@@ -1,3 +1,6 @@
+
 <template>
-    <p>Filter Section</p>
+    <div>   
+        <p>Filter Section</p>
+    </div>
 </template>
