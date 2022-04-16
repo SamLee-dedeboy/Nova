@@ -14,8 +14,10 @@ export default {
         this.emitter.on("graph-dev", graph => {
             this.nodes = graph.nodes
             this.edges = graph.edges
-            this.drawNodes(this.nodes, this.canvas)
+            // draw edges first for z-index
             this.drawEdges(this.edges, this.canvas)
+            this.drawNodes(this.nodes, this.canvas)
+
         })
     },
     methods: {
@@ -34,6 +36,7 @@ export default {
                 .attr("cy", function(d) { return d.y; })
                 .attr("r", "10px")
                 .attr("stroke", "black")
+                .attr("stroke-dasharray", function(d) { return d.dotted? 2.5 : 0})
                 .attr("fill", function(d) { if(d.isCenter) { return "white"} else return d.sentiment<0?color_neg(d.sentiment):color_pos(d.sentiment); }) 
             canvas.selectAll("text .nodes")
                 .data(nodes)
@@ -50,7 +53,9 @@ export default {
                 .attr("y1", function(d) { return d.source.y })
                 .attr("x2", function(d) { return d.target.x })
                 .attr("y2", function(d) { return d.target.y })
-                .style("stroke", "rgb(6,120,155)");
+                .attr("stroke", "rgb(6,120,155)")
+                .attr("stroke-dasharray", function(d) { return d.target.dotted || d.source.dotted? 2.5 : 0})
+
             }
         }
 }
