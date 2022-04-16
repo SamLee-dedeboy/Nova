@@ -19,29 +19,40 @@ export default {
         })
     },
     methods: {
-     drawNodes(nodes, canvas) {
-        canvas.selectAll("circle .nodes")
-            .data(nodes)
-            .enter()
-            .append("svg:circle")
-            .attr("class", "nodes")
-            .attr("cx", function(d) { return d.x; })
-            .attr("cy", function(d) { return d.y; })
-            .attr("r", "10px")
-            .attr("fill", "black") 
-    },
-    drawEdges(edges, canvas) {
-        canvas.selectAll(".line")
-            .data(edges)
-            .enter()
-            .append("line")
-            .attr("x1", function(d) { return d.source.x })
-            .attr("y1", function(d) { return d.source.y })
-            .attr("x2", function(d) { return d.target.x })
-            .attr("y2", function(d) { return d.target.y })
-            .style("stroke", "rgb(6,120,155)");
+        drawNodes(nodes, canvas) {
+            var color_neg = d3.scaleSqrt()
+            .domain([-1, 0])  
+            .range(["blue", "white"]); 
+            var color_pos = d3.scaleSqrt()
+            .domain([0, 1])
+            .range(["white", "red"]);
+            canvas.selectAll("circle .nodes")
+                .data(nodes)
+                .join("svg:circle")
+                .attr("class", "nodes")
+                .attr("cx", function(d) { return d.x; })
+                .attr("cy", function(d) { return d.y; })
+                .attr("r", "10px")
+                .attr("stroke", "black")
+                .attr("fill", function(d) { if(d.isCenter) { return "white"} else return d.sentiment<0?color_neg(d.sentiment):color_pos(d.sentiment); }) 
+            canvas.selectAll("text .nodes")
+                .data(nodes)
+                .join("svg:text")
+                .attr("x", function(d) { return d.x; })
+                .attr("y", function(d) { return d.y; })
+                .text(function(d) {return d.outlet || d.text; })
+        },
+        drawEdges(edges, canvas) {
+            canvas.selectAll(".line")
+                .data(edges)
+                .join("line")
+                .attr("x1", function(d) { return d.source.x })
+                .attr("y1", function(d) { return d.source.y })
+                .attr("x2", function(d) { return d.target.x })
+                .attr("y2", function(d) { return d.target.y })
+                .style("stroke", "rgb(6,120,155)");
+            }
         }
-    }
 }
 
 
