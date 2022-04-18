@@ -30,30 +30,40 @@ export default {
             // define node color
             var color_neg = d3.scaleSqrt()
             .domain([-1, 0])  
-            .range(["blue", "white"]); 
+            .range(["red", "white"]); 
             var color_pos = d3.scaleSqrt()
             .domain([0, 1])
-            .range(["white", "red"]);
+            .range(["white", "yellow"]);
 
             // create nodes for outlets
             var node = svg.selectAll("g")
             .data(nodes)
             .join("g")
+            .style("cursor", "pointer")
+            .on("mouseover", function(d) {
+                    d3.select(this).select("rect").style("filter", "brightness(90%)")
+            })
+            .on("mouseout", function(d) {
+                    d3.select(this).select("rect").style("filter", "brightness(100%)")
+            })
             node.append("rect")
                 .attr("class", "nodes")
                 .attr("x", function(d) { return d.x; })
                 .attr("y", function(d) { return d.y; })
+                
+
             node.append("text")
                 .attr("class", "node_text")
                 .attr("x", function(d) { return d.x; })
                 .attr("y", function(d) { return d.y; })
-                .attr("dy", "20")
-                .attr("dx", "10")
+                .attr("dy", "15")
+                .attr("dx", "7.5")
+                .attr("font-size","small")
                 .text(function(d) {return d.outlet || d.text; })
 
              node.selectAll("rect")
-                .attr("width", function(d){ return this.parentNode.childNodes[1].getComputedTextLength() + 20; })
-                .attr("height", "30")
+                .attr("width", function(d){ return this.parentNode.childNodes[1].getComputedTextLength() + 15; })
+                .attr("height", "20")
                 .attr("stroke", "black")
                 .attr("stroke-dasharray", function(d) { return d.dotted? 2.5 : 0})
                 .attr("fill", function(d) { return d.sentiment<0?color_neg(d.sentiment):color_pos(d.sentiment); }) 
