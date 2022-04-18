@@ -9,21 +9,24 @@ export default {
         }
     }, 
     mounted() {
-        this.canvas = d3.select("#graph").append("svg"),
-
-        this.emitter.on("graph-dev", graph => {
-            var nodes = graph.nodes
-            var center_node = graph.center_node
-            // draw edges first for z-index
-            this.drawNodes(nodes, center_node, this.canvas)
-            var rects = this.canvas.selectAll("rect.nodes")
-            var center_rect = this.canvas.select("rect.center")
-            this.drawEdges(rects, center_rect, this.canvas)
-            this.canvas.selectAll("line.graph_edge").lower()
+        this.canvas = d3.select("#graph")
+        this.emitter.on("graph-dev", graphList => {
+            graphList.forEach(graph => {
+                var svg = this.canvas.append("svg")
+                var nodes = graph.nodes
+                var center_node = graph.center_node
+                // draw edges first for z-index
+                this.drawNodes(nodes, center_node, svg)
+                var rects = svg.selectAll("rect.nodes")
+                var center_rect = svg.select("rect.center")
+                this.drawEdges(rects, center_rect, svg)
+                svg.selectAll("line.graph_edge").lower()
+            });
+            
         })
     },
     methods: {
-        drawNodes(nodes, center_node_data, canvas) {
+        drawNodes(nodes, center_node_data, svg) {
             // define node color
             var color_neg = d3.scaleSqrt()
             .domain([-1, 0])  
@@ -33,7 +36,7 @@ export default {
             .range(["white", "red"]);
 
             // create nodes for outlets
-            var node = canvas.selectAll("g")
+            var node = svg.selectAll("g")
             .data(nodes)
             .join("g")
             node.append("rect")
@@ -56,7 +59,7 @@ export default {
                 .attr("fill", function(d) { return d.sentiment<0?color_neg(d.sentiment):color_pos(d.sentiment); }) 
             
             // create center node for noun-phrase
-            var center_node = canvas.append("g")
+            var center_node = svg.append("g")
                 .data([center_node_data])
                 .join("g")
             center_node.append("rect")
@@ -72,7 +75,7 @@ export default {
                 .attr("dx", "10")
                 .text(function(d) {return d.outlet || d.text; })
             center_node.selectAll("rect")
-                .attr("width", function(d){ return this.parentNode.childNodes[1].getComputedTextLength() + 20; })
+                .attr("width", function(d){  return this.parentNode.childNodes[1].getComputedTextLength() + 20; })
                 .attr("height", "30")
                 .attr("stroke", "black")
                 .attr("stroke-dasharray", function(d) { return d.dotted? 2.5 : 0})
@@ -80,8 +83,8 @@ export default {
 
         },
         
-        drawEdges(rects, center_rect, canvas) {
-            canvas.selectAll("line")
+        drawEdges(rects, center_rect, svg) {
+            svg.selectAll("line")
                 .data(rects)
                 .join("line")
                 .attr("class", "graph_edge")
@@ -103,6 +106,6 @@ export default {
 <template>
 <div>
     <p>Target Section</p>
-    <div id="graph">this is graph</div>
+    <div id='graph'></div>
 </div>
 </template>

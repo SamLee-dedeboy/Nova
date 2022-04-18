@@ -5,28 +5,38 @@ methods: {
     testClicked() {
         var outlet_set = ["CNN", "Fox", "NYT", "WSJ"]
         // original nodes and edges
-        var nodes = [
+        var graph1 = {
+            nodes: [
                 {x: 25, y: 30, outlet:"CNN", sentiment: 0.8},
                 {x: 10, y: 80, outlet:"Fox", sentiment: -0.9},
                 {x: 120, y: 120, outlet:"NYT", sentiment: 0.1},
-        ]
-        var center_node = {x: 70, y: 80, isCenter:true, text:"Joe Biden"}
+            ],
+            center_node : {x: 70, y: 80, text:"Joe Biden"}
+        }
 
+        var graph2 = {
+            nodes: [
+                {x: 25, y: 30, outlet:"CNN", sentiment: 0.1},
+                {x: 10, y: 80, outlet:"Fox", sentiment: 0.9},
+                {x: 120, y: 120, outlet:"WSJ", sentiment: -0.8},
+            ],
+            center_node : {x: 80, y: 80, text:"BLM"}
+        }
+        var graphList = [graph1, graph2]
         // add dotted nodes
-        var dotted_nodes = []
-        outlet_set.forEach(outlet => {
-            if(!nodes.map(a => a.outlet).includes(outlet)) {
+
+        graphList.forEach(graph => {
+            var dotted_nodes = []
+            outlet_set.forEach(outlet => {
+            if(!graph.nodes.map(a => a.outlet).includes(outlet)) {
                 dotted_nodes.push({x:100, y:20, outlet:outlet, sentiment:0, dotted:true})
             } 
         })
-        nodes.push.apply(nodes, dotted_nodes)
-        var graph = {
-            nodes: nodes,
-            center_node: center_node,
-        }
+            graph.nodes.push.apply(graph.nodes, dotted_nodes)
+        })
 
-
-      this.emitter.emit("graph-dev", graph);
+        // emit
+        this.emitter.emit("graph-dev", graphList);
     }
   }
 }
