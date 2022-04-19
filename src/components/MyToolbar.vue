@@ -40,7 +40,7 @@ methods: {
             graphList: graphList,
             outlet_set: outlet_set
         }
-        this.emitter.emit("graph-dev", dataset);
+        this.$emit("graph-dev", dataset);
     }
   }
 }

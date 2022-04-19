@@ -12,6 +12,16 @@ export default {
     MyToolbar,
     Splitter,
     SplitterPanel
+  },
+  data() {
+    return {
+      dataset: []
+    }
+  },
+  methods: {
+    updateDataset(dataset) {
+      this.dataset = dataset
+    }
   }
 }
 </script>
@@ -22,7 +32,7 @@ export default {
       <SplitterPanel class="flex align-items-center justify-content-center" :size="80">
         <Splitter layout="vertical" >
           <SplitterPanel class="flex align-items-center justify-content-center" :size="10"> 
-            <MyToolbar/>
+            <MyToolbar @graph-dev="updateDataset"/>
           </SplitterPanel>
           <SplitterPanel class="flex align-items-center justify-content-center" :size="90">
               <Splitter layout="vertical" >
@@ -30,7 +40,7 @@ export default {
                   <Filter></Filter>
                 </SplitterPanel>
                 <SplitterPanel class="flex align-items-center justify-content-center" :size="90">
-                  <Target></Target>
+                  <Target v-bind:dataset="dataset"></Target>
                 </SplitterPanel>
               </Splitter>
           </SplitterPanel>

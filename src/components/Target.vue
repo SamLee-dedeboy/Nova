@@ -2,15 +2,14 @@
 import * as d3 from "d3";
 import { onUpdated } from '@vue/runtime-core';
 export default {
-    data() {
-        return {
-            nodes:[],
-            edges:[]
-        }
-    }, 
+    props: {
+        dataset: []
+    },
     mounted() {
         this.canvas = d3.select("#graph")
-        this.emitter.on("graph-dev", dataset => {
+    },
+    watch: {
+         dataset: function(dataset) {
             dataset.graphList.forEach(graph => {
                 var svg = this.canvas.append("svg")
                 var nodes = graph.nodes.filter(node => dataset.outlet_set.includes(node.outlet))
@@ -23,7 +22,7 @@ export default {
                 svg.selectAll("line.graph_edge").lower()
             });
             
-        })
+        }
     },
     methods: {
         drawNodes(nodes, center_node_data, svg) {
