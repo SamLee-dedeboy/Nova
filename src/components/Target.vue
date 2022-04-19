@@ -10,10 +10,10 @@ export default {
     }, 
     mounted() {
         this.canvas = d3.select("#graph")
-        this.emitter.on("graph-dev", graphList => {
-            graphList.forEach(graph => {
+        this.emitter.on("graph-dev", dataset => {
+            dataset.graphList.forEach(graph => {
                 var svg = this.canvas.append("svg")
-                var nodes = graph.nodes
+                var nodes = graph.nodes.filter(node => dataset.outlet_set.includes(node.outlet))
                 var center_node = graph.center_node
                 // draw edges first for z-index
                 this.drawNodes(nodes, center_node, svg)

@@ -36,7 +36,11 @@ methods: {
         })
 
         // emit
-        this.emitter.emit("graph-dev", graphList);
+        var dataset = {
+            graphList: graphList,
+            outlet_set: outlet_set
+        }
+        this.emitter.emit("graph-dev", dataset);
     }
   }
 }
