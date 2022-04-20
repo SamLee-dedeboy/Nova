@@ -1,6 +1,7 @@
 
 <script>
 export default {
+emits: ["graph-dev"],
 methods: {
     testClicked() {
         var outlet_set = ["CNN", "Fox", "NYT", "WSJ"]

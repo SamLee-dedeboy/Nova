@@ -2,29 +2,42 @@
 import * as d3 from "d3";
 import { onUpdated } from '@vue/runtime-core';
 export default {
-    props: {
-        dataset: []
+    props: ['dataset', 'enabled_outlet_set'],
+    computed: {
+        outlet_set() {
+            return this.enabled_outlet_set.filter(outlet => outlet.enabled).map(outlet => outlet.outlet)
+        }
     },
     mounted() {
         this.canvas = d3.select("#graph")
     },
+    data() {
+
+    },
     watch: {
-         dataset: function(dataset) {
-            dataset.graphList.forEach(graph => {
-                var svg = this.canvas.append("svg")
-                var nodes = graph.nodes.filter(node => dataset.outlet_set.includes(node.outlet))
-                var center_node = graph.center_node
-                // draw edges first for z-index
-                this.drawNodes(nodes, center_node, svg)
-                var rects = svg.selectAll("rect.nodes")
-                var center_rect = svg.select("rect.center")
-                this.drawEdges(rects, center_rect, svg)
-                svg.selectAll("line.graph_edge").lower()
-            });
-            
-        }
+        dataset: function() {
+            this.drawGraph()
+        },
+        // enabled_outlet_set: function() {
+        //     console.log("filtered. updating ")
+        //     this.drawGraph()
+        // }
     },
     methods: {
+        drawGraph() {
+            console.log("dataset updated")
+            this.dataset.graphList.forEach(graph => {
+                    var svg = this.canvas.append("svg")
+                    var nodes = graph.nodes.filter(node => this.outlet_set.includes(node.outlet))
+                    var center_node = graph.center_node
+                    // draw edges first for z-index
+                    this.drawNodes(nodes, center_node, svg)
+                    var rects = svg.selectAll("rect.nodes")
+                    var center_rect = svg.select("rect.center")
+                    this.drawEdges(rects, center_rect, svg)
+                    svg.selectAll("line.graph_edge").lower()
+                }); 
+        },
         drawNodes(nodes, center_node_data, svg) {
             // define node color
             var color_neg = d3.scaleSqrt()

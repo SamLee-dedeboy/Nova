@@ -15,12 +15,22 @@ export default {
   },
   data() {
     return {
-      dataset: []
+      dataset: {},
+      enabled_outlet_set:[]
     }
   },
+
   methods: {
     updateDataset(dataset) {
       this.dataset = dataset
+      this.enabled_outlet_set = dataset.outlet_set.map(function(outlet) {return {outlet:outlet,enabled:true}; })
+    }, 
+    updateEnabledOutlet(enabled_outlet_set) {
+      console.log("filtered event captured")
+      this.dataset.graphList.forEach(graph => {
+        graph.nodes = graph.nodes.filter(node => this.enabled_outlet_set.filter(outlet => outlet.enabled).map(outlet => outlet.outlet).includes(node.outlet))
+      });
+
     }
   }
 }
@@ -37,10 +47,11 @@ export default {
           <SplitterPanel class="flex align-items-center justify-content-center" :size="90">
               <Splitter layout="vertical" >
                 <SplitterPanel class="flex align-items-center justify-content-center" :size="10">
-                  <Filter></Filter>
+                  <Filter v-bind:enabled_outlet_set="enabled_outlet_set"
+                          @outlet-filtered="updateEnabledOutlet"></Filter>
                 </SplitterPanel>
                 <SplitterPanel class="flex align-items-center justify-content-center" :size="90">
-                  <Target v-bind:dataset="dataset"></Target>
+                  <Target v-bind:dataset="dataset" :enabled_outlet_set="enabled_outlet_set"></Target>
                 </SplitterPanel>
               </Splitter>
           </SplitterPanel>
