@@ -26,7 +26,7 @@ methods: {
         var graphList = [graph1, graph2]
         // add dotted nodes
 
-        graphList.forEach(graph => {
+        graphList.forEach(graph=> {
             var dotted_nodes = []
             outlet_set.forEach(outlet => {
             if(!graph.nodes.map(a => a.outlet).includes(outlet)) {

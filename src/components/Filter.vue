@@ -1,8 +1,16 @@
 <script>
 
 export default {
-    props: {
-        enabled_outlet_set: Array
+    props: ['outlet_set'],
+    data() {
+        return {
+            enabled_outlet_set:[]
+        }
+    },
+    watch: {
+        outlet_set: function() {
+            this.enabled_outlet_set = this.outlet_set.map(function(outlet) {return {outlet:outlet,enabled:true}; })
+        }
     },
     emit: ["outlet-filtered"],
     methods: {

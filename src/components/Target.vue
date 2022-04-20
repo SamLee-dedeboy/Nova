@@ -11,24 +11,23 @@ export default {
     mounted() {
         this.canvas = d3.select("#graph")
     },
-    data() {
-
-    },
     watch: {
         dataset: function() {
             this.drawGraph()
         },
-        // enabled_outlet_set: function() {
-        //     console.log("filtered. updating ")
-        //     this.drawGraph()
-        // }
+        enabled_outlet_set: function() {
+            console.log("filtered. updating ")
+            this.drawGraph()
+        }
     },
     methods: {
         drawGraph() {
-            console.log("dataset updated")
+            console.log("dataset updated", this.dataset)
+            console.log(this.enabled_outlet_set[0])
             this.dataset.graphList.forEach(graph => {
                     var svg = this.canvas.append("svg")
                     var nodes = graph.nodes.filter(node => this.outlet_set.includes(node.outlet))
+                    console.log(nodes)
                     var center_node = graph.center_node
                     // draw edges first for z-index
                     this.drawNodes(nodes, center_node, svg)
