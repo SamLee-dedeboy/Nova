@@ -40,6 +40,7 @@ export default {
     }, 
     updateEnabledOutlet(enabled_outlet_set) {
       console.log("HomeView: get filtering")     
+      console.log("...")
       this.enabled_outlet_set = enabled_outlet_set
       // this.dataset.graphList.forEach(graph => {
       //  graph.nodes =  graph.nodes.filter(node => this.enabled_outlet_set.filter(outlet => outlet.enabled).map(outlet => outlet.outlet).includes(node.outlet))
