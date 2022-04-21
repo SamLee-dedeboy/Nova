@@ -1,17 +1,19 @@
 <script>
 
 import Filter from "../components/Filter.vue";
-import Target from "../components/Target.vue";
+//import Target from "../components/Target.vue";
+import TargetContainer from "../components/TargetContainer.vue";
 import MyToolbar from "../components/MyToolbar.vue"
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 export default {
   components: {
     Filter,
-    Target,
+   // Target,
     MyToolbar,
     Splitter,
-    SplitterPanel
+    SplitterPanel,
+    TargetContainer
   },
   data() {
     return {
@@ -31,12 +33,13 @@ export default {
 
   methods: {
     updateDataset(dataset) {
+      console.log("HomeView: get dataset")
       this.dataset = dataset
       this.outlet_set = dataset.outlet_set
       this.enabled_outlet_set = dataset.outlet_set.map(function(outlet) {return {outlet:outlet,enabled:true}; })
     }, 
     updateEnabledOutlet(enabled_outlet_set) {
-      console.log("filtered event captured")     
+      console.log("HomeView: get filtering")     
       this.enabled_outlet_set = enabled_outlet_set
       // this.dataset.graphList.forEach(graph => {
       //  graph.nodes =  graph.nodes.filter(node => this.enabled_outlet_set.filter(outlet => outlet.enabled).map(outlet => outlet.outlet).includes(node.outlet))
@@ -62,7 +65,7 @@ export default {
                           @outlet-filtered="updateEnabledOutlet"></Filter>
                 </SplitterPanel>
                 <SplitterPanel class="flex align-items-center justify-content-center" :size="90">
-                  <Target v-bind:dataset="dataset" :enabled_outlet_set="enabled_outlet_set"></Target>
+                  <TargetContainer v-bind:dataset="dataset" :enabled_outlet_set="enabled_outlet_set"></TargetContainer>
                 </SplitterPanel>
               </Splitter>
           </SplitterPanel>

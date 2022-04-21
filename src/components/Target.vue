@@ -2,41 +2,38 @@
 import * as d3 from "d3";
 import { onUpdated } from '@vue/runtime-core';
 export default {
-    props: ['dataset', 'enabled_outlet_set'],
+    props: ['graph', 'graph_index'],
     computed: {
-        outlet_set() {
-            return this.enabled_outlet_set.filter(outlet => outlet.enabled).map(outlet => outlet.outlet)
-        },
-        filtered_graphList() {
-            return this.dataset.graphList.map(
-                graph =>  {
-                    return {
-                        nodes: graph.nodes.filter(node => this.outlet_set.includes(node.outlet)), 
-                        center_node: graph.center_node
-                    }
-                })
-        },
+        // outlet_set() {
+        //     return this.enabled_outlet_set.filter(outlet => outlet.enabled).map(outlet => outlet.outlet)
+        // },
+        // filtered_graph() {
+        //     return  {
+        //                 nodes: this.graph.nodes.filter(node => this.outlet_set.includes(node.outlet)), 
+        //                 center_node: this.graph.center_node
+        //             }
+        // },
     },
     mounted() {
-        this.canvas = d3.select("#graph")
-        this.drawGraphList()
+        this.canvas = d3.select("#graph-" + this.graph_index)
         this.color_neg = d3.scaleSqrt()
             .domain([-1, 0])  
             .range(["red", "white"]); 
         this.color_pos = d3.scaleSqrt()
             .domain([0, 1])
             .range(["white", "yellow"]);
+        this.updateGraph()
+
     },
     watch: {
-        dataset: function() {
-            this.drawGraphList()
+        graph: function() {
+            console.log("graph created")
+            this.updateGraph(this.graph)
         },
-        enabled_outlet_set: function() {
-            console.log("filtered. updating ")
-            console.log(this.outlet_set)
-            this.updateNode()
-            this.updateEdges()
-        }
+        // enabled_outlet_set: function() {
+        //     console.log("filtered. ", this.filtered_graph)
+        //     //this.updateGraphList(this.filtered_graphList)
+        // }
     },
     methods: {
         updateEdges() {
@@ -53,7 +50,7 @@ export default {
             svg.selectAll("line.graph_edge").lower()
         }, 
         updateNode() {
-            console.log(this.filtered_graphList)
+            console.log("updating node")
             var node = this.canvas.selectAll("svg").selectAll(".outlet_node")
             const color_pos = this.color_pos
             const color_neg = this.color_neg 
@@ -98,39 +95,35 @@ export default {
                 .attr("stroke-dasharray", function(d) { return d.dotted? 2.5 : 0})
                 .attr("fill", "white") 
         },
-        drawGraphList() {
-            console.log("dataset updated", this.dataset)
-            console.log(this.filtered_graphList)
+        updateGraph() {
+            console.log("graph updated")
+            var svg = this.canvas.append("svg")
 
-            var graphSvg = this.canvas.selectAll("svg")
-            .data(this.filtered_graphList)
-            .join("svg")
-            .each(function(graph) {
-                // outlet_node
-                var svg = d3.select(this)
-                const outlet_nodes = svg.selectAll("g")
-                .data(graph.nodes)
+            console.log(this.graph.nodes)
+            // outlet_node
+            const outlet_nodes = svg.selectAll("g")
+            .data(this.graph.nodes)
+            .join("g")
+            .style("cursor", "pointer")
+            .attr("class", "outlet_node")
+            .on("mouseover", function(d) {
+                d3.select(this).select("rect").style("filter", "brightness(90%)")
+            })
+            .on("mouseout", function(d) {
+                d3.select(this).select("rect").style("filter", "brightness(100%)")
+            })
+
+            // center node
+            const center_node_data = this.graph.center_node
+            const center_node = svg.append("g")
+                .data([center_node_data])
                 .join("g")
-                .style("cursor", "pointer")
-                .attr("class", "outlet_node")
-                .on("mouseover", function(d) {
-                        svg.select("rect").style("filter", "brightness(90%)")
-                })
-                .on("mouseout", function(d) {
-                        svg.select("rect").style("filter", "brightness(100%)")
-                })
-
-                // center node
-                const center_node_data = graph.center_node
-                const center_node = svg.append("g")
-                    .data([center_node_data])
-                    .join("g")
-                    .attr("class", "center_node")
-             })
+                .attr("class", "center_node")
+             
        
             this.updateNode();
-            // edges
 
+            // edges
             this.canvas.selectAll("svg").each(function(graph) {
                 var svg = d3.select(this)
                 var rects = svg.selectAll("rect.nodes")
@@ -151,10 +144,6 @@ export default {
 
 </script>
 <template>
-<div>
-    <p>Target Section</p>
-    <div id='graph'>
-
+    <div >
     </div>
-</div>
 </template>
