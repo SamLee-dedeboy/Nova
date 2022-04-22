@@ -121,6 +121,6 @@ export default {
 
 </script>
 <template>
-    <div >
-    </div>
+    <span >
+    </span>
 </template>
