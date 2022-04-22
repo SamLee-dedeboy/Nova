@@ -16,7 +16,6 @@ export default {
     methods: {
         updateFilter(event, index) {
             var old_state = event.target.getAttribute("data-selected")
-            console.log(this.enabled_outlet_set, index)
             if(old_state == "selected") {
                 event.target.classList.remove("p-button-raised")
                 event.target.classList.add("p-button-outlined")

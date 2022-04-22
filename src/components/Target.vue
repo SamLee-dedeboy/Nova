@@ -3,19 +3,10 @@ import * as d3 from "d3";
 import { onUpdated } from '@vue/runtime-core';
 export default {
     props: ['graph', 'graph_index'],
-    computed: {
-        // outlet_set() {
-        //     return this.enabled_outlet_set.filter(outlet => outlet.enabled).map(outlet => outlet.outlet)
-        // },
-        // filtered_graph() {
-        //     return  {
-        //                 nodes: this.graph.nodes.filter(node => this.outlet_set.includes(node.outlet)), 
-        //                 center_node: this.graph.center_node
-        //             }
-        // },
-    },
     mounted() {
         this.canvas = d3.select("#graph-" + this.graph_index)
+        this.canvas.append("svg")
+
         this.color_neg = d3.scaleSqrt()
             .domain([-1, 0])  
             .range(["red", "white"]); 
@@ -25,16 +16,7 @@ export default {
         this.updateGraph()
 
     },
-    watch: {
-        graph: function() {
-            console.log("graph created")
-            this.updateGraph(this.graph)
-        },
-        // enabled_outlet_set: function() {
-        //     console.log("filtered. ", this.filtered_graph)
-        //     //this.updateGraphList(this.filtered_graphList)
-        // }
-    },
+
     methods: {
         updateEdges() {
             var svg = this.canvas.selectAll("svg")
@@ -50,7 +32,6 @@ export default {
             svg.selectAll("line.graph_edge").lower()
         }, 
         updateNode() {
-            console.log("updating node")
             var node = this.canvas.selectAll("svg").selectAll(".outlet_node")
             const color_pos = this.color_pos
             const color_neg = this.color_neg 
@@ -96,10 +77,7 @@ export default {
                 .attr("fill", "white") 
         },
         updateGraph() {
-            console.log("graph updated")
-            var svg = this.canvas.append("svg")
-
-            console.log(this.graph.nodes)
+            var svg = this.canvas.selectAll("svg")
             // outlet_node
             const outlet_nodes = svg.selectAll("g")
             .data(this.graph.nodes)
@@ -132,7 +110,6 @@ export default {
                 .join("line")
                 .attr("class", "graph_edge")
             })
-        
             this.updateEdges();
 
         },
