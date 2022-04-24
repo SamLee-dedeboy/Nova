@@ -1,9 +1,10 @@
 <script>
 import Target from "./Target.vue";
-
+import Cloud from "./Cloud.vue"
 export default ({
     components: {
-      Target
+      Target,
+      Cloud
     },
     props:['dataset', 'enabled_outlet_set'],
     data() {
@@ -26,11 +27,11 @@ export default ({
 
 <template>
 <div>
-    <Target v-for="(graph,index) in filtered_dataset" 
+    <Cloud v-for="(graph,index) in filtered_dataset" 
     :key="graph.center_node"
     :graph="graph"
     :graph_index="index"
     :id="`graph-${index}`">
-    </Target>
+    </Cloud>
 </div>
 </template>

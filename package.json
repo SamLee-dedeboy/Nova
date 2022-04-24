@@ -8,6 +8,7 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore"
   },
   "dependencies": {
+    "@vue/composition-api": "^1.4.9",
     "d3": "^7.4.4",
     "mitt": "^3.0.0",
     "primeicons": "^5.0.0",

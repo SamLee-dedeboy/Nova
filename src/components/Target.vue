@@ -1,6 +1,5 @@
 <script>
 import * as d3 from "d3";
-import { onUpdated } from '@vue/runtime-core';
 export default {
     props: ['graph', 'graph_index'],
     mounted() {
