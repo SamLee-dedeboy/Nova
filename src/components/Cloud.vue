@@ -6,6 +6,13 @@ export default defineComponent({
     setup() {
     },
     props: ['graph', 'graph_index'],
+    computed: {
+        center_node_gradient() {
+            var pos_score = this.graph.nodes.filter(node => node.sentiment > 0).reduce((pos, node) => pos + Math.abs(node.sentiment), 0)
+            var neg_score = this.graph.nodes.filter(node => node.sentiment < 0).reduce((neg, node) => neg + Math.abs(node.sentiment), 0)
+            return neg_score / (pos_score + neg_score)
+        }
+    },
     mounted() {
         this.canvas = d3.select("#graph-" + this.graph_index)
         this.canvas.append("svg")
@@ -81,12 +88,29 @@ export default defineComponent({
                 .attr("stroke", "black")
                 .attr("stroke-dasharray", function(d) { return d.dotted? 2.5 : 0})
                 .attr("fill", function(d) { return d.sentiment<0?color_neg(d.sentiment):color_pos(d.sentiment); }) 
+            
+            
             var center_node = this.canvas.selectAll("svg").selectAll(".center_node")
+            var gradient = center_node.append("defs").append("linearGradient")
+            .attr("id", "rectSentimentGradient")
+         
+            gradient.append("stop")
+            .attr("offset", "0%")
+            .attr("stop-color", "red")
+            gradient.append("stop")
+            .attr("offset", this.center_node_gradient)
+            .attr("stop-color", "red")
+            gradient.append("stop")
+            .attr("offset", this.center_node_gradient)
+            .attr("stop-color", "yellow")
+            gradient.append("stop")
+            .attr("offset", "100%")
+            .attr("stop-color", "yellow")
             center_node.append("rect")
                 .attr("class", "center")
                 .attr("x", function(d) { return d.x; })
                 .attr("y", function(d) { return d.y; })
-                
+                .attr("fill", "url(#rectSentimentGradient)")
             center_node.append("text")
                 .attr("class", "node_text")
                 .attr("x", function(d) { return d.x; })
@@ -94,12 +118,13 @@ export default defineComponent({
                 .attr("dy", "20")
                 .attr("dx", "10")
                 .text(function(d) {return d.outlet || d.text; })
+
             center_node.selectAll("rect")
-                .attr("width", function(d){  return this.parentNode.childNodes[1].getComputedTextLength() + 20; })
+                .attr("width", function(d){ return this.parentNode.childNodes[2].getComputedTextLength() + 20; })
                 .attr("height", "30")
                 .attr("stroke", "black")
                 .attr("stroke-dasharray", function(d) { return d.dotted? 2.5 : 0})
-                .attr("fill", "white") 
+                //.attr("fill", "white") 
         
         }
     }
