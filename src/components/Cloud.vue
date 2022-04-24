@@ -10,6 +10,7 @@ export default defineComponent({
         center_node_gradient() {
             var pos_score = this.graph.nodes.filter(node => node.sentiment > 0).reduce((pos, node) => pos + Math.abs(node.sentiment), 0)
             var neg_score = this.graph.nodes.filter(node => node.sentiment < 0).reduce((neg, node) => neg + Math.abs(node.sentiment), 0)
+            console.log(this.graph_index, neg_score / (pos_score + neg_score))
             return neg_score / (pos_score + neg_score)
         }
     },
@@ -92,7 +93,7 @@ export default defineComponent({
             
             var center_node = this.canvas.selectAll("svg").selectAll(".center_node")
             var gradient = center_node.append("defs").append("linearGradient")
-            .attr("id", "rectSentimentGradient")
+            .attr("id", "rectSentimentGradient-"+this.graph_index)
          
             gradient.append("stop")
             .attr("offset", "0%")
@@ -110,7 +111,7 @@ export default defineComponent({
                 .attr("class", "center")
                 .attr("x", function(d) { return d.x; })
                 .attr("y", function(d) { return d.y; })
-                .attr("fill", "url(#rectSentimentGradient)")
+                .attr("fill", "url(#rectSentimentGradient-"+this.graph_index+")")
             center_node.append("text")
                 .attr("class", "node_text")
                 .attr("x", function(d) { return d.x; })
