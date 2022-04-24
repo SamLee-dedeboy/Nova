@@ -19,10 +19,10 @@ export default defineComponent({
 
         this.color_neg = d3.scaleSqrt()
             .domain([-1, 0])  
-            .range(["red", "white"]); 
+            .range(["red", "salmon"]); 
         this.color_pos = d3.scaleSqrt()
             .domain([0, 1])
-            .range(["white", "yellow"]);
+            .range(["khaki", "yellow"]);
         this.updateGraph()
     },
     methods: {
@@ -87,7 +87,7 @@ export default defineComponent({
                 .attr("r", function(d){ return this.parentNode.childNodes[1].getComputedTextLength()/1.5 + Math.abs(d.sentiment*20); })
                 .attr("stroke", "black")
                 .attr("stroke-dasharray", function(d) { return d.dotted? 2.5 : 0})
-                .attr("fill", function(d) { return d.sentiment<0?color_neg(d.sentiment):color_pos(d.sentiment); }) 
+                .attr("fill", function(d) { return d.dotted?"white":(d.sentiment<0?color_neg(d.sentiment):color_pos(d.sentiment)); }) 
             
             
             var center_node = this.canvas.selectAll("svg").selectAll(".center_node")
@@ -99,10 +99,10 @@ export default defineComponent({
             .attr("stop-color", "red")
             gradient.append("stop")
             .attr("offset", this.center_node_gradient)
-            .attr("stop-color", "red")
+            .attr("stop-color", "salmon")
             gradient.append("stop")
             .attr("offset", this.center_node_gradient)
-            .attr("stop-color", "yellow")
+            .attr("stop-color", "khaki")
             gradient.append("stop")
             .attr("offset", "100%")
             .attr("stop-color", "yellow")

@@ -54,7 +54,7 @@ export default {
                 .attr("height", "20")
                 .attr("stroke", "black")
                 .attr("stroke-dasharray", function(d) { return d.dotted? 2.5 : 0})
-                .attr("fill", function(d) { return d.sentiment<0?color_neg(d.sentiment):color_pos(d.sentiment); }) 
+                .attr("fill", function(d) { return d.dotted?"white":(d.sentiment<0?color_neg(d.sentiment):color_pos(d.sentiment)); }) 
             var center_node = this.canvas.selectAll("svg").selectAll(".center_node")
             center_node.append("rect")
                 .attr("class", "center")
