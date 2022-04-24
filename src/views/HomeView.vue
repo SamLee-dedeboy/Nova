@@ -53,7 +53,15 @@ export default {
                           @outlet-filtered="updateEnabledOutlet"></Filter>
                 </SplitterPanel>
                 <SplitterPanel class="flex align-items-center justify-content-center" :size="90">
-                  <TargetContainer :dataset="dataset" :enabled_outlet_set="enabled_outlet_set"></TargetContainer>
+                  <Splitter layout="vertical" >
+                    <SplitterPanel class="flex align-items-center justify-content-center" :size="20">
+                      <TargetContainer :dataset="dataset" :enabled_outlet_set="enabled_outlet_set"></TargetContainer>
+                    </SplitterPanel>
+                    <SplitterPanel class="flex align-items-center justify-content-center" :size="80">
+                      <p>article panel</p>
+                    </SplitterPanel>
+                  </Splitter>
+
                 </SplitterPanel>
               </Splitter>
           </SplitterPanel>
