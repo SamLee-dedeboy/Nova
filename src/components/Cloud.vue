@@ -10,7 +10,6 @@ export default defineComponent({
         center_node_gradient() {
             var pos_score = this.graph.nodes.filter(node => node.sentiment > 0).reduce((pos, node) => pos + Math.abs(node.sentiment), 0)
             var neg_score = this.graph.nodes.filter(node => node.sentiment < 0).reduce((neg, node) => neg + Math.abs(node.sentiment), 0)
-            console.log(this.graph_index, neg_score / (pos_score + neg_score))
             return neg_score / (pos_score + neg_score)
         }
     },

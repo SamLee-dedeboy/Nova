@@ -32,6 +32,6 @@ export default ({
     :graph="graph"
     :graph_index="index"
     :id="`graph-${index}`">
-    </Cloud>
+    </Cloud >
 </div>
 </template>
