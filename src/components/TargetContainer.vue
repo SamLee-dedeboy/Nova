@@ -21,6 +21,11 @@ export default ({
                 graph.nodes =  graph.nodes.filter(node => this.enabled_outlet_set.includes(node.outlet))
             });
         },
+    },
+    methods: {
+        handleNodeClicked(clicked_node) {
+            this.$emit("node-clicked", clicked_node)        
+        }
     }
 })
 </script>
@@ -31,7 +36,8 @@ export default ({
     :key="graph.center_node"
     :graph="graph"
     :graph_index="index"
-    :id="`graph-${index}`">
+    :id="`graph-${index}`"
+    @node-clicked="handleNodeClicked">
     </Cloud >
 </div>
 </template>

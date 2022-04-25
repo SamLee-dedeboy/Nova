@@ -6,14 +6,16 @@ import TargetContainer from "../components/TargetContainer.vue";
 import MyToolbar from "../components/MyToolbar.vue"
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
+import ArticleView from "../components/ArticleView.vue";
 export default {
   components: {
     Filter,
     MyToolbar,
     Splitter,
     SplitterPanel,
-    TargetContainer
-  },
+    TargetContainer,
+    ArticleView
+},
   data() {
     return {
       dataset: {
@@ -21,7 +23,8 @@ export default {
         outlet_set:[]
       },
       outlet_set: [],
-      enabled_outlet_set:[]
+      enabled_outlet_set:[],
+      selected_articles: []
     }
   },
 
@@ -33,7 +36,10 @@ export default {
     }, 
     updateEnabledOutlet(outlet_set_info) {
       this.enabled_outlet_set = outlet_set_info.filter(outlet => outlet.enabled).map(outlet => outlet.outlet)
-    }
+    },
+    updateSelectedNode(node) {
+      this.selected_articles = node.articles
+    },
   }
 }
 </script>
@@ -55,10 +61,13 @@ export default {
                 <SplitterPanel class="flex align-items-center justify-content-center" :size="90">
                   <Splitter layout="vertical" >
                     <SplitterPanel class="flex align-items-center justify-content-center" :size="20">
-                      <TargetContainer :dataset="dataset" :enabled_outlet_set="enabled_outlet_set"></TargetContainer>
+                      <TargetContainer 
+                      :dataset="dataset" 
+                      :enabled_outlet_set="enabled_outlet_set"
+                      @node-clicked="updateSelectedNode"></TargetContainer>
                     </SplitterPanel>
                     <SplitterPanel class="flex align-items-center justify-content-center" :size="80">
-                      <p>article panel</p>
+                      <ArticleView :articles="selected_articles"></ArticleView>
                     </SplitterPanel>
                   </Splitter>
 

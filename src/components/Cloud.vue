@@ -28,6 +28,7 @@ export default defineComponent({
     methods: {
         updateGraph() {
             var svg = this.canvas.selectAll("svg")
+            var self = this
             // outlet_node
             const outlet_nodes = svg.selectAll("g")
             .data(this.graph.nodes)
@@ -39,6 +40,9 @@ export default defineComponent({
             })
             .on("mouseout", function(d) {
                 d3.select(this).select("rect").style("filter", "brightness(100%)")
+            })
+            .on("click", function(e, d) {
+                self.$emit("node-clicked", d)
             })
 
             // center node
@@ -125,7 +129,6 @@ export default defineComponent({
                 .attr("stroke", "black")
                 .attr("stroke-dasharray", function(d) { return d.dotted? 2.5 : 0})
                 //.attr("fill", "white") 
-        
         }
     }
 })
