@@ -17,12 +17,15 @@ export default defineComponent({
         this.canvas = d3.select("#graph-" + this.graph_index)
         this.canvas.append("svg")
 
+        this.neg_color_range = ["red", "salmon"]
+        this.pos_color_range = ["#7986F8", "#3146F9"]
+
         this.color_neg = d3.scaleSqrt()
             .domain([-1, 0])  
-            .range(["red", "salmon"]); 
+            .range(this.neg_color_range); 
         this.color_pos = d3.scaleSqrt()
             .domain([0, 1])
-            .range(["khaki", "yellow"]);
+            .range(this.pos_color_range);
         this.updateGraph()
     },
     methods: {
@@ -100,16 +103,16 @@ export default defineComponent({
          
             gradient.append("stop")
             .attr("offset", "0%")
-            .attr("stop-color", "red")
+            .attr("stop-color", this.neg_color_range[0])
             gradient.append("stop")
             .attr("offset", this.center_node_gradient)
-            .attr("stop-color", "salmon")
+            .attr("stop-color", this.neg_color_range[1])
             gradient.append("stop")
             .attr("offset", this.center_node_gradient)
-            .attr("stop-color", "khaki")
+            .attr("stop-color", this.pos_color_range[0])
             gradient.append("stop")
             .attr("offset", "100%")
-            .attr("stop-color", "yellow")
+            .attr("stop-color", this.pos_color_range[1])
             center_node.append("rect")
                 .attr("class", "center")
                 .attr("x", function(d) { return d.x; })
