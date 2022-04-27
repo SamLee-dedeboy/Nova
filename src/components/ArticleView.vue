@@ -2,6 +2,7 @@
 import { defineComponent } from '@vue/composition-api'
 import ScrollPanel from 'primevue/scrollpanel'
 import Panel from 'primevue/panel'
+import Chip from 'primevue/chip'
 import { nextTick } from 'vue'
 import * as d3 from "d3";
 
@@ -12,7 +13,8 @@ export default defineComponent({
     props:["articles"],
     components: {
     Panel,
-      ScrollPanel
+    ScrollPanel,
+    Chip
     },
     
     mounted() {
@@ -51,6 +53,16 @@ export default defineComponent({
     :toggleable=true
     :collapsed=true
     >
+    <template #header>
+        <span>
+            {{index+1 + '. ' + article.headline}}
+        </span>
+        <!-- <Chip :style="{'background-color': this.color_neg(article.sentiment)}">  -->
+        <Chip style="background-color: white">
+            {{article.sentiment}}
+        </Chip>
+        
+    </template>
     <ScrollPanel style="width: 100%; height: 200px">
         {{article.content}}
     </ScrollPanel>
