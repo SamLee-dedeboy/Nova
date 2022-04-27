@@ -34,10 +34,10 @@ export default defineComponent({
                 header.setAttribute("style", "background-color:" + this.color_neg(this.articles[i].sentiment))
                 i++
                 header.onclick = function(e) {
-                    if(e.target != header.childNodes[3].childNodes[2] &&
-                        ![...header.childNodes[3].childNodes[2].childNodes].includes(e.target)
+                    if(e.target != header.childNodes[5].childNodes[2] &&
+                        ![...header.childNodes[5].childNodes[2].childNodes].includes(e.target)
                     ) 
-                        header.childNodes[3].childNodes[2].click()
+                        header.childNodes[5].childNodes[2].click()
                 }
             }
 
