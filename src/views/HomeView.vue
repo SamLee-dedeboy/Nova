@@ -46,38 +46,21 @@ export default {
 
 <template>
   <main>
-    <Splitter style="height:100vh">
-      <SplitterPanel class="flex align-items-center justify-content-center" :size="80">
-        <Splitter layout="vertical" >
-          <SplitterPanel class="flex align-items-center justify-content-center" :size="10"> 
-            <MyToolbar @graph-dev="updateDataset"/>
+    <Splitter style="height:100vh" layout="vertical">
+      <SplitterPanel id="overview-section" class="flex align-items-center justify-content-center" :size="80">
+        <Splitter>
+          <SplitterPanel id='target-section' class="flex align-items-center justify-content-center" :size="85"> 
+            <TargetContainer
+            :dataset="dataset"
+            :enabled_outlet_set="enabled_outlet_set"></TargetContainer>
           </SplitterPanel>
-          <SplitterPanel class="flex align-items-center justify-content-center" :size="90">
-              <Splitter layout="vertical" >
-                <SplitterPanel class="flex align-items-center justify-content-center" :size="10">
-                  <Filter v-bind:outlet_set="outlet_set"
-                          @outlet-filtered="updateEnabledOutlet"></Filter>
-                </SplitterPanel>
-                <SplitterPanel class="flex align-items-center justify-content-center" :size="90">
-                  <Splitter layout="vertical" >
-                    <SplitterPanel class="flex align-items-center justify-content-center" :size="20">
-                      <TargetContainer 
-                      :dataset="dataset" 
-                      :enabled_outlet_set="enabled_outlet_set"
-                      @node-clicked="updateSelectedNode"></TargetContainer>
-                    </SplitterPanel>
-                    <SplitterPanel class="flex align-items-center justify-content-center" :size="80">
-                      <ArticleView :articles="selected_articles"></ArticleView>
-                    </SplitterPanel>
-                  </Splitter>
-
-                </SplitterPanel>
-              </Splitter>
+          <SplitterPanel id='sidebar' class="flex align-items-center justify-content-center" :size="15">
+            <MyToolbar @graph-dev="updateDataset"></MyToolbar>
           </SplitterPanel>
         </Splitter>
       </SplitterPanel>
-      <SplitterPanel class="flex align-items-center justify-content-center" :size="20">
-        <p> side bar </p>
+      <SplitterPanel id='detail-section' class="flex align-items-center justify-content-center" :size="20">
+        <p> detail </p>
       </SplitterPanel>
     </Splitter>
   </main>
