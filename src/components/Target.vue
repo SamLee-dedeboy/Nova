@@ -6,12 +6,15 @@ export default {
         this.canvas = d3.select("#graph-" + this.graph_index)
         this.canvas.append("svg")
 
+        this.neg_color_range = ["red", "salmon"]
+        this.pos_color_range = ["#7986F8", "#3146F9"]
+
         this.color_neg = d3.scaleSqrt()
             .domain([-1, 0])  
-            .range(["red", "white"]); 
+            .range(this.neg_color_range); 
         this.color_pos = d3.scaleSqrt()
             .domain([0, 1])
-            .range(["white", "yellow"]);
+            .range(this.pos_color_range);
         this.updateGraph()
 
     },
@@ -77,6 +80,7 @@ export default {
         },
         updateGraph() {
             var svg = this.canvas.selectAll("svg")
+            var self = this
             // outlet_node
             const outlet_nodes = svg.selectAll("g")
             .data(this.graph.nodes)
@@ -89,7 +93,9 @@ export default {
             .on("mouseout", function(d) {
                 d3.select(this).select("rect").style("filter", "brightness(100%)")
             })
-
+            .on("click", function(e, d) {
+                self.$emit("node-clicked", d)
+            })
             // center node
             const center_node_data = this.graph.center_node
             const center_node = svg.append("g")

@@ -32,12 +32,12 @@ export default ({
 
 <template>
 <div>
-    <Cloud v-for="(graph,index) in filtered_dataset" 
+    <Target v-for="(graph,index) in filtered_dataset" 
     :key="graph.center_node"
     :graph="graph"
     :graph_index="index"
     :id="`graph-${index}`"
     @node-clicked="handleNodeClicked">
-    </Cloud >
+    </Target >
 </div>
 </template>
