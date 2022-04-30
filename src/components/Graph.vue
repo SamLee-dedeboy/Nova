@@ -17,19 +17,26 @@ export default {
     },
 
     methods: {
+        // TODO
         handleNodeClick(node) {
             console.log("node clicked!", node)
         },
         updateEdges() {
             // edges
             var svg = this.canvas
+
+            // bind edges to node circles, so that edges can bind to circle center
             var circles = svg.selectAll("circle.node")
             const edges = svg.selectAll("line")
             .data(circles)
             .join("line")
             .attr("class", "graph_edge")
 
+            // specify two ends of edges
+            // center node
             var center_node = svg.select("g.center").select("circle")
+
+            // outlet node
             svg.selectAll("line.graph_edge")
                 .attr("x1", function(d) { return parseInt(d3.select(d).attr("cx"));})
                 .attr("x2", function(d) { return parseInt(center_node.attr("cx")); })
@@ -37,6 +44,8 @@ export default {
                 .attr("y2", function(d) { return parseInt(center_node.attr("cy")); })
                 .attr("stroke", "rgb(6,120,155)")
                 .attr("stroke-dasharray", function(d) { return parseInt(d3.select(d).attr("stroke-dasharray"))==0 ? 0:2.5; })
+            
+            // lower the z-index of edges to prevent from overlapping nodes
             svg.selectAll("line.graph_edge").lower()
         },      
     }

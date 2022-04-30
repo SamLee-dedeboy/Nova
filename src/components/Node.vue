@@ -22,7 +22,7 @@ export default {
         updateNode() {
             var svg = this.svg
             var self = this
-            // outlet_node
+            // create g and bind data
             const node = svg.select("#node-" + this.node_index)
             .data([this.node])
             .join("g")
@@ -37,14 +37,14 @@ export default {
             .on("click", function(e, d) {
                 self.$emit("node-clicked", d)
             })
-            const color_pos = this.color_pos
-            const color_neg = this.color_neg 
+
+            // add circles for node
             node.append("circle")
                 .attr("class", "node")
                 .attr("cx", function(d) { return d.x; })
                 .attr("cy", function(d) { return d.y; })
-                
-
+            
+            // add label
             node.append("text")
                 .attr("class", "node_text")
                 .attr("x", function(d) { return d.x; })
@@ -54,14 +54,22 @@ export default {
                 .attr("font-size","small")
                 .text(function(d) {return d.outlet || d.text; })
 
+            // set size and styling according to label width
             node.selectAll("circle.node")
                 .attr("r", function(d){ return this.parentNode.childNodes[1].getComputedTextLength()/1.5 + self.r*15; })
                 .attr("stroke", "black")
                 .attr("stroke-dasharray", function(d) { return d.dotted? 2.5 : 0})
                 .attr("fill", "white") 
             
+            // set outer rings to represent sentiments
+            // no outer rings if node is dotted
+            if(this.node.dotted) return
+
+            // create element for outer ring, wrapped in g
             var outer_ring = node.append("g")
                 .attr("class", "outer_ring")
+
+            // positive ring
             outer_ring.append("circle")
                 .attr("class", "outer_ring_pos")
                 .attr("cx", function(d) { return d.x; })
@@ -77,14 +85,14 @@ export default {
                     var space = 2*3.14*r
                     return width + " " + space
                 })
-                
+            // negative ring
             outer_ring.append("circle")
                 .attr("class", "outer_ring_neg")
                 .attr("cx", function(d) { return d.x; })
                 .attr("cy", function(d) { return d.y; })
                 .attr("r",  function(d) { return parseInt(d3.select(this.parentNode.parentNode.childNodes[0]).attr("r") + 5);})
                 .attr("fill", "transparent")
-                .attr("stroke", this.neg_color_range[1])
+                .attr("stroke", this.neg_color_range[0])
                 .attr("stroke-width", 5)
                 .attr("stroke-dasharray", function(d) { 
                     var r = d3.select(this).attr("r")
@@ -101,6 +109,7 @@ export default {
                     var degree = percentage * 360
                     return "transform: rotate(" + degree + "deg);"
                 })
+            // neutral ring
             outer_ring.append("circle")
                 .attr("class", "outer_ring_neu")
                 .attr("cx", function(d) { return d.x; })
