@@ -85,8 +85,8 @@ export default defineComponent({
                 .attr("class", "node_text")
                 .attr("x", function(d) { return d.x; })
                 .attr("y", function(d) { return d.y; })
-                .attr("text-anchor", "middle")
-                .attr("alignment-baseline", "middle")
+                .attr("dy", "15")
+                .attr("dx", "7.5")
                 .attr("font-size","small")
                 .text(function(d) {return d.outlet || d.text; })
 

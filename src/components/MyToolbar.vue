@@ -5,7 +5,7 @@ export default {
     emits: ["graph-dev"],
     data() {
         return {
-            articles: articleData
+            articles: articleData.data.Article
         }
     },
     methods: {
@@ -14,28 +14,28 @@ export default {
             // original nodes and edges
             var graph1 = {
                 nodes: [
-                    {x: 45, y: 70, outlet:"CNN", sentiment: -0.8, articles:this.articles.data.Article},
-                    {x: 180, y: 80, outlet:"Fox", sentiment: 0.9 },
-                    {x: 60, y: 120, outlet:"NYT", sentiment: -0.1},
-                    {x: 170, y: 120, outlet:"ABC", sentiment: 0.5},
-                    {x: 200, y: 100, outlet:"WP", sentiment: 0.1}
+                    {x: 35, y: 70, outlet:"CNN", sentiment: -0.8, articles:this.articles.filter(article => article.journal=="CNN")},
+                    {x: 200, y: 80, outlet:"Fox", sentiment: 0.9, articles:this.articles.filter(article => article.journal=="Fox")},
+                    {x: 40, y: 120, outlet:"NYT", sentiment: -0.1, articles:this.articles.filter(article => article.journal=="NYT")},
+                    {x: 200, y: 120, outlet:"ABC", sentiment: 0.5, articles:this.articles.filter(article => article.journal=="ABC")},
+                    {x: 200, y: 40, outlet:"WP", sentiment: 0.1, articles:this.articles.filter(article => article.journal=="WP")}
 
                 ],
-                center_node : {x: 70, y: 80, text:"Joe Biden"}
+                center_node : {x: 120, y: 100, text:"Joe Biden", pos_sent:1.5, neg_sent:-0.9, neutral_sent: 1}
             }
 
             var graph2 = {
                 nodes: [
                     {x: 60, y: 70, outlet:"CNN", sentiment: -0.1},
                     {x: 50, y: 110, outlet:"Fox", sentiment: -0.9},
-                    {x: 160, y: 110, outlet:"WSJ", sentiment: 0.8},
-                    {x: 150, y: 70, outlet:"ABC", sentiment: 0.5},
-                    {x: 185, y: 80, outlet:"WP", sentiment: 0.2}
+                    {x: 180, y: 110, outlet:"WSJ", sentiment: 0.8},
+                    {x: 180, y: 40, outlet:"ABC", sentiment: 0.5},
+                    {x: 215, y: 70, outlet:"WP", sentiment: 0.2}
 
                 ],
-                center_node : {x: 80, y: 80, text:"BLM"}
+                center_node : {x: 130, y: 80, text:"BLM"}
             }
-            var graphList = [graph1, graph2]
+            var graphList = [graph1]
             // add dotted nodes
 
             graphList.forEach(graph=> {
