@@ -21,7 +21,7 @@ export default {
                     {x: 200, y: 40, outlet:"WP", sentiment: 0.1, pos_sent: 0.1, neg_sent: 0, neu_sent:0, articles:this.articles.filter(article => article.journal=="WP")}
 
                 ],
-                center_node : {x: 120, y: 100, text:"Joe Biden", pos_sent:1.5, neg_sent:-0.9, neu_sent: 1}
+                center_node : {x: 120, y: 100, text:"Joe Biden"}
             }
 
             var graph2 = {

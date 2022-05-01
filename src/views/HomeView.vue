@@ -56,6 +56,8 @@ export default {
           </SplitterPanel>
           <SplitterPanel id='sidebar' class="flex align-items-center justify-content-center" :size="15">
             <MyToolbar @graph-dev="updateDataset"></MyToolbar>
+            <Filter :outlet_set="outlet_set"
+            @outlet-filtered="updateEnabledOutlet"></Filter>
           </SplitterPanel>
         </Splitter>
       </SplitterPanel>

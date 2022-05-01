@@ -9,10 +9,29 @@ export default {
     computed: {
         total_articles: function() {
             return this.graph.nodes.reduce((sum, node) => sum + node.dotted? 0:node.articles.length, 0)
+        },
+        center_node: function() {
+            var center_node = this.graph.center_node
+            center_node.pos_sent = this.graph.nodes.reduce((pos_sum, node) => pos_sum + (node.dotted? 0:node.pos_sent), 0)
+            center_node.neg_sent = this.graph.nodes.reduce((neg_sum, node) => neg_sum + (node.dotted? 0:node.neg_sent), 0)
+            center_node.neu_sent = this.graph.nodes.reduce((neu_sum, node) => neu_sum + (node.dotted? 0:node.neu_sent), 0)
+            return center_node
+        },
+    },
+    watch: {
+        graph: function() {
+            console.log("graph updated")
+            this.graph.center_node.pos_sent = this.graph.nodes.reduce((pos_sum, node) => pos_sum + node.pos_sent, 0)
+            this.graph.center_node.neg_sent = this.graph.nodes.reduce((neg_sum, node) => neg_sum + Math.abs(node.neg_sent), 0)
+            this.graph.center_node.neu_sent = this.graph.nodes.reduce((neu_sum, node) => neu_sum + Math.abs(node.pos_sent), 0)
+
         }
     },
     mounted() {
         this.canvas = d3.select("#graph-" + this.graph_index)
+        // .call(d3.zoom().on("zoom", function (e) {
+        //     d3.select(this).attr("transform", e.transform)
+        // }))
         this.updateEdges()
     },
 
@@ -73,7 +92,7 @@ export default {
     :id="`node-center`"
     :graph_index="this.graph_index"
     node_index="center"
-    :node="graph.center_node"
+    :node="center_node"
     :r="this.total_articles"
     class="center"
     ></Node>
