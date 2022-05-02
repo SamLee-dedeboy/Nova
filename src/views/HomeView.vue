@@ -7,6 +7,7 @@ import MyToolbar from "../components/MyToolbar.vue"
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import ArticleView from "../components/ArticleView.vue";
+import TopicSelection from "../components/TopicSelection.vue";
 export default {
   components: {
     Filter,
@@ -14,7 +15,8 @@ export default {
     Splitter,
     SplitterPanel,
     TargetContainer,
-    ArticleView
+    ArticleView,
+    TopicSelection
 },
   data() {
     return {
@@ -56,6 +58,10 @@ export default {
           </SplitterPanel>
           <SplitterPanel id='sidebar' class="flex align-items-center justify-content-center" :size="15">
             <MyToolbar @graph-dev="updateDataset"></MyToolbar>
+            <TopicSelection></TopicSelection>
+ 
+            <div>Target selection section</div>
+            <div>Time range slider</div>
             <Filter :outlet_set="outlet_set"
             @outlet-filtered="updateEnabledOutlet"></Filter>
           </SplitterPanel>
