@@ -56,7 +56,7 @@ export default {
 
             // set size and styling according to label width
             node.selectAll("circle.node")
-                .attr("r", function(d){ return this.parentNode.childNodes[1].getComputedTextLength()/1.5 + self.r*15; })
+                .attr("r", function(d){ return this.parentNode.childNodes[1].getComputedTextLength()/1.5 + self.r; })
                 .attr("stroke", "black")
                 .attr("stroke-dasharray", function(d) { return d.dotted? 2.5 : 0})
                 .attr("fill", "white") 

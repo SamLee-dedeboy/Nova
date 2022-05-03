@@ -8,7 +8,7 @@ export default {
     },
     computed: {
         total_articles: function() {
-            return this.graph.nodes.reduce((sum, node) => sum + node.dotted? 0:node.articles.length, 0)
+            return this.graph.nodes.reduce((sum, node) => sum + (node.dotted? 0:node.articles.length), 0)
         },
         center_node: function() {
             var center_node = this.graph.center_node
@@ -82,7 +82,7 @@ export default {
     :graph_index="this.graph_index"
     :node_index="index"
     :node="node"
-    :r="Math.abs(node.sentiment)"
+    :r="Array(node.articles).length*8"
     class="node"
     @node-clicked="handleNodeClick"
     >
