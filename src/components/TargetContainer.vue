@@ -1,16 +1,20 @@
 <script>
 import Graph from "./Graph.vue";
 import Cloud from "./Cloud.vue"
+import TabView from 'primevue/tabview';
+import TabPanel from 'primevue/tabpanel';
 export default ({
     components: {
       Graph,
-      Cloud
+      Cloud,
+      TabView,
+      TabPanel
     },
-    props:['dataset', 'enabled_outlet_set'],
+    props:['dataset', 'enabled_outlet_set','targets'],
     data() {
         return {
             filtered_dataset: [],
-            changed:0
+            changed:0,
         }
     },
     watch: {
@@ -31,13 +35,15 @@ export default ({
 </script>
 
 <template>
-<div>
-    <Graph v-for="(graph,index) in filtered_dataset" 
-    :key="graph.center_node"
-    :graph="graph"
-    :graph_index="index"
-    :id="`graph-${index}`"
-    @node-clicked="handleNodeClicked">
-    </Graph >
-</div>
+<TabView>
+    <TabPanel v-for="target in targets" :key="target" :header="target">
+            <Graph v-for="(graph,index) in filtered_dataset" 
+            :key="graph.center_node"
+            :graph="graph"
+            :graph_index="index"
+            :id="`graph-${index}`"
+            @node-clicked="handleNodeClicked">
+        </Graph >
+    </TabPanel>
+</TabView>
 </template>

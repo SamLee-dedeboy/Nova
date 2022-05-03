@@ -54,7 +54,8 @@ export default {
           <SplitterPanel id='target-section' class="flex align-items-center justify-content-center" :size="85"> 
             <TargetContainer
             :dataset="dataset"
-            :enabled_outlet_set="enabled_outlet_set"></TargetContainer>
+            :enabled_outlet_set="enabled_outlet_set"
+            :targets="['Joe Biden']"></TargetContainer>
           </SplitterPanel>
           <SplitterPanel id='sidebar' class="flex align-items-center justify-content-center" :size="15">
             <MyToolbar @graph-dev="updateDataset"></MyToolbar>
