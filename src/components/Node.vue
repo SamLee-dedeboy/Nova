@@ -29,22 +29,24 @@ export default {
             .style("cursor", "pointer")
             .attr("class", this.class)
             .on("mouseover", function(d) {
-                    d3.select(this).select("circle.expand")
+                    const container = d3.select(this)
+                    container.select("circle.expand")
                     .transition()
                     .duration(100)
-                    .attr("opacity", 1)
-
-                    d3.select(this).selectAll("circle")
+                    .attr("r", function(d) { return parseFloat(container.select("circle.node").attr("r")) + 10;})
+                    
+                    container.selectAll("circle")
                     .style("filter", "brightness(90%)")
 
                 })
                 .on("mouseout", function(d) {
-                    d3.select(this).select("circle.expand")
+                    const container = d3.select(this)
+                    container.select("circle.expand")
                     .transition()
                     .duration(100)
-                    .attr("opacity", 0)
+                    .attr("r", function(d) { return parseFloat(container.select("circle.node").attr("r"));})
 
-                    d3.select(this).selectAll("circle")
+                    container.selectAll("circle")
                     .style("filter", "brightness(100%)")
                 })
                 .on("click", function(e, d) {
@@ -55,7 +57,7 @@ export default {
                 .attr("class", "node")
                 .attr("cx", function(d) { return d.x; })
                 .attr("cy", function(d) { return d.y; })
-            
+                .attr("opacity", 0)
             // add label
             node.append("text")
                 .attr("class", "node_text")
@@ -69,10 +71,18 @@ export default {
             // set size and styling according to label width
             node.selectAll("circle.node")
                 .attr("r", function(d){ return this.parentNode.childNodes[1].getComputedTextLength()/1.5 + self.r; })
-                .attr("stroke", "black")
-                .attr("stroke-dasharray", function(d) { return d.dotted? 2.5 : 0})
-                .attr("fill", "white") 
-                
+            
+            // append outer circle for expand animation
+            var outer_circle = node.append("circle")
+            .attr("class", "expand")
+            .attr("cx", function(d) { return d.x; })
+            .attr("cy", function(d) { return d.y; })
+            .attr("r",  function(d) { return parseFloat(d3.select(this.parentNode).select("circle.node").attr("r"));})
+            .attr("stroke", "black")
+            .attr("stroke-dasharray", function(d) { return d.dotted? 2.5 : 0})
+            .attr("fill", "white") 
+            .lower()
+
             // set outer rings to represent sentiments
             // no outer rings if node is dotted
             if(this.node.dotted) return
@@ -86,7 +96,7 @@ export default {
                 .attr("class", "outer_ring_pos")
                 .attr("cx", function(d) { return d.x; })
                 .attr("cy", function(d) { return d.y; })
-                .attr("r",  function(d) { return parseInt(d3.select(this.parentNode.parentNode.childNodes[0]).attr("r"));})
+                .attr("r",  function(d) { return parseInt(d3.select(this.parentNode.parentNode).select("circle.node").attr("r"));})
                 .attr("fill", "transparent")
                 .attr("stroke", this.pos_color_range[1])
                 .attr("stroke-width", 5)
@@ -102,7 +112,7 @@ export default {
                 .attr("class", "outer_ring_neg")
                 .attr("cx", function(d) { return d.x; })
                 .attr("cy", function(d) { return d.y; })
-                .attr("r",  function(d) { return parseInt(d3.select(this.parentNode.parentNode.childNodes[0]).attr("r"));})
+                .attr("r",  function(d) { return parseInt(d3.select(this.parentNode.parentNode).select("circle.node").attr("r"));})
                 .attr("fill", "transparent")
                 .attr("stroke", this.neg_color_range[0])
                 .attr("stroke-width", 5)
@@ -126,7 +136,7 @@ export default {
                 .attr("class", "outer_ring_neu")
                 .attr("cx", function(d) { return d.x; })
                 .attr("cy", function(d) { return d.y; })
-                .attr("r",  function(d) { return parseInt(d3.select(this.parentNode.parentNode.childNodes[0]).attr("r"));})
+                .attr("r",  function(d) { return parseInt(d3.select(this.parentNode.parentNode).select("circle.node").attr("r"));})
                 .attr("fill", "transparent")
                 .attr("stroke", "grey")
                 .attr("stroke-width", 5)
@@ -145,17 +155,7 @@ export default {
                     var degree = -percentage*360
                     return "transform: rotate(" + degree + "deg);"
                 })
-            // append outer circle for expand animation
-            var outer_circle = node.append("circle")
-            .attr("class", "expand")
-            .attr("cx", function(d) { return d.x; })
-            .attr("cy", function(d) { return d.y; })
-            .attr("r",  function(d) { return parseInt(d3.select(this.parentNode.childNodes[0]).attr("r")) + 10;})
-            .attr("stroke", "black")
-            .attr("stroke-dasharray", function(d) { return d.dotted? 2.5 : 0})
-            .attr("fill", "white") 
-            .attr("opacity", 0)
-            .lower()
+            
 
         },      
     }
