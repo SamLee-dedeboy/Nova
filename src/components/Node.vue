@@ -29,15 +29,27 @@ export default {
             .style("cursor", "pointer")
             .attr("class", this.class)
             .on("mouseover", function(d) {
-                d3.select(this).select("circle").style("filter", "brightness(90%)")
-            })
-            .on("mouseout", function(d) {
-                d3.select(this).select("circle").style("filter", "brightness(100%)")
-            })
-            .on("click", function(e, d) {
-                self.$emit("node-clicked", d)
-            })
+                    d3.select(this).select("circle.expand")
+                    .transition()
+                    .duration(100)
+                    .attr("opacity", 1)
 
+                    d3.select(this).selectAll("circle")
+                    .style("filter", "brightness(90%)")
+
+                })
+                .on("mouseout", function(d) {
+                    d3.select(this).select("circle.expand")
+                    .transition()
+                    .duration(100)
+                    .attr("opacity", 0)
+
+                    d3.select(this).selectAll("circle")
+                    .style("filter", "brightness(100%)")
+                })
+                .on("click", function(e, d) {
+                    self.$emit("node-clicked", d)
+                })
             // add circles for node
             node.append("circle")
                 .attr("class", "node")
@@ -60,7 +72,7 @@ export default {
                 .attr("stroke", "black")
                 .attr("stroke-dasharray", function(d) { return d.dotted? 2.5 : 0})
                 .attr("fill", "white") 
-            
+                
             // set outer rings to represent sentiments
             // no outer rings if node is dotted
             if(this.node.dotted) return
@@ -74,7 +86,7 @@ export default {
                 .attr("class", "outer_ring_pos")
                 .attr("cx", function(d) { return d.x; })
                 .attr("cy", function(d) { return d.y; })
-                .attr("r",  function(d) { return parseInt(d3.select(this.parentNode.parentNode.childNodes[0]).attr("r") + 5);})
+                .attr("r",  function(d) { return parseInt(d3.select(this.parentNode.parentNode.childNodes[0]).attr("r"));})
                 .attr("fill", "transparent")
                 .attr("stroke", this.pos_color_range[1])
                 .attr("stroke-width", 5)
@@ -90,7 +102,7 @@ export default {
                 .attr("class", "outer_ring_neg")
                 .attr("cx", function(d) { return d.x; })
                 .attr("cy", function(d) { return d.y; })
-                .attr("r",  function(d) { return parseInt(d3.select(this.parentNode.parentNode.childNodes[0]).attr("r") + 5);})
+                .attr("r",  function(d) { return parseInt(d3.select(this.parentNode.parentNode.childNodes[0]).attr("r"));})
                 .attr("fill", "transparent")
                 .attr("stroke", this.neg_color_range[0])
                 .attr("stroke-width", 5)
@@ -114,7 +126,7 @@ export default {
                 .attr("class", "outer_ring_neu")
                 .attr("cx", function(d) { return d.x; })
                 .attr("cy", function(d) { return d.y; })
-                .attr("r",  function(d) { return parseInt(d3.select(this.parentNode.parentNode.childNodes[0]).attr("r") + 5);})
+                .attr("r",  function(d) { return parseInt(d3.select(this.parentNode.parentNode.childNodes[0]).attr("r"));})
                 .attr("fill", "transparent")
                 .attr("stroke", "grey")
                 .attr("stroke-width", 5)
@@ -133,6 +145,18 @@ export default {
                     var degree = -percentage*360
                     return "transform: rotate(" + degree + "deg);"
                 })
+            // append outer circle for expand animation
+            var outer_circle = node.append("circle")
+            .attr("class", "expand")
+            .attr("cx", function(d) { return d.x; })
+            .attr("cy", function(d) { return d.y; })
+            .attr("r",  function(d) { return parseInt(d3.select(this.parentNode.childNodes[0]).attr("r")) + 10;})
+            .attr("stroke", "black")
+            .attr("stroke-dasharray", function(d) { return d.dotted? 2.5 : 0})
+            .attr("fill", "white") 
+            .attr("opacity", 0)
+            .lower()
+
         },      
     }
 }
