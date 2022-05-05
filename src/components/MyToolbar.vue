@@ -1,11 +1,20 @@
 
 <script>
-import articleData from "../assets/articles.json"
+import articleData from "../assets/articles_topic.json"
 export default {
     emits: ["graph-dev"],
     data() {
         return {
-            articles: articleData.data.Article
+            articles: articleData,
+            topic_dict: {},
+        }
+    },
+    mounted() {
+        for(const article of this.articles) {
+            if(!this.topic_dict[article.class]) {
+                this.topic_dict[article.class] = []
+            }
+            this.topic_dict[article.class].push(article.id)
         }
     },
     methods: {
@@ -51,7 +60,8 @@ export default {
             // emit
             var dataset = {
                 graphList: graphList,
-                outlet_set: outlet_set
+                outlet_set: outlet_set,
+                topic_dict: this.topic_dict
             }
             this.$emit("graph-dev", dataset);
         }
