@@ -42,7 +42,8 @@ export default ({
             :graph="graph"
             :graph_index="index"
             :id="`graph-${index}`"
-            @node-clicked="handleNodeClicked">
+            @node-clicked="handleNodeClicked"
+            >
         </Graph >
     </TabPanel>
 </TabView>

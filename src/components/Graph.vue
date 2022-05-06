@@ -75,14 +75,14 @@ export default {
 
 </script>
 <template>
-<svg>
+<svg  viewBox="0 0 800 800">
     <Node v-for="(node, index) in graph.nodes"
     :key="node.outlet"
     :id="`node-${index}`"
     :graph_index="this.graph_index"
     :node_index="index"
     :node="node"
-    :r="Array(node.articles).length*8"
+    :r="true?5:Math.min(0, Array(node.articles).length)"
     class="node"
     @node-clicked="handleNodeClick"
     >
@@ -93,7 +93,7 @@ export default {
     :graph_index="this.graph_index"
     node_index="center"
     :node="center_node"
-    :r="this.total_articles"
+    :r="true?10:Math.min(this.total_articles, 10)"
     class="center"
     ></Node>
 </svg>
