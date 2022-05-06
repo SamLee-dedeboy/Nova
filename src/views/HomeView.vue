@@ -22,11 +22,13 @@ export default {
     return {
       dataset: {
         graphList:[],
-        outlet_set:[]
+        outlet_set:[],
+        topic_dict:[]
       },
       outlet_set: [],
       enabled_outlet_set:[],
-      selected_articles: []
+      selected_articles: [],
+      topic_list:[],
     }
   },
 
@@ -35,6 +37,7 @@ export default {
       this.dataset = dataset
       this.outlet_set = dataset.outlet_set
       this.enabled_outlet_set = dataset.outlet_set
+      this.topic_list = Object.keys(dataset.topic_dict)
     }, 
     updateEnabledOutlet(outlet_set_info) {
       this.enabled_outlet_set = outlet_set_info.filter(outlet => outlet.enabled).map(outlet => outlet.outlet)
@@ -59,7 +62,7 @@ export default {
           </SplitterPanel>
           <SplitterPanel id='sidebar' class="flex align-items-center justify-content-center" :size="15">
             <MyToolbar @graph-dev="updateDataset"></MyToolbar>
-            <TopicSelection></TopicSelection>
+            <TopicSelection :topics="topic_list"></TopicSelection>
  
             <div>Target selection section</div>
             <div>Time range slider</div>

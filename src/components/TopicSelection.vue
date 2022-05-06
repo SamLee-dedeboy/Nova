@@ -8,14 +8,12 @@ export default defineComponent({
     props:['topics'],
     data() {
         return {
-            items:[
-                {
-                    label:'Topic 1'
-                },
-                {
-                    label:'Topic 2'
-                }
-            ]
+            items:[]
+        }
+    },
+    watch: {
+        topics: function() {
+            this.items = this.topics.map(topic => Object({label: topic}))
         }
     },
     methods: {
@@ -23,10 +21,15 @@ export default defineComponent({
             this.$refs.menu.toggle(event);
         }   
     }
+
 })
 </script>
 
 <template>
     <Button type="button" label="Topic" @click="toggle" />
-    <TieredMenu ref="menu" :model="items" :popup="true" />
+    <TieredMenu id="topic_selection" ref="menu" :model="items" :popup="true"
+        style="width: auto"
+    >
+        
+    </TieredMenu>
 </template>
