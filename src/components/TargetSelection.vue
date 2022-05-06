@@ -6,6 +6,7 @@ export default defineComponent({
         TieredMenu
     },
     props:['targets'],
+    emits: ["target-selected"],
     data() {
         return {
             items:[]
@@ -19,7 +20,11 @@ export default defineComponent({
     methods: {
         toggle(event) {
             this.$refs.menu.toggle(event);
-        }   
+        },
+        targetClicked(event) {
+            if(event.target.className == "p-menuitem-text" || event.target.className == "p-menuitem-link")
+                this.$emit("target-selected", event.target.textContent)
+        }
     }
 
 })
@@ -29,6 +34,7 @@ export default defineComponent({
     <Button type="button" label="Target" @click="toggle" />
     <TieredMenu id="target_selection" ref="menu" :model="items" :popup="true"
         style="width: auto"
+        @click="targetClicked"
     >
         
     </TieredMenu>

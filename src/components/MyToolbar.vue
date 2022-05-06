@@ -37,16 +37,16 @@ export default {
 
             var graph2 = {
                 nodes: [
-                    {x: 35, y: 70, outlet:"Fox", sentiment: -0.8, pos_sent: 0.1, neg_sent: -0.9, neu_sent:0, articles:this.articles.filter(article => article.journal=="CNN")},
-                    {x: 200, y: 80, outlet:"NYT", sentiment: 0.9, pos_sent: 0.9, neg_sent: -0.1, neu_sent:0.1, articles:this.articles.filter(article => article.journal=="Fox")},
-                    {x: 40, y: 120, outlet:"ABC", sentiment: -0.1, pos_sent: 0.1, neg_sent: -0.3, neu_sent:0.1, articles:this.articles.filter(article => article.journal=="NYT")},
-                    {x: 200, y: 120, outlet:"WP", sentiment: 0.5, pos_sent: 0.6, neg_sent: -0.1, neu_sent:0, articles:this.articles.filter(article => article.journal=="ABC")},
-                    {x: 200, y: 40, outlet:"WSJ", sentiment: 0.1, pos_sent: 0.1, neg_sent: 0, neu_sent:0, articles:this.articles.filter(article => article.journal=="WP")}
+                    {x: 100, y: 110, outlet:outlet_set[0], sentiment: -0.8, pos_sent: 0.1, neg_sent: -0.9, neu_sent:0, articles:this.articles.filter(article => article.journal==outlet_set[0])},
+                    {x: 600, y: 150, outlet:outlet_set[1], sentiment: 0.9, pos_sent: 0.9, neg_sent: -0.1, neu_sent:0.1, articles:this.articles.filter(article => article.journal==outlet_set[1])},
+                    {x: 80, y: 300, outlet:outlet_set[3], sentiment: -0.1, pos_sent: 0.1, neg_sent: -0.3, neu_sent:0.1, articles:this.articles.filter(article => article.journal==outlet_set[2])},
+                    {x: 500, y: 300, outlet:outlet_set[4], sentiment: 0.5, pos_sent: 0.6, neg_sent: -0.1, neu_sent:0, articles:this.articles.filter(article => article.journal==outlet_set[4])},
+                    {x: 650, y: 400, outlet:outlet_set[5], sentiment: 0.1, pos_sent: 0.1, neg_sent: 0, neu_sent:0, articles:this.articles.filter(article => article.journal==outlet_set[5])}
 
                 ],
-                center_node : {x: 300, y: 150, text:this.np_list[1]}
+                center_node : {x: 300, y: 300, text:this.np_list[1]}
             }
-            var graphList = [graph1]
+            var graphList = [graph1, graph2]
             // add dotted nodes
 
             graphList.forEach(graph=> {

@@ -32,7 +32,8 @@ export default {
       enabled_outlet_set:[],
       selected_articles: [],
       topic_list:[],
-      np_list:[]
+      np_list:[],
+      selected_target:[]
     }
   },
 
@@ -50,6 +51,9 @@ export default {
     updateSelectedNode(node) {
       this.selected_articles = node.articles
     },
+    updateTarget(target) {
+      this.selected_target = [target]
+    }
   }
 }
 </script>
@@ -63,7 +67,7 @@ export default {
             <TargetContainer
             :dataset="dataset"
             :enabled_outlet_set="enabled_outlet_set"
-            :targets="['Joe Biden']"
+            :targets="selected_target"
             >
             </TargetContainer>
           </SplitterPanel>
@@ -71,7 +75,7 @@ export default {
             <MyToolbar @graph-dev="updateDataset"></MyToolbar>
             <TopicSelection :topics="topic_list"></TopicSelection>
  
-            <TargetSelection :targets="np_list"></TargetSelection>
+            <TargetSelection :targets="np_list" @target-selected="updateTarget"></TargetSelection>
             <div>Time range slider</div>
             <Filter :outlet_set="outlet_set"
             @outlet-filtered="updateEnabledOutlet"></Filter>
