@@ -8,6 +8,7 @@ import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import ArticleView from "../components/ArticleView.vue";
 import TopicSelection from "../components/TopicSelection.vue";
+import TargetSelection from "../components/TargetSelection.vue"
 export default {
   components: {
     Filter,
@@ -16,19 +17,22 @@ export default {
     SplitterPanel,
     TargetContainer,
     ArticleView,
-    TopicSelection
+    TopicSelection,
+    TargetSelection,
 },
   data() {
     return {
       dataset: {
         graphList:[],
         outlet_set:[],
-        topic_dict:[]
+        topic_dict:[],
+        np_list:[]
       },
       outlet_set: [],
       enabled_outlet_set:[],
       selected_articles: [],
       topic_list:[],
+      np_list:[]
     }
   },
 
@@ -38,6 +42,7 @@ export default {
       this.outlet_set = dataset.outlet_set
       this.enabled_outlet_set = dataset.outlet_set
       this.topic_list = Object.keys(dataset.topic_dict)
+      this.np_list = dataset.np_list
     }, 
     updateEnabledOutlet(outlet_set_info) {
       this.enabled_outlet_set = outlet_set_info.filter(outlet => outlet.enabled).map(outlet => outlet.outlet)
@@ -58,13 +63,15 @@ export default {
             <TargetContainer
             :dataset="dataset"
             :enabled_outlet_set="enabled_outlet_set"
-            :targets="['Joe Biden']"></TargetContainer>
+            :targets="['Joe Biden']"
+            >
+            </TargetContainer>
           </SplitterPanel>
           <SplitterPanel id='sidebar' class="flex align-items-center justify-content-center" :size="15">
             <MyToolbar @graph-dev="updateDataset"></MyToolbar>
             <TopicSelection :topics="topic_list"></TopicSelection>
  
-            <div>Target selection section</div>
+            <TargetSelection :targets="np_list"></TargetSelection>
             <div>Time range slider</div>
             <Filter :outlet_set="outlet_set"
             @outlet-filtered="updateEnabledOutlet"></Filter>
