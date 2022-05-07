@@ -7,6 +7,9 @@ export default {
             enabled_outlet_set:[]
         }
     },
+    mounted() {
+        this.enabled_outlet_set = this.outlet_set.map(function(outlet) {return {outlet:outlet,enabled:true}; })
+    },
     watch: {
         outlet_set: function() {
             this.enabled_outlet_set = this.outlet_set.map(function(outlet) {return {outlet:outlet,enabled:true}; })

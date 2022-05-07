@@ -6,10 +6,14 @@ export default defineComponent({
         TieredMenu
     },
     props:['topics'],
+    emits: ["topic-selected"],
     data() {
         return {
             items:[]
         }
+    },
+    mounted() {
+        this.items = this.topics.map(topic => Object({label: topic}))
     },
     watch: {
         topics: function() {
@@ -18,8 +22,12 @@ export default defineComponent({
     },
     methods: {
         toggle(event) {
-            this.$refs.menu.toggle(event);
-        }   
+            this.$refs.topic_menu.toggle(event);
+        },
+        topicClicked(event) {
+            if(event.target.className == "p-menuitem-text" || event.target.className == "p-menuitem-link")
+                this.$emit("topic-selected", event.target.textContent)
+        }
     }
 
 })
@@ -27,8 +35,9 @@ export default defineComponent({
 
 <template>
     <Button type="button" label="Topic" @click="toggle" />
-    <TieredMenu id="topic_selection" ref="menu" :model="items" :popup="true"
+    <TieredMenu ref="topic_menu" :model="items" :popup="true"
         style="width: auto"
+        @click="topicClicked"
     >
         
     </TieredMenu>

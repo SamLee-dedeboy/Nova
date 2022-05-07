@@ -12,6 +12,9 @@ export default defineComponent({
             items:[]
         }
     },
+    mounted() {
+        this.items = this.targets.map(target => Object({label: target}))
+    },
     watch: {
         targets: function() {
             this.items = this.targets.map(target => Object({label: target}))
@@ -19,7 +22,7 @@ export default defineComponent({
     },
     methods: {
         toggle(event) {
-            this.$refs.menu.toggle(event);
+            this.$refs.target_menu.toggle(event);
         },
         targetClicked(event) {
             if(event.target.className == "p-menuitem-text" || event.target.className == "p-menuitem-link")
@@ -32,7 +35,7 @@ export default defineComponent({
 
 <template>
     <Button type="button" label="Target" @click="toggle" />
-    <TieredMenu id="target_selection" ref="menu" :model="items" :popup="true"
+    <TieredMenu ref="target_menu" :model="items" :popup="true"
         style="width: auto"
         @click="targetClicked"
     >
