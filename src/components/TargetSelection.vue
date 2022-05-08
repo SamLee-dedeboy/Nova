@@ -7,18 +7,8 @@ export default defineComponent({
     },
     props:['targets'],
     emits: ["target-selected"],
-    data() {
-        return {
-            items:[]
-        }
-    },
-    mounted() {
-        this.items = this.targets.map(target => Object({label: target}))
-    },
-    watch: {
-        targets: function() {
-            this.items = this.targets.map(target => Object({label: target}))
-        }
+    computed: {
+        items: function() { return this.targets.map(target => Object({label: target})) },
     },
     methods: {
         toggle(event) {

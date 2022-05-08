@@ -1,5 +1,7 @@
 <script>
 import * as d3 from "d3";
+import { nextTick } from 'vue'
+
 export default {
     props: ['node','node_index', 'r', 'class', 'graph_index'],
     
@@ -17,7 +19,11 @@ export default {
         this.updateNode()
 
     },
-
+    watch: {
+        node: function() {
+            console.log(this.node)
+        }
+    },
     methods: {
         updateNode() {
             var svg = this.svg
@@ -70,7 +76,7 @@ export default {
 
             // set size and styling according to label width
             node.selectAll("circle.node")
-                .attr("r", function(d){ return this.parentNode.childNodes[1].getComputedTextLength()/1.5 + self.r; })
+                .attr("r", function(d){  return d3.select(this.parentNode).select("text").node().getComputedTextLength()/1.5 + self.r; })
             
             // append outer circle for expand animation
             var outer_circle = node.append("circle")
@@ -101,6 +107,7 @@ export default {
                 .attr("stroke", this.pos_color_range[1])
                 .attr("stroke-width", 5)
                 .attr("stroke-dasharray", function(d) { 
+        
                     var r = d3.select(this).attr("r")
                     var percentage = parseFloat(d.pos_sent)/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
                     var width = 2*3.14*r*percentage

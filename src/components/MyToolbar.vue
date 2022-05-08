@@ -32,7 +32,7 @@ export default {
                     {x: 650, y: 400, outlet:outlet_set[5], sentiment: 0.1, pos_sent: 0.1, neg_sent: 0, neu_sent:0, articles:this.articles.filter(article => article.journal==outlet_set[5])}
 
                 ],
-                center_node : {x: 300, y: 300, text:this.np_list[0]}
+                center_node : {x: 300, y: 300, text:this.np_list[0], pos_sent: 0, neg_sent: 0, neu_sent:0}
             }
 
             var graph2 = {
@@ -44,7 +44,7 @@ export default {
                     {x: 650, y: 400, outlet:outlet_set[5], sentiment: 0.1, pos_sent: 0.1, neg_sent: 0, neu_sent:0, articles:this.articles.filter(article => article.journal==outlet_set[5])}
 
                 ],
-                center_node : {x: 300, y: 300, text:this.np_list[1]}
+                center_node : {x: 300, y: 300, text:this.np_list[1], pos_sent: 0, neg_sent: 0, neu_sent:0}
             }
             var graphList = [graph1, graph2]
             // add dotted nodes
