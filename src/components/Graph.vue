@@ -31,11 +31,6 @@ export default {
     },
     watch: {
         graph: async function() {
-            // this.graph.center_node.pos_sent = this.graph.nodes.reduce((pos_sum, node) => pos_sum + node.pos_sent, 0)
-            // this.graph.center_node.neg_sent = this.graph.nodes.reduce((neg_sum, node) => neg_sum + Math.abs(node.neg_sent), 0)
-            // this.graph.center_node.neu_sent = this.graph.nodes.reduce((neu_sum, node) => neu_sum + Math.abs(node.pos_sent), 0)
-            //await nextTick();
-            //console.log(this.graph.nodes)
             this.updateNodes()
             this.updateCenterNode()
             this.updateEdges()
@@ -103,39 +98,6 @@ export default {
             .on("click", function(e, d) {
                 self.$emit("node-clicked", d)
             })
-            //this.applyNodeStyling(nodes)
-            return
-            // add circles for node
-            nodes.append("circle")
-                .attr("class", "node")
-                .attr("cx", function(d) { return d.x; })
-                .attr("cy", function(d) { return d.y; })
-                .attr("opacity", 0)
-            // add label
-            nodes.append("text")
-                .attr("class", "node_text")
-                .attr("x", function(d) { return d.x; })
-                .attr("y", function(d) { return d.y; })
-                .attr("text-anchor", "middle")
-                .attr("alignment-baseline", "central")
-                .attr("font-size","small")
-                .text(function(d) {return d.outlet || d.text; })
-
-            //set size and styling according to label width
-            nodes.selectAll("circle.node")
-                //.attr("r", function(d){  return d3.select(this.parentNode).select("text").node().getComputedTextLength()/1.5 + d.dotted?0:d.articles.length; })
-                .attr("r", function(d){  return d3.select(this.parentNode).select("text").node().getComputedTextLength()/1.5 + 5; })
-
-            // append outer circle for expand animation
-            var outer_circle = nodes.append("circle")
-            .attr("class", "expand")
-            .attr("cx", function(d) { return d.x; })
-            .attr("cy", function(d) { return d.y; })
-            .attr("r",  function(d) { return parseFloat(d3.select(this.parentNode).select("circle.node").attr("r"));})
-            .attr("stroke", "black")
-            .attr("stroke-dasharray", function(d) { return d.dotted? 2.5 : 0})
-            .attr("fill", "white") 
-            .lower()
 
         },
         updateCenterNode() {
@@ -147,12 +109,6 @@ export default {
                 enter => self.applyNodeStyling(enter, "center"),
                 update => self.applyNodeStyling(update, "center")
             )
-            //console.log(this.center_node)
-            
-            // svg.selectAll("g")
-            // .style("cursor", "pointer")
-            // .attr("class", "center")
-            
         },
         applyNodeStyling(enter, class_name) {
             var node = enter.append("g").attr("class", class_name)
@@ -193,9 +149,6 @@ export default {
             var outer_ring = node.filter(function(d) { return !d.dotted})
                 .append("g")
                 .attr("class", "outer_ring")
-            // create element for outer ring, wrapped in g
-            // var outer_ring = filtered_node.append("g")
-            //     .attr("class", "outer_ring")
 
             // positive ring
             outer_ring.append("circle")
@@ -285,21 +238,7 @@ export default {
                 .attr("stroke-dasharray", function(d) { return parseInt(d3.select(d).attr("stroke-dasharray"))==0 ? 0:2.5; })
                 .lower()
             )
-                // specify two ends of edges
-            // center node
-            // var center_node = svg.select("g.center").select("circle")
-
-            // // outlet node
-            // svg.selectAll("line.graph_edge")
-            //     .attr("x1", function(d) { return parseInt(d3.select(d).attr("cx"));})
-            //     .attr("x2", function(d) { return parseInt(center_node.attr("cx")); })
-            //     .attr("y1", function(d) { return parseInt(d3.select(d).attr("cy"));})
-            //     .attr("y2", function(d) { return parseInt(center_node.attr("cy")); })
-            //     .attr("stroke", "rgb(6,120,155)")
-            //     .attr("stroke-dasharray", function(d) { return parseInt(d3.select(d).attr("stroke-dasharray"))==0 ? 0:2.5; })
             
-            // // lower the z-index of edges to prevent from overlapping nodes
-            // svg.selectAll("line.graph_edge").lower()
         },      
     }
 }
@@ -310,25 +249,6 @@ export default {
 </script>
 <template>
 <svg  viewBox="0 0 800 800" :id="id">
-    <!-- <Node v-for="(node, index) in graph.nodes"
-    :key="node.outlet"
-    :id="`node-${index}`"
-    :graph_index="this.graph_index"
-    :node_index="index"
-    :node="node"
-    :r="true?5:Math.min(0, Array(node.articles).length)"
-    class="node"
-    @node-clicked="handleNodeClick"
-    >
-    </Node>
-    <Node 
-    :key="graph.center_node.text"
-    :id="`node-center`"
-    :graph_index="this.graph_index"
-    node_index="center"
-    :node="center_node"
-    :r="true?10:Math.min(this.total_articles, 10)"
-    class="center"
-    ></Node> -->
+
 </svg>
 </template>
