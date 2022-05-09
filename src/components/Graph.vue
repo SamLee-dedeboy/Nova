@@ -127,8 +127,9 @@ export default {
                 .attr("x", function(d) { return d.x; })
                 .attr("y", function(d) { return d.y; })
                 .attr("text-anchor", "middle")
-                .attr("alignment-baseline", "central")
                 .attr("font-size","small")
+
+                .attr("dominant-baseline", "central")
                 .text(d => d.outlet || d.text)
 
             //set size and styling according to label width
