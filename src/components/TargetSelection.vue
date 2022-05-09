@@ -47,6 +47,8 @@ export default defineComponent({
 }
 .p-megamenu .p-megamenu-submenu-header {
   padding: 0rem !important;
-  
+}
+.p-megamenu-panel {
+  width: max-content;
 }
 </style>
