@@ -1,22 +1,32 @@
 <script>
 import { defineComponent } from '@vue/composition-api'
-import TieredMenu from 'primevue/tieredmenu';
+import MegaMenu from 'primevue/megamenu';
 export default defineComponent({
     components: {
-        TieredMenu
+        MegaMenu
     },
     props:['topics'],
     emits: ["topic-selected"],
-    computed: {
-        items: function ()  { return this.topics.map(topic => Object({label: topic})) },
+    data() {
+        return {
+            items:[
+                {
+                    label: "Topic",
+                    items: [[{items:this.topics.map(topic => Object({label: topic}))}]]
+                }
+            ]
+        }
     },
     methods: {
         toggle(event) {
             this.$refs.topic_menu.toggle(event);
         },
         topicClicked(event) {
-            if(event.target.className == "p-menuitem-text" || event.target.className == "p-menuitem-link")
+            if(this.topics.includes(event.target.textContent)){
                 this.$emit("topic-selected", event.target.textContent)
+            }
+            // if(event.target.className == "p-menuitem-text" || event.target.className == "p-menuitem-link")
+            //     this.$emit("topic-selected", event.target.textContent)
         }
     }
 
@@ -24,11 +34,23 @@ export default defineComponent({
 </script>
 
 <template>
-    <Button type="button" label="Topic" @click="toggle" />
-    <TieredMenu ref="topic_menu" :model="items" :popup="true"
-        style="width: auto"
-        @click="topicClicked"
-    >
+    <!-- <Button type="button" label="Topic" @click="toggle" /> -->
+    <MegaMenu :model="items" @click=topicClicked />
         
-    </TieredMenu>
 </template>
+<style>
+.p-megamenu .p-megamenu-submenu {
+  width: auto !important;
+}
+.p-megamenu.p-component.p-megamenu-horizontal {
+  --margin-horizontal: 10px;
+  margin-left: var(--margin-horizontal);
+  margin-right: var(--margin-horizontal);
+  padding: inherit;
+  width:fit-content;
+}
+.p-megamenu .p-megamenu-submenu-header {
+  padding: 0rem !important;
+  
+}
+</style>

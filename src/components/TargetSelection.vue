@@ -1,14 +1,21 @@
 <script>
 import { defineComponent } from '@vue/composition-api'
-import TieredMenu from 'primevue/tieredmenu';
+import MegaMenu from 'primevue/megamenu';
 export default defineComponent({
     components: {
-        TieredMenu
+        MegaMenu
     },
     props:['targets'],
     emits: ["target-selected"],
-    computed: {
-        items: function() { return this.targets.map(target => Object({label: target})) },
+    data() {
+        return {
+            items:[
+                {
+                    label: "Target",
+                    items: [[{items:this.targets.map(target => Object({label: target}))}]]
+                }
+            ]
+        }
     },
     methods: {
         toggle(event) {
@@ -24,11 +31,21 @@ export default defineComponent({
 </script>
 
 <template>
-    <Button type="button" label="Target" @click="toggle" />
-    <TieredMenu ref="target_menu" :model="items" :popup="true"
-        style="width: auto"
-        @click="targetClicked"
-    >
-        
-    </TieredMenu>
+    <MegaMenu :model="items" @click=targetClicked />
 </template>
+<style>
+.p-megamenu .p-megamenu-submenu {
+  width: auto !important;
+}
+.p-megamenu.p-component.p-megamenu-horizontal {
+  --margin-horizontal: 10px;
+  margin-left: var(--margin-horizontal);
+  margin-right: var(--margin-horizontal);
+  padding: inherit;
+  width:fit-content;
+}
+.p-megamenu .p-megamenu-submenu-header {
+  padding: 0rem !important;
+  
+}
+</style>
