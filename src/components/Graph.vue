@@ -119,6 +119,8 @@ export default {
                 .attr("cx", function(d) { return d.x; })
                 .attr("cy", function(d) { return d.y; })
                 .attr("opacity", 0)
+                .attr("stroke-dasharray", function(d) { return d.dotted? 2.5 : 0})
+
             // add label
             node.append("text")
                 .attr("class", "node_text")
@@ -234,8 +236,8 @@ export default {
                 .attr("x2", function(d) { return parseInt(center_node.attr("cx")); })
                 .attr("y1", function(d) { return parseInt(d3.select(d).attr("cy"));})
                 .attr("y2", function(d) { return parseInt(center_node.attr("cy")); })
-                .attr("stroke", "rgb(6,120,155)")
-                .attr("stroke-dasharray", function(d) { return parseInt(d3.select(d).attr("stroke-dasharray"))==0 ? 0:2.5; })
+                .attr("stroke", function(d) { return d3.select(d).data()[0].dotted?"black":(d3.select(d).data()[0].sentiment>0?"blue":"red")})
+                .attr("stroke-dasharray", function(d) { return d3.select(d).data()[0].dotted ? 2.5:0; })
                 .lower()
             )
             
