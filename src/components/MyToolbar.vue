@@ -79,3 +79,9 @@ export default {
     <Button label="Test" @click="testClicked"></Button>
 </template> 
 
+<style scoped>
+Button {
+    margin: 10px;
+    border-radius: 8px;
+}
+</style>
