@@ -77,9 +77,10 @@ export default {
           </SplitterPanel>
           <SplitterPanel id='sidebar' class="flex align-items-center justify-content-center" :size="15">
             <MyToolbar @graph-dev="updateDataset"></MyToolbar>
-            <TopicSelection  v-if="topic_list.length!=0"  :topics="topic_list" @topic-selected="updateTopic"></TopicSelection>
- 
-            <TargetSelection v-if="selected_topic!=''" :targets="np_list" @target-selected="updateTarget"></TargetSelection>
+            <div class="selection_container" style="display:flex">
+              <TopicSelection  v-if="topic_list.length!=0"  :topics="topic_list" @topic-selected="updateTopic" style="flex:0.5"></TopicSelection>
+              <TargetSelection v-if="selected_topic!=''" :targets="np_list" @target-selected="updateTarget"></TargetSelection>
+            </div>
             <div>Time range slider</div>
             <Filter v-if="selected_target.length!=0" :outlet_set="outlet_set"
             @outlet-filtered="updateEnabledOutlet"></Filter>

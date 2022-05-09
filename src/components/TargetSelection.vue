@@ -22,8 +22,9 @@ export default defineComponent({
             this.$refs.target_menu.toggle(event);
         },
         targetClicked(event) {
-            if(event.target.className == "p-menuitem-text" || event.target.className == "p-menuitem-link")
+            if(this.targets.includes(event.target.textContent)){
                 this.$emit("target-selected", event.target.textContent)
+            }
         }
     }
 
