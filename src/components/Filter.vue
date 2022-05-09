@@ -51,5 +51,8 @@ export default {
 .clicked  {
     background-color: black;
 }
-
+Button {
+    margin: 10px;
+    border-radius: 8px;
+}
 </style>

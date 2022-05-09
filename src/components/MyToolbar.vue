@@ -21,7 +21,7 @@ export default {
     },
     methods: {
         testClicked() {
-            var outlet_set = ["CNN", "FoxNews", "New York Times", "ABC News", "Breitbart", "Washington Post"]
+            var outlet_set = ["CNN", "Breitbart", "FoxNews", "ABC News", "New York Times", "Washington Post", ]
             // original nodes and edges
             var graph1 = {
                 nodes: [
