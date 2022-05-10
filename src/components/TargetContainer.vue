@@ -3,12 +3,14 @@ import Graph from "./Graph.vue";
 import Cloud from "./Cloud.vue"
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
+import Legend from './Legend.vue'
 export default ({
     components: {
       Graph,
       Cloud,
       TabView,
-      TabPanel
+      TabPanel,
+      Legend
     },
     props:['dataset', 'enabled_outlet_set','targets'],
 
@@ -44,6 +46,7 @@ export default ({
             @node-clicked="handleNodeClicked"
             >
         </Graph >
+        <Legend v-if="targets.length!=0"></Legend>
     </TabPanel>
 </TabView>
 </template>
