@@ -39,14 +39,14 @@ export default {
         svg.append("text")
             .attr("x", x_offset + 2*r + horizontal_margin)
             .attr("y", y_offset)
-            .text("positive")
+            .text("negative")
             .attr("font", "small")
             .attr("dominant-baseline", "middle")
         
         svg.append("text")
             .attr("x", x_offset + 2*r + horizontal_margin)
             .attr("y", y_offset + 2*r + vertical_margin)
-            .text("negative")
+            .text("positive")
             .attr("font", "small")
             .attr("dominant-baseline", "middle")
 
