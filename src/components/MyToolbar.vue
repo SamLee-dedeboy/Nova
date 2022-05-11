@@ -75,8 +75,8 @@ export default {
 
 <template>
 
-    <Button label="Import"></Button>
-    <Button label="Test" @click="testClicked"></Button>
+    <Button label="Import" class="p-button-secondary"></Button>
+    <Button label="Test" @click="testClicked" class="p-button-secondary"></Button>
 </template> 
 
 <style scoped>

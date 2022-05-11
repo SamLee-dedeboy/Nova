@@ -82,7 +82,8 @@ export default {
               <TargetSelection v-if="selected_topic!=''" :targets="np_list" @target-selected="updateTarget"></TargetSelection>
             </div>
             <Filter v-if="selected_target.length!=0" :outlet_set="outlet_set"
-            @outlet-filtered="updateEnabledOutlet"></Filter>
+            @outlet-filtered="updateEnabledOutlet"
+            ></Filter>
             <div>Time range slider</div>
 
           </SplitterPanel>
@@ -99,4 +100,5 @@ export default {
 main {
   max-width:1280px;
 }
+
 </style>

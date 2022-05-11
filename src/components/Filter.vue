@@ -1,7 +1,13 @@
 <script>
-
+import Divider from "primevue/divider"
+import Chip from "primevue/chip"
 export default {
+    components: {
+    Divider,
+    Chip
+    },
     props: ['outlet_set'],
+    emits:["outlet-filtered"],
     data() {
         return {
             enabled_outlet_set:[]
@@ -38,12 +44,14 @@ export default {
 </script>
 
 <template>
-    <div>   
+        <Chip class='header' label="Filter" />
+        <div class='button-container'>
         <Button
-        v-for="(outlet, index) in enabled_outlet_set" :key="outlet"
-        @click ="updateFilter($event, index)"
-        data-selected=selected
-        >{{outlet.outlet}}</Button>
+            v-for="(outlet, index) in enabled_outlet_set" :key="outlet"
+            @click ="updateFilter($event, index)"
+            data-selected=selected
+            >{{outlet.outlet}}
+        </Button>
     </div>
 </template>
 <style scoped>
@@ -54,5 +62,17 @@ export default {
 Button {
     margin: 10px;
     border-radius: 8px;
+    font-size: small;
+}
+.p-chip {
+    margin-bottom:10px;
+    left: 10px;
+    top:10px;
+    bottom:10px;
+    padding: 0 2em !important;
+}
+div.button-container {
+    border-style:double;
+    margin:5px;
 }
 </style>
