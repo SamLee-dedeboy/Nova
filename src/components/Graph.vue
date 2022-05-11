@@ -27,6 +27,10 @@ export default {
             var graph_dict = Object.assign({}, ...this.graph.nodes.map((node) => ({[node.outlet]: node})));
             graph_dict[this.graph.center_node.text] = this.graph.center_node
             return graph_dict
+        },
+        minimum_radius: function() {
+            return 3
+           // return Math.max(...this.graph.nodes.map(node => node.outlet.length))
         }
     },
     watch: {
@@ -44,7 +48,14 @@ export default {
         // }))
         this.neg_color_range = ["red", "salmon"]
         this.pos_color_range = ["#7986F8", "#3146F9"]
-
+        this.abbr_dict={
+            "CNN": "CNN",
+            "FoxNews": "Fox",
+            "Breitbart": "Brb",
+            "ABC News": "ABC",
+            "New York Times": "NYT",
+            "Washington Post": "WP"
+        }
         this.color_neg = d3.scaleSqrt()
             .domain([-1, 0])  
             .range(this.neg_color_range); 
@@ -130,13 +141,13 @@ export default {
                 .attr("font-size","small")
 
                 .attr("dominant-baseline", "central")
-                .text(d => d.outlet || d.text)
+                .text(d => self.abbr_dict[d.outlet] || d.text)
 
             //set size and styling according to label width
             node.selectAll("circle." + class_name)
                 //.attr("r", function(d){  return d3.select(this.parentNode).select("text").node().getComputedTextLength()/1.5 + d.dotted?0:d.articles.length; })
-                .attr("r", function(d){  return d3.select(this.parentNode).select("text").node().getComputedTextLength()/1.5 + 5; })
-
+                //.attr("r", function(d){  return d3.select(this.parentNode).select("text").node().getComputedTextLength()/1.5 + 5; })
+                .attr("r", function(d) { return d.outlet?(self.minimum_radius*6 + (d.articles?d.articles.length*3:0)):d3.select(this.parentNode).select("text").node().getComputedTextLength()/1.5+5})
             // append outer circle for expand animation
             var outer_circle = node.append("circle")
             .attr("class", "expand")
