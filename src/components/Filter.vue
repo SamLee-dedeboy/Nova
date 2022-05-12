@@ -44,8 +44,10 @@ export default {
 </script>
 
 <template>
-        <Chip class='header' label="Filter" />
-        <div class='button-container'>
+    <div class="filter_container">
+        <div>
+            <Chip class='header' label="Filter" />
+        </div>
         <Button
             v-for="(outlet, index) in enabled_outlet_set" :key="outlet"
             @click ="updateFilter($event, index)"
@@ -71,7 +73,7 @@ Button {
     bottom:10px;
     padding: 0 2em !important;
 }
-div.button-container {
+div.filter_container {
     border-style:double;
     margin:5px;
 }
