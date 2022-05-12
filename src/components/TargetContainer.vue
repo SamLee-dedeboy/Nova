@@ -12,7 +12,7 @@ export default ({
       TabPanel,
       Legend
     },
-    props:['dataset', 'enabled_outlet_set','targets'],
+    props:['dataset', 'enabled_outlet_set','targets', 'topic'],
 
     computed: {
         graph_dict: function() {
@@ -38,7 +38,7 @@ export default ({
 
 <template>
 <TabView>
-    <TabPanel v-for="(target, index) in targets" :key="target" :header="target">
+    <TabPanel v-for="(target, index) in targets" :key="target" :header="topic">
             <Graph  
             :graph="graph_dict[target]"
             :graph_index="index"

@@ -72,6 +72,7 @@ export default {
             :dataset="dataset"
             :enabled_outlet_set="enabled_outlet_set"
             :targets="selected_target"
+            :topic="selected_topic"
             >
             </TargetContainer>
           </SplitterPanel>
@@ -84,7 +85,7 @@ export default {
             <Filter v-if="selected_target.length!=0" :outlet_set="outlet_set"
             @outlet-filtered="updateEnabledOutlet"
             ></Filter>
-            <div>Time range slider</div>
+            <!-- <div>Time range slider</div> -->
 
           </SplitterPanel>
         </Splitter>
