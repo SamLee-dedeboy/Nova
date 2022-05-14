@@ -84,7 +84,6 @@ export default {
             .join(
                 enter => {
                     self.applyNodeStyling(enter, "node")
-                    self.addEdges(enter.selectAll("g.node"))
                 },
                 update => update,
                 exit => {
@@ -165,7 +164,7 @@ export default {
 
                 const centerNode = d3.select("g.center")
 
-                self.updateEdges()
+                //elf.updateEdges()
                 self.$emit("node-clicked", d)
             })
 
@@ -177,7 +176,7 @@ export default {
             .data([this.center_node], function(d) { return d.text; })
             .join(
                 enter => self.applyNodeStyling(enter, "center"),
-                update => self.applyNodeStyling(update, "center")
+                update => update?update:self.applyNodeStyling(update, "center")
             )
             
         },
@@ -225,6 +224,8 @@ export default {
             .attr("stroke-dasharray", function(d) { return d.dotted? 2.5 : 0})
             .attr("fill", "white") 
             .lower()
+
+            this.addEdges(node)
             // set outer rings to represent sentiments
             // no outer rings if node is dotted
             var outer_ring = node.filter(function(d) { return !d.dotted})
@@ -232,85 +233,73 @@ export default {
                 .attr("class", "outer_ring")
 
             // positive ring
-            outer_ring.append("circle")
-                .attr("class", "outer_ring_pos")
-                .attr("cx", function(d) { return d3.select(this.parentNode.parentNode).attr("cx");; })
-                .attr("cy", function(d) { return d3.select(this.parentNode.parentNode).attr("cy");; })
-                .attr("r",  function(d) { return parseFloat(d3.select(this.parentNode.parentNode).attr("r"));})
-                .attr("fill", "transparent")
-                .attr("stroke", this.pos_color_range[1])
-                .attr("stroke-width", 5)
-                .attr("stroke-dasharray", function(d) { 
-                    var r = d3.select(this).attr("r")
+            outer_ring.append("path")
+                .attr("d", function(d) {
                     var percentage = parseFloat(d.pos_sent)/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
-                    var width = 2*3.14*r*percentage
-                    var space = 2*3.14*r
-                    return width + " " + space
+                    var radius = parseFloat(d3.select(this.parentNode.parentNode).attr("r"))
+                    return d3.arc()({
+                        innerRadius: radius-2.5,
+                        outerRadius: radius+2.5,
+                        startAngle: 0,//using the bound datum here
+                        endAngle: 2 * Math.PI*percentage
+                    })
                 })
+                .attr("fill", this.pos_color_range[1])     
+                .attr("transform", function(d) {
+                    const cx = d3.select(this.parentNode.parentNode).attr("cx")
+                    const cy = d3.select(this.parentNode.parentNode).attr("cy")
+                    return "translate(" + cx + "," + cy + ")"
+                })       
             // negative ring
-            outer_ring.append("circle")
-                .attr("class", "outer_ring_neg")
-
-                .attr("cx", function(d) { return d3.select(this.parentNode.parentNode).attr("cx");; })
-                .attr("cy", function(d) { return d3.select(this.parentNode.parentNode).attr("cy");; })
-                .attr("r",  function(d) { return parseFloat(d3.select(this.parentNode.parentNode).attr("r"));})
-                .attr("fill", "transparent")
-                .attr("stroke", this.neg_color_range[0])
-                .attr("stroke-width", 5)
-                .attr("stroke-dasharray", function(d) { 
-                    var r = d3.select(this).attr("r")
-                    var percentage = -parseFloat(d.neg_sent)/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
-                    var width = 2*3.14*r*percentage
-                    var space = 2*3.14*r
-                    return width + " " + space
+            outer_ring.append("path")
+                .attr("d", function(d) {
+                    var percentage = parseFloat(Math.abs(d.neg_sent))/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
+                    var start_percentage = parseFloat(d.pos_sent)/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
+                    var radius = parseFloat(d3.select(this.parentNode.parentNode).attr("r"))
+                    return d3.arc()({
+                        innerRadius: radius-2.5,
+                        outerRadius: radius+2.5,
+                        startAngle: 2 * Math.PI * start_percentage,
+                        endAngle: 2 * Math.PI*(start_percentage+percentage)
+                    })
                 })
-                .attr("transform-origin", function(d) {
-                    return d3.select(this).attr("cx") + " " + d3.select(this).attr("cy")
-                })
-                .attr("style", function(d) {
-                    var percentage = parseFloat(d.pos_sent)/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
-                    var degree = percentage * 360
-                    return "transform: rotate(" + degree + "deg);"
-                })
+                .attr("fill", this.neg_color_range[0])     
+                .attr("transform", function(d) {
+                    const cx = d3.select(this.parentNode.parentNode).attr("cx")
+                    const cy = d3.select(this.parentNode.parentNode).attr("cy")
+                    return "translate(" + cx + "," + cy + ")"
+                })       
             // neutral ring
-            outer_ring.append("circle")
-                .attr("class", "outer_ring_neu")
-  
-                .attr("cx", function(d) { return d3.select(this.parentNode.parentNode).attr("cx"); })
-                .attr("cy", function(d) { return d3.select(this.parentNode.parentNode).attr("cy"); })
-                .attr("r",  function(d) { return parseFloat(d3.select(this.parentNode.parentNode).attr("r"));})
-                .attr("fill", "transparent")
-                .attr("stroke", "grey")
-                .attr("stroke-width", 5)
-                .attr("stroke-dasharray", function(d) { 
-                    var r = d3.select(this).attr("r")
+            outer_ring.append("path")
+                .attr("d", function(d) {
                     var percentage = parseFloat(d.neu_sent)/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
-                    var width = 2*3.14*r*percentage
-                    var space = 2*3.14*r
-                    return width + " " + space
-                })
-                .attr("transform-origin", function(d) {
-                    return d3.select(this).attr("cx") + " " + d3.select(this).attr("cy")
-                })
-                .attr("style", function(d) {
-                    var percentage = parseFloat(d.neu_sent)/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
-                    var degree = -percentage*360
-                    return "transform: rotate(" + degree + "deg);"
-                })
+                    var start_percentage = parseFloat(d.pos_sent + Math.abs(d.neg_sent))/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
 
-            
+                    var radius = parseFloat(d3.select(this.parentNode.parentNode).attr("r"))
+                    return d3.arc()({
+                        innerRadius: radius-2.5,
+                        outerRadius: radius+2.5,
+                        startAngle: 2 * Math.PI * start_percentage,
+                        endAngle: 2 * Math.PI*(start_percentage+percentage)
+                    })
+                })
+                .attr("fill", "grey")     
+                .attr("transform", function(d) {
+                    const cx = d3.select(this.parentNode.parentNode).attr("cx")
+                    const cy = d3.select(this.parentNode.parentNode).attr("cy")
+                    return "translate(" + cx + "," + cy + ")"
+                })       
 
         },
         addEdges(node) {
             // edges
             var svg = this.canvas
-
             // bind edges to node circles, so that edges can bind to circle center
             var center_node = svg.select("g.center")
 
             node.append("line")
             .attr("class", "graph_edge")
-            .attr("x1", function(d) { return d3.select(this.parentNode).attr("cx");})
+            .attr("x1", function(d) { console.log(d3.select(this.parentNode).node());return d3.select(this.parentNode).attr("cx");})
             .attr("x2", function(d) { return parseInt(center_node.attr("cx")); })
             .attr("y1", function(d) { return d3.select(this.parentNode).attr("cy")})
             .attr("y2", function(d) { return parseInt(center_node.attr("cy")); })
@@ -319,21 +308,7 @@ export default {
             .lower()
 
             center_node.raise()
-            // var edges = svg.selectAll("line")
-            // .data(circles, function(d) { return d3.select(d).select("text").text()})
-            // .join(
-            //     enter => enter.append("line")
-            //     .attr("class", "graph_edge")
-            //     .attr("x1", function(d) { return parseInt(d3.select(d).attr("cx"));})
-            //     .attr("x2", function(d) { return parseInt(center_node.attr("cx")); })
-            //     .attr("y1", function(d) { return parseInt(d3.select(d).attr("cy"));})
-            //     .attr("y2", function(d) { return parseInt(center_node.attr("cy")); })
-            //     .attr("stroke", function(d) { return d3.select(d).data()[0].dotted?"black":(d3.select(d).data()[0].sentiment>0?"blue":"red")})
-            //     .attr("stroke-dasharray", function(d) { return d3.select(d).data()[0].dotted ? 2.5:0; })
-            //     .lower(),
-            //     update => update,
-            //     exit => exit.transition().delay(1000).remove()
-            // )
+          
             
         },  
     }
