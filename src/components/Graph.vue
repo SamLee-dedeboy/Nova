@@ -35,9 +35,10 @@ export default {
     },
     watch: {
         graph: async function() {
-            this.updateNodes()
             this.updateCenterNode()
-            this.updateEdges()
+
+            this.updateNodes()
+            //this.updateEdges()
 
         }
     },
@@ -62,9 +63,10 @@ export default {
         this.color_pos = d3.scaleSqrt()
             .domain([0, 1])
             .range(this.pos_color_range);
-        this.updateNodes()
         this.updateCenterNode()
-        this.updateEdges()
+
+        this.updateNodes()
+        //this.updateEdges()
 
     },
 
@@ -80,8 +82,27 @@ export default {
             const nodes = svg.selectAll("g.node")
             .data(this.graph.nodes, function(d) { return d.outlet })
             .join(
-                enter => self.applyNodeStyling(enter, "node"),
+                enter => {
+                    self.applyNodeStyling(enter, "node")
+                    self.addEdges(enter.selectAll("g.node"))
+                },
+                update => update,
+                exit => {
+                    var duration = 1000
+                    exit.selectAll("circle")
+                    .transition()
+                    .duration(duration)
+                    .attr("r", 0)
+                    .remove()
+                    exit.selectAll("text")
+                    .transition()
+                    .duration(duration)
+                    .attr("font-size", "0em")
+                    .remove()
+                    exit.transition().delay(duration).remove()
+                }
             )
+
 
             svg.selectAll("g.node")
             .style("cursor", "pointer")
@@ -125,7 +146,9 @@ export default {
                 //     return 'translate('+((1-expand_ratio)*cx+(end_cx-cx))+","+ ((1-expand_ratio)*cy+(end_cy-cy)) +")"+'scale('+expand_ratio+')';
                 //     //return 'translate(' + (1-shrink_ratio)*cx +"," + (1-shrink_ratio)*cy + ")" + 'scale(0.5)'
                 // })
-                clickedNode.selectAll("*").remove()
+                clickedNode
+                .selectAll("*").
+                remove()
                 self.applyNodeStyling(clickedNode, "node", width/2.2, height/2, expanded_r, false)
                 
                 //other nodes
@@ -156,6 +179,7 @@ export default {
                 enter => self.applyNodeStyling(enter, "center"),
                 update => self.applyNodeStyling(update, "center")
             )
+            
         },
         applyNodeStyling(enter, class_name, cx=-1, cy=-1, r=0, append_flag=true) {
             var node = append_flag?enter.append("g"):enter
@@ -226,6 +250,7 @@ export default {
             // negative ring
             outer_ring.append("circle")
                 .attr("class", "outer_ring_neg")
+
                 .attr("cx", function(d) { return d3.select(this.parentNode.parentNode).attr("cx");; })
                 .attr("cy", function(d) { return d3.select(this.parentNode.parentNode).attr("cy");; })
                 .attr("r",  function(d) { return parseFloat(d3.select(this.parentNode.parentNode).attr("r"));})
@@ -250,6 +275,7 @@ export default {
             // neutral ring
             outer_ring.append("circle")
                 .attr("class", "outer_ring_neu")
+  
                 .attr("cx", function(d) { return d3.select(this.parentNode.parentNode).attr("cx"); })
                 .attr("cy", function(d) { return d3.select(this.parentNode.parentNode).attr("cy"); })
                 .attr("r",  function(d) { return parseFloat(d3.select(this.parentNode.parentNode).attr("r"));})
@@ -272,31 +298,44 @@ export default {
                     return "transform: rotate(" + degree + "deg);"
                 })
 
+            
 
         },
-        updateEdges() {
+        addEdges(node) {
             // edges
             var svg = this.canvas
 
             // bind edges to node circles, so that edges can bind to circle center
-            var circles = svg.selectAll("g.node")
-            var center_node = svg.select("g.center").select("circle")
+            var center_node = svg.select("g.center")
 
-            var edges = svg.selectAll("line")
-            .data(circles, function(d) { return d3.select(d.parentNode).select("text").text()})
-            .join(
-                enter => enter.append("line")
-                .attr("class", "graph_edge")
-                .attr("x1", function(d) { return parseInt(d3.select(d).attr("cx"));})
-                .attr("x2", function(d) { return parseInt(center_node.attr("cx")); })
-                .attr("y1", function(d) { return parseInt(d3.select(d).attr("cy"));})
-                .attr("y2", function(d) { return parseInt(center_node.attr("cy")); })
-                .attr("stroke", function(d) { return d3.select(d).data()[0].dotted?"black":(d3.select(d).data()[0].sentiment>0?"blue":"red")})
-                .attr("stroke-dasharray", function(d) { return d3.select(d).data()[0].dotted ? 2.5:0; })
-                .lower()
-            )
+            node.append("line")
+            .attr("class", "graph_edge")
+            .attr("x1", function(d) { return d3.select(this.parentNode).attr("cx");})
+            .attr("x2", function(d) { return parseInt(center_node.attr("cx")); })
+            .attr("y1", function(d) { return d3.select(this.parentNode).attr("cy")})
+            .attr("y2", function(d) { return parseInt(center_node.attr("cy")); })
+            .attr("stroke", function(d) { return d3.select(this.parentNode).data()[0].dotted?"black":(d3.select(this.parentNode).data()[0].sentiment>0?"blue":"red")})
+            .attr("stroke-dasharray", function(d) { return d3.select(this.parentNode).data()[0].dotted ? 2.5:0; })
+            .lower()
+
+            center_node.raise()
+            // var edges = svg.selectAll("line")
+            // .data(circles, function(d) { return d3.select(d).select("text").text()})
+            // .join(
+            //     enter => enter.append("line")
+            //     .attr("class", "graph_edge")
+            //     .attr("x1", function(d) { return parseInt(d3.select(d).attr("cx"));})
+            //     .attr("x2", function(d) { return parseInt(center_node.attr("cx")); })
+            //     .attr("y1", function(d) { return parseInt(d3.select(d).attr("cy"));})
+            //     .attr("y2", function(d) { return parseInt(center_node.attr("cy")); })
+            //     .attr("stroke", function(d) { return d3.select(d).data()[0].dotted?"black":(d3.select(d).data()[0].sentiment>0?"blue":"red")})
+            //     .attr("stroke-dasharray", function(d) { return d3.select(d).data()[0].dotted ? 2.5:0; })
+            //     .lower(),
+            //     update => update,
+            //     exit => exit.transition().delay(1000).remove()
+            // )
             
-        },      
+        },  
     }
 }
 
