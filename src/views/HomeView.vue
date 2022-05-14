@@ -64,7 +64,7 @@ export default {
 
 <template>
   <main>
-    <Splitter style="height:100vh" layout="vertical">
+    <Splitter style="height:120vh" layout="vertical">
       <SplitterPanel id="overview-section" class="flex align-items-center justify-content-center" :size="80">
         <Splitter>
           <SplitterPanel id='target-section' class="flex align-items-center justify-content-center" :size="85"> 
