@@ -96,10 +96,41 @@ export default {
                 .style("filter", "brightness(100%)")
             })
             .on("click", function(e, d) {
-                const container = d3.select(this)
-                var r = 200
-                container.selectAll("*").remove()
-                self.applyNodeStyling(container, "node", 300, 300, r, false)
+                const width = parseInt(self.canvas.attr("viewBox").split(" ")[2])
+                const height = parseInt(self.canvas.attr("viewBox").split(" ")[3])
+
+                // clicked node
+                const expanded_r = 0.49*height
+                const clickedNode = d3.select(this)
+                // clickedNode.attr("transform", function(d) {
+                //     const cx = d3.select(this).attr("cx")
+                //     const cy = d3.select(this).attr("cy")
+                //     const r = d3.select(this).attr("r")
+                //     const end_cx = width/2.2
+                //     const end_cy = height/2
+                //     const end_r = expanded_r
+                //     const expand_ratio = expanded_r/r
+
+                //     return 'translate('+((1-expand_ratio)*cx+(end_cx-cx))+","+ ((1-expand_ratio)*cy+(end_cy-cy)) +")"+'scale('+expand_ratio+')';
+                //     //return 'translate(' + (1-shrink_ratio)*cx +"," + (1-shrink_ratio)*cy + ")" + 'scale(0.5)'
+                // })
+                clickedNode.selectAll("*").remove()
+                self.applyNodeStyling(clickedNode, "node", width/2.2, height/2, expanded_r, false)
+                
+                //other nodes
+                const shrink_ratio = 0.5
+                const otherNodes = d3.selectAll("g.node").filter((d) => d.outlet != clickedNode.data()[0].outlet)                
+                otherNodes.attr("transform", function(d) {
+                    var cx = d3.select(this).attr("cx")
+                    var cy = d3.select(this).attr("cy")
+
+                    return 'translate(' + (1-shrink_ratio)*cx +"," + (1-shrink_ratio)*cy + ")" + 'scale(0.5)'
+                })
+                // otherNodes.selectAll("*").remove()
+                // self.applyNodeStyling(otherNodes, "node", undefined, undefined, shrink_ratio, false)
+
+                const centerNode = d3.select("g.center")
+
                 self.updateEdges()
                 self.$emit("node-clicked", d)
             })
@@ -137,7 +168,6 @@ export default {
                 .attr("y", function(d) { return d3.select(this.parentNode).attr("cy"); })
                 .attr("text-anchor", "middle")
                 .attr("font-size","small")
-
                 .attr("dominant-baseline", "central")
                 .text(d => d.outlet || d.text)
 
@@ -145,7 +175,7 @@ export default {
             
             //node.selectAll("circle." + class_name)
                 //.attr("r", function(d){  return d3.select(this.parentNode).select("text").node().getComputedTextLength()/1.5 + d.dotted?0:d.articles.length; })
-            node.attr("r", function(d) {  return r!=0?r:(d3.select(this).select("text").node().getComputedTextLength()/1.5 + 5); })
+            node.attr("r", function(d) {  return r>0?r:((r<0?r:1)*d3.select(this).select("text").node().getComputedTextLength()/1.5 + 5); })
 
             node.selectAll("circle." + class_name)
                 .attr("r", function(d) { return d3.select(this.parentNode).attr("r")})
@@ -263,7 +293,14 @@ export default {
 
 </script>
 <template>
-<svg  viewBox="0 0 800 800" :id="id">
+<svg  class="graph" viewBox="0 0 800 600" :id="id">
 
 </svg>
 </template>
+
+<style scoped>
+.class {
+    width: 100%;
+    height: 100%
+}
+</style>
