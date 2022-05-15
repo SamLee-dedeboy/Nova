@@ -145,9 +145,24 @@ export default {
                 //     return 'translate('+((1-expand_ratio)*cx+(end_cx-cx))+","+ ((1-expand_ratio)*cy+(end_cy-cy)) +")"+'scale('+expand_ratio+')';
                 //     //return 'translate(' + (1-shrink_ratio)*cx +"," + (1-shrink_ratio)*cy + ")" + 'scale(0.5)'
                 // })
+
+                
+                clickedNode.select("g.outer_ring").remove()
                 clickedNode
-                .selectAll("*").
-                remove()
+                .selectAll("*")
+                .transition()
+                .duration(1000)
+                .attr("transform", function(d) {
+                    const element = d3.select(this)
+                    var pair = undefined
+                    if (element.attr("transform") != null)
+                        pair = element.attr("transform").replace(/translate\(/i, "").replace(/\)/i, "").split(",")
+                    var x = width/2.2 - (element.attr("cx") || element.attr("x") ||( (pair==undefined)?0:pair[0]) || 0)
+                    var y = height/2 - (element.attr("cy") || element.attr("y") || ((pair==undefined)?0:pair[1]) || 0)
+                    return "translate(" + x + "," + y + ")";
+                })
+                .attr("r", expanded_r)
+                .remove()
                 self.applyNodeStyling(clickedNode, "node", width/2.2, height/2, expanded_r, false)
                 
                 //other nodes
