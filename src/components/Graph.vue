@@ -234,62 +234,101 @@ export default {
 
             // positive ring
             outer_ring.append("path")
-                .attr("d", function(d) {
-                    var percentage = parseFloat(d.pos_sent)/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
-                    var radius = parseFloat(d3.select(this.parentNode.parentNode).attr("r"))
-                    return d3.arc()({
-                        innerRadius: radius-2.5,
-                        outerRadius: radius+2.5,
-                        startAngle: 0,//using the bound datum here
-                        endAngle: 2 * Math.PI*percentage
-                    })
-                })
                 .attr("fill", this.pos_color_range[1])     
                 .attr("transform", function(d) {
                     const cx = d3.select(this.parentNode.parentNode).attr("cx")
                     const cy = d3.select(this.parentNode.parentNode).attr("cy")
                     return "translate(" + cx + "," + cy + ")"
-                })       
+                })
+                .transition()
+                .duration(1000)
+                .tween('ring-effect', function(d) {
+                    var percentage = parseFloat(d.pos_sent)/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
+                    //var start_percentage = parseFloat(d.pos_sent)/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
+                    var start_percentage = 0
+
+                    var radius = parseFloat(d3.select(this.parentNode.parentNode).attr("r"))
+
+                    let startAngle = 2*Math.PI*start_percentage;
+                    let targetAngle = 2 * Math.PI*(start_percentage+percentage);
+                    let i = d3.interpolate(startAngle, targetAngle);
+                    return function(t) {
+                        let currentAngle = i(t);
+                    
+                        d3.select(this)
+                        .attr('d', d3.arc() ({
+                                innerRadius: radius-2.5,
+                                outerRadius: radius+2.5,
+                                startAngle: startAngle,
+                                endAngle: currentAngle
+                        }))
+                    };
+                })
+                
+                
+                
             // negative ring
             outer_ring.append("path")
-                .attr("d", function(d) {
-                    var percentage = parseFloat(Math.abs(d.neg_sent))/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
-                    var start_percentage = parseFloat(d.pos_sent)/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
-                    var radius = parseFloat(d3.select(this.parentNode.parentNode).attr("r"))
-                    return d3.arc()({
-                        innerRadius: radius-2.5,
-                        outerRadius: radius+2.5,
-                        startAngle: 2 * Math.PI * start_percentage,
-                        endAngle: 2 * Math.PI*(start_percentage+percentage)
-                    })
-                })
                 .attr("fill", this.neg_color_range[0])     
                 .attr("transform", function(d) {
                     const cx = d3.select(this.parentNode.parentNode).attr("cx")
                     const cy = d3.select(this.parentNode.parentNode).attr("cy")
                     return "translate(" + cx + "," + cy + ")"
-                })       
+                })     
+                .transition()
+                .duration(1000)
+                .tween('ring-effect', function(d) {
+                    var percentage = parseFloat(Math.abs(d.neg_sent))/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
+                    var start_percentage = parseFloat(d.pos_sent)/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
+                    var radius = parseFloat(d3.select(this.parentNode.parentNode).attr("r"))
+                    
+                    let startAngle = 2*Math.PI*start_percentage;
+                    let targetAngle = 2 * Math.PI*(start_percentage+percentage);
+                    let i = d3.interpolate(startAngle, targetAngle);
+                    return function(t) {
+                        let currentAngle = i(t);
+                    
+                        d3.select(this)
+                        .attr('d', d3.arc() ({
+                                innerRadius: radius-2.5,
+                                outerRadius: radius+2.5,
+                                startAngle: startAngle,
+                                endAngle: currentAngle
+                        }))
+                    }
+                })
+                
+                
             // neutral ring
             outer_ring.append("path")
-                .attr("d", function(d) {
-                    var percentage = parseFloat(d.neu_sent)/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
-                    var start_percentage = parseFloat(d.pos_sent + Math.abs(d.neg_sent))/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
-
-                    var radius = parseFloat(d3.select(this.parentNode.parentNode).attr("r"))
-                    return d3.arc()({
-                        innerRadius: radius-2.5,
-                        outerRadius: radius+2.5,
-                        startAngle: 2 * Math.PI * start_percentage,
-                        endAngle: 2 * Math.PI*(start_percentage+percentage)
-                    })
-                })
                 .attr("fill", "grey")     
                 .attr("transform", function(d) {
                     const cx = d3.select(this.parentNode.parentNode).attr("cx")
                     const cy = d3.select(this.parentNode.parentNode).attr("cy")
                     return "translate(" + cx + "," + cy + ")"
-                })       
-
+                })     
+                .transition()
+                .duration(1000)
+                .tween('ring-effect', function(d) {
+                    var percentage = parseFloat(d.neu_sent)/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
+                    var start_percentage = parseFloat(d.pos_sent + Math.abs(d.neg_sent))/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
+                    var radius = parseFloat(d3.select(this.parentNode.parentNode).attr("r"))
+                    
+                    let startAngle = 2*Math.PI*start_percentage;
+                    let targetAngle = 2 * Math.PI*(start_percentage+percentage);
+                    let i = d3.interpolate(startAngle, targetAngle);
+                    return function(t) {
+                        let currentAngle = i(t);
+                    
+                        d3.select(this)
+                        .attr('d', d3.arc() ({
+                                innerRadius: radius-2.5,
+                                outerRadius: radius+2.5,
+                                startAngle: startAngle,
+                                endAngle: currentAngle
+                        }))
+                    };
+                })
         },
         addEdges(node) {
             // edges
@@ -299,7 +338,7 @@ export default {
 
             node.append("line")
             .attr("class", "graph_edge")
-            .attr("x1", function(d) { console.log(d3.select(this.parentNode).node());return d3.select(this.parentNode).attr("cx");})
+            .attr("x1", function(d) { return d3.select(this.parentNode).attr("cx");})
             .attr("x2", function(d) { return parseInt(center_node.attr("cx")); })
             .attr("y1", function(d) { return d3.select(this.parentNode).attr("cy")})
             .attr("y2", function(d) { return parseInt(center_node.attr("cy")); })
