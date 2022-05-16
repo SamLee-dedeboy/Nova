@@ -75,6 +75,28 @@ export default {
         handleNodeClick(node) {
             console.log("node clicked!", node)
         },
+        translateAndScale(node, dst, scale, callback) {
+            const new_x = dst[0]
+            const new_y = dst[1]
+            node.attr("transform-origin", function(d) {
+                return d3.select(this).attr("cx") + " " + d3.select(this).attr("cy")
+            })
+            .transition()
+            .duration(1000)
+            .attr("cx", new_x)
+            .attr("cy", new_y)
+            .attr("transform", function(d) {
+                const element = d3.select(this)
+                var pair = undefined
+                if (element.attr("transform") != null)
+                    pair = element.attr("transform").replace(/translate\(/i, "").replace(/\)/i, "").split(",")
+                var x = new_x - (element.attr("cx") || element.attr("x") ||( (pair==undefined)?0:pair[0]) || 0)
+                var y = new_y - (element.attr("cy") || element.attr("y") || ((pair==undefined)?0:pair[1]) || 0)
+                return "translate(" + x + "," + y + ")" + 'scale(' + scale + ")"
+                return "translate(" + (new_x-cx) + "," + (new_y-cy) +")" + " " + 'scale(' + shrink_ratio + ")"
+            })
+            .on("end", callback)
+        },
         updateNodes() {
             var svg = this.canvas
             var self = this
@@ -171,42 +193,11 @@ export default {
                 const new_x = 700
                 const new_y = 100
                 const otherNodes = d3.selectAll("g.node").filter((d) => d.outlet != clickedNode.data()[0].outlet)                
-                otherNodes.attr("transform-origin", function(d) {
-                    return d3.select(this).attr("cx") + " " + d3.select(this).attr("cy")
-                })
-                .transition()
-                .duration(1000)
-                .attr("cx", new_x)
-                .attr("cy", new_y)
-                .attr("transform", function(d) {
-                    const element = d3.select(this)
-                    var pair = undefined
-                    if (element.attr("transform") != null)
-                        pair = element.attr("transform").replace(/translate\(/i, "").replace(/\)/i, "").split(",")
-                    var x = new_x - (element.attr("cx") || element.attr("x") ||( (pair==undefined)?0:pair[0]) || 0)
-                    var y = new_y - (element.attr("cy") || element.attr("y") || ((pair==undefined)?0:pair[1]) || 0)
-                    return "translate(" + x + "," + y + ")" + 'scale(' + shrink_ratio + ")"
-                    return "translate(" + (new_x-cx) + "," + (new_y-cy) +")" + " " + 'scale(' + shrink_ratio + ")"
-                })
+                self.translateAndScale(otherNodes, [new_x, new_y], shrink_ratio)
 
                 const center_node = d3.select("g.center")    
-                center_node.attr("transform-origin", function(d) {
-                    return d3.select(this).attr("cx") + " " + d3.select(this).attr("cy")
-                })
-                .transition()
-                .duration(1000)
-                .attr("cx", 700)
-                .attr("cy", 300)
-                .attr("transform", function(d) {
-                    const new_x = 700
-                    const new_y = 300
-                    const cx = d3.select(this).attr("cx")
-                    const cy = d3.select(this).attr("cy")
-                    return "translate(" + (new_x-cx) + "," + (new_y-cy) +")" + " " + 'scale(' + shrink_ratio + ")"
-                })
-                .on("end", function(d) {
-                    self.addEdges(d3.selectAll("g.node"))
-                })
+                self.translateAndScale(center_node, [700, 200], shrink_ratio, () => self.addEdges(d3.selectAll("g.node")))
+        
                 
                 console.log(d3.selectAll("line.graph_edge").nodes())
                 self.$emit("node-clicked", d)
