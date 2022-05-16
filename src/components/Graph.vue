@@ -75,18 +75,29 @@ export default {
         handleNodeClick(node) {
             console.log("node clicked!", node)
         },
-        translateAndScale(node, dst, scale, callback) {
-            const new_x = dst[0]
-            const new_y = dst[1]
+        translateAndScale(node, outletToPosDict, scale, callback) {
             node.attr("transform-origin", function(d) {
                 return d3.select(this).attr("cx") + " " + d3.select(this).attr("cy")
             })
             .transition()
             .duration(1000)
-            .attr("cx", new_x)
-            .attr("cy", new_y)
+            .attr("cx", function(d) {
+                const element = d3.select(this)
+                const elementData = element.data()[0]
+                return outletToPosDict[elementData.outlet || elementData.text][0]
+                
+            })
+            .attr("cy", function(d) {
+                const element = d3.select(this)
+                const elementData = element.data()[0]
+                return outletToPosDict[elementData.outlet || elementData.text][1] 
+            })
             .attr("transform", function(d) {
                 const element = d3.select(this)
+                const elementData = element.data()[0]
+                const new_x = outletToPosDict[elementData.outlet || elementData.text][0]
+                const new_y = outletToPosDict[elementData.outlet || elementData.text][1]
+                //element.attr("cx", new_x).attr("cy", new_y)
                 var pair = undefined
                 if (element.attr("transform") != null)
                     pair = element.attr("transform").replace(/translate\(/i, "").replace(/\)/i, "").split(",")
@@ -190,19 +201,54 @@ export default {
                 
                 //other nodes
                 const shrink_ratio = 0.5
-                const new_x = 700
-                const new_y = 100
+                const center_x = 700
+                const center_y = 100
                 const otherNodes = d3.selectAll("g.node").filter((d) => d.outlet != clickedNode.data()[0].outlet)                
-                self.translateAndScale(otherNodes, [new_x, new_y], shrink_ratio)
+                self.force_layout(otherNodes, [center_x, center_y], shrink_ratio)
+               //self.translateAndScale(otherNodes, [new_x, new_y], shrink_ratio)
 
                 const center_node = d3.select("g.center")    
-                self.translateAndScale(center_node, [700, 200], shrink_ratio, () => self.addEdges(d3.selectAll("g.node")))
-        
-                
+                const center_node_pos = {}
+                center_node_pos[center_node.data()[0].text] = [center_x, center_y]
+                //self.translateAndScale(center_node, center_node_pos, shrink_ratio)
+  
                 console.log(d3.selectAll("line.graph_edge").nodes())
                 self.$emit("node-clicked", d)
             })
 
+        },
+        force_layout(nodes, center, scale_ratio) {
+            const width = 200
+            const height = 150
+            var self = this
+            const graph = JSON.parse(JSON.stringify(this.graph.nodes))
+            graph.push(this.graph.center_node)
+            var simulation = d3.forceSimulation(graph)
+                    .velocityDecay(0.1)
+                    .force("x", d3.forceX().x(function(d) {
+                        return d.dotted?center[0]:((d.sentiment > 0)? center[0]+width/4: center[0]-width/4)
+                    }))
+                    .force("y", d3.forceY(height / 4).strength(.08))
+                    .force("center", d3.forceCenter(center[0], center[1]))
+                    .force("charge", d3.forceManyBody().strength(-240))
+                    .force("link", d3.forceLink().distance(50).strength(1))
+                    // .force('collision', d3.forceCollide().radius(function(d) {
+                    //     const node = d3.selectAll("g.node").filter((data) => data.outlet == d.outlet).node()
+                    //     return self.articlesToRadius(node)
+                    // }))
+                    .on('tick', function() {
+                        const center_node = this.nodes().filter(node => node.text)[0]
+                        center_node.x = center[0]
+                        center_node.y = center[1]
+                    })
+                    .on("end", function() {
+                        const outletToPosDict = Object.assign({}, ...this.nodes().map((node) => ({[node.outlet||node.text]: [node.x, node.y]})));
+                        console.log(outletToPosDict)
+                        self.translateAndScale(nodes, outletToPosDict, scale_ratio)
+                        self.translateAndScale(d3.select("g.center"), outletToPosDict, scale_ratio, () => self.addEdges(d3.selectAll("g.node")))
+
+                    })
+            
         },
         updateCenterNode() {
             var svg = this.canvas
@@ -245,7 +291,7 @@ export default {
             //node.selectAll("circle." + class_name)
                 //.attr("r", function(d){  return d3.select(this.parentNode).select("text").node().getComputedTextLength()/1.5 + d.dotted?0:d.articles.length; })
 
-            node.attr("r", function(d) {  return r>0?r:((r<0?r:1)*d3.select(this).select("text").node().getComputedTextLength()/1.5 + 5); })
+            node.attr("r", function(d) { return self.articlesToRadius(this, r)})
 
             node.selectAll("circle." + class_name)
                 .attr("r", function(d) { return d3.select(this.parentNode).attr("r")})
@@ -396,6 +442,9 @@ export default {
           
             
         },  
+        articlesToRadius(node, r=0) {
+            return r>0?r:((r<0?r:1)*d3.select(node).select("text").node().getComputedTextLength()/1.5 + 5);
+        }
     }
 }
 
