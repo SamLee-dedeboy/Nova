@@ -57,6 +57,8 @@ export default {
             "New York Times": "NYT",
             "Washington Post": "WP"
         }
+        this.animating_click = false
+
         this.color_neg = d3.scaleSqrt()
             .domain([-1, 0])  
             .range(this.neg_color_range); 
@@ -187,6 +189,7 @@ export default {
             svg.selectAll("g.node")
             .style("cursor", "pointer")
             .on("mouseover", function(d) {
+                if(self.animating_click) return
                 const container = d3.select(this)
                 container.select("circle.expand")
                 .transition()
@@ -198,6 +201,8 @@ export default {
 
             })
             .on("mouseout", function(d) {
+                if(self.animating_click) return
+
                 const container = d3.select(this)
                 container.select("circle.expand")
                 .transition()
@@ -220,25 +225,29 @@ export default {
                 
                 const clicked_center = [width/2, height/2]
                 // animate clicked node
-
+                self.animating_click = true
                 // move text
-                clickedNode.selectAll("text")
+                clickedNode.selectAll("text").transition().duration(1000)
                 .attr("x", clicked_center[0])
                 .attr("y", clicked_center[1])
                 // move circles
-                clickedNode.selectAll("circle")
-                .attr("cx", clicked_center[0])
-                .attr("cy", clicked_center[1])
-                // move container
-                clickedNode
+                const circles = clickedNode.selectAll("circle")
+                circles.transition().duration(1000)
                 .attr("cx", clicked_center[0])
                 .attr("cy", clicked_center[1])
                 .attr("r", expanded_r)
-
-                // update node
-                self.applyNodeStyling(clickedNode, "node", expanded_r, "on click")
+                // move container
+                clickedNode
+                .transition().duration(1000)
+                .attr("cx", clicked_center[0])
+                .attr("cy", clicked_center[1])
+                .attr("r", expanded_r)
+                .on("end", function() {
+                    self.applyNodeStyling(clickedNode, "node", expanded_r, "on click")
+                    self.addEdges(d3.selectAll("g.node"))
+                    self.animating_click = false
+                })
                 // update edges
-                self.addEdges(d3.selectAll("g.node"))
                 
                 const clicked_node_sentiment = clickedNode.data()[0].sentiment > 0
                 //other nodes
@@ -412,11 +421,9 @@ export default {
             // set outer rings to represent sentiments
             // no outer rings if node is dotted
             const outer_ring = 
-                (node.filter(function(d) { return !d.dotted})
-                .select("g.outer_ring").node()
+                ((node.filter(function(d) { return !d.dotted}).select("g.outer_ring").node())
                 ? node.select("g.outer_ring")
                 : node.append("g").attr("class", "outer_ring"))
-
             // positive ring
             const pos_ring = 
             (outer_ring.select("path.pos").node()
@@ -452,8 +459,7 @@ export default {
                         }))
                     };
                 })
-                
-                
+
                 
             // negative ring
             const neg_ring = 
@@ -524,7 +530,6 @@ export default {
                 })
         },
         addEdges(node) {
-            console.log("adding edges")
             if(node.empty()) return
             // edges
             var svg = this.canvas
