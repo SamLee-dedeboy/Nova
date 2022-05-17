@@ -242,6 +242,7 @@ export default {
                 .attr("cx", clicked_center[0])
                 .attr("cy", clicked_center[1])
                 .attr("r", expanded_r)
+                .attr("transform", "scale(1)")
                 .on("end", function() {
                     self.applyNodeStyling(clickedNode, "node", expanded_r, "on click")
                     self.addEdges(d3.selectAll("g.node"))
@@ -310,7 +311,6 @@ export default {
             
             var simulation = d3.forceSimulation(this.graph.nodes)
                     .alphaMin(0.3)
-
                     .force("x", d3.forceX().x(function(d) {
                         return d.dotted?center[0]:((d.sentiment > 0)? center[0]+width/3: center[0]-width/3)
                     }))
@@ -320,7 +320,7 @@ export default {
                     .force("link", d3.forceLink().distance(100).strength(1))
                     .force('collision', d3.forceCollide().radius(collision_radius))
                     .on('tick', function() {
-                        //console.log(this.nodes())
+                        console.log("ticking")
                         const center_node = this.nodes().filter(node => node.isCenter)[0]
                         center_node.x = center[0]
                         center_node.y = center[1]
