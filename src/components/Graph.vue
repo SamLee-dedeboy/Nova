@@ -34,11 +34,11 @@ export default {
         }
     },
     watch: {
-        graph: async function() {
+        graph: async function(new_graph, old_graph) {
             this.updateCenterNode()
-
             this.updateNodes()
-            
+            if(this.clickedNodeData && new_graph.nodes.length > old_graph.nodes.length)
+                this.handleNodeClick(undefined, this.clickedNodeData)
 
         }
     },
@@ -73,8 +73,69 @@ export default {
 
     methods: {
         // TODO
-        handleNodeClick(node) {
-            console.log("node clicked!", node)
+        handleNodeClick(e, d) {
+            var self = this
+            var svg = this.canvas
+            const width = parseInt(this.canvas.attr("viewBox").split(" ")[2])
+            const height = parseInt(this.canvas.attr("viewBox").split(" ")[3])
+
+            // clicked node
+            const expanded_r = 0.49*height
+            //const expanded_r = 0.2*height
+            const clickedNode = d3.selectAll("g.node").filter(node => node.outlet == d.outlet)
+            clickedNode.select("g.outer_ring").remove()
+            svg.selectAll("line.graph_edge").filter(line => d3.select(line).data()[0].outlet == clickedNode.data()[0].outlet).remove()
+            
+            const clicked_center = [width/2, height/2]
+            // animate clicked node
+            self.animating_click = true
+            // move text
+            clickedNode.selectAll("text").transition().duration(1000)
+                .attr("x", clicked_center[0])
+                .attr("y", clicked_center[1])
+                // move circles
+            const circles = clickedNode.selectAll("circle")
+            circles.transition().duration(1000)
+            .attr("cx", clicked_center[0])
+            .attr("cy", clicked_center[1])
+            .attr("r", expanded_r)
+            // move container
+            clickedNode
+            .transition().duration(1000)
+            .attr("cx", clicked_center[0])
+            .attr("cy", clicked_center[1])
+            .attr("r", expanded_r)
+            .attr("transform", "scale(1)")
+            .on("end", function() {
+                self.applyNodeStyling(clickedNode, "node", expanded_r, "on click")
+                self.addEdges(d3.selectAll("g.node"))
+                self.animating_click = false
+            })
+            // update edges
+            
+            const clicked_node_sentiment = clickedNode.data()[0].sentiment > 0
+            //other nodes
+            const shrink_ratio = 0.5
+            const center_x = clicked_node_sentiment? 100:700
+            const center_y = 100
+            const origin_x = clicked_node_sentiment? 0:600
+            const origin_y = 0
+            const shrinked_width = 180
+            const shrinked_height = 150
+            const otherNodes = d3.selectAll("g.node").filter((d) => d.outlet != clickedNode.data()[0].outlet)                
+            //self.moveNodesToCorner(otherNodes, [200, 150], [600, 0], [center_x, center_y], shrink_ratio)
+            self.force_layout(otherNodes, [origin_x, origin_y, shrinked_width, shrinked_height], [center_x, center_y], shrink_ratio, clickedNode.data()[0].outlet)
+            
+            //self.translateAndScale(otherNodes, [new_x, new_y], shrink_ratio)
+
+            const center_node = d3.select("g.center")    
+            const center_node_pos = {}
+            center_node_pos[center_node.data()[0].text] = [center_x, center_y]
+            //self.translateAndScale(center_node, center_node_pos, shrink_ratio)
+
+            self.$emit("node-clicked", d)
+            self.clickedNodeData = d
+
         },
         translateAndScale(node, outletToPosDict, scale, callback) {
             node.selectAll("*").attr("transform-origin", function(d) {
@@ -212,67 +273,8 @@ export default {
                 container.selectAll("circle")
                 .style("filter", "brightness(100%)")
             })
-            .on("click", function(e, d) {
-                const width = parseInt(self.canvas.attr("viewBox").split(" ")[2])
-                const height = parseInt(self.canvas.attr("viewBox").split(" ")[3])
-
-                // clicked node
-                const expanded_r = 0.49*height
-                //const expanded_r = 0.2*height
-                const clickedNode = d3.select(this)
-                clickedNode.select("g.outer_ring").remove()
-                svg.selectAll("line.graph_edge").filter(line => d3.select(line).data()[0].outlet == clickedNode.data()[0].outlet).remove()
-                
-                const clicked_center = [width/2, height/2]
-                // animate clicked node
-                self.animating_click = true
-                // move text
-                clickedNode.selectAll("text").transition().duration(1000)
-                .attr("x", clicked_center[0])
-                .attr("y", clicked_center[1])
-                // move circles
-                const circles = clickedNode.selectAll("circle")
-                circles.transition().duration(1000)
-                .attr("cx", clicked_center[0])
-                .attr("cy", clicked_center[1])
-                .attr("r", expanded_r)
-                // move container
-                clickedNode
-                .transition().duration(1000)
-                .attr("cx", clicked_center[0])
-                .attr("cy", clicked_center[1])
-                .attr("r", expanded_r)
-                .attr("transform", "scale(1)")
-                .on("end", function() {
-                    self.applyNodeStyling(clickedNode, "node", expanded_r, "on click")
-                    self.addEdges(d3.selectAll("g.node"))
-                    self.animating_click = false
-                })
-                // update edges
-                
-                const clicked_node_sentiment = clickedNode.data()[0].sentiment > 0
-                //other nodes
-                const shrink_ratio = 0.5
-                const center_x = clicked_node_sentiment? 100:700
-                const center_y = 100
-                const origin_x = clicked_node_sentiment? 0:600
-                const origin_y = 0
-                const shrinked_width = 180
-                const shrinked_height = 150
-                const otherNodes = d3.selectAll("g.node").filter((d) => d.outlet != clickedNode.data()[0].outlet)                
-                //self.moveNodesToCorner(otherNodes, [200, 150], [600, 0], [center_x, center_y], shrink_ratio)
-                self.force_layout(otherNodes, [origin_x, origin_y, shrinked_width, shrinked_height], [center_x, center_y], shrink_ratio, clickedNode.data()[0].outlet)
-               
-               //self.translateAndScale(otherNodes, [new_x, new_y], shrink_ratio)
-
-                const center_node = d3.select("g.center")    
-                const center_node_pos = {}
-                center_node_pos[center_node.data()[0].text] = [center_x, center_y]
-                //self.translateAndScale(center_node, center_node_pos, shrink_ratio)
-  
-                self.$emit("node-clicked", d)
-            })
-
+            .on("click", this.handleNodeClick)
+          
         },
         moveNodesToCorner(nodes, boundingBox, new_origin, new_center, scale_ratio) {
             const original_width = parseInt(this.canvas.attr("viewBox").split(" ")[2])
@@ -320,7 +322,6 @@ export default {
                     .force("link", d3.forceLink().distance(100).strength(1))
                     .force('collision', d3.forceCollide().radius(collision_radius))
                     .on('tick', function() {
-                        console.log("ticking")
                         const center_node = this.nodes().filter(node => node.isCenter)[0]
                         center_node.x = center[0]
                         center_node.y = center[1]
