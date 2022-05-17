@@ -137,7 +137,7 @@ export default {
             )
             
         },
-        updateNodes(pos_moved=false, clicked_outlet=null) {
+        updateNodes(pos_moved=false, clicked_outlet=null, scale_ratio = 1) {
             var svg = this.canvas
             this.previousData = d3.local();
 
@@ -212,8 +212,8 @@ export default {
                 const height = parseInt(self.canvas.attr("viewBox").split(" ")[3])
 
                 // clicked node
-                //const expanded_r = 0.49*height
-                const expanded_r = 0.2*height
+                const expanded_r = 0.49*height
+                //const expanded_r = 0.2*height
                 const clickedNode = d3.select(this)
                 clickedNode.select("g.outer_ring").remove()
                 svg.selectAll("line.graph_edge").filter(line => d3.select(line).data()[0].outlet == clickedNode.data()[0].outlet).remove()
@@ -239,14 +239,19 @@ export default {
                 self.applyNodeStyling(clickedNode, "node", expanded_r, "on click")
                 // update edges
                 self.addEdges(d3.selectAll("g.node"))
-
+                
+                const clicked_node_sentiment = clickedNode.data()[0].sentiment > 0
                 //other nodes
                 const shrink_ratio = 0.5
-                const center_x = 700
+                const center_x = clicked_node_sentiment? 100:700
                 const center_y = 100
+                const origin_x = clicked_node_sentiment? 0:600
+                const origin_y = 0
+                const shrinked_width = 180
+                const shrinked_height = 150
                 const otherNodes = d3.selectAll("g.node").filter((d) => d.outlet != clickedNode.data()[0].outlet)                
                 //self.moveNodesToCorner(otherNodes, [200, 150], [600, 0], [center_x, center_y], shrink_ratio)
-                self.force_layout(otherNodes, [200, 150], [center_x, center_y], shrink_ratio, clickedNode.data()[0].outlet)
+                self.force_layout(otherNodes, [origin_x, origin_y, shrinked_width, shrinked_height], [center_x, center_y], shrink_ratio, clickedNode.data()[0].outlet)
                
                //self.translateAndScale(otherNodes, [new_x, new_y], shrink_ratio)
 
@@ -255,7 +260,6 @@ export default {
                 center_node_pos[center_node.data()[0].text] = [center_x, center_y]
                 //self.translateAndScale(center_node, center_node_pos, shrink_ratio)
   
-                console.log(d3.selectAll("line.graph_edge").nodes())
                 self.$emit("node-clicked", d)
             })
 
@@ -289,35 +293,46 @@ export default {
             this.translateAndScale(center_node, center_node_pos, scale_ratio)
         },
         force_layout(nodes, boundingBox, center, scale_ratio, clicked_outlet) {
-            const width = boundingBox[0]
-            const height = boundingBox[1]
+            const origin = [boundingBox[0], boundingBox[1]]
+            const width = boundingBox[2]
+            const height = boundingBox[3]
+            const collision_radius = 25
             var self = this
             
             var simulation = d3.forceSimulation(this.graph.nodes)
                     .alphaMin(0.3)
 
                     .force("x", d3.forceX().x(function(d) {
-                        return d.dotted?center[0]:((d.sentiment > 0)? center[0]+width/4: center[0]-width/4)
+                        return d.dotted?center[0]:((d.sentiment > 0)? center[0]+width/3: center[0]-width/3)
                     }))
                     .force("y", d3.forceY(height / 4).strength(.08))
                     .force("center", d3.forceCenter(center[0], center[1]))
                     .force("charge", d3.forceManyBody())
-                    .force("link", d3.forceLink().distance(50).strength(1))
-                    
+                    .force("link", d3.forceLink().distance(100).strength(1))
+                    .force('collision', d3.forceCollide().radius(collision_radius))
                     .on('tick', function() {
                         //console.log(this.nodes())
                         const center_node = this.nodes().filter(node => node.isCenter)[0]
                         center_node.x = center[0]
                         center_node.y = center[1]
-
-                        self.updateNodes(true, clicked_outlet)
-                        self.updateCenterNode(true)
-                        // self.updateNodes(true, nodes)
-                        //self.updateCenterNode()
-                        // const outletToPosDict = Object.assign({}, ...this.nodes().map((node) => ({[node.outlet||node.text]: [node.x, node.y]})));
-                        // self.translateAndScale(nodes, outletToPosDict, scale_ratio)
-                        // self.translateAndScale(d3.select("g.center"), outletToPosDict, scale_ratio)
-
+                        this.nodes().forEach(node => {
+                            const bound_x = [origin[0], origin[0]+width - collision_radius]
+                            const bound_y = [origin[1], origin[1]+height - collision_radius]
+                            if(node.x < bound_x[0]) node.x = bound_x[0]
+                            if(node.x > bound_x[1]) node.x = bound_x[1]
+                            if(node.y < bound_y[0]) node.y = bound_y[0]
+                            if(node.y > bound_y[1]) node.y = bound_y[1]
+                        })
+                        self.updateNodes(true, clicked_outlet, scale_ratio)
+                        self.updateCenterNode(true, scale_ratio)
+                        nodes.attr("transform-origin", function(d) {
+                            const container = d3.select(this)
+                            return (container.attr("cx") || container.attr("x")) + " " + (container.attr("cy") || container.attr("y"))
+                        }).attr("transform", () => "scale(" + scale_ratio + ")")
+                        d3.select("g.center").attr("transform-origin", function(d) {
+                            const container = d3.select(this)
+                            return (container.attr("cx") || container.attr("x")) + " " + (container.attr("cy") || container.attr("y"))
+                        }).attr("transform", () => "scale(" + scale_ratio + ")")
                     })
                     // .on("end", function() {
                     //     console.log("end", self.graph.nodes)
