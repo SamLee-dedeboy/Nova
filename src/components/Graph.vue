@@ -75,7 +75,6 @@ export default {
             console.log("node clicked!", node)
         },
         translateAndScale(node, outletToPosDict, scale, callback) {
-            console.log("translating")
             node.selectAll("*").attr("transform-origin", function(d) {
                 const container = d3.select(this)
                 return (container.attr("cx") || container.attr("x")) + " " + (container.attr("cy") || container.attr("y"))
@@ -91,7 +90,6 @@ export default {
                 var pair = undefined
                 if (element.attr("transform") != null) {
                     pair = element.attr("transform").replace(/translate\(/i, "").replace(/\)/i, "").split(",")
-                    console.log(pair)
 
                     var x = new_x - (element.attr("cx") || element.attr("x") || ((pair==undefined)?0:pair[0]) || 0)
                     var y = new_y - (element.attr("cy") || element.attr("y") || ((pair==undefined)?0:pair[1]) || 0)
@@ -139,19 +137,18 @@ export default {
             )
             
         },
-        updateNodes(pos_moved=false) {
+        updateNodes(pos_moved=false, clicked_outlet=null) {
             var svg = this.canvas
             this.previousData = d3.local();
 
             var self = this
-            const nodes = svg.selectAll("g.node")
-            const filtered_nodes = this.graph.nodes.filter(node => !node.isCenter)
-            
+            const nodes = svg.selectAll("g.node").filter(node => node.outlet != clicked_outlet)
+
+            const filtered_nodes = this.graph.nodes.filter(node => !node.isCenter && node.outlet != clicked_outlet)
             // create g for outlet nodes and bind data
             nodes.data(filtered_nodes, function(d) { return d.outlet })
             .join(
                 enter => {
-                    console.log("enter", enter.nodes())
                     var node = enter.append("g")
                     .attr("class", "node")
                     .attr("cx", function(d) { return d.x; })
@@ -160,10 +157,8 @@ export default {
                 },
                 update => {
                     if(pos_moved) {
-                        console.log("update", update.data())
-                        var node = svg.selectAll("g.node")
-                        console.log(node.empty())
-                        node.attr("cx", function(d) { console.log(d); return d.x; })
+                        var node = svg.selectAll("g.node").filter(node => node.outlet != clicked_outlet)
+                        node.attr("cx", function(d) {   return d.x; })
                         .attr("cy", function(d) { return d.y; })
                         self.applyNodeStyling(node, "node", undefined, "update node")
                     }
@@ -251,7 +246,7 @@ export default {
                 const center_y = 100
                 const otherNodes = d3.selectAll("g.node").filter((d) => d.outlet != clickedNode.data()[0].outlet)                
                 //self.moveNodesToCorner(otherNodes, [200, 150], [600, 0], [center_x, center_y], shrink_ratio)
-                self.force_layout(otherNodes, [200, 150], [center_x, center_y], shrink_ratio)
+                self.force_layout(otherNodes, [200, 150], [center_x, center_y], shrink_ratio, clickedNode.data()[0].outlet)
                
                //self.translateAndScale(otherNodes, [new_x, new_y], shrink_ratio)
 
@@ -275,7 +270,6 @@ export default {
             d3.select(nodes).nodes().forEach(node => {
                 node.nodes().forEach(ele => {
                    const eleSelection = d3.select(ele)
-                   console.log(eleSelection.node())
                    outletToPosDict[eleSelection.data()[0].outlet] = [parseFloat(eleSelection.attr("cx"))*ratio[0]+new_origin[0],parseFloat( eleSelection.attr("cy"))*ratio[1]+new_origin[1]]
                 })
             })
@@ -294,7 +288,7 @@ export default {
             center_node_pos[center_node.data()[0].text] = new_center
             this.translateAndScale(center_node, center_node_pos, scale_ratio)
         },
-        force_layout(nodes, boundingBox, center, scale_ratio) {
+        force_layout(nodes, boundingBox, center, scale_ratio, clicked_outlet) {
             const width = boundingBox[0]
             const height = boundingBox[1]
             var self = this
@@ -315,7 +309,9 @@ export default {
                         const center_node = this.nodes().filter(node => node.isCenter)[0]
                         center_node.x = center[0]
                         center_node.y = center[1]
-                        
+
+                        self.updateNodes(true, clicked_outlet)
+                        self.updateCenterNode(true)
                         // self.updateNodes(true, nodes)
                         //self.updateCenterNode()
                         // const outletToPosDict = Object.assign({}, ...this.nodes().map((node) => ({[node.outlet||node.text]: [node.x, node.y]})));
@@ -323,11 +319,11 @@ export default {
                         // self.translateAndScale(d3.select("g.center"), outletToPosDict, scale_ratio)
 
                     })
-                    .on("end", function() {
-                        console.log("end", self.graph.nodes)
-                        self.updateNodes(true)
-                        self.updateCenterNode(true)
-                    })
+                    // .on("end", function() {
+                    //     console.log("end", self.graph.nodes)
+                    //     self.updateNodes(true)
+                    //     self.updateCenterNode(true)
+                    // })
                     //     const outletToPosDict = Object.assign({}, ...this.nodes().map((node) => ({[node.outlet||node.text]: [node.x, node.y]})));
                     //     self.translateAndScale(nodes, outletToPosDict, scale_ratio)
                     //     self.translateAndScale(d3.select("g.center"), outletToPosDict, scale_ratio, () => self.addEdges(d3.selectAll("g.node")))
@@ -343,7 +339,6 @@ export default {
         },
         
         applyNodeStyling(node, class_name,r=0, msg="???") {
-            console.log(msg)
             if(node.empty()) return 
             //var node = append_flag?enter.append("g"):enter
             // console.log(d3.select(enter).node())
@@ -357,11 +352,10 @@ export default {
             (node.selectAll("circle." + class_name).node()
             ? node.selectAll("circle." + class_name)
             : node.append("circle").attr("class", class_name))
-            innerCircle.attr("cx", function(d) { console.log(d3.select(this.parentNode));return d3.select(this.parentNode).attr('cx') })
+            innerCircle.attr("cx", function(d) { return d3.select(this.parentNode).attr('cx') })
                 .attr("cy", function(d) { return d3.select(this.parentNode).attr('cy') })
                 .attr("opacity", 0)
                 .attr("stroke-dasharray", function(d) { return d.dotted? 2.5 : 0})
-            console.log(innerCircle.node())
 
             // add label
             const nodeText = 
