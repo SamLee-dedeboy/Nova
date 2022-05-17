@@ -19,10 +19,11 @@ export default ({
             var graph_dict = {}
             var clone_dataset = JSON.parse(JSON.stringify(this.dataset.graphList));
             clone_dataset.forEach(graph => {
-                graph_dict[graph.center_node.text] = graph
+                const center_node = graph.nodes.filter(node => node.isCenter)[0]
+                graph_dict[center_node.text] = graph
             })
             Object.keys(graph_dict).forEach(key => {
-                graph_dict[key].nodes =  graph_dict[key].nodes.filter(node => this.enabled_outlet_set.includes(node.outlet))
+                graph_dict[key].nodes =  graph_dict[key].nodes.filter(node => node.text||(this.enabled_outlet_set.includes(node.outlet)))
             });
             return graph_dict
         }
@@ -46,7 +47,7 @@ export default ({
             @node-clicked="handleNodeClicked"
             >
         </Graph >
-        <Legend v-if="targets.length!=0"></Legend>
+        <!-- <Legend v-if="targets.length!=0"></Legend> -->
     </TabPanel>
 </TabView>
 </template>
