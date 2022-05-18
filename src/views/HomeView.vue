@@ -9,6 +9,7 @@ import SplitterPanel from 'primevue/splitterpanel';
 import ArticleView from "../components/ArticleView.vue";
 import TopicSelection from "../components/TopicSelection.vue";
 import TargetSelection from "../components/TargetSelection.vue"
+import MonthSlider from "../components/MonthSlider.vue"
 export default {
   components: {
     Filter,
@@ -19,6 +20,7 @@ export default {
     ArticleView,
     TopicSelection,
     TargetSelection,
+    MonthSlider,
 },
   data() {
     return {
@@ -85,8 +87,7 @@ export default {
             <Filter v-if="selected_target.length!=0" :outlet_set="outlet_set"
             @outlet-filtered="updateEnabledOutlet"
             ></Filter>
-            <!-- <div>Time range slider</div> -->
-
+          <MonthSlider></MonthSlider>
           </SplitterPanel>
         </Splitter>
       </SplitterPanel>
