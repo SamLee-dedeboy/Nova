@@ -86,6 +86,8 @@ export default {
             clickedNode.select("g.outer_ring").remove()
             svg.selectAll("line.graph_edge").filter(line => d3.select(line).data()[0].outlet == clickedNode.data()[0].outlet).remove()
             
+            clickedNode.selectAll("circle").style("filter", "brightness(100%)")
+
             const clicked_center = [width/2, height/2]
             // animate clicked node
             self.animating_click = true
