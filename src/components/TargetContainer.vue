@@ -4,13 +4,16 @@ import Cloud from "./Cloud.vue"
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
 import Legend from './Legend.vue'
+import TimeAxes from './TimeAxes.vue'
 export default ({
     components: {
       Graph,
       Cloud,
       TabView,
       TabPanel,
-      Legend
+      Legend,
+      TimeAxes
+
     },
     props:['dataset', 'enabled_outlet_set','targets', 'topic'],
 
@@ -48,6 +51,8 @@ export default ({
             >
         </Graph >
         <!-- <Legend v-if="targets.length!=0"></Legend> -->
+        <TimeAxes></TimeAxes>
+
     </TabPanel>
 </TabView>
 </template>
