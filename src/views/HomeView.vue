@@ -37,7 +37,7 @@ export default {
       np_list:[],
       selected_topic:"",
       selected_target:[],
-      timeRange:[1,12]
+      timeRange:[1,13]
     }
   },
 
