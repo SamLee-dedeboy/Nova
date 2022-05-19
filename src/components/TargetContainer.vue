@@ -15,7 +15,7 @@ export default ({
       TimeAxes
 
     },
-    props:['dataset', 'enabled_outlet_set','targets', 'topic'],
+    props:['dataset', 'enabled_outlet_set','targets', 'topic', 'selectedTimeRange'],
 
     computed: {
         graph_dict: function() {
@@ -51,7 +51,7 @@ export default ({
             >
         </Graph >
         <!-- <Legend v-if="targets.length!=0"></Legend> -->
-        <TimeAxes></TimeAxes>
+        <TimeAxes v-if="targets.length!=0" :selectedTimeRange="selectedTimeRange"></TimeAxes>
 
     </TabPanel>
 </TabView>

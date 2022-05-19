@@ -36,7 +36,8 @@ export default {
       topic_list:[],
       np_list:[],
       selected_topic:"",
-      selected_target:[]
+      selected_target:[],
+      timeRange:[1,12]
     }
   },
 
@@ -59,6 +60,9 @@ export default {
     },
     updateTarget(target) {
       this.selected_target = [target]
+    },
+    handleTimeRangeChanged(new_range) {
+      this.timeRange = new_range
     }
   }
 }
@@ -75,11 +79,12 @@ export default {
             :enabled_outlet_set="enabled_outlet_set"
             :targets="selected_target"
             :topic="selected_topic"
+            :selectedTimeRange="timeRange"
             >
             </TargetContainer>
           </SplitterPanel>
           <SplitterPanel id='sidebar' class="flex align-items-center justify-content-center" :size="20" :min-size="20">
-            <MyToolbar @graph-dev="updateDataset"></MyToolbar>
+            <MyToolbar @graph-dev="updateDataset"  ></MyToolbar>
             <div class="selection_container" style="display:flex">
               <TopicSelection  v-if="topic_list.length!=0"  :topics="topic_list" @topic-selected="updateTopic" style="flex:0.5"></TopicSelection>
               <TargetSelection v-if="selected_topic!=''" :targets="np_list" @target-selected="updateTarget"></TargetSelection>
@@ -87,7 +92,7 @@ export default {
             <Filter v-if="selected_target.length!=0" :outlet_set="outlet_set"
             @outlet-filtered="updateEnabledOutlet"
             ></Filter>
-          <MonthSlider></MonthSlider>
+          <MonthSlider  @timerange-changed="handleTimeRangeChanged" ></MonthSlider>
           </SplitterPanel>
         </Splitter>
       </SplitterPanel>
