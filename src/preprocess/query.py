@@ -13,11 +13,21 @@ def fetchQuery(query):
     return r.text
 
 def getTenArticles():
-    query = """   query {
-        Article(limit: 10) {
-            content
+    query = """query MyQuery {
+        Article(where: {timestamp: {_gte: "\\"2020-02-01\\"", _lte: "\\"2020-06-01\\""}}) {
+            id
+            headline
             journal
             timestamp
+            content
+            ClassifierTopLevel {
+                class
+                percentage
+            }
+            ClassifierSecondLevel {
+                subclass
+                percentage
+            }
         }
     }
     """
