@@ -28,3 +28,4 @@ coverage
 *.sw?
 
 src/preprocess/data/*
+src/preprocess/__pycache__/
