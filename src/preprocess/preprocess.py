@@ -5,12 +5,35 @@ import nltk
 import pandas as pd
 import os
 import re
+import json
 # pp = pprint.PrettyPrinter(indent=4)
+import numpy as np
 
-def getDataset():
+def getRawDataset():
     file = open("data/articles.json")
     data = json.load(file)
     return data["data"]["Article"]
+
+def getSingleTopicDataset():
+    file = open("data/single_topic_articles.json")
+    data = json.load(file)
+    return data
+
+def gen_single_topic_dataset(dataset, filepath="data/single_topic_articles.json"):
+    top_level_key = "ClassifierTopLevel"
+    second_level_key = "ClassifierSecondLevel"
+    for article in dataset:
+        top_level_topic = get_max_topic(article[top_level_key], "class", "percentage") 
+        second_level_topic = get_max_topic(article[second_level_key], "subclass", "percentage") 
+        article["top_level_topic"] = top_level_topic
+        article["second_level_topic"] = second_level_topic
+        article.pop(top_level_key, None)
+        article.pop(second_level_key, None)
+    dict_to_json(dataset, filepath=filepath)
+
+def get_max_topic(topic_list, key_name, value_name):
+    max_index = max(range(len(topic_list)), key=lambda i: topic_list[i][value_name])
+    return topic_list[max_index][key_name]
 
 def paragraph_to_sentences(content):
     import re
@@ -28,4 +51,9 @@ def df_to_csv(df, filepath="data/sentiments.csv"):
     relative_path = os.path.join(dirname, filepath)
     df.to_csv(relative_path, index=False)
 
+def dict_to_json(dict, filepath="data/new_dict.json"):
+    dirname = os.path.dirname(__file__)
+    relative_path = os.path.join(dirname, filepath)
+    with open(relative_path, 'w') as fp:
+        json.dump(dict, fp, indent=4)
 # sentences = article_to_sentences(dataset[21]["content"])
