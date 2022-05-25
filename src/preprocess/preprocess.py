@@ -4,6 +4,7 @@ import nltk
 # nltk.download('punkt')
 import pandas as pd
 import os
+import re
 # pp = pprint.PrettyPrinter(indent=4)
 
 def getDataset():
@@ -12,10 +13,12 @@ def getDataset():
     return data["data"]["Article"]
 
 def paragraph_to_sentences(content):
-    return list(nltk.sent_tokenize(content))
+    import re
+    content = re.sub(r'([a-z])\.([A-Z])', r'\1. \2', content)
+    return list(nltk.tokenize.sent_tokenize(content))
 
 def article_to_paragraphs(content):
-    return list(filter(None, content.split("\n")))
+    return list(filter(None, re.split(r'\n', content)))
 
 def article_to_sentences(content):
     return paragraph_to_sentences(" ".join(article_to_paragraphs(content)))
@@ -25,4 +28,4 @@ def df_to_csv(df, filepath="data/sentiments.csv"):
     relative_path = os.path.join(dirname, filepath)
     df.to_csv(relative_path, index=False)
 
-
+# sentences = article_to_sentences(dataset[21]["content"])
