@@ -4,16 +4,25 @@ class hugFace:
     def __init__(self):
         self.classifier = pipeline("sentiment-analysis")
 
-    def sentiment_analyze(self, sentences):
+    def analyze_sentiment(self, sentences):
         classifier = self.classifier
         results = []
         for sentence in sentences:
-            res = classifier(sentence)[0]
-            if res["label"] != "POSITIVE" and res["label"] != "NEGATIVE":
-                print(res["label"])
-                return 
-            sent = 1 if res["label"] == "POSITIVE" else -1   
-            score = sent * float(res["score"])
-            results.append(score)
-        return results    
+            results.append(classifier(sentence)[0])
+        return self.normalize_sst(results)
+
+    def normalize_sst(self, res):
+        res_pos = 0
+        res_neg = 0
+        for sst in res:
+            sent = 1 if sst["label"] == "POSITIVE" else -1   
+            score = sent * float(sst["score"])
+            if score > 0:
+                res_pos += score
+            else:
+                res_neg += score
+
+        return  {"pos": res_pos, "neg": res_neg, "score": (res_pos+res_neg)/(res_pos-res_neg)}
+        
+
 
