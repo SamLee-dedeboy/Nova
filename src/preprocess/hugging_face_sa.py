@@ -9,20 +9,18 @@ class hugFace:
         results = []
         for sentence in sentences:
             results.append(classifier(sentence)[0])
-        return self.normalize_sst(results)
 
-    def normalize_sst(self, res):
-        res_pos = 0
-        res_neg = 0
-        for sst in res:
+        sst_pos = 0
+        sst_neg = 0
+        for sst in results:
             sent = 1 if sst["label"] == "POSITIVE" else -1   
             score = sent * float(sst["score"])
             if score > 0:
-                res_pos += score
+                sst_pos += score
             else:
-                res_neg += score
+                sst_neg += score
 
-        return  {"pos": res_pos, "neg": res_neg, "score": (res_pos+res_neg)/(res_pos-res_neg)}
+        return  {"pos": sst_pos, "neg": sst_neg, "num_sentences": len(results)} 
         
 
 

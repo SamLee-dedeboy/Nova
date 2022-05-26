@@ -12,7 +12,7 @@ def analyze_sentiment(sentences):
         else:
             sst_neg += sentence.sentiment.polarity
 
-    return  {"pos": sst_pos, "neg": sst_neg, "score": (sst_pos+sst_neg)/(sst_pos-sst_neg)}
+    return  {"pos": sst_pos, "neg": sst_neg, "num_sentences": len(sentences)} 
 
 # text_doc = "President Donald Trump said he \"doesn\u2019t like\" the idea of states releasing nonviolent offenders. Trump discusses opening the country as coronavirus peak approaches."
 # wiki = TextBlob(text_doc)
