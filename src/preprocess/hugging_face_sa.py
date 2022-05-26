@@ -6,21 +6,22 @@ class hugFace:
 
     def analyze_sentiment(self, sentences):
         classifier = self.classifier
-        results = []
-        for sentence in sentences:
-            results.append(classifier(sentence)[0])
-
         sst_pos = 0
         sst_neg = 0
-        for sst in results:
-            sent = 1 if sst["label"] == "POSITIVE" else -1   
-            score = sent * float(sst["score"])
+        pos_sentences = 0
+        neg_sentences = 0
+        for sentence in sentences:
+            sst = classifier(sentence)[0] 
+            sent_binary = 1 if sst["label"] == "POSITIVE" else -1   
+            score = sent_binary * float(sst["score"])
             if score > 0:
                 sst_pos += score
+                pos_sentences += 1
             else:
                 sst_neg += score
+                neg_sentences += 1
 
-        return  {"pos": sst_pos, "neg": sst_neg, "num_sentences": len(results)} 
+        return  {"pos": sst_pos, "neg": sst_neg, "pos_sentences": pos_sentences, "neg_sentences": neg_sentences} 
         
 
 
