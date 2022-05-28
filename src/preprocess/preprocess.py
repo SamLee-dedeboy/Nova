@@ -14,8 +14,8 @@ def getRawDataset():
     data = json.load(file)
     return data["data"]["Article"]
 
-def getSingleTopicDataset():
-    file = open("data/single_topic_articles.json")
+def getDataset(relative_path):
+    file = open(relative_path)
     data = json.load(file)
     return data
 
