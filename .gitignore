@@ -30,3 +30,5 @@ coverage
 src/preprocess/data/*
 src/preprocess/__pycache__/
 src/preprocess/mediabias-*.json
+src/preprocess/rel_ned/*
+!src/preprocess/rel_ned/*.py
