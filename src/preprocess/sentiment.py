@@ -9,7 +9,6 @@ def add_sentiment(src_dataset_path, dst_dataset_path, subset=None):
     dataset = preprocess.getDataset(src_dataset_path)
     hugging_face_analyzer =  hugFace()
     articles = dataset if subset == None else dataset[0:subset]
-
     # process sentiment 
     for (ite, article) in enumerate(articles):
         print("ite: {}, id: {}".format(ite, article["id"]))
@@ -27,4 +26,7 @@ def add_sentiment(src_dataset_path, dst_dataset_path, subset=None):
 
 
     # save results
+    print("-------------------------------")
+    print("Sentiemnt Processing Done! Saving....")
+    print("-------------------------------")
     preprocess.dict_to_json(articles, filepath=dst_dataset_path)
