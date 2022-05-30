@@ -37,7 +37,7 @@ def get_max_topic(topic_list, key_name, value_name):
 
 def paragraph_to_sentences(content):
     import re
-    content = re.sub(r'([a-z])\.([A-Z])', r'\1. \2', content)
+    content = re.sub(r'([a-z0-9])\.([A-Z])', r'\1. \2', content)
     return list(nltk.tokenize.sent_tokenize(content))
 
 def article_to_paragraphs(content):
@@ -57,3 +57,11 @@ def dict_to_json(dict, filepath="data/new_dict.json"):
     with open(relative_path, 'w') as fp:
         json.dump(dict, fp, indent=4)
 # sentences = article_to_sentences(dataset[21]["content"])
+# dataset = getDataset("data/processed_articles_rel.json")
+# for article in dataset:
+#     if article["id"] == 2304:
+#         sentences = article_to_sentences(article["content"])
+#         for sentence in sentences:
+#             print("---------------------------")
+#             print(len(sentence.split(" ")))
+#             print(sentence)
