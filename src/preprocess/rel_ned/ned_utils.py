@@ -24,12 +24,18 @@ class REL_NedAnalyzer:
         self.tagger_ngram = Cmns(base_url, wiki_version, n=5)
         self.model = EntityDisambiguation(base_url, wiki_version, config)
     
-    def analyze_entity(self, dataset):
-        dataset = format_dataset(dataset) 
+    def analyze_entity(self, dataset, preprocess_func=None):
+        dataset = format_dataset(dataset, preprocess_func) 
         mentions_dataset, n_mentions = self.mention_detection.find_mentions(dataset, self.tagger_ngram)
+        print("analyze_entity(): find mentions done...")
+        print("analyze_entity(): model predicting...")
         predictions, timing = self.model.predict(mentions_dataset)
+        print("analyze_entity(): model predict done...")
+        print("analyze_entity(): processing results")
         results = process_results(mentions_dataset, predictions, dataset)
+        print("analyze_entity(): process result done")
         doc_entity_dict = {} 
+        print("analyze_entity(): summarizing entities...")
         for doc in results:
             entities = [entity[3] for entity in results[doc]] 
             doc_entity_dict[doc] = list(set(entities))
@@ -38,10 +44,10 @@ class REL_NedAnalyzer:
             #     prediction = entity["prediction"]
         return doc_entity_dict
 
-def format_dataset(dataset):
+def format_dataset(dataset, preprocess_func=None):
     # dataset should have format [article], article = {"id":xxx, "content":xxx}
     processed = {}
     # user does some stuff, which results in the format below.
     for article in dataset:
-        processed[article["id"]] = [article["content"], []]
+        processed[article["id"]] = [article["content"] if preprocess_func == None else preprocess_func(article["content"]), []]
     return processed
