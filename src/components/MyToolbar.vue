@@ -1,27 +1,35 @@
 
 <script>
-import articleData from "../assets/articles_topic.json"
+import articleData from "../preprocess/data/processed_articles_hugFace_1000.json"
+import entity_mentions from "../preprocess/data/candidate_entities.json"
 export default {
     emits: ["graph-dev"],
     data() {
         return {
             articles: articleData,
+            np_list: entity_mentions,
             topic_dict: {},
-            np_list:[]
+            outlet_article_dict: {}
         }
     },
     mounted() {
         for(const article of this.articles) {
-            if(!this.topic_dict[article.class]) {
-                this.topic_dict[article.class] = []
+            // topic
+            if(!this.topic_dict[article.top_level_topic]) {
+                this.topic_dict[article.top_level_topic] = []
             }
-            this.topic_dict[article.class].push(article.id)
-            this.np_list=["Joe Biden", "BLM"]
+            this.topic_dict[article.top_level_topic].push(article.id)
+
+            // outlet
+            if(!this.outlet_article_dict[article.journal]) {
+                this.outlet_article_dict[article.journal] = []
+            }
+            this.outlet_article_dict[article.journal].push(article.id)
         }
     },
     methods: {
         testClicked() {
-            var outlet_set = ["CNN", "Breitbart", "FoxNews", "ABC News", "New York Times", "Washington Post", ]
+            var outlet_set = Object.keys(this.outlet_article_dict)
             // original nodes and edges
             var graph1 = {
                 nodes: [
