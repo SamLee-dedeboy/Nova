@@ -61,7 +61,7 @@ def gen_candidate_entities(filepath="data/rel_entities.json", num_candidate=1000
     file = open(filepath)
     entity_dict = json.load(file)
     sorted_entity_list = sorted(entity_dict.items(), key=lambda item: len(item[1]), reverse=True)
-    candidates = dict(sorted_entity_list[:num_candidate])
+    candidates = dict({"ranked_entity_list": sorted_entity_list[:num_candidate]})
     dict_to_json(candidates, filepath="data/candidate_entities.json")
 
 # gen_candidate_entities()
