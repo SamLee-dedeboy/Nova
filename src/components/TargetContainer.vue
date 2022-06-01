@@ -26,18 +26,27 @@ export default ({
                 } 
                 this.enabled_outlet_set.forEach(outlet => {
                     const articles = this.outlet_article_dict[outlet]
-                    const pos_sst = articles.map(article => article.sentiment.pos).reduce((sum, cur) => sum + cur, 0)
-                    const neg_sst = articles.map(article => article.sentiment.neg).reduce((sum, cur) => sum + cur, 0)
-                    const neu_sst = 0
-                    let node = {
-                        outlet: outlet,
-                        sentiment: pos_sst + neg_sst + neu_sst,
-                        pos_sent: pos_sst,
-                        neg_sent: neg_sst,
-                        neu_sent: neu_sst,
-                        articles: articles 
+                    if(articles.length == 0) {
+                        let node = {
+                            outlet: outlet,
+                            sentiment: 0,
+                            dotted: true
+                        }
+                        graph.nodes.push(node)
+                    } else {
+                        const pos_sst = articles.map(article => article.sentiment.pos).reduce((sum, cur) => sum + cur, 0)
+                        const neg_sst = articles.map(article => article.sentiment.neg).reduce((sum, cur) => sum + cur, 0)
+                        const neu_sst = 0
+                        let node = {
+                            outlet: outlet,
+                            sentiment: pos_sst + neg_sst + neu_sst,
+                            pos_sent: pos_sst,
+                            neg_sent: neg_sst,
+                            neu_sent: neu_sst,
+                            articles: articles 
+                        }
+                        graph.nodes.push(node)
                     }
-                    graph.nodes.push(node)
                 }) 
                 // center node
                 graph.nodes.push({

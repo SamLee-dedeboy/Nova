@@ -33,7 +33,7 @@ export default {
            // return Math.max(...this.graph.nodes.map(node => node.outlet.length))
         },
         article_num_list: function() {
-           return this.graph.nodes.filter(node => !node.isCenter).map(node => node.articles.length)
+           return this.graph.nodes.filter(node => !node.isCenter && !node.dotted).map(node => node.articles.length)
         },
         avg_articles: function() {
            return this.article_num_list.reduce((sum, cur) => sum + cur, 0) / this.article_num_list.length
@@ -55,6 +55,8 @@ export default {
         graph: async function(new_graph, old_graph) {
             this.updateCenterNode()
             this.updateNodes()
+            this.force_layout(d3.selectAll("g.node"), [0, 0, this.canvas_width, this.canvas_height], [this.canvas_width/2, this.canvas_height/2], 1)
+
             if(this.clickedNodeData && new_graph.nodes.length > old_graph.nodes.length)
                 this.handleNodeClick(undefined, this.clickedNodeData)
 
@@ -76,7 +78,6 @@ export default {
             "Washington Post": "WP"
         }
         this.animating_click = false
-
         this.color_neg = d3.scaleSqrt()
             .domain([-1, 0])  
             .range(this.neg_color_range); 
@@ -89,7 +90,6 @@ export default {
         this.updateCenterNode()
         this.updateNodes()
         this.force_layout(d3.selectAll("g.node"), [0, 0, width, height], [width/2, height/2], 1)
-        this.getRadiusBytext("CNN")
         //this.updateEdges()
 
     },
