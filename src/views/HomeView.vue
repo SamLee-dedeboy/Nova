@@ -37,17 +37,19 @@ export default {
       np_list:[],
       selected_topic:"",
       selected_target:[],
-      timeRange:[1,13]
+      timeRange:[1,13],
+      outlet_article_dict: {}
     }
   },
 
   methods: {
-    updateDataset(dataset) {
-      this.dataset = dataset
-      this.outlet_set = dataset.outlet_set
-      this.enabled_outlet_set = dataset.outlet_set
-      this.topic_list = Object.keys(dataset.topic_dict)
-      this.np_list = dataset.np_list
+    updateNpList(np_list) {
+      // this.dataset = dataset
+      // this.outlet_set = dataset.outlet_set
+      // this.enabled_outlet_set = dataset.outlet_set
+      // this.topic_list = Object.keys(dataset.topic_dict)
+      this.np_list = np_list
+      this.outlet_article_dict
     }, 
     updateEnabledOutlet(outlet_set_info) {
       this.enabled_outlet_set = outlet_set_info.filter(outlet => outlet.enabled).map(outlet => outlet.outlet)
@@ -59,10 +61,36 @@ export default {
       this.selected_topic = topic
     },
     updateTarget(target) {
+      const index = this.entity_list.indexOf(target) 
       this.selected_target = [target]
+      const article_list = this.np_list[index][1]
+      // TODO: query data from graphql
+      const dataset = this.$refs.toolbar.getData(target)
+      const topic_dict = {}
+      for(const article of dataset) {
+          // topic
+          if(!topic_dict[article.top_level_topic]) {
+              topic_dict[article.top_level_topic] = []
+          }
+          topic_dict[article.top_level_topic].push(article.id)
+          // outlet
+          if(!this.outlet_article_dict[article.journal]) {
+              this.outlet_article_dict[article.journal] = []
+          }
+          this.outlet_article_dict[article.journal].push(article)
+      }
+      this.outlet_set = Object.keys(this.outlet_article_dict)
+      this.enabled_outlet_set = this.outlet_set
+      this.topic_list = Object.keys(topic_dict)
+      this.dataset = dataset
     },
     handleTimeRangeChanged(new_range) {
       this.timeRange = new_range
+    }
+  },
+  computed: {
+    entity_list: function() {
+      return this.np_list.map(entity_mentions => entity_mentions[0])
     }
   }
 }
@@ -75,7 +103,7 @@ export default {
         <Splitter>
           <SplitterPanel id='target-section' class="flex align-items-center justify-content-center" :size="85"> 
             <TargetContainer
-            :dataset="dataset"
+            :outlet_article_dict="outlet_article_dict"
             :enabled_outlet_set="enabled_outlet_set"
             :targets="selected_target"
             :topic="selected_topic"
@@ -84,10 +112,10 @@ export default {
             </TargetContainer>
           </SplitterPanel>
           <SplitterPanel id='sidebar' class="flex align-items-center justify-content-center" :size="20" :min-size="20">
-            <MyToolbar @graph-dev="updateDataset"  ></MyToolbar>
+            <MyToolbar ref="toolbar" @candidate_updated="updateNpList"  ></MyToolbar>
             <div class="selection_container" style="display:flex">
-              <TopicSelection  v-if="topic_list.length!=0"  :topics="topic_list" @topic-selected="updateTopic" style="flex:0.5"></TopicSelection>
-              <TargetSelection v-if="selected_topic!=''" :targets="np_list" @target-selected="updateTarget"></TargetSelection>
+              <TargetSelection v-if="np_list.length!=0" :targets="entity_list" @target-selected="updateTarget"></TargetSelection>
+              <!-- <TopicSelection  v-if="topic_list.length!=0"  :topics="topic_list" @topic-selected="updateTopic" style="flex:0.5"></TopicSelection> -->
             </div>
             <Filter v-if="selected_target.length!=0" :outlet_set="outlet_set"
             @outlet-filtered="updateEnabledOutlet"
