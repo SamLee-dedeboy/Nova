@@ -31,6 +31,24 @@ export default {
         minimum_radius: function() {
             return 3
            // return Math.max(...this.graph.nodes.map(node => node.outlet.length))
+        },
+        article_num_list: function() {
+           return this.graph.nodes.filter(node => !node.isCenter).map(node => node.articles.length)
+        },
+        avg_articles: function() {
+           return this.article_num_list.reduce((sum, cur) => sum + cur, 0) / this.article_num_list.length
+        },
+        min_articles: function() {
+            return Math.min(...this.article_num_list)
+        },
+        max_articles: function() {
+            return Math.max(...this.article_num_list)
+        },
+        canvas_width: function() {
+            return parseInt(this.canvas.attr("viewBox").split(" ")[2])
+        },
+        canvas_height: function() {
+            return parseInt(this.canvas.attr("viewBox").split(" ")[3])
         }
     },
     watch: {
@@ -65,8 +83,13 @@ export default {
         this.color_pos = d3.scaleSqrt()
             .domain([0, 1])
             .range(this.pos_color_range);
+
+        const width = this.canvas_width
+        const height = this.canvas_height
         this.updateCenterNode()
         this.updateNodes()
+        this.force_layout(d3.selectAll("g.node"), [0, 0, width, height], [width/2, height/2], 1)
+        this.getRadiusBytext("CNN")
         //this.updateEdges()
 
     },
@@ -187,8 +210,8 @@ export default {
                 enter => {
                     var node = enter.append("g")
                     .attr("class", "center")
-                    .attr("cx", function(d) { return d.x; })
-                    .attr("cy", function(d) { return d.y; })
+                    .attr("cx", self.canvas_width/2) 
+                    .attr("cy", self.canvas_height/2)
                     self.applyNodeStyling(node, "center", undefined, "enter center")
                 },
                 update => {
@@ -202,9 +225,8 @@ export default {
             )
             
         },
-        updateNodes(pos_moved=false, clicked_outlet=null, scale_ratio = 1) {
+        updateNodes(pos_moved=false, clicked_outlet=null, scale_ratio = 1, add_edges=true) {
             var svg = this.canvas
-            this.previousData = d3.local();
 
             var self = this
             const nodes = svg.selectAll("g.node").filter(node => node.outlet != clicked_outlet)
@@ -216,8 +238,8 @@ export default {
                 enter => {
                     var node = enter.append("g")
                     .attr("class", "node")
-                    .attr("cx", function(d) { return d.x; })
-                    .attr("cy", function(d) { return d.y; })
+                    .attr("cx", self.canvas_width/2)
+                    .attr("cy", self.canvas_height/2)
                     self.applyNodeStyling(node, "node", undefined, "enter node")
                 },
                 update => {
@@ -246,7 +268,7 @@ export default {
                     .on("end", function(d) { self.addEdges(d3.selectAll("g.node")) })
                 }
             )
-            this.addEdges(svg.selectAll("g.node"))
+            if(add_edges) this.addEdges(svg.selectAll("g.node"))
 
 
             svg.selectAll("g.node")
@@ -306,13 +328,11 @@ export default {
             center_node_pos[center_node.data()[0].text] = new_center
             this.translateAndScale(center_node, center_node_pos, scale_ratio)
         },
-        force_layout(nodes, boundingBox, center, scale_ratio, clicked_outlet) {
+        force_layout(nodes, boundingBox, center, scale_ratio, clicked_outlet=null) {
             const origin = [boundingBox[0], boundingBox[1]]
             const width = boundingBox[2]
             const height = boundingBox[3]
-            const collision_radius = 25
             var self = this
-            
             var simulation = d3.forceSimulation(this.graph.nodes)
                     .alphaMin(0.3)
                     .force("x", d3.forceX().x(function(d) {
@@ -322,20 +342,20 @@ export default {
                     .force("center", d3.forceCenter(center[0], center[1]))
                     .force("charge", d3.forceManyBody())
                     .force("link", d3.forceLink().distance(100).strength(1))
-                    .force('collision', d3.forceCollide().radius(collision_radius))
+                    .force('collision', d3.forceCollide().radius(d => self.getRadiusBytext(d.outlet?d.outlet:d.text)))
                     .on('tick', function() {
                         const center_node = this.nodes().filter(node => node.isCenter)[0]
                         center_node.x = center[0]
                         center_node.y = center[1]
                         this.nodes().forEach(node => {
-                            const bound_x = [origin[0], origin[0]+width - collision_radius]
-                            const bound_y = [origin[1], origin[1]+height - collision_radius]
+                            const bound_x = [origin[0], origin[0]+width - self.getRadiusBytext(node.outlet?node.outlet:node.text)]
+                            const bound_y = [origin[1], origin[1]+height - self.getRadiusBytext(node.outlet?node.outlet:node.text)]
                             if(node.x < bound_x[0]) node.x = bound_x[0]
                             if(node.x > bound_x[1]) node.x = bound_x[1]
                             if(node.y < bound_y[0]) node.y = bound_y[0]
                             if(node.y > bound_y[1]) node.y = bound_y[1]
                         })
-                        self.updateNodes(true, clicked_outlet, scale_ratio)
+                        self.updateNodes(true, clicked_outlet, scale_ratio, false)
                         self.updateCenterNode(true, scale_ratio)
                         nodes.attr("transform-origin", function(d) {
                             const container = d3.select(this)
@@ -346,11 +366,9 @@ export default {
                             return (container.attr("cx") || container.attr("x")) + " " + (container.attr("cy") || container.attr("y"))
                         }).attr("transform", () => "scale(" + scale_ratio + ")")
                     })
-                    // .on("end", function() {
-                    //     console.log("end", self.graph.nodes)
-                    //     self.updateNodes(true)
-                    //     self.updateCenterNode(true)
-                    // })
+                    .on("end", function() {
+                        self.addEdges(d3.selectAll("g.node"))
+                    })
                     //     const outletToPosDict = Object.assign({}, ...this.nodes().map((node) => ({[node.outlet||node.text]: [node.x, node.y]})));
                     //     self.translateAndScale(nodes, outletToPosDict, scale_ratio)
                     //     self.translateAndScale(d3.select("g.center"), outletToPosDict, scale_ratio, () => self.addEdges(d3.selectAll("g.node")))
@@ -564,8 +582,16 @@ export default {
           
             
         },  
+        getRadiusBytext(label) {
+            const target = d3.selectAll("text").filter(d => (d.outlet?d.outlet:d.text) == label)
+            return parseFloat(d3.select(target.node().parentNode).attr("r"))+50
+        },
         articlesToRadius(node, d, r=0) {
-            return r>0?r:((r<0?r:1)*d3.select(node).select("text").node().getComputedTextLength()/1.5 + (d.dotted?5:(d.articles?d.articles.length+5:5)));
+            return r>0?r:((r<0?r:1)*d3.select(node).select("text").node().getComputedTextLength()/1.5 + (d.dotted?5:(d.articles?this.normalizedLength(d.articles.length):50)));
+        },
+
+        normalizedLength(length) {
+            return ((length - this.min_articles)/this.max_articles) * 60 + 10 
         }
     }
 }
