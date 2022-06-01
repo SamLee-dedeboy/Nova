@@ -10,7 +10,7 @@ export default {
     },
     computed: {
         total_articles: function() {
-            return this.graph.nodes.reduce((sum, node) => sum + (node.dotted? 0:node.articles.length), 0)
+            return this.graph.nodes.filter(node => node.articles).reduce((sum, node) => sum + node.articles.length, 0)
         },
         center_node: function() {
             const center_node = this.graph.nodes.filter(node => node.isCenter)[0]
@@ -140,18 +140,26 @@ export default {
             
             const clicked_node_sentiment = clickedNode.data()[0].sentiment > 0
             //other nodes
-            const shrink_ratio = 0.5
-            const center_x = clicked_node_sentiment? 100:700
-            const center_y = 100
+            const shrink_ratio = 0.45
             const origin_x = clicked_node_sentiment? 0:600
             const origin_y = 0
             const shrinked_width = 180
-            const shrinked_height = 150
+            const shrinked_height = 120
+            const center_x = origin_x + shrinked_width/2
+            const center_y = origin_y + shrinked_height/2
             const otherNodes = d3.selectAll("g.node").filter((d) => d.outlet != clickedNode.data()[0].outlet)                
             //self.moveNodesToCorner(otherNodes, [200, 150], [600, 0], [center_x, center_y], shrink_ratio)
             self.force_layout(otherNodes, [origin_x, origin_y, shrinked_width, shrinked_height], [center_x, center_y], shrink_ratio, clickedNode.data()[0].outlet)
-            
-            //self.translateAndScale(otherNodes, [new_x, new_y], shrink_ratio)
+
+            // draw bounding box for dev
+            // svg.append("rect")
+            // .attr("x", origin_x) 
+            // .attr("y", origin_y)
+            // .attr("width", shrinked_width)
+            // .attr("height", shrinked_height)
+            // .attr("fill", "none")
+            // .attr("stroke-width", 5)
+            // .attr("stroke", "black")
 
             const center_node = d3.select("g.center")    
             const center_node_pos = {}
@@ -333,8 +341,10 @@ export default {
             const width = boundingBox[2]
             const height = boundingBox[3]
             var self = this
+            var tick_num = 0
             var simulation = d3.forceSimulation(this.graph.nodes)
-                    .alphaMin(0.3)
+                    .alphaMin(0.1)
+                    // .alphaMin(0.1)
                     .force("x", d3.forceX().x(function(d) {
                         return d.dotted?center[0]:((d.sentiment > 0)? center[0]+width/3: center[0]-width/3)
                     }))
@@ -342,19 +352,21 @@ export default {
                     .force("center", d3.forceCenter(center[0], center[1]))
                     .force("charge", d3.forceManyBody())
                     .force("link", d3.forceLink().distance(100).strength(1))
-                    .force('collision', d3.forceCollide().radius(d => self.getRadiusBytext(d.outlet?d.outlet:d.text)))
+                    .force('collision', d3.forceCollide().radius(d => self.getRadiusBytext(d.outlet?d.outlet:d.text)*scale_ratio))
                     .on('tick', function() {
+                        tick_num += 1
                         const center_node = this.nodes().filter(node => node.isCenter)[0]
                         center_node.x = center[0]
                         center_node.y = center[1]
-                        this.nodes().forEach(node => {
-                            const bound_x = [origin[0], origin[0]+width - self.getRadiusBytext(node.outlet?node.outlet:node.text)]
-                            const bound_y = [origin[1], origin[1]+height - self.getRadiusBytext(node.outlet?node.outlet:node.text)]
-                            if(node.x < bound_x[0]) node.x = bound_x[0]
-                            if(node.x > bound_x[1]) node.x = bound_x[1]
-                            if(node.y < bound_y[0]) node.y = bound_y[0]
-                            if(node.y > bound_y[1]) node.y = bound_y[1]
-                        })
+                        if(tick_num > 95) {
+                            this.nodes().forEach(node => {
+                                const radius = self.getRadiusBytext(node.outlet?node.outlet:node.text)*scale_ratio 
+                                const bound_x = [origin[0] + radius, origin[0] + width - radius]
+                                const bound_y = [origin[1] + radius, origin[1] + height - radius]
+                                node.x = Math.max(bound_x[0], Math.min(bound_x[1], node.x))
+                                node.y = Math.max(bound_y[0], Math.min(bound_y[1], node.y))
+                            })
+                        }
                         self.updateNodes(true, clicked_outlet, scale_ratio, false)
                         self.updateCenterNode(true, scale_ratio)
                         nodes.attr("transform-origin", function(d) {
@@ -369,17 +381,6 @@ export default {
                     .on("end", function() {
                         self.addEdges(d3.selectAll("g.node"))
                     })
-                    //     const outletToPosDict = Object.assign({}, ...this.nodes().map((node) => ({[node.outlet||node.text]: [node.x, node.y]})));
-                    //     self.translateAndScale(nodes, outletToPosDict, scale_ratio)
-                    //     self.translateAndScale(d3.select("g.center"), outletToPosDict, scale_ratio, () => self.addEdges(d3.selectAll("g.node")))
-                    //     console.log(outletToPosDict)
-                    //     self.canvas.append("circle")
-                    //     .attr("cx", 700)
-                    //     .attr("cy", 100)
-                    //     .attr("r", 10)
-                    //     .attr("fill", "black")
-
-                    // })
             
         },
         
@@ -441,6 +442,7 @@ export default {
 
             // set outer rings to represent sentiments
             // no outer rings if node is dotted
+            const animate_duration = 1000
             const outer_ring = 
                 ((node.filter(function(d) { return !d.dotted}).select("g.outer_ring").node())
                 ? node.select("g.outer_ring")
@@ -457,7 +459,7 @@ export default {
                     return "translate(" + cx + "," + cy + ")"
                 })
                 .transition()
-                .duration(1000)
+                .duration(animate_duration)
                 .tween('ring-effect', function(d) {
                     var percentage = parseFloat(d.pos_sent)/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
                     //var start_percentage = parseFloat(d.pos_sent)/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
@@ -494,7 +496,7 @@ export default {
                     return "translate(" + cx + "," + cy + ")"
                 })     
                 .transition()
-                .duration(1000)
+                .duration(animate_duration)
                 .tween('ring-effect', function(d) {
                     var percentage = parseFloat(Math.abs(d.neg_sent))/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
                     var start_percentage = parseFloat(d.pos_sent)/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
@@ -528,7 +530,7 @@ export default {
                     return "translate(" + cx + "," + cy + ")"
                 })     
                 .transition()
-                .duration(1000)
+                .duration(animate_duration)
                 .tween('ring-effect', function(d) {
                     var percentage = parseFloat(d.neu_sent)/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
                     var start_percentage = parseFloat(d.pos_sent + Math.abs(d.neg_sent))/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
@@ -584,12 +586,14 @@ export default {
         },  
         getRadiusBytext(label) {
             const target = d3.selectAll("text").filter(d => (d.outlet?d.outlet:d.text) == label)
-            return parseFloat(d3.select(target.node().parentNode).attr("r"))+50
+            return parseFloat(d3.select(target.node().parentNode).attr("r"))
         },
         articlesToRadius(node, d, r=0) {
-            return r>0?r:((r<0?r:1)*d3.select(node).select("text").node().getComputedTextLength()/1.5 + (d.dotted?5:(d.articles?this.normalizedLength(d.articles.length):50)));
+            return r>0?r:((r<0?r:1)*d3.select(node).select("text").node().getComputedTextLength()/1.5 + (d.dotted?5:(d.articles?this.normalizedLength(d.articles.length):this.centerNodeRadius())));
         },
-
+        centerNodeRadius() {
+            return this.normalizedLength(this.total_articles)/6
+        },
         normalizedLength(length) {
             return ((length - this.min_articles)/this.max_articles) * 60 + 10 
         }
