@@ -1,15 +1,14 @@
 
 <script>
-import articleData from "../preprocess/data/processed_articles_hugFace_1000.json"
-import entity_mentions from "../preprocess/data/candidate_entities.json"
 export default {
     emits: ["candidate_updated"],
-    data() {
-        return {
-            articles: articleData,
-            np_list: entity_mentions.ranked_entity_list,
-            // topic_dict: {},
-            // outlet_article_dict: {}
+    inject: ['articles', 'entity_mentions'],
+    computed: {
+        article_dict: function() {
+            return this.articles.reduce(function(dict, article) { dict[article["id"]] = article; return dict; }, {})
+        },
+        np_article_dict: function() {
+            return this.entity_mentions.reduce(function(p, c) { p[c[0]] = c[1]; return p; }, {});
         }
     },
     mounted() {
@@ -29,9 +28,12 @@ export default {
         }
     },
     methods: {
-        getData() {
-            return this.articles
+        getData(target_entity) {
+            const article_id_list = this.np_article_dict[target_entity] 
+            var self = this
+            return article_id_list.reduce(function(article_list, id) { article_list.push(self.article_dict[id]); return article_list; }, [])
         },
+        
         testClicked() {
             // var outlet_set = Object.keys(this.outlet_article_dict)
             // // original nodes and edges
@@ -78,7 +80,7 @@ export default {
             //     topic_dict: this.topic_dict,
             //     np_list: this.np_list
             // }
-            this.$emit("candidate_updated", this.np_list);
+            this.$emit("candidate_updated", this.entity_mentions);
         }
       }
     }

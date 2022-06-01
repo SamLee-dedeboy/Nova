@@ -11,6 +11,9 @@ import "primevue/resources/themes/bootstrap4-light-blue/theme.css"
 import "primevue/resources/primevue.min.css"
 import "primeicons/primeicons.css"
 
+import articleData from "./preprocess/data/processed_articles_hugFace.json"
+import entity_mentions from "./preprocess/data/candidate_entities.json"
+
 const app = createApp(App);
 const emitter = mitt();
 app.config.globalProperties.emitter = emitter;
@@ -18,6 +21,7 @@ app.config.globalProperties.emitter = emitter;
 app.use(router);
 app.use(PrimeVue, {ripple:true})
 app.component('Button', Button);
-
+app.provide('articles', articleData)
+app.provide('entity_mentions', entity_mentions.ranked_entity_list)
 
 app.mount("#app");
