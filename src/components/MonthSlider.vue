@@ -3,17 +3,20 @@ import Slider from "primevue/slider"
 import TimeAxes from "./TimeAxes.vue"
 import * as d3 from "d3"
 export default {
-    emits: ["timerange-changed"],
-    props: ["selected_range"],
+    props: ["selectedRange"],
+    model: {
+        prop: "selectedRange",
+        event: "timerange-changed"
+    },
     components: {
         Slider,
         TimeAxes
     },
-    data() {
-        return {
-            timeRange: [1, 13]
-        }
-    },
+    // data() {
+    //     return {
+    //         timeRange: [1, 13]
+    //     }
+    // },
     mounted() {
         let scale = d3.scaleLinear().domain([1, 13]).range([0, 200]);
         let axis = d3.axisBottom(scale);
@@ -22,7 +25,7 @@ export default {
     },
     methods: {
         handleChange() {
-            this.$emit("timerange-changed", this.timeRange) 
+            this.$emit("timerange-changed", this.selectedRange) 
         }
     }
 }
@@ -30,7 +33,7 @@ export default {
 </script>
 <template>
     <span class="slider-header">Date Range</span>
-    <Slider v-model="timeRange" :range="true" :step="1" :min="1" :max="13"
+    <Slider v-model="selectedRange" :range="true" :step="1" :min="1" :max="13"
     @change="handleChange"></Slider>
     <svg  viewBox="0 0 200 30" class="slideraxes" overflow="visible" style="position:absolute;left:20px;right:20px"></svg>
 </template>

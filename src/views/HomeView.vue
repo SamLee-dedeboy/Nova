@@ -41,7 +41,6 @@ export default {
       outlet_article_dict: {}
     }
   },
-
   methods: {
     updateNpList(np_list) {
       // this.dataset = dataset
@@ -66,6 +65,13 @@ export default {
       const article_list = this.np_list[index][1]
       // TODO: query data from graphql
       const dataset = this.$refs.toolbar.getData(target)
+      
+      // sort by date and update time range
+      dataset.sort((a1, a2) => Date.parse(a1.timestamp) > Date.parse(a2.timestamp))
+      const startMonth = parseInt(dataset[0].timestamp.split('-')[1])
+      const endMonth = parseInt(dataset[dataset.length-1].timestamp.split('-')[1])
+      this.timeRange = [startMonth, endMonth+1]
+      // group by topic and outlet
       const topic_dict = {}
       for(const article of dataset) {
           // topic
@@ -79,6 +85,7 @@ export default {
           }
           this.outlet_article_dict[article.journal].push(article)
       }
+      
       this.outlet_set = Object.keys(this.outlet_article_dict)
       this.enabled_outlet_set = this.outlet_set
       this.topic_list = Object.keys(topic_dict)
@@ -120,7 +127,8 @@ export default {
             <Filter v-if="selected_target.length!=0" :outlet_set="outlet_set"
             @outlet-filtered="updateEnabledOutlet"
             ></Filter>
-          <MonthSlider  @timerange-changed="handleTimeRangeChanged" ></MonthSlider>
+          <MonthSlider v-model:selectedRange="timeRange" ></MonthSlider>
+
           </SplitterPanel>
         </Splitter>
       </SplitterPanel>
