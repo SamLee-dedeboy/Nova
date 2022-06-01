@@ -24,6 +24,12 @@ export default {
 },
   data() {
     return {
+      original_dataset: {
+        graphList:[],
+        outlet_set:[],
+        topic_dict:[],
+        np_list:[]
+      },
       dataset: {
         graphList:[],
         outlet_set:[],
@@ -65,14 +71,21 @@ export default {
       const article_list = this.np_list[index][1]
       // TODO: query data from graphql
       const dataset = this.$refs.toolbar.getData(target)
-      
+      this.original_dataset = dataset
       // sort by date and update time range
       dataset.sort((a1, a2) => Date.parse(a1.timestamp) > Date.parse(a2.timestamp))
       const startMonth = parseInt(dataset[0].timestamp.split('-')[1])
       const endMonth = parseInt(dataset[dataset.length-1].timestamp.split('-')[1])
       this.timeRange = [startMonth, endMonth+1]
+      this.updateDicts(dataset)
+    },
+    updateDicts(dataset) {
       // group by topic and outlet
+      // clear
       const topic_dict = {}
+      for(let outlet of Object.keys(this.outlet_article_dict)) {
+        this.outlet_article_dict[outlet] = []
+      }
       for(const article of dataset) {
           // topic
           if(!topic_dict[article.top_level_topic]) {
@@ -85,20 +98,20 @@ export default {
           }
           this.outlet_article_dict[article.journal].push(article)
       }
-      
       this.outlet_set = Object.keys(this.outlet_article_dict)
       this.enabled_outlet_set = this.outlet_set
       this.topic_list = Object.keys(topic_dict)
       this.dataset = dataset
-    },
-    handleTimeRangeChanged(new_range) {
-      this.timeRange = new_range
-      console.log(new_range)
     }
   },
   watch: {
-    timeRange: function(new_range) {
-      console.log(new_range)
+    timeRange: function(new_range, old_range) {
+      if(new_range[0] != old_range[0] || new_range[1] != old_range[1]) {
+        const startIndex = this.original_dataset.findIndex(article => parseInt(article.timestamp.split('-')[1]) >= new_range[0])
+        const endIndex = this.original_dataset.findIndex(article => parseInt(article.timestamp.split('-')[1]) > new_range[1]-1)
+        const subset = this.original_dataset.slice(startIndex, endIndex)
+        this.updateDicts(subset)
+      }
     }
   },
   computed: {
