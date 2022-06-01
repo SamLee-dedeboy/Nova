@@ -93,6 +93,12 @@ export default {
     },
     handleTimeRangeChanged(new_range) {
       this.timeRange = new_range
+      console.log(new_range)
+    }
+  },
+  watch: {
+    timeRange: function(new_range) {
+      console.log(new_range)
     }
   },
   computed: {

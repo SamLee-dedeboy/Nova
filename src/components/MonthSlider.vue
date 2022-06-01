@@ -3,11 +3,8 @@ import Slider from "primevue/slider"
 import TimeAxes from "./TimeAxes.vue"
 import * as d3 from "d3"
 export default {
+    emits:['update:selectedRange'],
     props: ["selectedRange"],
-    model: {
-        prop: "selectedRange",
-        event: "timerange-changed"
-    },
     components: {
         Slider,
         TimeAxes
@@ -25,7 +22,7 @@ export default {
     },
     methods: {
         handleChange() {
-            this.$emit("timerange-changed", this.selectedRange) 
+            this.$emit("update:selectedRange", this.selectedRange) 
         }
     }
 }
