@@ -12,7 +12,7 @@ export default defineComponent({
             items:[
                 {
                     label: "Target",
-                    items: [[{items:this.targets.map(target => Object({label: target}))}]]
+                    items: [[{items:this.targets.slice(0,10).map(target => Object({label: target}))}]]
                 }
             ]
         }
