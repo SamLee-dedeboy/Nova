@@ -47,7 +47,7 @@ export default {
            // return Math.max(...this.graph.nodes.map(node => node.outlet.length))
         },
         article_num_list: function() {
-           return this.graph.nodes.filter(node => !node.isCenter && !node.dotted).map(node => node.articles.length)
+           return this.graph.nodes.filter(node => !node.isCenter ).map(node => node.dotted? 0:node.articles.length)
         },
         avg_articles: function() {
            return this.article_num_list.reduce((sum, cur) => sum + cur, 0) / this.article_num_list.length
@@ -237,12 +237,12 @@ export default {
                     self.applyNodeStyling(node, "center", undefined, "enter center")
                 },
                 update => {
+                    var node = svg.selectAll("g.center")
                     if(pos_moved) {
-                        var node = svg.selectAll("g.center")
-                        .attr("cx", function(d) { return d.x; })
+                        node.attr("cx", function(d) { return d.x; })
                         .attr("cy", function(d) { return d.y; })
-                        self.applyNodeStyling(node, "center", undefined, "update center")
                     }
+                    self.applyNodeStyling(node, "center", undefined, "update center")
                 }
             )
             
@@ -265,12 +265,12 @@ export default {
                     self.applyNodeStyling(node, "node", undefined, "enter node")
                 },
                 update => {
+                    var node = svg.selectAll("g.node").filter(node => node.outlet != clicked_outlet)
                     if(pos_moved) {
-                        var node = svg.selectAll("g.node").filter(node => node.outlet != clicked_outlet)
                         node.attr("cx", function(d) {   return d.x; })
                         .attr("cy", function(d) { return d.y; })
-                        self.applyNodeStyling(node, "node", undefined, "update node")
                     }
+                    self.applyNodeStyling(node, "node", undefined, "update node")
                     //self.addEdges(update)
                 },
                 exit => {
@@ -361,9 +361,9 @@ export default {
                     // .alphaMin(0.1)
                     .force("x", d3.forceX().x(function(d) {
                         return d.dotted?center[0]:((d.sentiment > 0)? center[0]+width/3: center[0]-width/3)
-                    }).strength(1))
-                    .force("y", d3.forceY(height / 3).strength(0.8))
-                    .force("center", d3.forceCenter(center[0], center[1]).strength(0.05))
+                    }).strength(0.1))
+                    .force("y", d3.forceY(center[1]).strength(0.8))
+                    .force("center", d3.forceCenter(center[0], center[1]).strength(0.001))
                     .force("charge", d3.forceManyBody().strength(-100))
                     .force("link", d3.forceLink(self.graph_links).strength(0.0001))
                     .force('collision', d3.forceCollide().radius(d => self.getRadiusBytext(d.outlet?d.outlet:d.text)*scale_ratio))
@@ -379,6 +379,9 @@ export default {
                                 const bound_y = [origin[1] + radius, origin[1] + height - radius]
                                 node.x = Math.max(bound_x[0], Math.min(bound_x[1], node.x))
                                 node.y = Math.max(bound_y[0], Math.min(bound_y[1], node.y))
+                                if(node.dotted) {
+                                    node.y = bound_y[0] + radius
+                                }
                             })
                         }
                         self.updateNodes(true, clicked_outlet, scale_ratio, false)
@@ -458,7 +461,7 @@ export default {
             // no outer rings if node is dotted
             const animate_duration = 1000
             const outer_ring = 
-                ((node.filter(function(d) { return !d.dotted}).select("g.outer_ring").node())
+                ((node.select("g.outer_ring").node())
                 ? node.select("g.outer_ring")
                 : node.append("g").attr("class", "outer_ring"))
             // positive ring
@@ -609,7 +612,7 @@ export default {
             return this.normalizedLength(this.total_articles)/6
         },
         normalizedLength(length) {
-            return ((length - this.min_articles)/this.max_articles) * 60 + 10 
+            return ((length - this.min_articles)/(this.max_articles+1)) * 60 + 10 
         }
     }
 }

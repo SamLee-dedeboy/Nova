@@ -81,7 +81,7 @@ export default ({
 <template>
 <TabView>
     <TabPanel v-for="(target, index) in targets" :key="target" :header="topic">
-            <Graph  
+            <Graph 
             :graph="graph_dict[target]"
             :graph_index="index"
             :id="`graph-${index}`"
