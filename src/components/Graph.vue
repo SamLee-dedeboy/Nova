@@ -20,6 +20,20 @@ export default {
             //console.log(center_node)
             return center_node
         },
+        graph_links: function() {
+            const center_node_index = this.graph.nodes.findIndex(node => node.isCenter) 
+            const links = []
+            this.graph.nodes.forEach((node, index) => {
+                if(index != center_node_index) {
+                    const edge = {
+                        "source": index,
+                        "target": center_node_index
+                    }
+                    links.push(edge)
+                }
+            })
+            return links
+        },
         outlet_set: function() {
             return this.graph.nodes.map(node => node.outlet)
         },
@@ -233,7 +247,7 @@ export default {
             )
             
         },
-        updateNodes(pos_moved=false, clicked_outlet=null, scale_ratio = 1, add_edges=true) {
+        updateNodes(pos_moved=false, clicked_outlet=null, scale_ratio = 1, add_edges=false) {
             var svg = this.canvas
 
             var self = this
@@ -347,18 +361,18 @@ export default {
                     // .alphaMin(0.1)
                     .force("x", d3.forceX().x(function(d) {
                         return d.dotted?center[0]:((d.sentiment > 0)? center[0]+width/3: center[0]-width/3)
-                    }))
-                    .force("y", d3.forceY(height / 4).strength(.08))
-                    .force("center", d3.forceCenter(center[0], center[1]))
-                    .force("charge", d3.forceManyBody())
-                    .force("link", d3.forceLink().distance(100).strength(1))
+                    }).strength(1))
+                    .force("y", d3.forceY(height / 3).strength(0.8))
+                    .force("center", d3.forceCenter(center[0], center[1]).strength(0.05))
+                    .force("charge", d3.forceManyBody().strength(-100))
+                    .force("link", d3.forceLink(self.graph_links).strength(0.0001))
                     .force('collision', d3.forceCollide().radius(d => self.getRadiusBytext(d.outlet?d.outlet:d.text)*scale_ratio))
                     .on('tick', function() {
                         tick_num += 1
                         const center_node = this.nodes().filter(node => node.isCenter)[0]
                         center_node.x = center[0]
                         center_node.y = center[1]
-                        if(tick_num > 95) {
+                        if(true || tick_num > 95) {
                             this.nodes().forEach(node => {
                                 const radius = self.getRadiusBytext(node.outlet?node.outlet:node.text)*scale_ratio 
                                 const bound_x = [origin[0] + radius, origin[0] + width - radius]
