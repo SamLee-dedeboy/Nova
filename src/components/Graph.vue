@@ -69,7 +69,7 @@ export default {
         graph: async function(new_graph, old_graph) {
             this.updateCenterNode()
             this.updateNodes()
-            this.force_layout(d3.selectAll("g.node"), [0, 0, this.canvas_width, this.canvas_height], [this.canvas_width/2, this.canvas_height/2], 1)
+            this.force_layout(d3.selectAll("g.outlet"), [0, 0, this.canvas_width, this.canvas_height], [this.canvas_width/2, this.canvas_height/2], 1)
 
             if(this.clickedNodeData && new_graph.nodes.length > old_graph.nodes.length)
                 this.handleNodeClick(undefined, this.clickedNodeData)
@@ -98,12 +98,30 @@ export default {
         this.color_pos = d3.scaleSqrt()
             .domain([0, 1])
             .range(this.pos_color_range);
-
+        // tooltip
+        this.tooltip = d3.select(".graphContainer").append("div")
+        .style("opacity", 0)
+        .style("position", "absolute")
+        .attr("class", "tooltip")
+        .style("background-color", "white")
+        .style("border", "solid")
+        .style("border-width", "2px")
+        .style("border-radius", "5px")
+        .style("padding", "5px")
+        .style("pointer-events", "none")
+        .html("tooltip")
+        // this.tooltip = this.tooltipContainer.append("text")
+        // .style("opacity", 0)
+        // .attr("class", "tooltip")
+        // .attr("text-anchor", "middle")
+        // .attr("font-size","small")
+        // .attr("dominant-baseline", "central")
+        // .text("tooltip")
         const width = this.canvas_width
         const height = this.canvas_height
         this.updateCenterNode()
         this.updateNodes()
-        this.force_layout(d3.selectAll("g.node"), [0, 0, width, height], [width/2, height/2], 1)
+        this.force_layout(d3.selectAll("g.outlet"), [0, 0, width, height], [width/2, height/2], 1)
         //this.updateEdges()
 
     },
@@ -119,7 +137,7 @@ export default {
             // clicked node
             const expanded_r = 0.49*height
             //const expanded_r = 0.2*height
-            const clickedNode = d3.selectAll("g.node").filter(node => node.outlet == d.outlet)
+            const clickedNode = d3.selectAll("g.outlet").filter(node => node.outlet == d.outlet)
             clickedNode.select("g.outer_ring").remove()
             svg.selectAll("line.graph_edge").filter(line => d3.select(line).data()[0].outlet == clickedNode.data()[0].outlet).remove()
             
@@ -147,7 +165,7 @@ export default {
             .attr("transform", "scale(1)")
             .on("end", function() {
                 self.applyNodeStyling(clickedNode, "node", expanded_r, "on click")
-                self.addEdges(d3.selectAll("g.node"))
+                self.addEdges(d3.selectAll("g.outlet"))
                 self.animating_click = false
             })
             // update edges
@@ -161,7 +179,7 @@ export default {
             const shrinked_height = 120
             const center_x = origin_x + shrinked_width/2
             const center_y = origin_y + shrinked_height/2
-            const otherNodes = d3.selectAll("g.node").filter((d) => d.outlet != clickedNode.data()[0].outlet)                
+            const otherNodes = d3.selectAll("g.outlet").filter((d) => d.outlet != clickedNode.data()[0].outlet)                
             //self.moveNodesToCorner(otherNodes, [200, 150], [600, 0], [center_x, center_y], shrink_ratio)
             self.force_layout(otherNodes, [origin_x, origin_y, shrinked_width, shrinked_height], [center_x, center_y], shrink_ratio, clickedNode.data()[0].outlet)
 
@@ -231,7 +249,7 @@ export default {
             .join(
                 enter => {
                     var node = enter.append("g")
-                    .attr("class", "center")
+                    .attr("class", "node center")
                     .attr("cx", self.canvas_width/2) 
                     .attr("cy", self.canvas_height/2)
                     self.applyNodeStyling(node, "center", undefined, "enter center")
@@ -251,7 +269,7 @@ export default {
             var svg = this.canvas
 
             var self = this
-            const nodes = svg.selectAll("g.node").filter(node => node.outlet != clicked_outlet)
+            const nodes = svg.selectAll("g.outlet").filter(node => node.outlet != clicked_outlet)
 
             const filtered_nodes = this.graph.nodes.filter(node => !node.isCenter && node.outlet != clicked_outlet)
             // create g for outlet nodes and bind data
@@ -259,13 +277,13 @@ export default {
             .join(
                 enter => {
                     var node = enter.append("g")
-                    .attr("class", "node")
+                    .attr("class", "node outlet")
                     .attr("cx", self.canvas_width/2)
                     .attr("cy", self.canvas_height/2)
                     self.applyNodeStyling(node, "node", undefined, "enter node")
                 },
                 update => {
-                    var node = svg.selectAll("g.node").filter(node => node.outlet != clicked_outlet)
+                    var node = svg.selectAll("g.outlet").filter(node => node.outlet != clicked_outlet)
                     if(pos_moved) {
                         node.attr("cx", function(d) {   return d.x; })
                         .attr("cy", function(d) { return d.y; })
@@ -287,16 +305,30 @@ export default {
                     .remove()
                     
                     exit.transition().delay(duration).remove()
-                    .on("end", function(d) { self.addEdges(d3.selectAll("g.node")) })
+                    .on("end", function(d) { self.addEdges(d3.selectAll("g.outlet")) })
                 }
             )
-            if(add_edges) this.addEdges(svg.selectAll("g.node"))
-
+            if(add_edges) this.addEdges(svg.selectAll("g.outlet"))
 
             svg.selectAll("g.node")
             .style("cursor", "pointer")
+            .on("mousemove", function(e) {
+                const node_data = d3.select(this).data()[0]
+                const tooltipText = 
+                "outlet: " + (node_data.outlet || node_data.text) + "<br>" +
+                "positive: " + parseFloat(node_data.pos_sent).toFixed(2) + "<br>" + 
+                "negative: " + parseFloat(node_data.neg_sent).toFixed(2) + "<br>" +
+                "neutral: " +  parseFloat(node_data.neu_sent).toFixed(2 )+ "<br>" +
+                "#articles: " + (node_data.articles?.length || self.total_articles) + "<br>" 
+
+                self.tooltip.html(tooltipText)
+                .style("left", e.offsetX + 15 + "px")
+                .style("top", e.offsetY - 5 + "px")
+            })
             .on("mouseover", function(d) {
                 if(self.animating_click) return
+                self.ite+=1
+                
                 const container = d3.select(this)
                 container.select("circle.expand")
                 .transition()
@@ -306,6 +338,7 @@ export default {
                 container.selectAll("circle")
                 .style("filter", "brightness(90%)")
 
+                self.tooltip.style("opacity", 1)
             })
             .on("mouseout", function(d) {
                 if(self.animating_click) return
@@ -318,6 +351,8 @@ export default {
 
                 container.selectAll("circle")
                 .style("filter", "brightness(100%)")
+
+                self.tooltip.style("opacity", 0)
             })
             .on("click", this.handleNodeClick)
           
@@ -396,7 +431,7 @@ export default {
                         }).attr("transform", () => "scale(" + scale_ratio + ")")
                     })
                     .on("end", function() {
-                        self.addEdges(d3.selectAll("g.node"))
+                        self.addEdges(d3.selectAll("g.outlet"))
                     })
             
         },
@@ -412,9 +447,9 @@ export default {
             var self = this
             // add circles for node
             const innerCircle = 
-            (node.selectAll("circle." + class_name).node()
-            ? node.selectAll("circle." + class_name)
-            : node.append("circle").attr("class", class_name))
+            (node.selectAll("circle.node").node()
+            ? node.selectAll("circle.node")
+            : node.append("circle").attr("class", "node"))
             innerCircle.attr("cx", function(d) { return d3.select(this.parentNode).attr('cx') })
                 .attr("cy", function(d) { return d3.select(this.parentNode).attr('cy') })
                 .attr("opacity", 0)
@@ -440,7 +475,7 @@ export default {
             })
             //return 
 
-            node.selectAll("circle." + class_name)
+            node.selectAll("circle.node")
                 .attr("r", function(d) { 
                     return d3.select(this.parentNode).attr("r")
                 })
@@ -602,11 +637,11 @@ export default {
             
         },  
         getRadiusBytext(label) {
-            const target = d3.selectAll("text").filter(d => (d.outlet?d.outlet:d.text) == label)
+            const target = d3.selectAll("text.node_text").filter(d => (d.outlet?d.outlet:d.text) == label)
             return parseFloat(d3.select(target.node().parentNode).attr("r"))
         },
         articlesToRadius(node, d, r=0) {
-            return r>0?r:((r<0?r:1)*d3.select(node).select("text").node().getComputedTextLength()/1.5 + (d.dotted?5:(d.articles?this.normalizedLength(d.articles.length):this.centerNodeRadius())));
+            return r>0?r:((r<0?r:1)*d3.select(node).select("text.node_text").node().getComputedTextLength()/1.5 + (d.dotted?5:(d.articles?this.normalizedLength(d.articles.length):this.centerNodeRadius())));
         },
         centerNodeRadius() {
             return this.normalizedLength(this.total_articles)/6
@@ -622,14 +657,21 @@ export default {
 
 </script>
 <template>
-<svg  class="graph" viewBox="0 0 800 600" :id="id">
-
-</svg>
+<div class="graphContainer">
+    <svg  class="graph" viewBox="0 0 800 600" :id="id">
+    </svg>
+</div>
 </template>
 
 <style scoped>
-.class {
+/* .class {
     width: 100%;
-    height: 100%
+    height: 100%;
+} */
+.graph {
+   display: inline-block; 
+}
+.graphContainer {
+    overflow: auto
 }
 </style>
