@@ -70,7 +70,6 @@ export default {
             this.updateCenterNode()
             this.updateNodes()
             this.force_layout(d3.selectAll("g.outlet"), [0, 0, this.canvas_width, this.canvas_height], [this.canvas_width/2, this.canvas_height/2], 1)
-
             if(this.clickedNodeData && new_graph.nodes.length > old_graph.nodes.length)
                 this.handleNodeClick(undefined, this.clickedNodeData)
 
@@ -129,6 +128,7 @@ export default {
     methods: {
         // TODO
         handleNodeClick(e, d) {
+            console.log(d)
             var self = this
             var svg = this.canvas
             const width = parseInt(this.canvas.attr("viewBox").split(" ")[2])
@@ -354,7 +354,8 @@ export default {
 
                 self.tooltip.style("opacity", 0)
             })
-            .on("click", this.handleNodeClick)
+            svg.selectAll("g.outlet").on("click", this.handleNodeClick)
+
           
         },
         moveNodesToCorner(nodes, boundingBox, new_origin, new_center, scale_ratio) {
