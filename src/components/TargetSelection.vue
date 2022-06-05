@@ -1,20 +1,52 @@
 <script>
 import { defineComponent } from '@vue/composition-api'
 import MegaMenu from 'primevue/megamenu';
+import DataTable from 'primevue/datatable'
+import {FilterMatchMode,FilterService} from 'primevue/api';
+import Column from 'primevue/column'
 export default defineComponent({
     components: {
-        MegaMenu
+        MegaMenu,
+        DataTable,
+        Column,
     },
     props:['targets'],
     emits: ["target-selected"],
+    computed: {
+        target_list: function() {
+            return this.targets.map(target => Object({label: target}))
+        } 
+    },
     data() {
         return {
-            items:[
+            target_test:[
                 {
                     label: "Target",
-                    items: [[{items:this.targets.slice(0,10).map(target => Object({label: target}))}]]
+                    // items: [[{items:this.targets.slice(0,10).map(target => Object({label: target}))}]]
+                    items: [[{items:this.targets.map(target => Object({label: target}))}]]
                 }
-            ]
+            ],
+            selected_target: null,
+            filters: {
+                'label': {value: null, matchMode: "FuzzyMatch"}
+            }
+        }
+    },
+    mounted() {
+        FilterService.register("FuzzyMatch", (value, filter) => {
+             if (filter === undefined || filter === null || filter.trim() === '') {
+                return true;
+            }
+    
+            if (value === undefined || value === null) {
+                return false;
+            }
+            return value.toString === filter.toSting();
+        })
+    },
+    watch: {
+        selected_target: function() {
+            this.$emit("target-selected", this.selected_target.label)
         }
     },
     methods: {
@@ -32,7 +64,30 @@ export default defineComponent({
 </script>
 
 <template>
-    <MegaMenu :model="items" @click=targetClicked />
+    <!-- <MegaMenu :model="targets" @click=targetClicked /> -->
+    <div class="TargetSelection">
+        <DataTable 
+        :value="target_list" 
+        :scrollable="true" 
+        v-model:selection="selected_target" selectionMode="single"
+        class="p-datatable-sm"
+        scrollHeight="300px" 
+        responsiveLayout="scroll"
+        dataKey="label">
+            <template #empty>
+                No target found.
+            </template>
+            <Column field="label" header="Target" style="text-overflow:ellipsis; width:250px"
+            >
+                <!-- <template #body="{data}">
+                    {{data.name}}
+                </template> -->
+                <!-- <template #filter="{filterModel,filterCallback}">
+                    <InputText type="text" v-model="filterModel.value" @input="filterCallback()" class="p-column-filter" :placeholder="`Search by name - ${filterModel.matchMode}`"/>
+                </template> -->
+            </Column>
+        </DataTable>
+    </div>
 </template>
 <style>
 .p-megamenu .p-megamenu-submenu {
