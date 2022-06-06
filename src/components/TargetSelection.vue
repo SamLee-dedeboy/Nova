@@ -4,11 +4,13 @@ import MegaMenu from 'primevue/megamenu';
 import DataTable from 'primevue/datatable'
 import {FilterMatchMode,FilterService} from 'primevue/api';
 import Column from 'primevue/column'
+import InputText from 'primevue/inputtext'
 export default defineComponent({
     components: {
         MegaMenu,
         DataTable,
         Column,
+        InputText,
     },
     props:['targets'],
     emits: ["target-selected"],
@@ -28,7 +30,7 @@ export default defineComponent({
             ],
             selected_target: null,
             filters: {
-                'label': {value: null, matchMode: "FuzzyMatch"}
+                'label': {value: null, matchMode: FilterMatchMode.STARTS_WITH}
             }
         }
     },
@@ -73,18 +75,22 @@ export default defineComponent({
         class="p-datatable-sm"
         scrollHeight="300px" 
         responsiveLayout="scroll"
+        v-model:filters="filters"
+        filterDisplay="row"
+        :globalFilterFields="['label']"
         dataKey="label">
             <template #empty>
                 No target found.
             </template>
-            <Column field="label" header="Target" style="text-overflow:ellipsis; width:250px"
-            >
-                <!-- <template #body="{data}">
-                    {{data.name}}
-                </template> -->
-                <!-- <template #filter="{filterModel,filterCallback}">
-                    <InputText type="text" v-model="filterModel.value" @input="filterCallback()" class="p-column-filter" :placeholder="`Search by name - ${filterModel.matchMode}`"/>
-                </template> -->
+            <Column field="label" header="Target" 
+            style="text-overflow:ellipsis; width:250px">
+
+                <template #body="{data}">
+                    {{data.label}}
+                </template>
+                <template #filter="{filterModel, filterCallback}">
+                    <InputText type="text" v-model="filterModel.value"  @input="filterCallback()" class="p-column-filter" :placeholder="`Search by name`"/>
+                </template>
             </Column>
         </DataTable>
     </div>
@@ -105,5 +111,8 @@ export default defineComponent({
 }
 .p-megamenu-panel {
   width: max-content;
+}
+.TargetSelection {
+
 }
 </style>
