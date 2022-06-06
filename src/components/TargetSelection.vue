@@ -83,10 +83,10 @@ export default defineComponent({
                 No target found.
             </template>
             <Column field="label" header="Target" 
-            style="text-overflow:ellipsis; width:250px">
+            style="text-overflow:ellipsis;overflow:hidden;display: inline-block; width:240px">
 
                 <template #body="{data}">
-                    {{data.label}}
+                    <span :title="data.label">{{data.label}}</span>
                 </template>
                 <template #filter="{filterModel, filterCallback}">
                     <InputText type="text" v-model="filterModel.value"  @input="filterCallback()" class="p-column-filter" :placeholder="`Search by name`"/>
