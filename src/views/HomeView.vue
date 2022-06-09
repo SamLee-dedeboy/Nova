@@ -71,6 +71,7 @@ export default {
       const article_list = this.np_list[index][1]
       // TODO: query data from graphql
       const dataset = this.$refs.toolbar.getData(target)
+
       this.original_dataset = dataset
       // sort by date and update time range
       dataset.sort((a1, a2) => Date.parse(a1.timestamp) > Date.parse(a2.timestamp))
@@ -80,13 +81,23 @@ export default {
       this.updateDicts(dataset)
     },
     updateDicts(dataset) {
+      const pos_mean = 12.506365768116687
+      const pos_std = 18.00385412093575
+      const neg_mean = -25.86358780825294
+      const neg_std = 29.437169285743654 
+
       // group by topic and outlet
       // clear
       const topic_dict = {}
       for(let outlet of Object.keys(this.outlet_article_dict)) {
         this.outlet_article_dict[outlet] = []
       }
-      for(const article of dataset) {
+      var count = 0
+      for(var article of dataset) {
+          // normalization
+          const pos = article.sentiment.pos
+          const neg = article.sentiment.neg
+          Object.assign(article.sentiment, {"normalized_sst": (Math.tanh((pos-pos_mean)/pos_std) + Math.tanh((neg-neg_mean)/neg_std))/2})
           // topic
           if(!topic_dict[article.top_level_topic]) {
               topic_dict[article.top_level_topic] = []
