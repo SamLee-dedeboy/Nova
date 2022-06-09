@@ -57,13 +57,38 @@ def dict_to_json(dict, filepath="data/new_dict.json"):
     with open(relative_path, 'w') as fp:
         json.dump(dict, fp, indent=4)
 
-def gen_candidate_entities(filepath="data/rel_entities.json", num_candidate=1000):
+def gen_candidate_entities(filepath="data/rel_entities_ner.json", min_mentions=500):
     file = open(filepath)
     entity_dict = json.load(file)
     sorted_entity_list = sorted(entity_dict.items(), key=lambda item: len(item[1]), reverse=True)
-    candidates = dict({"ranked_entity_list": sorted_entity_list[:num_candidate]})
+    candidates = dict({"ranked_entity_list": list(filter(lambda entity: len(entity[1]) >= min_mentions, sorted_entity_list))})
     dict_to_json(candidates, filepath="data/candidate_entities.json")
 
+def gen_entity_cooccurrence(filepath="data/candidate_entities.json"):
+    file = open(filepath)
+    entity_list = json.load(file)["ranked_entity_list"]
+
+    cooccurrence_mat = defaultdict(lambda: defaultdict(list)) 
+    for [entity1, mentioned_articles1] in entity_list:
+        for [entity2, mentioned_articles2] in entity_list: 
+            cooccurred_articles = list(set(mentioned_articles1) & set(mentioned_articles2))
+            cooccurrence_mat[entity1][entity2] = cooccurred_articles
+    dict_to_json(cooccurrence_mat, filepath="data/candidate_cooccurrences.json")
+
+    return
+from collections import defaultdict
+gen_entity_cooccurrence()
+# filepath="data/rel_entities_ner.json"
+# file = open(filepath)
+# entity_dict = json.load(file)
+# sorted_entity_list = sorted(entity_dict.items(), key=lambda item: len(item[1]), reverse=True)
+# print(len(sorted_entity_list))
+# num_mentions = [len(entity[1]) for entity in sorted_entity_list]
+
+# import matplotlib.pyplot as plt
+# fig = plt.figure()
+# plt.plot(list(range(len(sorted_entity_list))), [len(entity[1]) for entity in sorted_entity_list])
+# plt.show()
 # gen_candidate_entities()
 
 # sentences = article_to_sentences(dataset[21]["content"])
