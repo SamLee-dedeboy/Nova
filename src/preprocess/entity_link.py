@@ -2,7 +2,7 @@ import time
 import numpy as np 
 import preprocess
 from collections import defaultdict
-import swat_ned
+# import swat_ned
 import os
 import sys
 dirname = os.path.dirname(__file__)
@@ -15,7 +15,7 @@ def add_entity(src_dataset_path, dst_dataset_path, entity_list_path, subset=None
     start_time = time.time()
     dataset = preprocess.getDataset(src_dataset_path)
     rel_analyzer = REL_NedAnalyzer()
-    entitiesToArticle_dict = defaultdict(list)
+    entitiesToArticle_dict = defaultdict(set)
     # urlToName_dict = defaultdict(set)
     articles = dataset if subset == None else dataset[0:subset]
     
@@ -32,8 +32,8 @@ def add_entity(src_dataset_path, dst_dataset_path, entity_list_path, subset=None
         for article in batch:
             entity_list = article_entity_dict[article["id"]]
             article["entities"] = entity_list
-            for entity in entity_list:
-                entitiesToArticle_dict[entity].append(article["id"])
+            for entity in [result[3] for result in entity_list]:
+                entitiesToArticle_dict[entity].add(article["id"])
             # google entities
             # google_entities = google_sa.analyze_entity(sentences)
             # for entity in google_entities:
@@ -54,6 +54,7 @@ def add_entity(src_dataset_path, dst_dataset_path, entity_list_path, subset=None
             #     entitiesToArticle_dict[entity].append(article["id"])
             # article["entities"] = rel_entities
 
+    entitiesToArticle_dict = {k: list(v) for k, v in entitiesToArticle_dict.items()}
     # urlToName_dict = {k: list(v) for k, v in urlToName_dict.items()}
     print("-------------------------------")
     print("Entity Processing Done! Saving....")
