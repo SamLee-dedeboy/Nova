@@ -113,6 +113,12 @@ export default defineComponent({
   width: max-content;
 }
 .TargetSelection {
-
+border-style: double;
+margin: 5px;
+padding-left: 5px;
+padding-right: 5px;
+}
+th.p-filter-column {
+    border-bottom: double !important;
 }
 </style>
