@@ -76,14 +76,82 @@ def gen_entity_cooccurrence(filepath="data/candidate_entities.json"):
     dict_to_json(cooccurrence_mat, filepath="data/candidate_cooccurrences.json")
 
     return
-from collections import defaultdict
-gen_entity_cooccurrence()
-# filepath="data/rel_entities_ner.json"
-# file = open(filepath)
-# entity_dict = json.load(file)
+# from collections import defaultdict
+# # gen_entity_cooccurrence()
+
+# import json
+# import csv
+filepath="data/processed_articles_rel_hugFace.json"
+dirname = os.path.dirname(__file__)
+relative_path = os.path.join(dirname, filepath)
+file = open(filepath)
+articles = json.load(file)
+article_dict = {}
+pos_sentiments = []
+neg_sentiments = []
+for article in articles:
+    article_sentiment=article["sentiment"]
+    pos = article_sentiment["pos"]
+    neg = article_sentiment["neg"]
+    pos_sentiments.append(pos)
+    neg_sentiments.append(neg)
+def myNorm(input):
+    mean = np.mean(input)
+    std = np.std(input)
+    print(mean,std)
+    return [np.tanh((i-mean)/std) for i in input]
+
+def mySigmoid(x):
+    return 1/(1+np.exp(-x))
+pos_mean = np.mean(pos_sentiments)
+pos_std = np.std(pos_sentiments)
+neg_mean = np.mean(neg_sentiments)
+neg_std = np.std(neg_sentiments)
+meta_json = {"pos_mean": pos_mean, "pos_std": pos_std, "neg_mean": neg_mean, "neg_std": neg_std}
+# pos_norm = myNorm(pos_sentiments)
+# neg_norm = myNorm(neg_sentiments)
+# import matplotlib.pyplot as plt
+# fig = plt.figure()
+# bins=list(np.arange(-1,1,0.01))
+# plt.hist(neg_norm, bins=bins)
+# # plt.hist(np.clip(pos_sentiments,bins[0], bins[1]), bins=bins)
+# plt.show()
+
+#     article_id = article["id"]
+#     article_mentions = article["entities"]
+#     article_mention_json_list = [] 
+#     for entity in article_mentions:
+#         entity_json = {
+#             "start_pos": entity[0],
+#             "length": entity[1],
+#             "mention_text": entity[2],
+#             "entity": entity[3],
+#             "confidence_md": entity[4],
+#             "confidence_ed": entity[5],
+#             "type": entity[6]
+#         }
+#         article_mention_json_list.append(entity_json)
+#     article_dict[article_id] = {"mention_list": article_mention_json_list}
+import csv
+csv_file = open("data/sentiment_metadata.csv", "w", encoding='utf-8', newline="")
+csv_writer = csv.writer(csv_file)
+count = 0
+csv_writer.writerow(["pos_mean", "pos_std", "neg_mean", "neg_std"])
+csv_writer.writerow([pos_mean, pos_std, neg_mean, neg_std])
+# for (article_id, sentiment) in article_dict.items():
+#     if count == 0:
+#         header = ["id", "sentiment"]
+#         csv_writer.writerow(header)
+#         count += 1
+#     sentiment_string = json.dumps(sentiment)
+#     # mention_list_string = "{" + ",".join([str(mention) for mention in mention_list]) + "}"
+#     csv_writer.writerow([article_id, mention_list_string])
+csv_file.close()
+# --------
 # sorted_entity_list = sorted(entity_dict.items(), key=lambda item: len(item[1]), reverse=True)
-# print(len(sorted_entity_list))
-# num_mentions = [len(entity[1]) for entity in sorted_entity_list]
+
+# # print(len(sorted_entity_list))
+# # num_mentions = [len(entity[1]) for entity in sorted_entity_list]
 
 # import matplotlib.pyplot as plt
 # fig = plt.figure()
