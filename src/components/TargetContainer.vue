@@ -5,6 +5,7 @@ import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
 import Legend from './Legend.vue'
 import TimeAxes from './TimeAxes.vue'
+import * as dfd from "danfojs"
 export default ({
     components: {
       Graph,
@@ -16,7 +17,6 @@ export default ({
 
     },
     props:['outlet_article_dict', 'enabled_outlet_set','targets', 'topic', 'selectedTimeRange'],
-
     computed: {
         graph_dict: function() {
             var graph_dict = {}
@@ -34,9 +34,14 @@ export default ({
                         }
                         graph.nodes.push(node)
                     } else {
-                        const pos_sst = articles.map(article => article.sentiment.pos).reduce((sum, cur) => sum + cur, 0)
-                        const neg_sst = articles.map(article => article.sentiment.neg).reduce((sum, cur) => sum + cur, 0)
-                        const neu_sst = 0
+                        // const pos_sst = articles.map(article => article.sentiment.pos).reduce((sum, cur) => sum + cur, 0)
+                        // const neg_sst = articles.map(article => article.sentiment.neg).reduce((sum, cur) => sum + cur, 0)
+                        // const neu_sst = 0
+                        const sst_df = new dfd.DataFrame(articles.map(article=>article.sentiment))
+                        const neu_threshold = 0.1
+                        const pos_sst = sst_df.iloc({rows: sst_df["normalized_sst"].gt(neu_threshold)}).count({axis:0}).at("normalized_sst",1) 
+                        const neg_sst = sst_df.iloc({rows: sst_df["normalized_sst"].lt(-neu_threshold)}).count({axis:0}).at("normalized_sst",1) 
+                        const neu_sst = sst_df.iloc({rows: sst_df["normalized_sst"].lt(neu_threshold).and(sst_df["normalized_sst"].gt(-neu_threshold))}).count({axis:0}).at("normalized_sst",1) 
                         let node = {
                             outlet: outlet,
                             sentiment: pos_sst + neg_sst + neu_sst,
@@ -73,6 +78,9 @@ export default ({
     methods: {
         handleNodeClicked(clicked_node) {
             this.$emit("node-clicked", clicked_node)        
+        },
+        normalization(x, mean, std) {
+            return Math.tanh((x-mean)/std)
         }
     }
 })
