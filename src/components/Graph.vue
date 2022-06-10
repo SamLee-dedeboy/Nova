@@ -484,11 +484,35 @@ export default {
             : node.append("text").attr("class", "node_text"))
             nodeText.attr("x", function(d) { return d3.select(this.parentNode).attr("cx"); })
                 .attr("y", function(d) { return d3.select(this.parentNode).attr("cy"); })
+                .each(function(d) {
+                    if(d.text) {
+                        const break_text = d.text.split('_')
+                        const break_num = break_text.length
+                        var center_node_text = d3.select(this)
+                        center_node_text.selectAll("tspan")
+                        .data(break_text)
+                        .join("tspan")
+                        .text(d => d)
+                        .attr("x", center_node_text.attr("x"))
+                        .attr("dy", "1.4em")
+                        center_node_text.attr("y", function(d) { return d3.select(this).attr("y") - 18*(1+(break_num-1)/2)})
+                    } else {
+                        d3.select(this).text(d => self.abbr_dict[d.outlet])
+                    }
+                })
                 .attr("text-anchor", "middle")
-                .attr("font-size","small")
+                .attr("font-size","0.8em")
                 .attr("dominant-baseline", "central")
-                .text(d => self.abbr_dict[d.outlet] || d.text)
-
+                .style("display:block")
+                // .text(d => self.abbr_dict[d.outlet] || d.text)
+            // var textLength = nodeText.node().getComputedTextLength()
+            // var text = nodeText.text()
+            // const maxLength = 80
+            // while(textLength > maxLength && text.length > 0) {
+            //     text = text.slice(0, -1)
+            //     nodeText.text(text + "...")
+            //     textLength = nodeText.node().getComputedTextLength()
+            // }
             //set size and styling according to label width
             //node.selectAll("circle." + class_name)
                 //.attr("r", function(d){  return d3.select(this.parentNode).select("text").node().getComputedTextLength()/1.5 + d.dotted?0:d.articles.length; })
@@ -664,7 +688,9 @@ export default {
             return parseFloat(d3.select(target.node().parentNode).attr("r"))
         },
         articlesToRadius(node, d, r=0) {
-            return r>0?r:((r<0?r:1)*d3.select(node).select("text.node_text").node().getComputedTextLength()/1.5 + (d.dotted?5:(d.articles?this.normalizedLength(d.articles.length):this.centerNodeRadius())));
+            return r>0?r:(30+(d.dotted?5:(d.articles?this.normalizedLength(d.articles.length):this.centerNodeRadius())));
+
+            // return r>0?r:((r<0?r:1)*d3.select(node).select("text.node_text").node().getComputedTextLength()/1.5 + (d.dotted?5:(d.articles?this.normalizedLength(d.articles.length):this.centerNodeRadius())));
         },
         centerNodeRadius() {
             return this.normalizedLength(this.total_articles)/6
