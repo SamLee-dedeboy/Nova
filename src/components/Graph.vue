@@ -168,12 +168,11 @@ export default {
                 self.addEdges(d3.selectAll("g.outlet"))
                 self.animating_click = false
             })
-            // update edges
             
-            const clicked_node_sentiment = clickedNode.data()[0].sentiment > 0
+            const clicked_node_sentiment = clickedNode.data()[0].sentiment
             //other nodes
             const shrink_ratio = 0.45
-            const origin_x = clicked_node_sentiment? 0:600
+            const origin_x = {"pos": 0, "neg": 600, "neu": 0}[clicked_node_sentiment]
             const origin_y = 0
             const shrinked_width = 180
             const shrinked_height = 120
@@ -392,48 +391,70 @@ export default {
             const height = boundingBox[3]
             var self = this
             var tick_num = 0
-            var simulation = d3.forceSimulation(this.graph.nodes)
-                    .alphaMin(0.1)
-                    // .alphaMin(0.1)
-                    .force("x", d3.forceX().x(function(d) {
-                        return d.dotted?center[0]:((d.sentiment > 0)? center[0]+width/3: center[0]-width/3)
-                    }).strength(0.1))
-                    .force("y", d3.forceY(center[1]).strength(0.8))
-                    .force("center", d3.forceCenter(center[0], center[1]).strength(0.001))
-                    .force("charge", d3.forceManyBody().strength(-100))
-                    .force("link", d3.forceLink(self.graph_links).strength(0.0001))
-                    .force('collision', d3.forceCollide().radius(d => self.getRadiusBytext(d.outlet?d.outlet:d.text)*scale_ratio))
-                    .on('tick', function() {
-                        tick_num += 1
-                        const center_node = this.nodes().filter(node => node.isCenter)[0]
-                        center_node.x = center[0]
-                        center_node.y = center[1]
-                        if(true || tick_num > 95) {
-                            this.nodes().forEach(node => {
-                                const radius = self.getRadiusBytext(node.outlet?node.outlet:node.text)*scale_ratio 
-                                const bound_x = [origin[0] + radius, origin[0] + width - radius]
-                                const bound_y = [origin[1] + radius, origin[1] + height - radius]
-                                node.x = Math.max(bound_x[0], Math.min(bound_x[1], node.x))
-                                node.y = Math.max(bound_y[0], Math.min(bound_y[1], node.y))
-                                if(node.dotted) {
-                                    node.y = bound_y[0] + radius
-                                }
-                            })
+            const x_center = {"pos": center[0] + width/3, "neg": center[0] - width/3, "neu": center[0]}
+            const y_center = {"pos": center[1], "neg": center[1], "neu": 0}
+            var simulation = d3.forceSimulation(this.graph.nodes.map(node => {
+                if(node.isCenter) {
+                    node.fx = center[0]
+                    node.fy = center[1]
+                }
+                return node
+            })) .alphaMin(0.1)
+                .velocityDecay(0.6) 
+                .force("x", d3.forceX().x(function(d) {
+                    // console.log(d.dotted?center[0]:(x_center[d.sentiment]))
+                    const factor = 8
+                    return d.dotted?center[0]:(x_center[d.sentiment]+Math.random()*(width/factor+width/factor)-width/factor)
+                    // return d.dotted?center[0]:((d.sentiment > 0)? center[0]+width/3: center[0]-width/3)
+                }).strength(0.1))
+                .force("y", d3.forceY().y(function(d) {
+                    const factor = 8
+                    return d.dotted?0:(y_center[d.sentiment]+Math.random()*(height/factor+height/factor)-height/factor ) 
+                }).strength(0.1))
+                .force("center", d3.forceCenter(center[0], center[1]).strength(0.001))
+                .force("charge", d3.forceManyBody().strength(-10))
+                .force("link", d3.forceLink(self.graph_links).strength(0.0001))
+                .force('collision', d3.forceCollide().iterations(50).radius(d => {
+                    const r = self.getRadiusBytext(d.outlet||d.text)*scale_ratio
+                    return r
+                }))
+                .on('tick', function() {
+                    tick_num += 1
+                    const reigon_height = 100
+                    this.nodes().forEach(node => {
+                        if((node.x < center[0] + width/5) && (node.x > center[0] - width/5)) { 
+                            if(node.y > center[1]-reigon_height && node.y < center[1]) node.y += 3*reigon_height
                         }
-                        self.updateNodes(true, clicked_outlet, scale_ratio, false)
-                        self.updateCenterNode(true, scale_ratio)
-                        nodes.attr("transform-origin", function(d) {
-                            const container = d3.select(this)
-                            return (container.attr("cx") || container.attr("x")) + " " + (container.attr("cy") || container.attr("y"))
-                        }).attr("transform", () => "scale(" + scale_ratio + ")")
-                        d3.select("g.center").attr("transform-origin", function(d) {
-                            const container = d3.select(this)
-                            return (container.attr("cx") || container.attr("x")) + " " + (container.attr("cy") || container.attr("y"))
-                        }).attr("transform", () => "scale(" + scale_ratio + ")")
                     })
-                    .on("end", function() {
-                        self.addEdges(d3.selectAll("g.outlet"))
-                    })
+                    // const center_node = this.nodes().filter(node => node.isCenter)[0]
+                    // center_node.fx = center[0]
+                    // center_node.fy = center[1]
+                    if(true || tick_num > 95) {
+                        this.nodes().forEach(node => {
+                            const radius = self.getRadiusBytext(node.outlet||node.text)*scale_ratio 
+                            const bound_x = [origin[0] + radius, origin[0] + width - radius]
+                            const bound_y = [origin[1] + radius, origin[1] + height - radius]
+                            node.x = Math.max(bound_x[0], Math.min(bound_x[1], node.x))
+                            node.y = Math.max(bound_y[0], Math.min(bound_y[1], node.y))
+                            if(node.dotted) {
+                                node.y = bound_y[0] + radius
+                            }
+                        })
+                    }
+                    self.updateNodes(true, clicked_outlet, scale_ratio, false)
+                    self.updateCenterNode(true, scale_ratio)
+                    nodes.attr("transform-origin", function(d) {
+                        const container = d3.select(this)
+                        return (container.attr("cx") || container.attr("x")) + " " + (container.attr("cy") || container.attr("y"))
+                    }).attr("transform", () => "scale(" + scale_ratio + ")")
+                    d3.select("g.center").attr("transform-origin", function(d) {
+                        const container = d3.select(this)
+                        return (container.attr("cx") || container.attr("x")) + " " + (container.attr("cy") || container.attr("y"))
+                    }).attr("transform", () => "scale(" + scale_ratio + ")")
+                })
+                .on("end", function() {
+                    self.addEdges(d3.selectAll("g.outlet"))
+                })
             
         },
         
@@ -612,6 +633,7 @@ export default {
             // bind edges to node circles, so that edges can bind to circle center
             var center_node = svg.select("g.center")
 
+            const edge_color = {"pos": "blue", "neg": "red", "neu": "grey" }
             var edges = svg.selectAll("line")
             .data(node, function(d) { return d.outlet})
             .join("line")
@@ -620,7 +642,7 @@ export default {
             .attr("x2", function(d) { return parseInt(center_node.attr("cx")); })
             .attr("y1", function(d) { return d3.select(d).attr("cy")})
             .attr("y2", function(d) { return parseInt(center_node.attr("cy")); })
-            .attr("stroke", function(d) { return d3.select(d).data()[0].dotted?"black":(d3.select(d).data()[0].sentiment>0?"blue":"red")})
+            .attr("stroke", function(d) { return d3.select(d).data()[0].dotted?"black":(edge_color[d3.select(d).data()[0].sentiment])})
             .attr("stroke-dasharray", function(d) { return d3.select(d).data()[0].dotted ? 2.5:0; })
             .lower()
             // node.append("line")

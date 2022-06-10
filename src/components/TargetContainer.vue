@@ -38,13 +38,14 @@ export default ({
                         // const neg_sst = articles.map(article => article.sentiment.neg).reduce((sum, cur) => sum + cur, 0)
                         // const neu_sst = 0
                         const sst_df = new dfd.DataFrame(articles.map(article=>article.sentiment))
-                        const neu_threshold = 0.1
-                        const pos_sst = sst_df.iloc({rows: sst_df["normalized_sst"].gt(neu_threshold)}).count({axis:0}).at("normalized_sst",1) 
-                        const neg_sst = sst_df.iloc({rows: sst_df["normalized_sst"].lt(-neu_threshold)}).count({axis:0}).at("normalized_sst",1) 
-                        const neu_sst = sst_df.iloc({rows: sst_df["normalized_sst"].lt(neu_threshold).and(sst_df["normalized_sst"].gt(-neu_threshold))}).count({axis:0}).at("normalized_sst",1) 
+                        const neu_threshold = 0.05
+                        const pos_sst = sst_df.iloc({rows: sst_df["normalized_sst"].gt(neu_threshold)}).count({axis:0}).at("normalized_sst",1) || 0
+                        const neg_sst = sst_df.iloc({rows: sst_df["normalized_sst"].lt(-neu_threshold)}).count({axis:0}).at("normalized_sst",1) || 0
+                        const neu_sst = sst_df.iloc({rows: sst_df["normalized_sst"].lt(neu_threshold).and(sst_df["normalized_sst"].gt(-neu_threshold))}).count({axis:0}).at("normalized_sst",1) || 0
+                        const sst_array = [pos_sst, neg_sst, neu_sst]
                         let node = {
                             outlet: outlet,
-                            sentiment: pos_sst + neg_sst + neu_sst,
+                            sentiment: ["pos", "neg", "neu"][sst_array.indexOf(Math.max(...sst_array))],
                             pos_sent: pos_sst,
                             neg_sent: neg_sst,
                             neu_sent: neu_sst,
