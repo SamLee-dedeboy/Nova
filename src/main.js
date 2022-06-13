@@ -10,7 +10,8 @@ import mitt from 'mitt';
 import "primevue/resources/themes/bootstrap4-light-blue/theme.css"
 import "primevue/resources/primevue.min.css"
 import "primeicons/primeicons.css"
-
+import axios from 'axios'
+ 
 import articleData from "./preprocess/data/processed_articles_rel_hugFace.json"
 import entity_mentions from "./preprocess/data/candidate_entities.json"
 import entity_cooccurrences from "./preprocess/data/candidate_cooccurrences.json"
@@ -18,6 +19,7 @@ import entity_cooccurrences from "./preprocess/data/candidate_cooccurrences.json
 const app = createApp(App);
 const emitter = mitt();
 app.config.globalProperties.emitter = emitter;
+app.config.globalProperties.axios = axios
 
 app.use(router);
 app.use(PrimeVue, {ripple:true})

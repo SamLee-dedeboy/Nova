@@ -65,11 +65,45 @@ export default {
     updateTopic(topic) {
       this.selected_topic = topic
     },
+    queryDataset(article_list) {
+      console.log(article_list.toString())
+      const url = "http://ec2-35-160-171-6.us-west-2.compute.amazonaws.com:8081/v1/graphql"
+
+      const query = `
+        query MyQuery {
+          Article(where: {id: {_in: [${article_list}]}}) {
+            id
+            headline
+            journal
+            timestamp
+            Analysis_mentioned_entities {
+              mentions
+            }
+            Analysis_sentiments {
+              sentiment
+            }
+            content
+          }
+        }
+     ` 
+      this.axios({
+          url: url,
+          method: 'post',
+          data: {
+            query: query,
+          }
+      })   
+      .then(response => {
+        console.log("done")
+        console.log(response)
+      })
+    },
     updateTarget(target) {
       const index = this.entity_list.indexOf(target) 
       this.selected_target = [target]
       const article_list = this.np_list[index][1]
       // TODO: query data from graphql
+      // const dataset = this.queryDataset(article_list)
       const dataset = this.$refs.toolbar.getData(target)
 
       this.original_dataset = dataset
