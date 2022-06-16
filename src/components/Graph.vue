@@ -4,7 +4,7 @@ import Node from "./Node.vue"
 import { nextTick } from 'vue'
 
 export default {
-    props: ['graph', 'graph_index', "id"],
+    props: ['graph', 'graph_index', "id", "entity_graph"],
     components: {
         Node
     },
@@ -35,10 +35,10 @@ export default {
             return links
         },
         outlet_set: function() {
-            return this.graph.nodes.map(node => node.outlet)
+            return this.graph.nodes.map(node => node.text)
         },
         graph_dict:function() {
-            var graph_dict = Object.assign({}, ...this.graph.nodes.map((node) => ({[node.outlet]: node})));
+            var graph_dict = Object.assign({}, ...this.graph.nodes.map((node) => ({[node.text]: node})));
             graph_dict[this.center_node.text] = this.center_node
             return graph_dict
         },
@@ -65,14 +65,91 @@ export default {
             return parseInt(this.canvas.attr("viewBox").split(" ")[3])
         }
     },
+    data() {
+        return {
+            nodeClicked: false
+        }
+    },
     watch: {
         graph: async function(new_graph, old_graph) {
             this.updateCenterNode()
             this.updateNodes()
-            this.force_layout(d3.selectAll("g.outlet"), [0, 0, this.canvas_width, this.canvas_height], [this.canvas_width/2, this.canvas_height/2], 1)
+            const center = [this.canvas_width/2, this.canvas_height/2]
+            const data = new_graph.nodes.map(node => {
+                if(node.isCenter) {
+                    node.fx = center[0]
+                    node.fy = center[1]
+                }
+                return node
+            })
+            this.force_layout(d3.selectAll("g.outlet"), [0, 0, this.canvas_width, this.canvas_height], center, 1, data)
             if(this.clickedNodeData && new_graph.nodes.length > old_graph.nodes.length)
                 this.handleNodeClick(undefined, this.clickedNodeData)
-
+        },
+        entity_graph: function(new_entity_graph, old_entity_graph) {
+            const selected_node = this.clickedNode
+            const center = [selected_node.attr("cx"), selected_node.attr("cy")]
+            const r = selected_node.attr("r")
+            const entity_nodes = selected_node.selectAll("g.entity").data(new_entity_graph, (d) => (d.text))
+            .join(
+                enter => {
+                    const node = enter.append("g")
+                    .attr("class", "subnode entity")
+                    .attr("cx", center[0])
+                    .attr("cy", center[1])
+                    node.append("circle")
+                    .attr("class", "subnode entity")
+                    .attr("cx", center[0])
+                    .attr("cy", center)
+                    node.append("text")
+                    .attr("class", "text entity")
+                    .attr("x", center[0])
+                    .attr("y", center[1])
+                    .text((d) => (d.text))
+                }
+            )
+            var simulation = d3.forceSimulation(new_entity_graph)
+                .alphaMin(0.1)
+                .velocityDecay(0.6) 
+                .force("x", d3.forceX().x(center[0]))
+                .force("y", d3.forceY().y(center[1]))
+                .force("center", d3.forceCenter(center[0], center[1]).strength(0.001))
+                .force("charge", d3.forceManyBody().strength(-10))
+                .force('collision', d3.forceCollide().iterations(50).radius(d => {
+                    // const r = self.getRadiusBytext(d.text)*scale_ratio
+                    return 5
+                }))
+                .on('tick', function() {
+                    d3.selectAll("g.subnode.entity")
+                    .data(new_entity_graph)
+                    .join(
+                        enter => {
+                            const node = enter.append("g")
+                            .attr("class", "subnode entity")
+                            .attr("cx", d => d.x)
+                            .attr("cy", d => d.y)
+                            node.append("circle")
+                            .attr("class", "subnode entity")
+                            .attr("cx", d => d.x)
+                            .attr("cy", d => d.y)
+                            node.append("text")
+                            .attr("class", "text entity")
+                            .attr("x", d => d.x)
+                            .attr("y", d => d.y)
+                            .text((d) => (d.text))
+                        },
+                        update => {
+                            update.selectAll("circle.subnode.entity")
+                            .attr("cx", d => d.x)
+                            .attr("cy", d => d.y)
+                            update.selectAll("text.entity")
+                            .attr("x", d => d.x)
+                            .attr("y", d => d.y)
+                        }
+                    )
+                })
+                .on("end", function() {
+                })
         }
     },
     mounted() {
@@ -116,11 +193,19 @@ export default {
         // .attr("font-size","small")
         // .attr("dominant-baseline", "central")
         // .text("tooltip")
-        const width = this.canvas_width
-        const height = this.canvas_height
         this.updateCenterNode()
         this.updateNodes()
-        this.force_layout(d3.selectAll("g.outlet"), [0, 0, width, height], [width/2, height/2], 1)
+        const width = this.canvas_width
+        const height = this.canvas_height
+        const center = [this.canvas_width/2, this.canvas_height/2]
+        const data = this.graph.nodes.map(node => {
+            if(node.isCenter) {
+                node.fx = center[0]
+                node.fy = center[1]
+            }
+            return node
+        })
+        this.force_layout(d3.selectAll("g.outlet"), [0, 0, width, height], center, 1, data)
         //this.updateEdges()
 
     },
@@ -128,7 +213,7 @@ export default {
     methods: {
         // TODO
         handleNodeClick(e, d) {
-            console.log(d)
+            this.nodeClicked = true
             var self = this
             var svg = this.canvas
             const width = parseInt(this.canvas.attr("viewBox").split(" ")[2])
@@ -137,9 +222,9 @@ export default {
             // clicked node
             const expanded_r = 0.49*height
             //const expanded_r = 0.2*height
-            const clickedNode = d3.selectAll("g.outlet").filter(node => node.outlet == d.outlet)
+            const clickedNode = d3.selectAll("g.outlet").filter(node => node.text == d.text)
             clickedNode.select("g.outer_ring").remove()
-            svg.selectAll("line.graph_edge").filter(line => d3.select(line).data()[0].outlet == clickedNode.data()[0].outlet).remove()
+            svg.selectAll("line.graph_edge").filter(line => d3.select(line).data()[0].text == clickedNode.data()[0].text).remove()
             
             clickedNode.selectAll("circle").style("filter", "brightness(100%)")
 
@@ -167,6 +252,9 @@ export default {
                 self.applyNodeStyling(clickedNode, "node", expanded_r, "on click")
                 self.addEdges(d3.selectAll("g.outlet"))
                 self.animating_click = false
+                self.clickedNode = clickedNode
+                self.$emit("node-clicked", d)
+                self.clickedNodeData = d
             })
             
             const clicked_node_sentiment = clickedNode.data()[0].sentiment
@@ -178,9 +266,18 @@ export default {
             const shrinked_height = 120
             const center_x = origin_x + shrinked_width/2
             const center_y = origin_y + shrinked_height/2
-            const otherNodes = d3.selectAll("g.outlet").filter((d) => d.outlet != clickedNode.data()[0].outlet)                
+            const otherNodes = d3.selectAll("g.outlet").filter((d) => d.text != clickedNode.data()[0].text)                
             //self.moveNodesToCorner(otherNodes, [200, 150], [600, 0], [center_x, center_y], shrink_ratio)
-            self.force_layout(otherNodes, [origin_x, origin_y, shrinked_width, shrinked_height], [center_x, center_y], shrink_ratio, clickedNode.data()[0].outlet)
+            const center = [center_x, center_y]
+            const data = this.graph.nodes.map(node => {
+                if(node.isCenter) {
+                    node.fx = center[0]
+                    node.fy = center[1]
+                }
+                return node
+            })
+
+            self.force_layout(otherNodes, [origin_x, origin_y, shrinked_width, shrinked_height], center, shrink_ratio, data, clickedNode.data()[0].text)
 
             // draw bounding box for dev
             // svg.append("rect")
@@ -192,13 +289,7 @@ export default {
             // .attr("stroke-width", 5)
             // .attr("stroke", "black")
 
-            const center_node = d3.select("g.center")    
-            const center_node_pos = {}
-            center_node_pos[center_node.data()[0].text] = [center_x, center_y]
-            //self.translateAndScale(center_node, center_node_pos, shrink_ratio)
 
-            self.$emit("node-clicked", d)
-            self.clickedNodeData = d
 
         },
         translateAndScale(node, outletToPosDict, scale, callback) {
@@ -211,8 +302,8 @@ export default {
             .attr("transform", function(d) {
                 const element = d3.select(this)
                 const elementData = element.data()[0]
-                const new_x = outletToPosDict[elementData.outlet || elementData.text][0]
-                const new_y = outletToPosDict[elementData.outlet || elementData.text][1]
+                const new_x = outletToPosDict[elementData.text][0]
+                const new_y = outletToPosDict[elementData.text][1]
                 //element.attr("cx", new_x).attr("cy", new_y)
                 var pair = undefined
                 if (element.attr("transform") != null) {
@@ -230,13 +321,13 @@ export default {
             node.attr("cx", function(d) {
                 const element = d3.select(this)
                 const elementData = element.data()[0]
-                return outletToPosDict[elementData.outlet || elementData.text][0]
+                return outletToPosDict[elementData.text][0]
                 
             })
             .attr("cy", function(d) {
                 const element = d3.select(this)
                 const elementData = element.data()[0]
-                return outletToPosDict[elementData.outlet || elementData.text][1] 
+                return outletToPosDict[elementData.text][1] 
             })
             .on("end", callback)
         },
@@ -268,26 +359,26 @@ export default {
             var svg = this.canvas
 
             var self = this
-            const nodes = svg.selectAll("g.outlet").filter(node => node.outlet != clicked_outlet)
+            const nodes = svg.selectAll("g.outlet").filter(node => node.text != clicked_outlet)
 
-            const filtered_nodes = this.graph.nodes.filter(node => !node.isCenter && node.outlet != clicked_outlet)
+            const filtered_nodes = this.graph.nodes.filter(node => !node.isCenter && node.text != clicked_outlet)
             // create g for outlet nodes and bind data
-            nodes.data(filtered_nodes, function(d) { return d.outlet })
+            nodes.data(filtered_nodes, function(d) { return d.text })
             .join(
                 enter => {
                     var node = enter.append("g")
                     .attr("class", "node outlet")
                     .attr("cx", self.canvas_width/2)
                     .attr("cy", self.canvas_height/2)
-                    self.applyNodeStyling(node, "node", undefined, "enter node")
+                    self.applyNodeStyling(node, "outlet", undefined, "enter node")
                 },
                 update => {
-                    var node = svg.selectAll("g.outlet").filter(node => node.outlet != clicked_outlet)
+                    var node = svg.selectAll("g.outlet").filter(node => node.text != clicked_outlet)
                     if(pos_moved) {
                         node.attr("cx", function(d) {   return d.x; })
                         .attr("cy", function(d) { return d.y; })
                     }
-                    self.applyNodeStyling(node, "node", undefined, "update node")
+                    self.applyNodeStyling(node, "outlet", undefined, "update node")
                     //self.addEdges(update)
                 },
                 exit => {
@@ -314,7 +405,7 @@ export default {
             .on("mousemove", function(e) {
                 const node_data = d3.select(this).data()[0]
                 const tooltipText = 
-                "outlet: " + (node_data.outlet || node_data.text) + "<br>" +
+                "outlet: " + (node_data.text) + "<br>" +
                 "positive: " + parseFloat(node_data.pos_sent).toFixed(2) + "<br>" + 
                 "negative: " + parseFloat(node_data.neg_sent).toFixed(2) + "<br>" +
                 "neutral: " +  parseFloat(node_data.neu_sent).toFixed(2 )+ "<br>" +
@@ -367,13 +458,13 @@ export default {
             d3.select(nodes).nodes().forEach(node => {
                 node.nodes().forEach(ele => {
                    const eleSelection = d3.select(ele)
-                   outletToPosDict[eleSelection.data()[0].outlet] = [parseFloat(eleSelection.attr("cx"))*ratio[0]+new_origin[0],parseFloat( eleSelection.attr("cy"))*ratio[1]+new_origin[1]]
+                   outletToPosDict[eleSelection.data()[0].text] = [parseFloat(eleSelection.attr("cx"))*ratio[0]+new_origin[0],parseFloat( eleSelection.attr("cy"))*ratio[1]+new_origin[1]]
                 })
             })
             // update data
             nodes.data().forEach(node => {
-                node.x = outletToPosDict[node.outlet][0]
-                node.y = outletToPosDict[node.outlet][1]
+                node.x = outletToPosDict[node.text][0]
+                node.y = outletToPosDict[node.text][1]
             })
             this.graph.center_node.x = new_center[0]
             this.graph.center_node.y = new_center[1]
@@ -385,7 +476,7 @@ export default {
             center_node_pos[center_node.data()[0].text] = new_center
             this.translateAndScale(center_node, center_node_pos, scale_ratio)
         },
-        force_layout(nodes, boundingBox, center, scale_ratio, clicked_outlet=null) {
+        force_layout(nodes, boundingBox, center, scale_ratio, data, clicked_outlet=null) {
             const origin = [boundingBox[0], boundingBox[1]]
             const width = boundingBox[2]
             const height = boundingBox[3]
@@ -393,13 +484,8 @@ export default {
             var tick_num = 0
             const x_center = {"pos": center[0] + width/3, "neg": center[0] - width/3, "neu": center[0]}
             const y_center = {"pos": center[1], "neg": center[1], "neu": 0}
-            var simulation = d3.forceSimulation(this.graph.nodes.map(node => {
-                if(node.isCenter) {
-                    node.fx = center[0]
-                    node.fy = center[1]
-                }
-                return node
-            })) .alphaMin(0.1)
+            var simulation = d3.forceSimulation(data)
+                .alphaMin(0.1)
                 .velocityDecay(0.6) 
                 .force("x", d3.forceX().x(function(d) {
                     // console.log(d.dotted?center[0]:(x_center[d.sentiment]))
@@ -415,7 +501,7 @@ export default {
                 .force("charge", d3.forceManyBody().strength(-10))
                 .force("link", d3.forceLink(self.graph_links).strength(0.0001))
                 .force('collision', d3.forceCollide().iterations(50).radius(d => {
-                    const r = self.getRadiusBytext(d.outlet||d.text)*scale_ratio
+                    const r = self.getRadiusBytext(d.text)*scale_ratio
                     return r
                 }))
                 .on('tick', function() {
@@ -431,7 +517,7 @@ export default {
                     // center_node.fy = center[1]
                     if(true || tick_num > 95) {
                         this.nodes().forEach(node => {
-                            const radius = self.getRadiusBytext(node.outlet||node.text)*scale_ratio 
+                            const radius = self.getRadiusBytext(node.text)*scale_ratio 
                             const bound_x = [origin[0] + radius, origin[0] + width - radius]
                             const bound_y = [origin[1] + radius, origin[1] + height - radius]
                             node.x = Math.max(bound_x[0], Math.min(bound_x[1], node.x))
@@ -469,9 +555,9 @@ export default {
             var self = this
             // add circles for node
             const innerCircle = 
-            (node.selectAll("circle.node").node()
-            ? node.selectAll("circle.node")
-            : node.append("circle").attr("class", "node"))
+            (node.selectAll("circle.node." + class_name).node()
+            ? node.selectAll("circle.node." + class_name)
+            : node.append("circle").attr("class", "node " + class_name))
             innerCircle.attr("cx", function(d) { return d3.select(this.parentNode).attr('cx') })
                 .attr("cy", function(d) { return d3.select(this.parentNode).attr('cy') })
                 .attr("opacity", 0)
@@ -485,7 +571,7 @@ export default {
             nodeText.attr("x", function(d) { return d3.select(this.parentNode).attr("cx"); })
                 .attr("y", function(d) { return d3.select(this.parentNode).attr("cy"); })
                 .each(function(d) {
-                    if(d.text) {
+                    if(d.isCenter) {
                         const break_text = d.text.split('_')
                         const break_num = break_text.length
                         var center_node_text = d3.select(this)
@@ -497,7 +583,7 @@ export default {
                         .attr("dy", "1.4em")
                         center_node_text.attr("y", function(d) { return d3.select(this).attr("y") - 18*(1+(break_num-1)/2)})
                     } else {
-                        d3.select(this).text(d => self.abbr_dict[d.outlet])
+                        d3.select(this).text(d => self.abbr_dict[d.text])
                     }
                 })
                 .attr("text-anchor", "middle")
@@ -659,7 +745,7 @@ export default {
 
             const edge_color = {"pos": "blue", "neg": "red", "neu": "grey" }
             var edges = svg.selectAll("line")
-            .data(node, function(d) { return d.outlet})
+            .data(node, function(d) { return d.text})
             .join("line")
             .attr("class", "graph_edge")
             .attr("x1", function(d) { return d3.select(d).attr("cx");})
@@ -684,7 +770,7 @@ export default {
             
         },  
         getRadiusBytext(label) {
-            const target = d3.selectAll("text.node_text").filter(d => (d.outlet?d.outlet:d.text) == label)
+            const target = d3.selectAll("text.node_text").filter(d => d.text == label)
             return parseFloat(d3.select(target.node().parentNode).attr("r"))
         },
         articlesToRadius(node, d, r=0) {
@@ -708,6 +794,7 @@ export default {
 <template>
 <div class="graphContainer">
     <svg  class="graph" viewBox="0 0 800 600" :id="id">
+        
     </svg>
 </div>
 </template>
