@@ -16,43 +16,38 @@ export default ({
       TimeAxes
 
     },
-    props:['outlet_article_dict', 'enabled_outlet_set','targets', 'topic', 'selectedTimeRange'],
+    props:['articles', 'enabled_outlet_set','targets', 'topic', 'selectedTimeRange'],
+    data() {
+        return {
+            entity_graph: {
+                nodes:[]
+            }
+        }
+    },
     computed: {
+        outlet_article_dict: function() {
+            var outlet_article_dict = {} 
+            this.articles.forEach(article => {
+                outlet_article_dict[article.journal] = outlet_article_dict[article.journal] || []
+                outlet_article_dict[article.journal].push(article.id)
+            })
+            return outlet_article_dict
+        },
+        article_dict: function() {
+            return this.articles.reduce((dict, article) => (dict[article.id]=article, dict), {})
+        },
         graph_dict: function() {
             var graph_dict = {}
+            var graph = {
+                nodes: []
+            }
+            var self = this
             this.targets.forEach(target => {
-                let graph = {
-                    nodes: [],
-                } 
                 this.enabled_outlet_set.forEach(outlet => {
-                    const articles = this.outlet_article_dict[outlet]
-                    if(articles.length == 0) {
-                        let node = {
-                            outlet: outlet,
-                            sentiment: 0,
-                            dotted: true
-                        }
-                        graph.nodes.push(node)
-                    } else {
-                        // const pos_sst = articles.map(article => article.sentiment.pos).reduce((sum, cur) => sum + cur, 0)
-                        // const neg_sst = articles.map(article => article.sentiment.neg).reduce((sum, cur) => sum + cur, 0)
-                        // const neu_sst = 0
-                        const sst_df = new dfd.DataFrame(articles.map(article=>article.sentiment))
-                        const neu_threshold = 0.05
-                        const pos_sst = sst_df.iloc({rows: sst_df["normalized_sst"].gt(neu_threshold)}).count({axis:0}).at("normalized_sst",1) || 0
-                        const neg_sst = sst_df.iloc({rows: sst_df["normalized_sst"].lt(-neu_threshold)}).count({axis:0}).at("normalized_sst",1) || 0
-                        const neu_sst = sst_df.iloc({rows: sst_df["normalized_sst"].lt(neu_threshold).and(sst_df["normalized_sst"].gt(-neu_threshold))}).count({axis:0}).at("normalized_sst",1) || 0
-                        const sst_array = [pos_sst, neg_sst, neu_sst]
-                        let node = {
-                            outlet: outlet,
-                            sentiment: ["pos", "neg", "neu"][sst_array.indexOf(Math.max(...sst_array))],
-                            pos_sent: pos_sst,
-                            neg_sent: neg_sst,
-                            neu_sent: neu_sst,
-                            articles: articles 
-                        }
-                        graph.nodes.push(node)
-                    }
+                    const article_ids = this.outlet_article_dict[outlet]
+                    const articles = this.idsToArticles(article_ids)
+                    const node = self.construct_node(articles, outlet) 
+                    graph.nodes.push(node)
                 }) 
                 // center node
                 graph.nodes.push({
@@ -77,8 +72,62 @@ export default ({
     },
 
     methods: {
+        idsToArticles(article_ids) {
+            var self = this
+            return article_ids.reduce(function(article_list, id) { article_list.push(self.article_dict[id]); return article_list; }, [])
+        },
         handleNodeClicked(clicked_node) {
             this.$emit("node-clicked", clicked_node)        
+            const target = this.targets[0]
+            const articles = clicked_node.articles
+            let cooccur_freq = {}
+            articles.forEach(article => {
+                const entity_list = article.entities
+                entity_list.forEach(entity_mention => {
+                    const entity_id = entity_mention[3]
+                    if(entity_id === target) return
+                    cooccur_freq[entity_id] = (cooccur_freq[entity_id] || [])
+                    cooccur_freq[entity_id].push(article.id)
+                })
+            })
+            var nodes = [] 
+            for (const [entity_id, article_ids] of Object.entries(cooccur_freq)) {
+                const articles = this.idsToArticles(article_ids) 
+                const node = this.construct_node(articles, entity_id) 
+                nodes.push(node)
+            }
+            const max_node_num = 20
+            this.entity_graph.nodes = nodes.sort((a,b) => (a.articles.length < b.articles.length)).slice(0, max_node_num)
+
+        },
+        construct_node(articles, label) {
+            let node
+            if(articles.length == 0) {
+                node = {
+                    text: label,
+                    sentiment: 0,
+                    dotted: true
+                }
+            } else {
+                // const pos_sst = articles.map(article => article.sentiment.pos).reduce((sum, cur) => sum + cur, 0)
+                // const neg_sst = articles.map(article => article.sentiment.neg).reduce((sum, cur) => sum + cur, 0)
+                // const neu_sst = 0
+                const sst_df = new dfd.DataFrame(articles.map(article=>article.sentiment))
+                const neu_threshold = 0.05
+                const pos_sst = sst_df.iloc({rows: sst_df["normalized_sst"].gt(neu_threshold)}).count({axis:0}).at("normalized_sst",1) || 0
+                const neg_sst = sst_df.iloc({rows: sst_df["normalized_sst"].lt(-neu_threshold)}).count({axis:0}).at("normalized_sst",1) || 0
+                const neu_sst = sst_df.iloc({rows: sst_df["normalized_sst"].lt(neu_threshold).and(sst_df["normalized_sst"].gt(-neu_threshold))}).count({axis:0}).at("normalized_sst",1) || 0
+                const sst_array = [pos_sst, neg_sst, neu_sst]
+                node = {
+                    text: label,
+                    sentiment: ["pos", "neg", "neu"][sst_array.indexOf(Math.max(...sst_array))],
+                    pos_sent: pos_sst,
+                    neg_sent: neg_sst,
+                    neu_sent: neu_sst,
+                    articles: articles 
+                }
+            }
+            return node
         },
         normalization(x, mean, std) {
             return Math.tanh((x-mean)/std)
@@ -94,6 +143,7 @@ export default ({
             :graph="graph_dict[target]"
             :graph_index="index"
             :id="`graph-${index}`"
+            :entity_graph="entity_graph.nodes"
             @node-clicked="handleNodeClicked"
             >
         </Graph >

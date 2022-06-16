@@ -104,49 +104,45 @@ export default {
       const article_list = this.np_list[index][1]
       // TODO: query data from graphql
       // const dataset = this.queryDataset(article_list)
-      const dataset = this.$refs.toolbar.getData(target)
+      const target_articles = this.$refs.toolbar.getData(target)
 
-      this.original_dataset = dataset
+      this.original_dataset = target_articles
       // sort by date and update time range
-      dataset.sort((a1, a2) => Date.parse(a1.timestamp) > Date.parse(a2.timestamp))
-      const startMonth = parseInt(dataset[0].timestamp.split('-')[1])
-      const endMonth = parseInt(dataset[dataset.length-1].timestamp.split('-')[1])
+      target_articles.sort((a1, a2) => Date.parse(a1.timestamp) > Date.parse(a2.timestamp))
+      const startMonth = parseInt(target_articles[0].timestamp.split('-')[1])
+      const endMonth = parseInt(target_articles[target_articles.length-1].timestamp.split('-')[1])
       this.timeRange = [startMonth, endMonth+1]
-      this.updateDicts(dataset)
+      this.updateDicts(target_articles)
     },
-    updateDicts(dataset) {
+    updateDicts(target_articles) {
       const pos_mean = 12.506365768116687
       const pos_std = 18.00385412093575
       const neg_mean = -25.86358780825294
       const neg_std = 29.437169285743654 
 
-      // group by topic and outlet
+      // group by topic 
       // clear
       const topic_dict = {}
-      for(let outlet of Object.keys(this.outlet_article_dict)) {
-        this.outlet_article_dict[outlet] = []
-      }
+      // for(let outlet of Object.keys(this.outlet_article_dict)) {
+      //   this.outlet_article_dict[outlet] = []
+      // }
       var count = 0
-      for(var article of dataset) {
+      for(var article of target_articles) {
           // normalization
           const pos = article.sentiment.pos
           const neg = article.sentiment.neg
           Object.assign(article.sentiment, {"normalized_sst": (Math.tanh((pos-pos_mean)/pos_std) + Math.tanh((neg-neg_mean)/neg_std))/2})
           // topic
-          if(!topic_dict[article.top_level_topic]) {
-              topic_dict[article.top_level_topic] = []
-          }
+          topic_dict[article.top_level_topic] = topic_dict[article.top_level_topic] || []
           topic_dict[article.top_level_topic].push(article.id)
           // outlet
-          if(!this.outlet_article_dict[article.journal]) {
-              this.outlet_article_dict[article.journal] = []
-          }
+          this.outlet_article_dict[article.journal] = this.outlet_article_dict[article.journal] || []
           this.outlet_article_dict[article.journal].push(article)
       }
       this.outlet_set = Object.keys(this.outlet_article_dict)
       this.enabled_outlet_set = this.outlet_set
       this.topic_list = Object.keys(topic_dict)
-      this.dataset = dataset
+      this.normalized_articles = target_articles
     }
   },
   watch: {
@@ -174,7 +170,7 @@ export default {
         <Splitter>
           <SplitterPanel id='target-section' class="flex align-items-center justify-content-center" :size="85"> 
             <TargetContainer
-            :outlet_article_dict="outlet_article_dict"
+            :articles="normalized_articles"
             :enabled_outlet_set="enabled_outlet_set"
             :targets="selected_target"
             :topic="selected_topic"
