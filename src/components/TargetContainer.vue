@@ -96,7 +96,7 @@ export default ({
                 const node = this.construct_node(articles, entity_id) 
                 nodes.push(node)
             }
-            const max_node_num = 20
+            const max_node_num = 15 
             this.entity_graph.nodes = nodes.sort((a,b) => (a.articles.length < b.articles.length)).slice(0, max_node_num)
 
         },
