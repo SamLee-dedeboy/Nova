@@ -9,10 +9,8 @@ export default {
         Node
     },
     computed: {
-        total_articles: function() {
-            return this.graph.nodes.filter(node => node.articles).reduce((sum, node) => sum + node.articles.length, 0)
-        },
-        center_node: function() {
+        total_articles() { return this.graph.nodes.filter(node => node.articles).reduce((sum, node) => sum + node.articles.length, 0) },
+        center_node() {
             const center_node = this.graph.nodes.filter(node => node.isCenter)[0]
             center_node.pos_sent = this.graph.nodes.reduce((pos_sum, node) => pos_sum + (node.dotted? 0:node.pos_sent), 0)
             center_node.neg_sent = this.graph.nodes.reduce((neg_sum, node) => neg_sum + (node.dotted? 0:node.neg_sent), 0)
@@ -20,7 +18,7 @@ export default {
             //console.log(center_node)
             return center_node
         },
-        graph_links: function() {
+        graph_links() {
             const center_node_index = this.graph.nodes.findIndex(node => node.isCenter) 
             const links = []
             this.graph.nodes.forEach((node, index) => {
@@ -34,36 +32,23 @@ export default {
             })
             return links
         },
-        outlet_set: function() {
-            return this.graph.nodes.map(node => node.text)
-        },
-        graph_dict:function() {
+        outlet_set() { return this.graph.nodes.map(node => node.text) },
+        graph_dict() {
             var graph_dict = Object.assign({}, ...this.graph.nodes.map((node) => ({[node.text]: node})));
             graph_dict[this.center_node.text] = this.center_node
             return graph_dict
         },
-        minimum_radius: function() {
-            return 3
-           // return Math.max(...this.graph.nodes.map(node => node.outlet.length))
-        },
-        article_num_list: function() {
-           return this.graph.nodes.filter(node => !node.isCenter ).map(node => node.dotted? 0:node.articles.length)
-        },
-        avg_articles: function() {
-           return this.article_num_list.reduce((sum, cur) => sum + cur, 0) / this.article_num_list.length
-        },
-        min_articles: function() {
-            return Math.min(...this.article_num_list)
-        },
-        max_articles: function() {
-            return Math.max(...this.article_num_list)
-        },
-        canvas_width: function() {
-            return parseInt(this.canvas.attr("viewBox").split(" ")[2])
-        },
-        canvas_height: function() {
-            return parseInt(this.canvas.attr("viewBox").split(" ")[3])
-        }
+        minimum_radius() { return 50 },
+        maximum_radius() { return 80 },
+        outlet_article_num_list() { return this.graph.nodes.filter(node => !node.isCenter ).map(node => node.dotted? 0:node.articles.length) },
+        outlet_avg_articles() { return this.article_num_list.reduce((sum, cur) => sum + cur, 0) / this.article_num_list.length },
+        outlet_min_articles() { return Math.min(...this.outlet_article_num_list) },
+        outlet_max_articles() { return Math.max(...this.outlet_article_num_list) },
+        entity_article_num_list() { return this.entity_graph.map(node => node.articles.length)  },
+        entity_min_articles() { return Math.min(...this.entity_article_num_list) },
+        entity_max_articles() { return Math.max(...this.entity_article_num_list) },
+        canvas_width() { return parseInt(this.canvas.attr("viewBox").split(" ")[2]) },
+        canvas_height() { return parseInt(this.canvas.attr("viewBox").split(" ")[3]) }
     },
     data() {
         return {
@@ -601,7 +586,7 @@ export default {
             //node.selectAll("circle." + class_name)
                 //.attr("r", function(d){  return d3.select(this.parentNode).select("text").node().getComputedTextLength()/1.5 + d.dotted?0:d.articles.length; })
             node.attr("r", function(d) { 
-                return self.articlesToRadius(this, d, r)
+                return self.articlesToRadius(node_level, d, r)
             })
             //return 
 
@@ -775,16 +760,20 @@ export default {
             const target = d3.selectAll("g.node,g.subnode").filter(d => d.text == label)
             return parseFloat(target.attr("r"))
         },
-        articlesToRadius(node, d, r=0) {
-            return r>0?r:(30+(d.dotted?5:(d.articles?this.normalizedLength(d.articles.length):this.centerNodeRadius())));
+        articlesToRadius(node_level, d, r=0) {
+            return r>0?r:(d.dotted?this.minimum_radius:(d.articles?this.normalizedLength(d.articles.length, node_level):this.centerNodeRadius(node_level)));
 
             // return r>0?r:((r<0?r:1)*d3.select(node).select("text.node_text").node().getComputedTextLength()/1.5 + (d.dotted?5:(d.articles?this.normalizedLength(d.articles.length):this.centerNodeRadius())));
         },
-        centerNodeRadius() {
-            return this.normalizedLength(this.total_articles)/6
+        centerNodeRadius(node_level) {
+            return this.normalizedLength(this.total_articles/6, node_level)
         },
-        normalizedLength(length) {
-            return ((length - this.min_articles)/(this.max_articles+1)) * 60 + 10 
+        normalizedLength(num_articles, node_level) {
+            const articles_ratio = 
+            (node_level === "node"
+            ? (num_articles - this.outlet_min_articles)/(this.outlet_max_articles+1) 
+            : (num_articles - this.entity_min_articles)/(this.entity_max_articles+1))
+            return articles_ratio*(this.maximum_radius-this.minimum_radius) + this.minimum_radius
         }
     }
 }
