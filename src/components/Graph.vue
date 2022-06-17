@@ -132,7 +132,7 @@ export default {
                     )
                 })
                 .on("end", function() {
-                    console.log(new_entity_graph)
+                    self.add_entity_edges(d3.selectAll("g.subnode.entity"))
                 })
         }
     },
@@ -510,7 +510,7 @@ export default {
                             }
                         })
                     }
-                    self.updateNodes(true, clicked_outlet, scale_ratio, false)
+                    self.updateNodes(true, clicked_outlet, scale_ratio, true)
                     self.updateCenterNode(true, scale_ratio)
                     nodes.attr("transform-origin", function(d) {
                         const container = d3.select(this)
@@ -522,7 +522,7 @@ export default {
                     }).attr("transform", () => "scale(" + scale_ratio + ")")
                 })
                 .on("end", function() {
-                    self.addEdges(d3.selectAll("g.node.outlet"))
+                    // self.addEdges(d3.selectAll("g.node.outlet"))
                 })
             
         },
@@ -731,7 +731,7 @@ export default {
             var center_node = svg.select("g.node.center")
 
             const edge_color = {"pos": "blue", "neg": "red", "neu": "grey" }
-            var edges = svg.selectAll("line")
+            var edges = svg.selectAll("line.edge.outlet")
             .data(node, function(d) { return d.text})
             .join("line")
             .attr("class", "edge outlet")
@@ -753,8 +753,6 @@ export default {
             // .lower()
 
             center_node.raise()
-          
-            
         },  
         getRadiusBytext(label) {
             const target = d3.selectAll("g.node,g.subnode").filter(d => d.text == label)
