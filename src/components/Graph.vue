@@ -87,6 +87,7 @@ export default {
                 this.handleNodeClick(undefined, this.clickedNodeData)
         },
         entity_graph: function(new_entity_graph, old_entity_graph) {
+            var self = this
             const selected_node = this.clickedNode
             const center = [selected_node.attr("cx"), selected_node.attr("cy")]
             const r = selected_node.attr("r")
@@ -97,19 +98,19 @@ export default {
                     .attr("class", "subnode entity")
                     .attr("cx", center[0])
                     .attr("cy", center[1])
+                    self.applyNodeStyling(node, "subnode", "entity", undefined, "enter entity")
                 }
             )
-            var self = this
             var simulation = d3.forceSimulation(new_entity_graph)
                 .alphaMin(0.1)
                 .velocityDecay(0.6) 
-                .force("x", d3.forceX().x(center[0]))
-                .force("y", d3.forceY().y(center[1]))
-                .force("center", d3.forceCenter(center[0], center[1]).strength(0.001))
+                // .force("x", d3.forceX().x(center[0]))
+                // .force("y", d3.forceY().y(center[1]))
+                .force("center", d3.forceCenter(center[0], center[1]).strength(0.1))
                 .force("charge", d3.forceManyBody().strength(-10))
                 .force('collision', d3.forceCollide().iterations(50).radius(d => {
-                    // const r = self.getRadiusBytext(d.text)*scale_ratio
-                    return 5
+                    const r = self.getRadiusBytext(d.text)
+                    return r
                 }))
                 .on('tick', function() {
                     d3.selectAll("g.subnode.entity")
@@ -120,7 +121,6 @@ export default {
                             .attr("class", "subnode entity")
                             .attr("cx", d => d.x)
                             .attr("cy", d => d.y)
-                            console.log("🚀 ~ file: Graph.vue ~ line 129 ~ .on ~ node", node)
                             self.applyNodeStyling(node, "subnode", "entity", undefined, "enter entity")
                             // node.append("circle")
                             // .attr("class", "subnode entity")
@@ -136,8 +136,6 @@ export default {
                             var node = d3.selectAll("g.subnode.entity")
                             node.attr("cx", function(d) {   return d.x; })
                             .attr("cy", function(d) { return d.y; })
-                            console.log("🚀 ~ file: Graph.vue ~ line 146 ~ .on ~ node", node)
-
                             self.applyNodeStyling(node, "subnode", "entity", undefined, "update entity")
                             // update.selectAll("circle.subnode.entity")
                             // .attr("cx", d => d.x)
@@ -208,8 +206,6 @@ export default {
         })
         this.force_layout(d3.selectAll("g.node.outlet"), [0, 0, width, height], center, 1, data)
         //this.updateEdges()
-        
-
     },
 
     methods: {
@@ -573,19 +569,19 @@ export default {
             nodeText.attr("x", function(d) { return d3.select(this.parentNode).attr("cx"); })
                 .attr("y", function(d) { return d3.select(this.parentNode).attr("cy"); })
                 .each(function(d) {
-                    if(d.isCenter) {
+                    if(node_level === "node" && class_name === "outlet") {
+                        d3.select(this).text(d => self.abbr_dict[d.text])
+                    } else {
                         const break_text = d.text.split('_')
                         const break_num = break_text.length
-                        var center_node_text = d3.select(this)
-                        center_node_text.selectAll("tspan")
+                        var node_text = d3.select(this)
+                        node_text.selectAll("tspan")
                         .data(break_text)
                         .join("tspan")
                         .text(d => d)
-                        .attr("x", center_node_text.attr("x"))
+                        .attr("x", node_text.attr("x"))
                         .attr("dy", "1.4em")
-                        center_node_text.attr("y", function(d) { return d3.select(this).attr("y") - 18*(1+(break_num-1)/2)})
-                    } else {
-                        d3.select(this).text(d => self.abbr_dict[d.text])
+                        node_text.attr("y", function(d) { return d3.select(this).attr("y") - 18*(1+(break_num-1)/2)})
                     }
                 })
                 .attr("text-anchor", "middle")
@@ -776,8 +772,8 @@ export default {
             
         },  
         getRadiusBytext(label) {
-            const target = d3.selectAll("text").filter(d => d.text == label)
-            return parseFloat(d3.select(target.node().parentNode).attr("r"))
+            const target = d3.selectAll("g.node,g.subnode").filter(d => d.text == label)
+            return parseFloat(target.attr("r"))
         },
         articlesToRadius(node, d, r=0) {
             return r>0?r:(30+(d.dotted?5:(d.articles?this.normalizedLength(d.articles.length):this.centerNodeRadius())));
