@@ -21,7 +21,8 @@ export default ({
         return {
             entity_graph: {
                 nodes:[]
-            }
+            },
+            cooccur_matrix: {}
         }
     },
     computed: {
@@ -80,24 +81,45 @@ export default ({
             this.$emit("node-clicked", clicked_node)        
             const target = this.targets[0]
             const articles = clicked_node.articles
+            const max_node_num = 15 
+            // generate candidates that cooccur frequently with target
             let cooccur_freq = {}
             articles.forEach(article => {
                 const entity_list = article.entities
                 entity_list.forEach(entity_mention => {
                     const entity_id = entity_mention[3]
-                    if(entity_id === target) return
                     cooccur_freq[entity_id] = (cooccur_freq[entity_id] || [])
                     cooccur_freq[entity_id].push(article.id)
                 })
             })
-            var nodes = [] 
-            for (const [entity_id, article_ids] of Object.entries(cooccur_freq)) {
-                const articles = this.idsToArticles(article_ids) 
-                const node = this.construct_node(articles, entity_id) 
+            // get top k candidates
+            const freq_list = Object.entries(cooccur_freq).map(item => [item[0], item[1].length]).sort((a,b) => (a[1] < b[1])).slice(0, max_node_num).map(item => item[0])
+
+            var cooccur_matrix = {}
+            var nodes = []
+            freq_list.forEach(entity_id => {
+                // generate candidate cooccur matrix
+                cooccur_matrix[entity_id] = {}
+                const entity_articles = this.idsToArticles(cooccur_freq[entity_id])
+                entity_articles.forEach(article => {
+                    const mentioned_entities = article.entities.map(mention => mention[3]).filter(entity => freq_list.includes(entity))
+                    mentioned_entities.forEach(cooccur_entity_id => {
+                        cooccur_matrix[entity_id][cooccur_entity_id] = (cooccur_matrix[entity_id][cooccur_entity_id] || 0)+1  
+                    })
+                })
+                // construct node
+                const node = this.construct_node(entity_articles, entity_id)
                 nodes.push(node)
-            }
-            const max_node_num = 15 
-            this.entity_graph.nodes = nodes.sort((a,b) => (a.articles.length < b.articles.length)).slice(0, max_node_num)
+            })
+            this.entity_graph.nodes = nodes
+            this.cooccur_matrix = cooccur_matrix
+            // // var nodes = [] 
+            // // for (const [entity_id, article_ids] of Object.entries(cooccur_freq)) {
+            // //     const articles = this.idsToArticles(article_ids) 
+            // //     const node = this.construct_node(articles, entity_id) 
+            // //     nodes.push(node)
+            // // }
+            // this.entity_graph.nodes = nodes.sort((a,b) => (a.articles.length < b.articles.length)).slice(0, max_node_num)
 
         },
         construct_node(articles, label) {
@@ -144,6 +166,7 @@ export default ({
             :graph_index="index"
             :id="`graph-${index}`"
             :entity_graph="entity_graph.nodes"
+            :cooccur_matrix="cooccur_matrix"
             @node-clicked="handleNodeClicked"
             >
         </Graph >

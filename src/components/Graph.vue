@@ -4,7 +4,7 @@ import Node from "./Node.vue"
 import { nextTick } from 'vue'
 
 export default {
-    props: ['graph', 'graph_index', "id", "entity_graph"],
+    props: ['graph', 'graph_index', "id", "entity_graph", "cooccur_matrix"],
     components: {
         Node
     },
@@ -107,6 +107,7 @@ export default {
                             .attr("cx", d => d.x)
                             .attr("cy", d => d.y)
                             self.applyNodeStyling(node, "subnode", "entity", undefined, "enter entity")
+                            // self.add_entity_edges(node)
                             // node.append("circle")
                             // .attr("class", "subnode entity")
                             // .attr("cx", d => d.x)
@@ -122,6 +123,7 @@ export default {
                             node.attr("cx", function(d) {   return d.x; })
                             .attr("cy", function(d) { return d.y; })
                             self.applyNodeStyling(node, "subnode", "entity", undefined, "update entity")
+                            // self.add_entity_edges(node)
                             // update.selectAll("circle.subnode.entity")
                             // .attr("cx", d => d.x)
                             // .attr("cy", d => d.y)
@@ -132,7 +134,7 @@ export default {
                     )
                 })
                 .on("end", function() {
-                    self.add_entity_edges(d3.selectAll("g.subnode.entity"))
+                    // self.add_entity_edges(d3.selectAll("g.subnode.entity"))
                 })
         }
     },
