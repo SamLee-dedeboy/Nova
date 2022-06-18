@@ -32,6 +32,21 @@ export default {
             })
             return links
         },
+        entity_links() {
+            const links = []   
+            this.entity_graph.forEach((node_a, index_a) => {
+                this.entity_graph.forEach((node_b, index_b) => {
+                    if(index_a != index_b) {
+                        const edge = {
+                            "source": index_a,
+                            "target": index_b
+                        }
+                        links.push(edge)
+                    }
+                })
+            })
+            return links
+        },
         outlet_set() { return this.graph.nodes.map(node => node.text) },
         graph_dict() {
             var graph_dict = Object.assign({}, ...this.graph.nodes.map((node) => ({[node.text]: node})));
@@ -93,6 +108,7 @@ export default {
                 // .force("y", d3.forceY().y(center[1]))
                 .force("center", d3.forceCenter(center[0], center[1]).strength(0.1))
                 .force("charge", d3.forceManyBody().strength(-10))
+                .force("link", d3.forceLink(self.graph_links).strength(0.0001))
                 .force('collision', d3.forceCollide().iterations(50).radius(d => {
                     const r = self.getRadiusBytext(d.text)
                     return r
@@ -107,7 +123,7 @@ export default {
                             .attr("cx", d => d.x)
                             .attr("cy", d => d.y)
                             self.applyNodeStyling(node, "subnode", "entity", undefined, "enter entity")
-                            // self.add_entity_edges(node)
+                            self.add_entity_edges(new_entity_graph, selected_node)
                             // node.append("circle")
                             // .attr("class", "subnode entity")
                             // .attr("cx", d => d.x)
@@ -123,7 +139,7 @@ export default {
                             node.attr("cx", function(d) {   return d.x; })
                             .attr("cy", function(d) { return d.y; })
                             self.applyNodeStyling(node, "subnode", "entity", undefined, "update entity")
-                            // self.add_entity_edges(node)
+                            self.add_entity_edges(new_entity_graph, selected_node)
                             // update.selectAll("circle.subnode.entity")
                             // .attr("cx", d => d.x)
                             // .attr("cy", d => d.y)
@@ -756,6 +772,31 @@ export default {
 
             center_node.raise()
         },  
+        add_entity_edges(entity_graph, clickedNode) {
+            var self = this
+            const edges = clickedNode.selectAll("line.edge.entity")
+            .data(this.entity_links, (d) => (`${d.source}-${d.target}`))
+            .join(
+                enter => {
+                    enter.append("line")
+                    .attr("class", "edge entity")
+                    .attr("x1", function(d) { return entity_graph[d.source].x; })
+                    .attr("x2", function(d) { return entity_graph[d.target].x; }) 
+                    .attr("y1", function(d) { return entity_graph[d.source].y; })
+                    .attr("y2", function(d) { return entity_graph[d.target].y; })
+                    .attr("stroke", "black") 
+                }, 
+                update => {
+                    update
+                    .attr("x1", function(d) { return entity_graph[d.source].x; })
+                    .attr("x2", function(d) { return entity_graph[d.target].x; }) 
+                    .attr("y1", function(d) { return entity_graph[d.source].y; })
+                    .attr("y2", function(d) { return entity_graph[d.target].y; })
+                    .attr("stroke", "black") 
+                }
+            ) 
+            clickedNode.selectAll("g.subnode.entity").raise()
+        },
         getRadiusBytext(label) {
             const target = d3.selectAll("g.node,g.subnode").filter(d => d.text == label)
             return parseFloat(target.attr("r"))
