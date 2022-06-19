@@ -261,7 +261,7 @@ export default {
             const expanded_r = 0.49*height
             //const expanded_r = 0.2*height
             const clickedNode = d3.selectAll("g.node.outlet").filter(node => node.text == d.text)
-            clickedNode.select("g.outer_ring.node").remove()
+            clickedNode.select("g.outer_ring_node_outlet").remove()
             svg.selectAll("line.edge.outlet").filter(line => d3.select(line).data()[0].text == clickedNode.data()[0].text).remove()
             
             clickedNode.selectAll("circle.expand.node").style("filter", "brightness(100%)")
@@ -270,11 +270,11 @@ export default {
             // animate clicked node
             self.animating_click = true
             // move text
-            clickedNode.selectAll("text.node").transition().duration(1000)
+            clickedNode.selectAll("text.node_outlet").transition().duration(1000)
                 .attr("x", clicked_center[0])
                 .attr("y", clicked_center[1])
                 // move circles
-            const circles = clickedNode.selectAll("circle.node")
+            const circles = clickedNode.selectAll("circle")
             circles.transition().duration(1000)
             .attr("cx", clicked_center[0])
             .attr("cy", clicked_center[1])
