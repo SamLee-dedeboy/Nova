@@ -90,9 +90,31 @@ export default {
             for(const [entity_1, cooccurrs] of Object.entries(this.cooccur_matrix)) {
                 const max_of_entity_1 = Math.max(...Object.keys(cooccurrs).map(entity_2 => cooccurrs[entity_2]))
                 max = Math.max(max, max_of_entity_1)
-            }
+            }   
             return  max
-        }
+        },
+        mean_entity_cooccurr() {
+            var sum = 0
+            var count = 0 
+            for(const [entity_1, cooccurrs] of Object.entries(this.cooccur_matrix)) {
+                for(const [entity_2, freq] of Object.entries(cooccurrs)) {
+                    sum += freq
+                    count += 1
+                }
+            }
+            return sum/count
+        },
+        std_entity_cooccurr() {
+            var sum = 0
+            var count = 0
+            for(const [entity_1, cooccurrs] of Object.entries(this.cooccur_matrix)) {
+                for(const [entity_2, freq] of Object.entries(cooccurrs)) {
+                    sum += Math.pow(freq - this.mean_entity_cooccurr, 2)
+                    count += 1
+                }
+            }
+            return Math.sqrt(sum)/count
+        },
     },
     data() {
         return {
@@ -116,11 +138,10 @@ export default {
                 this.handleNodeClick(undefined, this.clickedNodeData)
         },
         entity_graph: function(new_entity_graph, old_entity_graph) {
-        // console.log("🚀 ~ file: Graph.vue ~ line 119 ~ new_entity_graph", new_entity_graph)
             var self = this
             const selected_node = this.clickedNode
-            const center = [selected_node.attr("cx"), selected_node.attr("cy")]
-            const r = selected_node.attr("r")
+            const center = [parseFloat(selected_node.attr("cx")), parseFloat(selected_node.attr("cy"))]
+            const bounded_r = selected_node.attr("r")
             const entity_nodes = selected_node.selectAll("g.subnode.entity").data(new_entity_graph, (d) => (d.text))
             .join(
                 enter => {
@@ -131,34 +152,53 @@ export default {
                     self.applyNodeStyling(node, "subnode", "entity", undefined, "enter entity")
                 }
             )
+            new_entity_graph.forEach(node => {
+                node.x = parseInt(center[0])
+                node.y = parseInt(center[1])
+            })
             var simulation = d3.forceSimulation(new_entity_graph)
-                .alphaMin(0.1)
+                .alphaMin(0.2)
                 .velocityDecay(0.6) 
                 // .force("x", d3.forceX().x(center[0]))
                 // .force("y", d3.forceY().y(center[1]))
                 .force("center", d3.forceCenter(center[0], center[1]).strength(0.1))
-                .force("charge", d3.forceManyBody().strength(-180))
+                .force("charge", d3.forceManyBody().strength(-50))
                 .force("link", d3.forceLink(self.entity_links).strength(function(d) {
                     const entity_1 = d.source.text
                     const entity_2 = d.target.text
                     const freq = self.cooccur_matrix[entity_1][entity_2] || 0
-                    const min = 0.00001
-                    const max = 0.0001
-                    return (max-min)*(freq/self.max_entity_cooccurr) + min
+                    var res = (freq - self.mean_entity_cooccurr)/self.std_entity_cooccurr
+                    res = 1 / (1 + Math.exp(-res));
+                    const min = 0.001
+                    const max = 0.01
+                    res = (max-min)*res + min
+                    return res 
                 }))
                 .force('collision', d3.forceCollide().iterations(50).radius(d => {
-                    const r = self.getRadiusBytext(d.text)
+                    const r = self.getRadiusBytext("subnode", d.text)
                     return r
                 }))
                 .on('tick', function() {
+                    this.nodes().forEach(node => {
+                        const distance = Math.sqrt(Math.pow(node.x-center[0], 2) + Math.pow(node.y-center[1], 2))
+                        const r = bounded_r-self.getRadiusBytext("subnode", node.text) - 10
+                        if(distance > r) {
+                            node.x = (node.x-center[0])*r/distance + center[0]
+                            node.y = (node.y-center[1])*r/distance + center[1]
+                        }
+                    })
                     d3.selectAll("g.subnode.entity")
                     .data(new_entity_graph, (d) => (d.text))
                     .join(
                         enter => {
                             const node = enter.append("g")
                             .attr("class", "subnode entity")
-                            .attr("cx", d => d.x)
-                            .attr("cy", d => d.y)
+                            .attr('cx', function (d) { 
+                                return d.x
+                            })
+                            .attr('cy', function (d) { 
+                                return d.y
+                            });
                             self.applyNodeStyling(node, "subnode", "entity", undefined, "enter entity")
                             self.add_entity_edges(new_entity_graph, selected_node)
                             // node.append("circle")
@@ -173,8 +213,12 @@ export default {
                         },
                         update => {
                             var node = d3.selectAll("g.subnode.entity")
-                            node.attr("cx", function(d) {   return d.x; })
-                            .attr("cy", function(d) { return d.y; })
+                            .attr('cx', function (d) { 
+                                return d.x
+                            })
+                            .attr('cy', function (d) { 
+                                return d.y
+                            });
                             self.applyNodeStyling(node, "subnode", "entity", undefined, "update entity")
                             self.add_entity_edges(new_entity_graph, selected_node)
                             // update.selectAll("circle.subnode.entity")
@@ -249,7 +293,23 @@ export default {
     },
 
     methods: {
-        // TODO
+        pythag(r, b, coord) {
+            const strokeWidth = 0
+            const w = 500
+            const bound_radius = w/2
+            const hyp2 = Math.pow(bound_radius, 2)
+            // force use of b coord that exists in circle to avoid sqrt(x<0)
+            b = Math.min(w - r - strokeWidth, Math.max(r + strokeWidth, b));
+
+            var b2 = Math.pow((b - bound_radius), 2),
+                a = Math.sqrt(hyp2 - b2);
+
+            // radius - sqrt(hyp^2 - b^2) < coord < sqrt(hyp^2 - b^2) + radius
+            coord = Math.max(bound_radius - a + r + strokeWidth,
+                        Math.min(a + bound_radius - r - strokeWidth, coord));
+
+            return coord;
+        },
         handleNodeClick(e, d) {
             this.nodeClicked = true
             var self = this
@@ -539,7 +599,7 @@ export default {
                 .force("charge", d3.forceManyBody().strength(-10))
                 .force("link", d3.forceLink(self.graph_links).strength(0.0001))
                 .force('collision', d3.forceCollide().iterations(50).radius(d => {
-                    const r = self.getRadiusBytext(d.text)*scale_ratio
+                    const r = self.getRadiusBytext("node", d.text)*scale_ratio
                     return r
                 }))
                 .on('tick', function() {
@@ -555,7 +615,7 @@ export default {
                     // center_node.fy = center[1]
                     if(true || tick_num > 95) {
                         this.nodes().forEach(node => {
-                            const radius = self.getRadiusBytext(node.text)*scale_ratio 
+                            const radius = self.getRadiusBytext("node", node.text)*scale_ratio 
                             const bound_x = [origin[0] + radius, origin[0] + width - radius]
                             const bound_y = [origin[1] + radius, origin[1] + height - radius]
                             node.x = Math.max(bound_x[0], Math.min(bound_x[1], node.x))
@@ -919,8 +979,8 @@ export default {
             if(!node) return 0;
             return node[0].articles.length
         },
-        getRadiusBytext(label) {
-            const target = d3.selectAll("g.node,g.subnode").filter(d => d.text == label)
+        getRadiusBytext(node_level, label) {
+            const target = d3.selectAll(`g.${node_level}`).filter(d => d.text == label)
             return parseFloat(target.attr("r"))
         },
         articlesToRadius(node_level, d, r=0) {
