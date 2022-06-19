@@ -53,17 +53,30 @@ export default {
             graph_dict[this.center_node.text] = this.center_node
             return graph_dict
         },
-        minimum_radius() { return 50 },
-        maximum_radius() { return 80 },
+        canvas_width() { return parseInt(this.canvas.attr("viewBox").split(" ")[2]) },
+        canvas_height() { return parseInt(this.canvas.attr("viewBox").split(" ")[3]) },
+        // outlet
+        minimum_outlet_radius() { return 50 },
+        maximum_outlet_radius() { return 80 },
         outlet_article_num_list() { return this.graph.nodes.filter(node => !node.isCenter ).map(node => node.dotted? 0:node.articles.length) },
         outlet_avg_articles() { return this.article_num_list.reduce((sum, cur) => sum + cur, 0) / this.article_num_list.length },
         outlet_min_articles() { return Math.min(...this.outlet_article_num_list) },
         outlet_max_articles() { return Math.max(...this.outlet_article_num_list) },
+        // entity articles
+        minimum_entity_radius() { return 30 },
+        maximum_entity_radius() { return 50 },
         entity_article_num_list() { return this.entity_graph.map(node => node.articles.length)  },
         entity_min_articles() { return Math.min(...this.entity_article_num_list) },
         entity_max_articles() { return Math.max(...this.entity_article_num_list) },
-        canvas_width() { return parseInt(this.canvas.attr("viewBox").split(" ")[2]) },
-        canvas_height() { return parseInt(this.canvas.attr("viewBox").split(" ")[3]) }
+        // entity cooccurr freqs
+        max_entity_cooccurr() { 
+            var max = 0
+            for(const [entity_1, cooccurrs] of Object.entries(this.cooccur_matrix)) {
+                const max_of_entity_1 = Math.max(...Object.keys(cooccurrs).map(entity_2 => cooccurrs[entity_2]))
+                max = Math.max(max, max_of_entity_1)
+            }
+            return  max
+        }
     },
     data() {
         return {
@@ -107,7 +120,7 @@ export default {
                 // .force("x", d3.forceX().x(center[0]))
                 // .force("y", d3.forceY().y(center[1]))
                 .force("center", d3.forceCenter(center[0], center[1]).strength(0.1))
-                .force("charge", d3.forceManyBody().strength(-10))
+                .force("charge", d3.forceManyBody().strength(-180))
                 .force("link", d3.forceLink(self.graph_links).strength(0.0001))
                 .force('collision', d3.forceCollide().iterations(50).radius(d => {
                     const r = self.getRadiusBytext(d.text)
@@ -583,12 +596,12 @@ export default {
                         .join("tspan")
                         .text(d => d)
                         .attr("x", node_text.attr("x"))
-                        .attr("dy", "1.4em")
-                        node_text.attr("y", function(d) { return d3.select(this).attr("y") - 18*(1+(break_num-1)/2)})
+                        .attr("dy", () => (node_level === "node" ? "1.4em":"1.4em"))
+                        node_text.attr("y", function(d) { return d3.select(this).attr("y") - (node_level === "node"? 18:14)*(1+(break_num-1)/2)})
                     }
                 })
                 .attr("text-anchor", "middle")
-                .attr("font-size","0.8em")
+                .attr("font-size", () => (node_level === "node" ? "0.8em":"0.6em"))
                 .attr("dominant-baseline", "central")
                 .style("display:block")
                 // .text(d => self.abbr_dict[d.outlet] || d.text)
@@ -776,26 +789,57 @@ export default {
             var self = this
             const edges = clickedNode.selectAll("line.edge.entity")
             .data(this.entity_links, (d) => (`${d.source}-${d.target}`))
-            .join(
-                enter => {
-                    enter.append("line")
-                    .attr("class", "edge entity")
-                    .attr("x1", function(d) { return entity_graph[d.source].x; })
-                    .attr("x2", function(d) { return entity_graph[d.target].x; }) 
-                    .attr("y1", function(d) { return entity_graph[d.source].y; })
-                    .attr("y2", function(d) { return entity_graph[d.target].y; })
-                    .attr("stroke", "black") 
-                }, 
-                update => {
-                    update
-                    .attr("x1", function(d) { return entity_graph[d.source].x; })
-                    .attr("x2", function(d) { return entity_graph[d.target].x; }) 
-                    .attr("y1", function(d) { return entity_graph[d.source].y; })
-                    .attr("y2", function(d) { return entity_graph[d.target].y; })
-                    .attr("stroke", "black") 
-                }
-            ) 
+            edges.enter().append("line").attr("class", "edge entity")
+                .merge(edges)
+                .attr("x1", function(d) { return entity_graph[d.source].x; })
+                .attr("x2", function(d) { return entity_graph[d.target].x; }) 
+                .attr("y1", function(d) { return entity_graph[d.source].y; })
+                .attr("y2", function(d) { return entity_graph[d.target].y; })
+                .attr("stroke", "black") 
+                .attr("stroke-width", function(d) {
+                    const entity_1 = entity_graph[d.source].text
+                    const entity_2 = entity_graph[d.target].text
+                    const freq = self.cooccur_matrix[entity_1][entity_2] || 0
+                    const min_width = 5
+                    const max_width = 30
+                    return (max_width-min_width)*(freq/self.max_entity_cooccurr) + min_width  
+                })
+                .style("stroke-opacity", function(d) {
+                    const entity_1 = entity_graph[d.source].text
+                    const entity_2 = entity_graph[d.target].text
+                    const freq = self.cooccur_matrix[entity_1][entity_2]
+                    const min_opacity = 0 
+                    const max_opacity = 1 
+                    return (max_opacity-min_opacity)*(freq/self.max_entity_cooccurr) + min_opacity  
+
+                })
+                .style("stroke-linecap","round")
+               
+                // enter => {
+
+                //     enter.append("line")
+                //     .attr("class", "edge entity")
+                //     .attr("x1", function(d) { return entity_graph[d.source].x; })
+                //     .attr("x2", function(d) { return entity_graph[d.target].x; }) 
+                //     .attr("y1", function(d) { return entity_graph[d.source].y; })
+                //     .attr("y2", function(d) { return entity_graph[d.target].y; })
+                //     .attr("stroke", "black") 
+                // }, 
+                // update => {
+                //     update
+                //     .attr("x1", function(d) { return entity_graph[d.source].x; })
+                //     .attr("x2", function(d) { return entity_graph[d.target].x; }) 
+                //     .attr("y1", function(d) { return entity_graph[d.source].y; })
+                //     .attr("y2", function(d) { return entity_graph[d.target].y; })
+                //     .attr("stroke", "black") 
+                // }
+            // ) 
             clickedNode.selectAll("g.subnode.entity").raise()
+        },
+        getArticleNumByOutlet(outlet) {
+            const node = this.graph.nodes.filter(node => node.text == outlet)
+            if(!node) return 0;
+            return node[0].articles.length
         },
         getRadiusBytext(label) {
             const target = d3.selectAll("g.node,g.subnode").filter(d => d.text == label)
@@ -814,7 +858,10 @@ export default {
             (node_level === "node"
             ? (num_articles - this.outlet_min_articles)/(this.outlet_max_articles+1) 
             : (num_articles - this.entity_min_articles)/(this.entity_max_articles+1))
-            return articles_ratio*(this.maximum_radius-this.minimum_radius) + this.minimum_radius
+
+            const min = (node_level === "node" ? this.minimum_outlet_radius : this.minimum_entity_radius)
+            const max = (node_level === "node" ? this.minimum_outlet_radius : this.minimum_entity_radius)
+            return articles_ratio*(max-min) + min
         }
     }
 }
