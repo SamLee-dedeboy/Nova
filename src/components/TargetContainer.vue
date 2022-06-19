@@ -81,7 +81,7 @@ export default ({
             this.$emit("node-clicked", clicked_node)        
             const target = this.targets[0]
             const articles = clicked_node.articles
-            const max_node_num = 15 
+            const max_node_num = 10
             // generate candidates that cooccur frequently with target
             let cooccur_freq = {}
             articles.forEach(article => {
