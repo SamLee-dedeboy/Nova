@@ -47,6 +47,22 @@ export default {
             })
             return links
         },
+        undirected_entity_links() {
+            const links = []   
+            this.entity_graph.forEach((node_a, index_a) => {
+                this.entity_graph.forEach((node_b, index_b) => {
+                    if(index_a < index_b) {
+                        const edge = {
+                            "source": index_a,
+                            "target": index_b
+                        }
+                        links.push(edge)
+                    }
+                })
+            })
+            return links
+
+        },
         outlet_set() { return this.graph.nodes.map(node => node.text) },
         graph_dict() {
             var graph_dict = Object.assign({}, ...this.graph.nodes.map((node) => ({[node.text]: node})));
@@ -100,6 +116,7 @@ export default {
                 this.handleNodeClick(undefined, this.clickedNodeData)
         },
         entity_graph: function(new_entity_graph, old_entity_graph) {
+        // console.log("🚀 ~ file: Graph.vue ~ line 119 ~ new_entity_graph", new_entity_graph)
             var self = this
             const selected_node = this.clickedNode
             const center = [selected_node.attr("cx"), selected_node.attr("cy")]
@@ -794,26 +811,71 @@ export default {
         },  
         add_entity_edges(entity_graph, clickedNode) {
             var self = this
-            const edges = clickedNode.selectAll("line.edge.entity")
-            .data(this.entity_links, (d) => (`${d.source.text}-${d.target.text}`))
-            edges.enter().append("line").attr("class", "edge entity")
-                .merge(edges)
-                .attr("x1", function(d) { return d.source.x; })
-                .attr("x2", function(d) { return d.target.x; }) 
-                .attr("y1", function(d) { return d.source.y; })
-                .attr("y2", function(d) { return d.target.y; })
-                .attr("stroke", "black") 
+            const edge_group = clickedNode.selectAll("g.edge_group")
+                .data(this.undirected_entity_links, (d) => (`${entity_graph[d.source].text}-${entity_graph[d.target].text}`))
+                .join(
+                    enter => {
+                        enter.append("g").attr("class", "edge_group")
+                    }
+                )
+                // .attr("id", (d) => (`${entity_graph[d.source].text}-${entity_graph[d.target].text}`))
+            const edges = 
+            ( edge_group.selectAll("line").node()
+            ? edge_group.selectAll("line")
+            : edge_group.append("line").attr("class", "edge entity"))
+            edges.attr("x1", function(d) { return entity_graph[d.source].x; })
+                .attr("x2", function(d) { return entity_graph[d.target].x; }) 
+                .attr("y1", function(d) { return entity_graph[d.source].y; })
+                .attr("y2", function(d) { return entity_graph[d.target].y; })
+            const gradient = 
+                ( edge_group.selectAll("defs")?.selectAll("linearGradient").node()
+                ? edge_group.selectAll("defs").selectAll("linearGradient")
+                : edge_group.append("defs").append("linearGradient"))
+            gradient.attr("id", (d) => (`${entity_graph[d.source].text}-${entity_graph[d.target].text}`))
+                // .attr("x1", "0%") 
+                // .attr("x2", "100%")
+                // .attr("y1", "0%")
+                // .attr("y2", "100%")
+                // .attr("x1", function(d) { return d3.select(this.parentNode.parentNode).attr("x1")})
+                // .attr("x2", function(d) { return d3.select(this.parentNode.parentNode).attr("x2")})
+                // .attr("y1", function(d) { return d3.select(this.parentNode.parentNode).attr("y1")})
+                // .attr("y2", function(d) { return d3.select(this.parentNode.parentNode).attr("y2")} 
+            const start = 
+            ( gradient.selectAll("stop.start").node()
+            ? gradient.selectAll("stop.start")
+            : gradient.append("stop").attr("class", "start"))
+            start.attr("offset", "0%")
+                .attr("stop-color", function(d) {
+                    const node = (entity_graph[d.source].x < entity_graph[d.target].x)? entity_graph[d.source]:entity_graph[d.target]
+                    const sentiment = node.sentiment
+                    if(sentiment == "pos") return "blue" 
+                    if(sentiment == "neg") return "red" 
+                    if(sentiment == "neu") return "grey" 
+                })
+            const end = 
+            ( gradient.selectAll("stop.end").node()
+            ? gradient.selectAll("stop.ent")
+            : gradient.append("stop").attr("class", "end"))
+            end.attr("offset", "100%")
+            .attr("stop-color", function(d) {
+                    const node = (entity_graph[d.source].x > entity_graph[d.target].x)? entity_graph[d.source]:entity_graph[d.target]
+                    const sentiment = node.sentiment 
+                    if(sentiment == "pos") return "blue" 
+                    if(sentiment == "neg") return "red" 
+                    if(sentiment == "neu") return "grey" 
+                })
+            edges.attr("stroke", (d) => (`url(#${entity_graph[d.source].text}-${entity_graph[d.target].text})`))
                 .attr("stroke-width", function(d) {
-                    const entity_1 = d.source.text
-                    const entity_2 = d.target.text
+                    const entity_1 = entity_graph[d.source].text
+                    const entity_2 = entity_graph[d.target].text
                     const freq = self.cooccur_matrix[entity_1][entity_2] || 0
                     const min_width = 5
                     const max_width = 30
                     return (max_width-min_width)*(freq/self.max_entity_cooccurr) + min_width  
                 })
                 .style("stroke-opacity", function(d) {
-                    const entity_1 = d.source.text
-                    const entity_2 = d.target.text
+                    const entity_1 = entity_graph[d.source].text
+                    const entity_2 = entity_graph[d.target].text
                     const freq = self.cooccur_matrix[entity_1][entity_2]
                     const min_opacity = 0 
                     const max_opacity = 1 
@@ -842,6 +904,15 @@ export default {
                 // }
             // ) 
             clickedNode.selectAll("g.subnode.entity").raise()
+        },
+        sentiment_classify(node_data) {
+            const pos = node_data.pos_sent
+            const neg = node_data.neg_sent
+            const neu = node_data.neu_sent
+            const max = Math.max(pos, neg, neu) 
+            if(max == pos) return "positive"
+            if(max == neg) return "negative"
+            if(max == neu) return "neutral"
         },
         getArticleNumByOutlet(outlet) {
             const node = this.graph.nodes.filter(node => node.text == outlet)
