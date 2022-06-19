@@ -121,7 +121,14 @@ export default {
                 // .force("y", d3.forceY().y(center[1]))
                 .force("center", d3.forceCenter(center[0], center[1]).strength(0.1))
                 .force("charge", d3.forceManyBody().strength(-180))
-                .force("link", d3.forceLink(self.graph_links).strength(0.0001))
+                .force("link", d3.forceLink(self.entity_links).strength(function(d) {
+                    const entity_1 = d.source.text
+                    const entity_2 = d.target.text
+                    const freq = self.cooccur_matrix[entity_1][entity_2] || 0
+                    const min = 0.00001
+                    const max = 0.0001
+                    return (max-min)*(freq/self.max_entity_cooccurr) + min
+                }))
                 .force('collision', d3.forceCollide().iterations(50).radius(d => {
                     const r = self.getRadiusBytext(d.text)
                     return r
@@ -788,25 +795,25 @@ export default {
         add_entity_edges(entity_graph, clickedNode) {
             var self = this
             const edges = clickedNode.selectAll("line.edge.entity")
-            .data(this.entity_links, (d) => (`${d.source}-${d.target}`))
+            .data(this.entity_links, (d) => (`${d.source.text}-${d.target.text}`))
             edges.enter().append("line").attr("class", "edge entity")
                 .merge(edges)
-                .attr("x1", function(d) { return entity_graph[d.source].x; })
-                .attr("x2", function(d) { return entity_graph[d.target].x; }) 
-                .attr("y1", function(d) { return entity_graph[d.source].y; })
-                .attr("y2", function(d) { return entity_graph[d.target].y; })
+                .attr("x1", function(d) { return d.source.x; })
+                .attr("x2", function(d) { return d.target.x; }) 
+                .attr("y1", function(d) { return d.source.y; })
+                .attr("y2", function(d) { return d.target.y; })
                 .attr("stroke", "black") 
                 .attr("stroke-width", function(d) {
-                    const entity_1 = entity_graph[d.source].text
-                    const entity_2 = entity_graph[d.target].text
+                    const entity_1 = d.source.text
+                    const entity_2 = d.target.text
                     const freq = self.cooccur_matrix[entity_1][entity_2] || 0
                     const min_width = 5
                     const max_width = 30
                     return (max_width-min_width)*(freq/self.max_entity_cooccurr) + min_width  
                 })
                 .style("stroke-opacity", function(d) {
-                    const entity_1 = entity_graph[d.source].text
-                    const entity_2 = entity_graph[d.target].text
+                    const entity_1 = d.source.text
+                    const entity_2 = d.target.text
                     const freq = self.cooccur_matrix[entity_1][entity_2]
                     const min_opacity = 0 
                     const max_opacity = 1 
