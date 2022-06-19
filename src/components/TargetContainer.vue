@@ -104,7 +104,8 @@ export default ({
                 entity_articles.forEach(article => {
                     const mentioned_entities = article.entities.map(mention => mention[3]).filter(entity => freq_list.includes(entity))
                     mentioned_entities.forEach(cooccur_entity_id => {
-                        cooccur_matrix[entity_id][cooccur_entity_id] = (cooccur_matrix[entity_id][cooccur_entity_id] || 0)+1  
+                        if(entity_id != cooccur_entity_id)
+                            cooccur_matrix[entity_id][cooccur_entity_id] = (cooccur_matrix[entity_id][cooccur_entity_id] || 0)+1  
                     })
                 })
                 // construct node
