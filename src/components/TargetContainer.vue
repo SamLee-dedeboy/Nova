@@ -83,29 +83,29 @@ export default ({
             const articles = clicked_node.articles
             const max_node_num = 10
             // generate candidates that cooccur frequently with target
-            let cooccur_freq = {}
+            let entity_mentioned_articles = {}
             articles.forEach(article => {
                 const entity_list = article.entities
                 entity_list.forEach(entity_mention => {
                     const entity_id = entity_mention[3]
-                    cooccur_freq[entity_id] = (cooccur_freq[entity_id] || [])
-                    cooccur_freq[entity_id].push(article.id)
+                    entity_mentioned_articles[entity_id] = (entity_mentioned_articles[entity_id] || new Set())
+                    entity_mentioned_articles[entity_id].add(article.id)
                 })
             })
             // get top k candidates
-            const freq_list = Object.entries(cooccur_freq).map(item => [item[0], item[1].length]).sort((a,b) => (a[1] < b[1])).slice(0, max_node_num).map(item => item[0])
-
+            var freq_list = Array.from(Object.entries(entity_mentioned_articles).map(item => [item[0], item[1].size])).sort((a,b) => (b[1] - a[1])).slice(0, max_node_num).map(item => item[0]) 
+            // console.log("🚀 ~ file: TargetContainer.vue ~ line 97 ~ handleNodeClicked ~ freq_list", freq_list)
             var cooccur_matrix = {}
             var nodes = []
             freq_list.forEach(entity_id => {
                 // generate candidate cooccur matrix
                 cooccur_matrix[entity_id] = {}
-                const entity_articles = this.idsToArticles(cooccur_freq[entity_id])
+                const entity_articles = this.idsToArticles([...entity_mentioned_articles[entity_id]])
                 entity_articles.forEach(article => {
-                    const mentioned_entities = article.entities.map(mention => mention[3]).filter(entity => freq_list.includes(entity))
-                    mentioned_entities.forEach(cooccur_entity_id => {
-                        if(entity_id != cooccur_entity_id)
-                            cooccur_matrix[entity_id][cooccur_entity_id] = (cooccur_matrix[entity_id][cooccur_entity_id] || 0)+1  
+                    const comentioned_entities = Array.from(new Set(article.entities.map(mention => mention[3]).filter(entity => freq_list.includes(entity))))
+                    comentioned_entities.forEach(cooccur_entity_id => {
+                        // if(entity_id != cooccur_entity_id)
+                        cooccur_matrix[entity_id][cooccur_entity_id] = (cooccur_matrix[entity_id][cooccur_entity_id] || 0)+1  
                     })
                 })
                 // construct node
