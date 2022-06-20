@@ -118,7 +118,8 @@ export default {
     },
     data() {
         return {
-            nodeClicked: false
+            nodeClicked: false,
+            outlet_expanded: false,
         }
     },
     watch: {
@@ -152,6 +153,31 @@ export default {
                     self.applyNodeStyling(node, "subnode", "entity", undefined, "enter entity")
                 }
             )
+            d3.selectAll("g.subnode.entity").selectAll("text.subnode_entity")
+                .style("pointer-events", "none")
+            d3.selectAll("g.subnode.entity")
+            .style("cursor", "pointer")
+            .on("mousemove", function(e) {
+                const entity_data = d3.select(this).data()[0]
+                const tooltipText = 
+                "entity: " + (entity_data.text) + "<br>" +
+                "positive: " + parseFloat(entity_data.pos_sent).toFixed(2) + "<br>" + 
+                "negative: " + parseFloat(entity_data.neg_sent).toFixed(2) + "<br>" +
+                "neutral: " +  parseFloat(entity_data.neu_sent).toFixed(2 )+ "<br>" +
+                "#articles: " + (entity_data.articles?.length) + "<br>" 
+
+                self.tooltip.html(tooltipText)
+                .style("left", e.offsetX + 15 + "px")
+                .style("top", e.offsetY - 5 + "px")
+            })
+            .on("mouseover", function(d) {
+                if(self.animating_click) return
+                self.tooltip.style("opacity", 1)
+            })
+            .on("mouseout", function(d) {
+                if(self.animating_click) return
+                self.tooltip.style("opacity", 0)
+            })
             new_entity_graph.forEach(node => {
                 node.x = parseInt(center[0])
                 node.y = parseInt(center[1])
@@ -162,7 +188,7 @@ export default {
                 // .force("x", d3.forceX().x(center[0]))
                 // .force("y", d3.forceY().y(center[1]))
                 .force("center", d3.forceCenter(center[0], center[1]).strength(0.1))
-                .force("charge", d3.forceManyBody().strength(-50))
+                .force("charge", d3.forceManyBody().strength(-150))
                 .force("link", d3.forceLink(self.entity_links).strength(function(d) {
                     const entity_1 = d.source.text
                     const entity_2 = d.target.text
@@ -317,6 +343,10 @@ export default {
             const width = parseInt(this.canvas.attr("viewBox").split(" ")[2])
             const height = parseInt(this.canvas.attr("viewBox").split(" ")[3])
 
+            // animate clicked node
+            self.animating_click = true
+            // remove tooltip
+            d3.selectAll("div.tooltip").style("opacity", 0)
             // clicked node
             const expanded_r = 0.49*height
             //const expanded_r = 0.2*height
@@ -327,8 +357,6 @@ export default {
             clickedNode.selectAll("circle.expand.node").style("filter", "brightness(100%)")
 
             const clicked_center = [width/2, height/2]
-            // animate clicked node
-            self.animating_click = true
             // move text
             clickedNode.selectAll("text.node_outlet").transition().duration(1000)
                 .attr("x", clicked_center[0])
@@ -455,7 +483,7 @@ export default {
         },
         updateNodes(pos_moved=false, clicked_outlet=null, scale_ratio = 1, add_edges=false) {
             var svg = this.canvas
-
+            this.outlet_expanded = false
             var self = this
             const nodes = svg.selectAll("g.node.outlet").filter(node => node.text != clicked_outlet)
 
@@ -497,25 +525,28 @@ export default {
                 }
             )
             if(add_edges) this.addEdges(svg.selectAll("g.node.outlet"))
-
+            svg.selectAll("g.node").selectAll("text.node_outlet,text.node_center")
+                .style("pointer-events", "none")
             svg.selectAll("g.node")
             .style("cursor", "pointer")
             .on("mousemove", function(e) {
+                if(self.nodeClicked) return
                 const node_data = d3.select(this).data()[0]
                 const tooltipText = 
-                "outlet: " + (node_data.text) + "<br>" +
-                "positive: " + parseFloat(node_data.pos_sent).toFixed(2) + "<br>" + 
-                "negative: " + parseFloat(node_data.neg_sent).toFixed(2) + "<br>" +
-                "neutral: " +  parseFloat(node_data.neu_sent).toFixed(2 )+ "<br>" +
-                "#articles: " + (node_data.articles?.length || self.total_articles) + "<br>" 
+                `outlet: ${(node_data.text)} <br>` + 
+                `positive: ${parseFloat(node_data.pos_sent).toFixed(2)} <br>` + 
+                `negative: ${parseFloat(node_data.neg_sent).toFixed(2)} <br>` +
+                `neutral: ${parseFloat(node_data.neu_sent).toFixed(2)} <br>` +
+                `#articles: ${(node_data.articles?.length || self.total_articles)} <br>` 
 
                 self.tooltip.html(tooltipText)
                 .style("left", e.offsetX + 15 + "px")
                 .style("top", e.offsetY - 5 + "px")
+
             })
             .on("mouseover", function(d) {
                 if(self.animating_click) return
-                self.ite+=1
+                if(self.nodeClicked) return
                 
                 const container = d3.select(this)
                 container.select("circle.expand_node_outlet")
@@ -530,6 +561,7 @@ export default {
             })
             .on("mouseout", function(d) {
                 if(self.animating_click) return
+                if(self.nodeClicked) return
 
                 const container = d3.select(this)
                 container.select("circle.expand_node_outlet")
@@ -943,26 +975,28 @@ export default {
 
                 })
                 .style("stroke-linecap","round")
-               
-                // enter => {
-
-                //     enter.append("line")
-                //     .attr("class", "edge entity")
-                //     .attr("x1", function(d) { return entity_graph[d.source].x; })
-                //     .attr("x2", function(d) { return entity_graph[d.target].x; }) 
-                //     .attr("y1", function(d) { return entity_graph[d.source].y; })
-                //     .attr("y2", function(d) { return entity_graph[d.target].y; })
-                //     .attr("stroke", "black") 
-                // }, 
-                // update => {
-                //     update
-                //     .attr("x1", function(d) { return entity_graph[d.source].x; })
-                //     .attr("x2", function(d) { return entity_graph[d.target].x; }) 
-                //     .attr("y1", function(d) { return entity_graph[d.source].y; })
-                //     .attr("y2", function(d) { return entity_graph[d.target].y; })
-                //     .attr("stroke", "black") 
-                // }
-            // ) 
+                .style("cursor", "pointer")
+                .on("mousemove", function(e) {
+                    const edge_data = d3.select(this).data()[0]
+                    const entity_1 = entity_graph[edge_data.source].text
+                    const entity_2 = entity_graph[edge_data.target].text
+                    const freq = self.cooccur_matrix[entity_1][entity_2] || 0
+                    const tooltipText = 
+                    `entity_1: ${entity_1} <br>` +
+                    `entity_2: ${entity_2} <br>` + 
+                    `#co-occur: ${freq} <br>` 
+                    self.tooltip.html(tooltipText)
+                    .style("left", e.offsetX + 15 + "px")
+                    .style("top", e.offsetY - 5 + "px")
+                })
+                .on("mouseover", function(d) {
+                    if(self.animating_click) return
+                    self.tooltip.style("opacity", 1)
+                })
+                .on("mouseout", function(d) {
+                    if(self.animating_click) return
+                    self.tooltip.style("opacity", 0)
+                })
             clickedNode.selectAll("g.subnode.entity").raise()
         },
         sentiment_classify(node_data) {
@@ -998,7 +1032,7 @@ export default {
             : (num_articles - this.entity_min_articles)/(this.entity_max_articles+1))
 
             const min = (node_level === "node" ? this.minimum_outlet_radius : this.minimum_entity_radius)
-            const max = (node_level === "node" ? this.minimum_outlet_radius : this.minimum_entity_radius)
+            const max = (node_level === "node" ? this.maximum_outlet_radius : this.maximum_entity_radius)
             return articles_ratio*(max-min) + min
         }
     }
