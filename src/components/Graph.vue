@@ -551,7 +551,7 @@ export default {
                 `positive: ${parseFloat(node_data.pos_sent).toFixed(2)} <br>` + 
                 `negative: ${parseFloat(node_data.neg_sent).toFixed(2)} <br>` +
                 `neutral: ${parseFloat(node_data.neu_sent).toFixed(2)} <br>` +
-                `#articles: ${(node_data.articles?.length || self.total_articles)} <br>` 
+                `#articles: ${node_data.dotted?0:(node_data.articles?.length || self.total_articles)} <br>` 
 
                 self.tooltip.html(tooltipText)
                 .style("left", e.offsetX + 15 + "px")
@@ -1034,7 +1034,7 @@ export default {
             return parseFloat(target.attr("r"))
         },
         articlesToRadius(node_level, d, r=0) {
-            return r>0?r:(d.dotted?this.minimum_radius:(d.articles?this.normalizedLength(d.articles.length, node_level):this.centerNodeRadius(node_level)));
+            return r>0?r:(d.dotted?this.minimum_outlet_radius:(d.articles?this.normalizedLength(d.articles.length, node_level):this.centerNodeRadius(node_level)));
 
             // return r>0?r:((r<0?r:1)*d3.select(node).select("text.node_text").node().getComputedTextLength()/1.5 + (d.dotted?5:(d.articles?this.normalizedLength(d.articles.length):this.centerNodeRadius())));
         },
