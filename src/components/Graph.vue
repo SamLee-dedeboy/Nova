@@ -257,6 +257,7 @@ export default {
                     )
                 })
                 .on("end", function() {
+                    self.animating_click=false
                     // self.add_entity_edges(d3.selectAll("g.subnode.entity"))
                 })
         }
@@ -283,6 +284,14 @@ export default {
         this.color_pos = d3.scaleSqrt()
             .domain([0, 1])
             .range(this.pos_color_range);
+        // handle canvas clicked
+        this.canvas.on("click", () => {
+            if(this.animating_click) return
+            if(this.clickedNode) {
+                this.clickedNode.selectAll("g.subnode, g.edge_group").remove()
+                this.updateOutletGraph()
+            }
+        })
         // tooltip
         this.tooltip = d3.select(".graphContainer").append("div")
         .style("opacity", 0)
@@ -295,6 +304,8 @@ export default {
         .style("padding", "5px")
         .style("pointer-events", "none")
         .html("tooltip")
+
+        this.updateOutletGraph()
         // this.tooltip = this.tooltipContainer.append("text")
         // .style("opacity", 0)
         // .attr("class", "tooltip")
@@ -302,23 +313,26 @@ export default {
         // .attr("font-size","small")
         // .attr("dominant-baseline", "central")
         // .text("tooltip")
-        this.updateCenterNode()
-        this.updateNodes()
-        const width = this.canvas_width
-        const height = this.canvas_height
-        const center = [this.canvas_width/2, this.canvas_height/2]
-        const data = this.graph.nodes.map(node => {
-            if(node.isCenter) {
-                node.fx = center[0]
-                node.fy = center[1]
-            }
-            return node
-        })
-        this.force_layout(d3.selectAll("g.node.outlet"), [0, 0, width, height], center, 1, data)
         //this.updateEdges()
     },
 
     methods: {
+        updateOutletGraph() {
+            this.updateCenterNode()
+            this.updateNodes()
+            const width = this.canvas_width
+            const height = this.canvas_height
+            const center = [this.canvas_width/2, this.canvas_height/2]
+            const data = this.graph.nodes.map(node => {
+                if(node.isCenter) {
+                    node.fx = center[0]
+                    node.fy = center[1]
+                }
+                return node
+            })
+            this.force_layout(d3.selectAll("g.node.outlet"), [0, 0, width, height], center, 1, data)
+
+        },
         pythag(r, b, coord) {
             const strokeWidth = 0
             const w = 500
@@ -337,24 +351,31 @@ export default {
             return coord;
         },
         handleNodeClick(e, d) {
+            e.stopPropagation()
+            if(this.animating_click) return
             this.nodeClicked = true
             var self = this
             var svg = this.canvas
             const width = parseInt(this.canvas.attr("viewBox").split(" ")[2])
             const height = parseInt(this.canvas.attr("viewBox").split(" ")[3])
-
+            // remove previous clicked nodes' subnodes
+            if(this.clickedNode) {
+                this.clickedNode.selectAll("g.subnode, g.edge_group").remove()
+            }
             // animate clicked node
-            self.animating_click = true
+            this.animating_click = true
             // remove tooltip
             d3.selectAll("div.tooltip").style("opacity", 0)
             // clicked node
             const expanded_r = 0.49*height
             //const expanded_r = 0.2*height
             const clickedNode = d3.selectAll("g.node.outlet").filter(node => node.text == d.text)
+            this.clickedNode = clickedNode
+
             clickedNode.select("g.outer_ring_node_outlet").remove()
             svg.selectAll("line.edge.outlet").filter(line => d3.select(line).data()[0].text == clickedNode.data()[0].text).remove()
             
-            clickedNode.selectAll("circle.expand.node").style("filter", "brightness(100%)")
+            clickedNode.selectAll("circle.expand_node_outlet").style("filter", "brightness(100%)")
 
             const clicked_center = [width/2, height/2]
             // move text
@@ -377,8 +398,6 @@ export default {
             .on("end", function() {
                 self.applyNodeStyling(clickedNode,  "node", "outlet", expanded_r, "on click")
                 self.addEdges(d3.selectAll("g.node.outlet"))
-                self.animating_click = false
-                self.clickedNode = clickedNode
                 self.$emit("node-clicked", d)
                 self.clickedNodeData = d
             })
@@ -546,9 +565,9 @@ export default {
             })
             .on("mouseover", function(d) {
                 if(self.animating_click) return
-                if(self.nodeClicked) return
                 
                 const container = d3.select(this)
+                if(container.data()[0].text === self.clickedNode?.data()[0].text) return
                 container.select("circle.expand_node_outlet")
                 .transition()
                 .duration(100)
@@ -557,13 +576,14 @@ export default {
                 container.selectAll("circle.expand_node_outlet")
                 .style("filter", "brightness(90%)")
 
+                if(self.nodeClicked) return
                 self.tooltip.style("opacity", 1)
             })
             .on("mouseout", function(d) {
                 if(self.animating_click) return
-                if(self.nodeClicked) return
 
                 const container = d3.select(this)
+                if(container.data()[0].text === self.clickedNode?.data()[0].text) return
                 container.select("circle.expand_node_outlet")
                 .transition()
                 .duration(100)
@@ -572,6 +592,7 @@ export default {
                 container.selectAll("circle.expand_node_outlet")
                 .style("filter", "brightness(100%)")
 
+                if(self.nodeClicked) return
                 self.tooltip.style("opacity", 0)
             })
             svg.selectAll("g.node.outlet").on("click", this.handleNodeClick)
