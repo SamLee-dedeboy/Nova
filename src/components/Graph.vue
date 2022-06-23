@@ -123,20 +123,14 @@ export default {
         }
     },
     watch: {
-        graph: async function(new_graph, old_graph) {
-            this.updateCenterNode()
-            this.updateNodes()
-            const center = [this.canvas_width/2, this.canvas_height/2]
-            const data = new_graph.nodes.map(node => {
-                if(node.isCenter) {
-                    node.fx = center[0]
-                    node.fy = center[1]
-                }
-                return node
-            })
-            this.force_layout(d3.selectAll("g.node.outlet"), [0, 0, this.canvas_width, this.canvas_height], center, 1, data)
-            if(this.clickedNodeData && new_graph.nodes.length > old_graph.nodes.length)
-                this.handleNodeClick(undefined, this.clickedNodeData)
+        graph: function(new_graph, old_graph) {
+            if(this.clickedNode) {
+                this.clickedNode.selectAll("g.subnode, g.edge_group").remove()
+                this.clickedNode = undefined
+            }
+            this.updateOutletGraph()
+            // if(this.clickedNodeData && new_graph.nodes.length > old_graph.nodes.length)
+            //     this.handleNodeClick(undefined, this.clickedNodeData)
         },
         entity_graph: function(new_entity_graph, old_entity_graph) {
             var self = this
@@ -528,20 +522,20 @@ export default {
                     //self.addEdges(update)
                 },
                 exit => {
-                    const duration = 1000
-                    exit.selectAll("node.circle")
-                    .transition()
-                    .duration(duration)
-                    .attr("r", 0)
-                    .remove()
-                    exit.selectAll("text.node")
-                    .transition()
-                    .duration(duration)
-                    .attr("font-size", "0em")
-                    .remove()
+                    // const duration = 1000
+                    // exit.selectAll("circle.node_outlet")
+                    // .transition()
+                    // .duration(duration)
+                    // .attr("r", 0)
+                    // .remove()
+                    // exit.selectAll("text.node_outlet")
+                    // .transition()
+                    // .duration(duration)
+                    // .attr("font-size", "0em")
+                    // .remove()
                     
-                    exit.transition().delay(duration).remove()
-                    .on("end", function(d) { self.addEdges(d3.selectAll("g.node.outlet")) })
+                    exit.remove()
+                    // .on("end", function(d) { self.addEdges(d3.selectAll("g.node.outlet")) })
                 }
             )
             if(add_edges) this.addEdges(svg.selectAll("g.node.outlet"))
