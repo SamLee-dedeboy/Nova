@@ -290,6 +290,7 @@ export default {
             if(this.clickedNode) {
                 this.clickedNode.selectAll("g.subnode, g.edge_group").remove()
                 this.updateOutletGraph()
+                this.clickedNode = undefined
             }
         })
         // tooltip
