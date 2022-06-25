@@ -79,16 +79,24 @@ export default {
         outlet_min_articles() { return Math.min(...this.outlet_article_num_list) },
         outlet_max_articles() { return Math.max(...this.outlet_article_num_list) },
         // entity articles
-        minimum_entity_radius() { return 30 },
-        maximum_entity_radius() { return 50 },
+        minimum_entity_radius() { return 35},
+        maximum_entity_radius() { return 80 },
         entity_article_num_list() { return this.entity_graph.map(node => node.articles.length)  },
         entity_min_articles() { return Math.min(...this.entity_article_num_list) },
         entity_max_articles() { return Math.max(...this.entity_article_num_list) },
         // entity cooccurr freqs
+        min_entity_cooccurr() { 
+            var min = 0
+            for(const [entity_1, cooccurrs] of Object.entries(this.cooccur_matrix)) {
+                const min_of_entity_1 = Math.min(...Object.keys(cooccurrs).map(entity_2 => cooccurrs[entity_2]))
+                min = Math.min(min, min_of_entity_1)
+            }   
+            return  min
+        },
         max_entity_cooccurr() { 
             var max = 0
             for(const [entity_1, cooccurrs] of Object.entries(this.cooccur_matrix)) {
-                const max_of_entity_1 = Math.max(...Object.keys(cooccurrs).map(entity_2 => cooccurrs[entity_2]))
+                const max_of_entity_1 = Math.max(...Object.keys(cooccurrs).filter(entity_2 => entity_2 != entity_1).map(entity_2 => cooccurrs[entity_2]))
                 max = Math.max(max, max_of_entity_1)
             }   
             return  max
@@ -166,11 +174,11 @@ export default {
             })
             .on("mouseover", function(d) {
                 if(self.animating_click) return
-                self.tooltip.style("opacity", 1)
+                self.tooltip.transition().duration(1000).style("scale", 1)
             })
             .on("mouseout", function(d) {
                 if(self.animating_click) return
-                self.tooltip.style("opacity", 0)
+                self.tooltip.transition().duration(1000).style("scale", 0)
             })
             new_entity_graph.forEach(node => {
                 node.x = parseInt(center[0])
@@ -182,7 +190,7 @@ export default {
                 // .force("x", d3.forceX().x(center[0]))
                 // .force("y", d3.forceY().y(center[1]))
                 .force("center", d3.forceCenter(center[0], center[1]).strength(0.1))
-                .force("charge", d3.forceManyBody().strength(-150))
+                .force("charge", d3.forceManyBody().strength(-180))
                 .force("link", d3.forceLink(self.entity_links).strength(function(d) {
                     const entity_1 = d.source.text
                     const entity_2 = d.target.text
@@ -190,7 +198,7 @@ export default {
                     var res = (freq - self.mean_entity_cooccurr)/self.std_entity_cooccurr
                     res = 1 / (1 + Math.exp(-res));
                     const min = 0.001
-                    const max = 0.01
+                    const max = 0.005
                     res = (max-min)*res + min
                     return res 
                 }))
@@ -289,7 +297,7 @@ export default {
         })
         // tooltip
         this.tooltip = d3.select(".graphContainer").append("div")
-        .style("opacity", 0)
+        .style("scale", 0)
         .style("position", "absolute")
         .attr("class", "tooltip")
         .style("background-color", "white")
@@ -298,6 +306,7 @@ export default {
         .style("border-radius", "5px")
         .style("padding", "5px")
         .style("pointer-events", "none")
+        .style("transform-origin", "top left")
         .html("tooltip")
 
         this.updateOutletGraph()
@@ -572,7 +581,7 @@ export default {
                 .style("filter", "brightness(90%)")
 
                 if(self.nodeClicked) return
-                self.tooltip.style("opacity", 1)
+                self.tooltip.transition().duration(100).style("scale", 1)
             })
             .on("mouseout", function(d) {
                 if(self.animating_click) return
@@ -588,7 +597,7 @@ export default {
                 .style("filter", "brightness(100%)")
 
                 if(self.nodeClicked) return
-                self.tooltip.style("opacity", 0)
+                self.tooltip.transition().duration(100).style("scale", 0)
             })
             svg.selectAll("g.node.outlet").on("click", this.handleNodeClick)
 
@@ -720,8 +729,13 @@ export default {
                     if(node_level === "node" && class_name === "outlet") {
                         d3.select(this).text(d => self.abbr_dict[d.text])
                     } else {
-                        const break_text = d.text.split('_')
-                        const break_num = break_text.length
+                        var break_text = d.text.split('_')
+                        var break_num = break_text.length
+                        if(break_num >= 4) {
+                            break_text = [break_text[0], break_text[1], break_text[2], '...']
+                            break_num = 4
+                        }
+                             
                         var node_text = d3.select(this)
                         node_text.selectAll("tspan")
                         .data(break_text)
@@ -985,9 +999,12 @@ export default {
                     const entity_1 = entity_graph[d.source].text
                     const entity_2 = entity_graph[d.target].text
                     const freq = self.cooccur_matrix[entity_1][entity_2]
-                    const min_opacity = 0 
-                    const max_opacity = 1 
-                    return (max_opacity-min_opacity)*(freq/self.max_entity_cooccurr) + min_opacity  
+                    const min_opacity = 0.1
+                    const max_opacity = 0.9
+                    const powerScale = d3.scalePow().exponent(1.8)
+                        .domain([self.min_entity_cooccurr, self.max_entity_cooccurr])
+                        .range([min_opacity, max_opacity])
+                    return powerScale(freq)
 
                 })
                 .style("stroke-linecap","round")
