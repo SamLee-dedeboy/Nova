@@ -174,11 +174,11 @@ export default {
             })
             .on("mouseover", function(d) {
                 if(self.animating_click) return
-                self.tooltip.transition().duration(1000).style("scale", 1)
+                self.tooltip.transition().duration(100).style("scale", 1)
             })
             .on("mouseout", function(d) {
                 if(self.animating_click) return
-                self.tooltip.transition().duration(1000).style("scale", 0)
+                self.tooltip.transition().duration(100).style("scale", 0)
             })
             new_entity_graph.forEach(node => {
                 node.x = parseInt(center[0])
@@ -270,7 +270,7 @@ export default {
         //     d3.select(this).attr("transform", e.transform)
         // }))
         this.neg_color_range = ["red", "salmon"]
-        this.pos_color_range = ["#7986F8", "#3146F9"]
+        this.pos_color_range = ["#7986F8", "#0d6eff"]
         this.abbr_dict={
             "CNN": "CNN",
             "FoxNews": "Fox",
@@ -369,7 +369,7 @@ export default {
             // animate clicked node
             this.animating_click = true
             // remove tooltip
-            d3.selectAll("div.tooltip").style("opacity", 0)
+            d3.selectAll("div.tooltip").style("scale", 0)
             // clicked node
             const expanded_r = 0.49*height
             //const expanded_r = 0.2*height
@@ -970,9 +970,9 @@ export default {
                 .attr("stop-color", function(d) {
                     const node = (entity_graph[d.source].x < entity_graph[d.target].x)? entity_graph[d.source]:entity_graph[d.target]
                     const sentiment = node.sentiment
-                    if(sentiment == "pos") return "blue" 
-                    if(sentiment == "neg") return "red" 
-                    if(sentiment == "neu") return "grey" 
+                    if(sentiment == "pos") return self.pos_color_range[1]
+                    if(sentiment == "neg") return self.neg_color_range[1] 
+                    if(sentiment == "neu") return "grey"
                 })
             const end = 
             ( gradient.selectAll("stop.end").node()
@@ -1024,11 +1024,11 @@ export default {
                 })
                 .on("mouseover", function(d) {
                     if(self.animating_click) return
-                    self.tooltip.style("opacity", 1)
+                    self.tooltip.transition().duration(100).style("scale", 1)
                 })
                 .on("mouseout", function(d) {
                     if(self.animating_click) return
-                    self.tooltip.style("opacity", 0)
+                    self.tooltip.transition().duration(100).style("scale", 0)
                 })
             clickedNode.selectAll("g.subnode.entity").raise()
         },
