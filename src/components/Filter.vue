@@ -74,7 +74,10 @@ Button {
     padding: 0 2em !important;
 }
 div.filter_container {
-    border-style:double;
+    border-style: solid;
+    border-radius: 6px;
+    border-width: 2px;
+    border-color: ghostwhite;
     margin:5px;
 }
 </style>
