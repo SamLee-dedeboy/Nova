@@ -74,6 +74,7 @@ export default ({
 
     methods: {
         idsToArticles(article_ids) {
+            if(!article_ids) return []
             var self = this
             return article_ids.reduce(function(article_list, id) { article_list.push(self.article_dict[id]); return article_list; }, [])
         },
@@ -124,12 +125,13 @@ export default ({
 
         },
         construct_node(articles, label) {
-            let node
+            let node = {}
             if(articles.length == 0) {
                 node = {
                     text: label,
                     sentiment: 0,
-                    dotted: true
+                    dotted: true,
+                    articles: []
                 }
             } else {
                 // const pos_sst = articles.map(article => article.sentiment.pos).reduce((sum, cur) => sum + cur, 0)
