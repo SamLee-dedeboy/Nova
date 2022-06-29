@@ -2,7 +2,7 @@
 <script>
 export default {
     emits: ["candidate_updated"],
-    inject: ['articles', 'entity_mentions'],
+    // inject: ['articles', 'entity_mentions'],
     computed: {
         article_dict: function() {
             return this.articles.reduce(function(dict, article) { dict[article["id"]] = article; return dict; }, {})
@@ -11,7 +11,31 @@ export default {
             return this.entity_mentions.reduce(function(p, c) { p[c[0]] = c[1]; return p; }, {});
         }
     },
+    data() {
+        return {
+            articles: {},
+            entity_mentions: {}
+        }
+    },
     mounted() {
+        fetch("candidate_entities.json")
+            .then(res => res.json())
+            .then(json => {
+                this.entity_mentions = json.ranked_entity_list
+            },
+            response => {
+                console.log("Error loading entity mentions.")
+            })
+
+        fetch("processed_articles_rel_hugFace.json")
+            .then(res => res.json())
+            .then(json => {
+                this.articles = json
+            },
+            response => {
+                console.log("Error loading articles.")
+            })
+
         return
         for(const article of this.articles) {
             // topic
