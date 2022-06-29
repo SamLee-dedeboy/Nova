@@ -12,9 +12,9 @@ export default {
         total_articles() { return this.graph.nodes.filter(node => node.articles).reduce((sum, node) => sum + node.articles.length, 0) },
         center_node() {
             const center_node = this.graph.nodes.filter(node => node.isCenter)[0]
-            center_node.pos_sent = this.graph.nodes.reduce((pos_sum, node) => pos_sum + (node.dotted? 0:node.pos_sent), 0)
-            center_node.neg_sent = this.graph.nodes.reduce((neg_sum, node) => neg_sum + (node.dotted? 0:node.neg_sent), 0)
-            center_node.neu_sent = this.graph.nodes.reduce((neu_sum, node) => neu_sum + (node.dotted? 0:node.neu_sent), 0)
+            // center_node.pos_sent = this.graph.nodes.reduce((pos_sum, node) => pos_sum + (node.dotted? 0:node.pos_sent), 0)
+            // center_node.neg_sent = this.graph.nodes.reduce((neg_sum, node) => neg_sum + (node.dotted? 0:node.neg_sent), 0)
+            // center_node.neu_sent = this.graph.nodes.reduce((neu_sum, node) => neu_sum + (node.dotted? 0:node.neu_sent), 0)
             //console.log(center_node)
             return center_node
         },
@@ -65,8 +65,8 @@ export default {
         },
         outlet_set() { return this.graph.nodes.map(node => node.text) },
         graph_dict() {
-            var graph_dict = Object.assign({}, ...this.graph.nodes.map((node) => ({[node.text]: node})));
-            graph_dict[this.center_node.text] = this.center_node
+            // var graph_dict = Object.assign({}, ...this.graph.nodes.map((node) => ({[node.text]: node})));
+            // graph_dict[this.center_node.text] = this.center_node
             return graph_dict
         },
         canvas_width() { return parseInt(this.canvas.attr("viewBox").split(" ")[2]) },
@@ -441,45 +441,6 @@ export default {
 
 
         },
-        translateAndScale(node, outletToPosDict, scale, callback) {
-            node.selectAll("*").attr("transform-origin", function(d) {
-                const container = d3.select(this)
-                return (container.attr("cx") || container.attr("x")) + " " + (container.attr("cy") || container.attr("y"))
-            })
-            // .transition()
-            // .duration(500)
-            .attr("transform", function(d) {
-                const element = d3.select(this)
-                const elementData = element.data()[0]
-                const new_x = outletToPosDict[elementData.text][0]
-                const new_y = outletToPosDict[elementData.text][1]
-                //element.attr("cx", new_x).attr("cy", new_y)
-                var pair = undefined
-                if (element.attr("transform") != null) {
-                    pair = element.attr("transform").replace(/translate\(/i, "").replace(/\)/i, "").split(",")
-
-                    var x = new_x - (element.attr("cx") || element.attr("x") || ((pair==undefined)?0:pair[0]) || 0)
-                    var y = new_y - (element.attr("cy") || element.attr("y") || ((pair==undefined)?0:pair[1]) || 0)
-                } else {
-                    var x = 0
-                    var y = 0
-                } 
-                return "translate(" + x + "," + y + ")" + ' scale(' + scale + ")"
-                //return "translate(" + (new_x-cx) + "," + (new_y-cy) +")" + " " + 'scale(' + shrink_ratio + ")"
-            })
-            node.attr("cx", function(d) {
-                const element = d3.select(this)
-                const elementData = element.data()[0]
-                return outletToPosDict[elementData.text][0]
-                
-            })
-            .attr("cy", function(d) {
-                const element = d3.select(this)
-                const elementData = element.data()[0]
-                return outletToPosDict[elementData.text][1] 
-            })
-            .on("end", callback)
-        },
         updateCenterNode(pos_moved=false) {
             var svg = this.canvas
             var self = this
@@ -555,11 +516,12 @@ export default {
             .on("mousemove", function(e) {
                 if(self.nodeClicked) return
                 const node_data = d3.select(this).data()[0]
+                const tooltip_title = node_data.isCenter? "entity":"outlet"
                 const tooltipText = 
-                `outlet: ${(node_data.text)} <br>` + 
-                `positive: ${parseFloat(node_data.pos_sent).toFixed(2)} <br>` + 
-                `negative: ${parseFloat(node_data.neg_sent).toFixed(2)} <br>` +
-                `neutral: ${parseFloat(node_data.neu_sent).toFixed(2)} <br>` +
+                `${tooltip_title}: ${(node_data.text)} <br>` + 
+                `#posArticle/score: ${node_data.pos_articles}/${parseFloat(node_data.pos_sent).toFixed(2)}  <br>` + 
+                `#negArticle/score: ${node_data.neg_articles}/${parseFloat(node_data.neg_sent).toFixed(2)} <br>` +
+                `#neuArticle/score: ${node_data.neu_articles}/${parseFloat(node_data.neu_sent).toFixed(2)} <br>` +
                 `#articles: ${node_data.dotted?0:(node_data.articles?.length || self.total_articles)} <br>` 
 
                 self.tooltip.html(tooltipText)
@@ -602,34 +564,6 @@ export default {
             svg.selectAll("g.node.outlet").on("click", this.handleNodeClick)
 
           
-        },
-        moveNodesToCorner(nodes, boundingBox, new_origin, new_center, scale_ratio) {
-            const original_width = parseInt(this.canvas.attr("viewBox").split(" ")[2])
-            const original_height = parseInt(this.canvas.attr("viewBox").split(" ")[3])
-            const ratio = [boundingBox[0]/original_width, boundingBox[1]/original_height]
-            
-            // construct dict with key: outletname, value: position
-            const outletToPosDict = {}
-            d3.select(nodes).nodes().forEach(node => {
-                node.nodes().forEach(ele => {
-                   const eleSelection = d3.select(ele)
-                   outletToPosDict[eleSelection.data()[0].text] = [parseFloat(eleSelection.attr("cx"))*ratio[0]+new_origin[0],parseFloat( eleSelection.attr("cy"))*ratio[1]+new_origin[1]]
-                })
-            })
-            // update data
-            nodes.data().forEach(node => {
-                node.x = outletToPosDict[node.text][0]
-                node.y = outletToPosDict[node.text][1]
-            })
-            this.graph.center_node.x = new_center[0]
-            this.graph.center_node.y = new_center[1]
-
-            // move the svgs
-            this.translateAndScale(nodes, outletToPosDict, scale_ratio)
-            const center_node = d3.select("g.node.center")    
-            const center_node_pos = {}
-            center_node_pos[center_node.data()[0].text] = new_center
-            this.translateAndScale(center_node, center_node_pos, scale_ratio)
         },
         force_layout(nodes, boundingBox, center, scale_ratio, data, clicked_outlet=null) {
             const origin = [boundingBox[0], boundingBox[1]]
@@ -809,7 +743,7 @@ export default {
                 .transition()
                 .duration(animate_duration)
                 .tween('ring-effect', function(d) {
-                    var percentage = parseFloat(d.pos_sent)/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
+                    var percentage = parseFloat(d.pos_sent)/(d.pos_sent+Math.abs(d.neg_sent)+Math.abs(d.neu_sent))
                     //var start_percentage = parseFloat(d.pos_sent)/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
                     var start_percentage = 0
                     var radius = parseFloat(d3.select(this.parentNode.parentNode).attr("r"))
@@ -845,8 +779,8 @@ export default {
                 .transition()
                 .duration(animate_duration)
                 .tween('ring-effect', function(d) {
-                    var percentage = parseFloat(Math.abs(d.neg_sent))/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
-                    var start_percentage = parseFloat(d.pos_sent)/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
+                    var percentage = parseFloat(Math.abs(d.neg_sent))/(d.pos_sent+Math.abs(d.neg_sent)+Math.abs(d.neu_sent))
+                    var start_percentage = parseFloat(d.pos_sent)/(d.pos_sent+Math.abs(d.neg_sent)+Math.abs(d.neu_sent))
                     var radius = parseFloat(d3.select(this.parentNode.parentNode).attr("r"))
                     
                     let startAngle = 2*Math.PI*start_percentage;
@@ -880,8 +814,8 @@ export default {
                 .transition()
                 .duration(animate_duration)
                 .tween('ring-effect', function(d) {
-                    var percentage = parseFloat(d.neu_sent)/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
-                    var start_percentage = parseFloat(d.pos_sent + Math.abs(d.neg_sent))/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
+                    var percentage = parseFloat(Math.abs(d.neu_sent))/(d.pos_sent+Math.abs(d.neg_sent)+Math.abs(d.neu_sent))
+                    var start_percentage = parseFloat(d.pos_sent + Math.abs(d.neg_sent))/(d.pos_sent+Math.abs(d.neg_sent)+Math.abs(d.neu_sent))
                     var radius = parseFloat(d3.select(this.parentNode.parentNode).attr("r"))
                     
                     let startAngle = 2*Math.PI*start_percentage;
@@ -1034,8 +968,8 @@ export default {
         },
         sentiment_classify(node_data) {
             const pos = node_data.pos_sent
-            const neg = node_data.neg_sent
-            const neu = node_data.neu_sent
+            const neg = Math.abs(node_data.neg_sent)
+            const neu = Math.abs(node_data.neu_sent)
             const max = Math.max(pos, neg, neu) 
             if(max == pos) return "positive"
             if(max == neg) return "negative"
@@ -1051,7 +985,7 @@ export default {
             return parseFloat(target.attr("r"))
         },
         articlesToRadius(node_level, d, r=0) {
-            return r>0?r:(d.dotted?this.minimum_outlet_radius:(d.articles?this.normalizedLength(d.articles.length, node_level):this.centerNodeRadius(node_level)));
+            return r>0?r:(d.dotted?this.minimum_outlet_radius:(d.isCenter?this.centerNodeRadius(node_level):this.normalizedLength(d.articles.length, node_level)));
 
             // return r>0?r:((r<0?r:1)*d3.select(node).select("text.node_text").node().getComputedTextLength()/1.5 + (d.dotted?5:(d.articles?this.normalizedLength(d.articles.length):this.centerNodeRadius())));
         },

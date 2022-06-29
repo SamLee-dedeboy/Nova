@@ -51,13 +51,16 @@ export default ({
                     graph.nodes.push(node)
                 }) 
                 // center node
-                graph.nodes.push({
-                    text: target,
-                    pos_sent: 0,
-                    neg_sent: 0,
-                    neu_sent: 0,
-                    isCenter: true
-                })
+                var center_node = self.construct_node(self.articles, target)
+                center_node["isCenter"] = true
+                graph.nodes.push(center_node)
+                // graph.nodes.push({
+                //     text: target,
+                //     pos_sent: 0,
+                //     neg_sent: 0,
+                //     neu_sent: 0,
+                //     isCenter: true
+                // })
                 graph_dict[target] = graph
             })
             // var clone_dataset = JSON.parse(JSON.stringify(this.dataset.graphList));
@@ -131,21 +134,38 @@ export default ({
                     text: label,
                     sentiment: 0,
                     dotted: true,
-                    articles: []
                 }
             } else {
                 // const pos_sst = articles.map(article => article.sentiment.pos).reduce((sum, cur) => sum + cur, 0)
                 // const neg_sst = articles.map(article => article.sentiment.neg).reduce((sum, cur) => sum + cur, 0)
                 // const neu_sst = 0
                 const sst_df = new dfd.DataFrame(articles.map(article=>article.sentiment))
-                const neu_threshold = 0.05
-                const pos_sst = sst_df.iloc({rows: sst_df["normalized_sst"].gt(neu_threshold)}).count({axis:0}).at("normalized_sst",1) || 0
-                const neg_sst = sst_df.iloc({rows: sst_df["normalized_sst"].lt(-neu_threshold)}).count({axis:0}).at("normalized_sst",1) || 0
-                const neu_sst = sst_df.iloc({rows: sst_df["normalized_sst"].lt(neu_threshold).and(sst_df["normalized_sst"].gt(-neu_threshold))}).count({axis:0}).at("normalized_sst",1) || 0
-                const sst_array = [pos_sst, neg_sst, neu_sst]
+                const neu_threshold = 0.2
+                // const pos_sst = sst_df.iloc({rows: sst_df["normalized_sst"].gt(neu_threshold)}).count({axis:0}).at("normalized_sst",1) || 0
+                // const neg_sst = sst_df.iloc({rows: sst_df["normalized_sst"].lt(-neu_threshold)}).count({axis:0}).at("normalized_sst",1) || 0
+                // const neu_sst = sst_df.iloc({rows: sst_df["normalized_sst"].lt(neu_threshold).and(sst_df["normalized_sst"].gt(-neu_threshold))}).count({axis:0}).at("normalized_sst",1) || 0
+                const pos_dfs = sst_df.iloc({rows: sst_df["normalized_sst"].gt(neu_threshold)})
+                const neg_dfs = sst_df.iloc({rows: sst_df["normalized_sst"].lt(-neu_threshold)})
+                const neu_dfs = sst_df.iloc({rows: sst_df["normalized_sst"].lt(neu_threshold).and(sst_df["normalized_sst"].gt(-neu_threshold))})
+
+                const pos_sst = pos_dfs.sum({axis:0}).at("normalized_sst",1) || 0
+                const neg_sst = neg_dfs.sum({axis:0}).at("normalized_sst",1) || 0
+                const neu_sst = (1/neu_threshold)*neu_dfs.sum({axis:0}).at("normalized_sst",1) || 0
+
+                const pos_atcs = pos_dfs.count({axis:0}).at("normalized_sst", 1) || 0
+                const neg_atcs = neg_dfs.count({axis:0}).at("normalized_sst", 1) || 0
+                const neu_atcs = neu_dfs.count({axis:0}).at("normalized_sst", 1) || 0
+
+                // const pos_sst = sst_df.iloc({rows: sst_df["normalized_sst"].gt(neu_threshold)}).at("normalized_sst",1) || 0
+                // const neg_sst = sst_df.iloc({rows: sst_df["normalized_sst"].lt(-neu_threshold)}).at("normalized_sst",1) || 0
+                // const neu_sst = sst_df.iloc({rows: sst_df["normalized_sst"].lt(neu_threshold).and(sst_df["normalized_sst"].gt(-neu_threshold))}).at("normalized_sst",1) || 0
+                const sst_array = [pos_sst, Math.abs(neg_sst), Math.abs(neu_sst)]
                 node = {
                     text: label,
                     sentiment: ["pos", "neg", "neu"][sst_array.indexOf(Math.max(...sst_array))],
+                    pos_articles: pos_atcs,
+                    neg_articles: neg_atcs,
+                    neu_articles: neu_atcs,
                     pos_sent: pos_sst,
                     neg_sent: neg_sst,
                     neu_sent: neu_sst,
