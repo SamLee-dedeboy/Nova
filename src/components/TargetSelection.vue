@@ -18,7 +18,8 @@ export default defineComponent({
     emits: ["target-selected"],
     computed: {
         target_list: function() {
-            return this.targets.map(target => Object({label: target}))
+            return this.targets
+            return this.targets.map(target => Object({name: target}))
         } 
     },
     data() {
@@ -32,7 +33,9 @@ export default defineComponent({
             ],
             selected_target: null,
             filters: {
-                'label': {value: null, matchMode: FilterMatchMode.STARTS_WITH}
+                'global': {value: null, matchMode: FilterMatchMode.STARTS_WITH},
+                'name': {value: null, matchMode: FilterMatchMode.STARTS_WITH},
+                'num': {value: null, matchMode: FilterMatchMode.STARTS_WITH}
             }
         }
     },
@@ -50,7 +53,7 @@ export default defineComponent({
     },
     watch: {
         selected_target: function() {
-            this.$emit("target-selected", this.selected_target.label)
+            this.$emit("target-selected", this.selected_target.name)
         }
     },
     methods: {
@@ -78,29 +81,67 @@ export default defineComponent({
         scrollHeight="300px" 
         responsiveLayout="scroll"
         v-model:filters="filters"
-        filterDisplay="row"
-        :globalFilterFields="['label']"
-        dataKey="label">
+        :globalFilterFields="['name', 'num']"
+        dataKey="name">
             <template #header>
-            <Chip class='header' label="Target"  />
+            <!-- <Chip class='header' label="Target"  /> -->
+            <div class="flex justify-content-center align-items-center">
+                    <span class="m-0">Entity:</span>
+                    <span>
+                        <InputText v-model="filters['global'].value" placeholder="Search by Name" />
+                    </span>
+                 </div>
             </template>
             <template #empty>
                 No target found.
             </template>
-            <Column field="label" 
-            style="text-overflow:ellipsis;overflow:hidden;display: inline-block; width:240px">
+            <Column field="name" 
+            header="Name"
+            sortable
+            style="text-overflow:ellipsis;overflow:hidden;display: inline-block; width:110px">
+                <template #body="{data}">
+                    <span :title="data.name" style="font-size:14px">{{data.name}}</span>
+                </template>
+                <!-- <template #filter="{filterModel}">
+                    <InputText type="text" v-model="filterModel.value" class="p-column-filter" :placeholder="`Entity search by name`"/>
+                </template> -->
+                <!-- <template #filter="{filterModel, filterCallback}">
+                    <InputText type="text" v-model="filterModel.value"  @input="filterCallback()" class="p-column-filter" :placeholder="`Entity search by name`"/>
+                </template> -->
+            </Column>
+            <Column field="num" 
+            header="Num"
+            sortable
+            style="text-overflow:ellipsis;overflow:hidden;display: inline-block; width:110px">
 
                 <template #body="{data}">
-                    <span :title="data.label">{{data.label}}</span>
+                    <span :title="data.num" style="font-size:14px">{{data.num}}</span>
                 </template>
-                <template #filter="{filterModel, filterCallback}">
-                    <InputText type="text" v-model="filterModel.value"  @input="filterCallback()" class="p-column-filter" :placeholder="`Search by name`"/>
-                </template>
+                <!-- <template #filter="{filterModel}">
+                    <InputText type="text" v-model="filterModel.value" class="p-column-filter" :placeholder="`Entity search by name`"/>
+                </template> -->
+                <!-- <template #filter="{filterModel, filterCallback}">
+                    <InputText type="text" v-model="filterModel.value"  @input="filterCallback()" class="p-column-filter" :placeholder="`Entity search by name`"/>
+                </template> -->
             </Column>
         </DataTable>
     </div>
 </template>
 <style>
+.p-fluid.p-column-filter-element {
+  display: contents !important;
+}
+.p-inputtext {
+    left: 10px;
+    font-size: 0.8rem !important;
+    width: 60% !important; 
+}
+.p-datatable .p-datatable-thead > tr > th {
+    border: none !important;
+}
+.p-datatable-header {
+    display: block ruby;
+}
 .p-datatable .p-datatable-header {
     background-color: #ffff !important;
 }

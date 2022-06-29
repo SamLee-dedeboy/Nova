@@ -100,6 +100,7 @@ export default {
     },
     updateTarget(target) {
       const index = this.entity_list.indexOf(target) 
+
       this.selected_target = [target]
       const article_list = this.np_list[index][1]
       // TODO: query data from graphql
@@ -158,6 +159,9 @@ export default {
   computed: {
     entity_list: function() {
       return this.np_list.map(entity_mentions => entity_mentions[0])
+    },
+    entity_data: function() {
+      return this.np_list.map(entity_mentions => { return {"name": entity_mentions[0], "num": entity_mentions[1].length || 0}})
     }
   }
 }
@@ -181,13 +185,13 @@ export default {
           <SplitterPanel id='sidebar' class="flex align-items-center justify-content-center" :size="20" :min-size="20">
             <MyToolbar ref="toolbar" @candidate_updated="updateNpList"  ></MyToolbar>
             <div class="selection_container" style="display:flex">
-              <TargetSelection v-if="np_list.length!=0" :targets="entity_list" @target-selected="updateTarget"></TargetSelection>
+              <TargetSelection v-if="np_list.length!=0" :targets="entity_data" @target-selected="updateTarget"></TargetSelection>
               <!-- <TopicSelection  v-if="topic_list.length!=0"  :topics="topic_list" @topic-selected="updateTopic" style="flex:0.5"></TopicSelection> -->
             </div>
             <Filter v-if="selected_target.length!=0" :outlet_set="outlet_set"
             @outlet-filtered="updateEnabledOutlet"
             ></Filter>
-          <MonthSlider v-model:selectedRange="timeRange" ></MonthSlider>
+          <MonthSlider v-if="selected_target.length!=0" v-model:selectedRange="timeRange" ></MonthSlider>
 
           </SplitterPanel>
         </Splitter>
