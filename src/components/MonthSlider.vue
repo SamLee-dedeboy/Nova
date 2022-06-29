@@ -29,10 +29,12 @@ export default {
 
 </script>
 <template>
-    <span class="slider-header">Date Range</span>
-    <Slider v-model="selectedRange" :range="true" :step="1" :min="1" :max="13"
-    @change="handleChange"></Slider>
-    <svg  viewBox="0 0 200 30" class="slideraxes" overflow="visible" style="position:absolute;left:20px;right:20px"></svg>
+    <div class="month-slider-container">
+        <div class="slider-header">Date Range</div>
+        <Slider v-model="selectedRange" :range="true" :step="1" :min="1" :max="13"
+        @change="handleChange"></Slider>
+        <svg  viewBox="0 0 200 30" class="slideraxes" overflow="visible" style="position:absolute;left:20px;right:20px"></svg>
+    </div>
 </template>
 <style>
 .p-slider-horizontal {
@@ -46,7 +48,23 @@ export default {
 svg {
     margin-top: 9px;
 }
-span.slider-header {
-   margin-left:20px; 
+.month-slider-container {
+    border-style: solid;
+    border-radius: 6px;
+    border-width: 2px;
+    border-color: ghostwhite;
+    margin:5px;
+}
+.slider-header {
+    background: #efefef;
+    color: #212529;
+    border: solid #dee2e6;
+    border-top-width: medium;
+    border-right-width: medium;
+    border-bottom-width: medium;
+    border-left-width: medium;
+    border-width: 1px 0 0 0;
+    padding: 0.5rem 0.5rem;
+   /* margin-left:20px;  */
 }
 </style>
