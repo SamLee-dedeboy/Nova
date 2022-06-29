@@ -72,7 +72,7 @@ export default {
         canvas_width() { return parseInt(this.canvas.attr("viewBox").split(" ")[2]) },
         canvas_height() { return parseInt(this.canvas.attr("viewBox").split(" ")[3]) },
         // outlet
-        minimum_outlet_radius() { return 50 },
+        minimum_outlet_radius() { return 20 },
         maximum_outlet_radius() { return 80 },
         outlet_article_num_list() { return this.graph.nodes.filter(node => !node.isCenter ).map(node => node.dotted? 0:node.articles.length) },
         outlet_avg_articles() { return this.article_num_list.reduce((sum, cur) => sum + cur, 0) / this.article_num_list.length },
@@ -160,13 +160,20 @@ export default {
             d3.selectAll("g.subnode.entity")
             .style("cursor", "pointer")
             .on("mousemove", function(e) {
-                const entity_data = d3.select(this).data()[0]
+                const node_data = d3.select(this).data()[0]
+                const tooltip_title = "entity"
                 const tooltipText = 
-                "entity: " + (entity_data.text) + "<br>" +
-                "positive: " + parseFloat(entity_data.pos_sent).toFixed(2) + "<br>" + 
-                "negative: " + parseFloat(entity_data.neg_sent).toFixed(2) + "<br>" +
-                "neutral: " +  parseFloat(entity_data.neu_sent).toFixed(2 )+ "<br>" +
-                "#articles: " + (entity_data.articles?.length) + "<br>" 
+                `${tooltip_title}: ${(node_data.text)} <br>` + 
+                `#posArticle/score: ${node_data.pos_articles}/${parseFloat(node_data.pos_sent).toFixed(2)}  <br>` + 
+                `#negArticle/score: ${node_data.neg_articles}/${parseFloat(node_data.neg_sent).toFixed(2)} <br>` +
+                `#neuArticle/score: ${node_data.neu_articles}/${parseFloat(node_data.neu_sent).toFixed(2)} <br>` +
+                `#articles: ${(node_data.articles.length)} <br>` 
+                // const tooltipText = 
+                // "entity: " + (entity_data.text) + "<br>" +
+                // "positive: " + parseFloat(entity_data.pos_sent).toFixed(2) + "<br>" + 
+                // "negative: " + parseFloat(entity_data.neg_sent).toFixed(2) + "<br>" +
+                // "neutral: " +  parseFloat(entity_data.neu_sent).toFixed(2 )+ "<br>" +
+                // "#articles: " + (entity_data.articles?.length) + "<br>" 
 
                 self.tooltip.html(tooltipText)
                 .style("left", e.offsetX + 15 + "px")
@@ -293,6 +300,7 @@ export default {
                 this.clickedNode.selectAll("g.subnode, g.edge_group").remove()
                 this.updateOutletGraph()
                 this.clickedNode = undefined
+                this.nodeClicked = false
             }
         })
         // tooltip
