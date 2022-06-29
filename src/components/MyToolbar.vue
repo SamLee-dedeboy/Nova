@@ -17,8 +17,8 @@ export default {
             entity_mentions: {}
         }
     },
-    mounted() {
-        fetch("candidate_entities.json")
+    async mounted() {
+        await fetch("candidate_entities.json")
             .then(res => res.json())
             .then(json => {
                 this.entity_mentions = json.ranked_entity_list
@@ -27,7 +27,7 @@ export default {
                 console.log("Error loading entity mentions.")
             })
 
-        fetch("processed_articles_rel_hugFace.json")
+        await fetch("processed_articles_rel_hugFace.json")
             .then(res => res.json())
             .then(json => {
                 this.articles = json
@@ -35,7 +35,6 @@ export default {
             response => {
                 console.log("Error loading articles.")
             })
-
         return
         for(const article of this.articles) {
             // topic
