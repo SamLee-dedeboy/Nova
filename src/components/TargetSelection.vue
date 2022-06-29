@@ -142,12 +142,6 @@ export default defineComponent({
 .p-datatable-header {
     display: block ruby;
 }
-.p-datatable .p-datatable-header {
-    background-color: #ffff !important;
-}
-.p-datatable.p-datatable-sm .p-datatable-header {
-    padding-top: 0px !important;
-}
 .p-chip {
     margin-bottom:10px;
     top:10px;

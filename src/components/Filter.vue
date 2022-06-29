@@ -45,8 +45,9 @@ export default {
 
 <template>
     <div class="filter_container">
-        <div>
-            <Chip class='header' label="Filter" />
+        <div class="header">
+            Filter
+            <!-- <Chip class='header' label="Filter" /> -->
         </div>
         <Button
             class="p-button-success"
@@ -64,6 +65,7 @@ export default {
 }
 Button {
     margin: 10px;
+    margin-left: 0.3em;
     border-radius: 8px;
     font-size: small;
     background: rgb(34 197 94) !important;
@@ -75,6 +77,17 @@ Button {
     bottom:10px;
     padding: 0 2em !important;
     background-color: rgb(219, 221, 223) !important 
+}
+.header {
+    background: #efefef;
+    color: #212529;
+    border: solid #dee2e6;
+    border-top-width: medium;
+    border-right-width: medium;
+    border-bottom-width: medium;
+    border-left-width: medium;
+    border-width: 1px 0 0 0;
+    padding: 0.5rem 0.5rem;
 }
 div.filter_container {
     border-style: solid;
