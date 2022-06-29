@@ -5,12 +5,14 @@ import DataTable from 'primevue/datatable'
 import {FilterMatchMode,FilterService} from 'primevue/api';
 import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'
+import Chip from "primevue/chip"
 export default defineComponent({
     components: {
         MegaMenu,
         DataTable,
         Column,
         InputText,
+        Chip,
     },
     props:['targets'],
     emits: ["target-selected"],
@@ -79,10 +81,13 @@ export default defineComponent({
         filterDisplay="row"
         :globalFilterFields="['label']"
         dataKey="label">
+            <template #header>
+            <Chip class='header' label="Target"  />
+            </template>
             <template #empty>
                 No target found.
             </template>
-            <Column field="label" header="Target" 
+            <Column field="label" 
             style="text-overflow:ellipsis;overflow:hidden;display: inline-block; width:240px">
 
                 <template #body="{data}">
@@ -96,6 +101,18 @@ export default defineComponent({
     </div>
 </template>
 <style>
+.p-datatable .p-datatable-header {
+    background-color: #ffff !important;
+}
+.p-datatable.p-datatable-sm .p-datatable-header {
+    padding-top: 0px !important;
+}
+.p-chip {
+    margin-bottom:10px;
+    top:10px;
+    padding: 0 2em !important;
+    background-color: rgb(219, 221, 223) !important 
+}
 .p-megamenu .p-megamenu-submenu {
   width: auto !important;
 }

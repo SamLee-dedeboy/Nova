@@ -49,6 +49,7 @@ export default {
             <Chip class='header' label="Filter" />
         </div>
         <Button
+            class="p-button-success"
             v-for="(outlet, index) in enabled_outlet_set" :key="outlet"
             @click ="updateFilter($event, index)"
             data-selected=selected
@@ -65,6 +66,7 @@ Button {
     margin: 10px;
     border-radius: 8px;
     font-size: small;
+    background: rgb(34 197 94) !important;
 }
 .p-chip {
     margin-bottom:10px;
@@ -72,6 +74,7 @@ Button {
     top:10px;
     bottom:10px;
     padding: 0 2em !important;
+    background-color: rgb(219, 221, 223) !important 
 }
 div.filter_container {
     border-style: solid;
