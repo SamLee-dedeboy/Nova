@@ -236,15 +236,6 @@ export default {
                             });
                             self.applyNodeStyling(node, "subnode", "entity", undefined, "enter entity")
                             self.add_entity_edges(new_entity_graph, selected_node)
-                            // node.append("circle")
-                            // .attr("class", "subnode entity")
-                            // .attr("cx", d => d.x)
-                            // .attr("cy", d => d.y)
-                            // node.append("text")
-                            // .attr("class", "text entity")
-                            // .attr("x", d => d.x)
-                            // .attr("y", d => d.y)
-                            // .text((d) => (d.text))
                         },
                         update => {
                             var node = d3.selectAll("g.subnode.entity")
@@ -256,18 +247,11 @@ export default {
                             });
                             self.applyNodeStyling(node, "subnode", "entity", undefined, "update entity")
                             self.add_entity_edges(new_entity_graph, selected_node)
-                            // update.selectAll("circle.subnode.entity")
-                            // .attr("cx", d => d.x)
-                            // .attr("cy", d => d.y)
-                            // update.selectAll("text.entity")
-                            // .attr("x", d => d.x)
-                            // .attr("y", d => d.y)
                         }
                     )
                 })
                 .on("end", function() {
                     self.animating_click=false
-                    // self.add_entity_edges(d3.selectAll("g.subnode.entity"))
                 })
         }
     },
@@ -907,58 +891,17 @@ export default {
                 .data(this.undirected_entity_links, (d) => (`${entity_graph[d.source].text}-${entity_graph[d.target].text}`))
                 .join(
                     enter => {
-                        enter.append("g").attr("class", "edge_group")
+                        const edge_group = enter.append("g").attr("class", "edge_group")
+                        const edges = edge_group.append("line").attr("class", "edge entity")
+                        const gradient = edge_group.append("defs").append("linearGradient")
                     }
                 )
-                // .attr("id", (d) => (`${entity_graph[d.source].text}-${entity_graph[d.target].text}`))
-            const edges = 
-            ( edge_group.selectAll("line").node()
-            ? edge_group.selectAll("line")
-            : edge_group.append("line").attr("class", "edge entity"))
-            edges.attr("x1", function(d) { return entity_graph[d.source].x; })
+                .selectAll("line")
+                .attr("x1", function(d) { return entity_graph[d.source].x; })
                 .attr("x2", function(d) { return entity_graph[d.target].x; }) 
                 .attr("y1", function(d) { return entity_graph[d.source].y; })
                 .attr("y2", function(d) { return entity_graph[d.target].y; })
-            var svg = this.canvas
-            const gradient = 
-                ( svg.selectAll("defs")?.selectAll("linearGradient").node()
-                ? edge_group.selectAll("defs").selectAll("linearGradient")
-                : edge_group.append("defs").append("linearGradient"))
-            gradient.attr("id", (d) => (`${entity_graph[d.source].text}-${entity_graph[d.target].text}`))
-                // .attr("x1", "0%") 
-                // .attr("x2", "100%")
-                // .attr("y1", "0%")
-                // .attr("y2", "100%")
-                // .attr("x1", function(d) { return d3.select(this.parentNode.parentNode).attr("x1")})
-                // .attr("x2", function(d) { return d3.select(this.parentNode.parentNode).attr("x2")})
-                // .attr("y1", function(d) { return d3.select(this.parentNode.parentNode).attr("y1")})
-                // .attr("y2", function(d) { return d3.select(this.parentNode.parentNode).attr("y2")} 
-            
-            // const start = 
-            // ( gradient.selectAll("stop.start").node()
-            // ? gradient.selectAll("stop.start")
-            // : gradient.append("stop").attr("class", "start"))
-            // start.attr("offset", "0%")
-            //     .attr("stop-color", function(d) {
-            //         const node = (entity_graph[d.source].x < entity_graph[d.target].x)? entity_graph[d.source]:entity_graph[d.target]
-            //         const sentiment = node.sentiment
-            //         if(sentiment == "pos") return self.pos_color
-            //         if(sentiment == "neg") return self.neg_color 
-            //         if(sentiment == "neu") return "grey"
-            //     })
-            // const end = 
-            // ( gradient.selectAll("stop.end").node()
-            // ? gradient.selectAll("stop.end")
-            // : gradient.append("stop").attr("class", "end"))
-            // end.attr("offset", "100%")
-            // .attr("stop-color", function(d) {
-            //         const node = (entity_graph[d.source].x > entity_graph[d.target].x)? entity_graph[d.source]:entity_graph[d.target]
-            //         const sentiment = node.sentiment 
-            //         if(sentiment == "pos") return self.pos_color
-            //         if(sentiment == "neg") return self.neg_color 
-            //         if(sentiment == "neu") return "grey"
-            //     })
-            edges.attr("stroke", (d) => {
+                .attr("stroke", (d) => {
                     const source_sst = entity_graph[d.source].sentiment
                     const target_sst = entity_graph[d.target].sentiment
                     if(source_sst == 'pos' && target_sst == 'pos') return this.pos_color                    
@@ -994,8 +937,7 @@ export default {
                     // neg-pos
                     if((source_sst == 'neg' && target_sst == 'pos') ||
                        (source_sst == 'pos' && target_sst == 'neg')) { angle = this.edgeRotation(source, target, 'neg', 'pos')}
-
-                    return `rotate(${angle}, ${mid_point[0]}, ${mid_point[1]})`
+                    return (angle==180)?`rotate(${angle}, ${mid_point[0]}, ${mid_point[1]})`:0
                 })
                 .attr("stroke-width", function(d) {
                     const entity_1 = entity_graph[d.source].text
