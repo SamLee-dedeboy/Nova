@@ -311,7 +311,7 @@ export default {
         interpolation.forEach(step_percentage => {
             gradient_neg2pos.append('stop')
             .attr("offset", `${step_percentage*100}%`)
-            .attr("stop-color", () => ( this.sst_range(step_percentage) ))
+            .attr("stop-color", () => ( this.sst_range((step_percentage<0.5)? Math.min(step_percentage, 0.2):Math.max(step_percentage, 0.8)) ))
         })
         // neu to pos 
         const gradient_neu2pos = svg.append("defs").append("linearGradient")
@@ -319,7 +319,7 @@ export default {
         interpolation.forEach(step_percentage => {
             gradient_neu2pos.append('stop')
             .attr("offset", `${step_percentage*100}%`)
-            .attr("stop-color", () => ( this.sst_range(0.5+step_percentage/2) ))
+            .attr("stop-color", () => ( this.sst_range(Math.min(0.8+step_percentage/2, 1)) ))
         })
         // neg to neu
         const gradient_neg2neu = svg.append("defs").append("linearGradient")
@@ -327,7 +327,7 @@ export default {
         interpolation.forEach(step_percentage => {
             gradient_neg2neu.append('stop')
             .attr("offset", `${step_percentage*100}%`)
-            .attr("stop-color", () => ( this.sst_range(0+step_percentage/2) ))
+            .attr("stop-color", () => ( this.sst_range(Math.min(0+step_percentage/2, 0.2)) ))
         })
         this.updateOutletGraph()
         // this.tooltip = this.tooltipContainer.append("text")
