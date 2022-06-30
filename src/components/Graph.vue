@@ -276,8 +276,14 @@ export default {
         // .call(d3.zoom().on("zoom", function (e) {
         //     d3.select(this).attr("transform", e.transform)
         // }))
-        this.neg_color_range = ["red", "salmon"]
-        this.pos_color_range = ["#7986F8", "#0d6eff"]
+        const offset = 0.15 
+        this.sst_range = d3.interpolateBrBG
+        this.neg_color = this.sst_range(0+offset)
+        this.pos_color = this.sst_range(1-offset)
+        // this.sst_range = d3.interpolateBrBG
+        // this.neg_color = this.RGBToHex(this.sst_range(0+offset))
+        // this.pos_color = this.RGBToHex(this.sst_range(1-offset))
+        this.neu_color = "grey"
         this.abbr_dict={
             "CNN": "CNN",
             "FoxNews": "Fox",
@@ -287,12 +293,6 @@ export default {
             "Washington Post": "WP"
         }
         this.animating_click = false
-        this.color_neg = d3.scaleSqrt()
-            .domain([-1, 0])  
-            .range(this.neg_color_range); 
-        this.color_pos = d3.scaleSqrt()
-            .domain([0, 1])
-            .range(this.pos_color_range);
         // handle canvas clicked
         this.canvas.on("click", () => {
             if(this.animating_click) return
@@ -317,6 +317,34 @@ export default {
         .style("transform-origin", "top left")
         .html("tooltip")
 
+        // create gradient for entity graph
+        var svg = this.canvas
+        const steps = 11
+        const interpolation = [...Array(steps).keys()].map(p => p/(steps-1))
+        // neg-pos
+        const gradient_neg2pos = svg.append("defs").append("linearGradient")
+        gradient_neg2pos.attr("id", "neg-pos") 
+        interpolation.forEach(step_percentage => {
+            gradient_neg2pos.append('stop')
+            .attr("offset", `${step_percentage*100}%`)
+            .attr("stop-color", () => ( this.sst_range(step_percentage) ))
+        })
+        // neu to pos 
+        const gradient_neu2pos = svg.append("defs").append("linearGradient")
+        gradient_neu2pos.attr("id", "neu-pos") 
+        interpolation.forEach(step_percentage => {
+            gradient_neu2pos.append('stop')
+            .attr("offset", `${step_percentage*100}%`)
+            .attr("stop-color", () => ( this.sst_range(0.5+step_percentage/2) ))
+        })
+        // neg to neu
+        const gradient_neg2neu = svg.append("defs").append("linearGradient")
+        gradient_neg2neu.attr("id", "neg-neu") 
+        interpolation.forEach(step_percentage => {
+            gradient_neg2neu.append('stop')
+            .attr("offset", `${step_percentage*100}%`)
+            .attr("stop-color", () => ( this.sst_range(0+step_percentage/2) ))
+        })
         this.updateOutletGraph()
         // this.tooltip = this.tooltipContainer.append("text")
         // .style("opacity", 0)
@@ -742,7 +770,7 @@ export default {
             ( outer_ring.select(`path.pos_${node_level}_${class_name}`).node()
             ? outer_ring.select(`path.pos_${node_level}_${class_name}`)
             : outer_ring.append("path").attr("class", `pos_${node_level}_${class_name}`))
-            pos_ring.attr("fill", this.pos_color_range[1])     
+            pos_ring.attr("fill", this.pos_color)     
                 .attr("transform", function(d) {
                     const cx = d3.select(this.parentNode.parentNode).attr("cx")
                     const cy = d3.select(this.parentNode.parentNode).attr("cy")
@@ -778,7 +806,7 @@ export default {
             ( outer_ring.select(`path.neg_${node_level}_${class_name}`).node()
             ? outer_ring.select(`path.neg_${node_level}_${class_name}`)
             : outer_ring.append("path").attr("class", `neg_${node_level}_${class_name}`))
-            neg_ring.attr("fill", this.neg_color_range[0])     
+            neg_ring.attr("fill", this.neg_color)     
                 .attr("transform", function(d) {
                     const cx = d3.select(this.parentNode.parentNode).attr("cx")
                     const cy = d3.select(this.parentNode.parentNode).attr("cy")
@@ -849,7 +877,7 @@ export default {
             // bind edges to node circles, so that edges can bind to circle center
             var center_node = svg.select("g.node.center")
 
-            const edge_color = {"pos": "blue", "neg": "red", "neu": "grey" }
+            const edge_color = {"pos": this.pos_color, "neg": this.neg_color, "neu": this.neu_color }
             var edges = svg.selectAll("line.edge.outlet")
             .data(node, function(d) { return d.text})
             .join("line")
@@ -891,8 +919,9 @@ export default {
                 .attr("x2", function(d) { return entity_graph[d.target].x; }) 
                 .attr("y1", function(d) { return entity_graph[d.source].y; })
                 .attr("y2", function(d) { return entity_graph[d.target].y; })
+            var svg = this.canvas
             const gradient = 
-                ( edge_group.selectAll("defs")?.selectAll("linearGradient").node()
+                ( svg.selectAll("defs")?.selectAll("linearGradient").node()
                 ? edge_group.selectAll("defs").selectAll("linearGradient")
                 : edge_group.append("defs").append("linearGradient"))
             gradient.attr("id", (d) => (`${entity_graph[d.source].text}-${entity_graph[d.target].text}`))
@@ -904,31 +933,70 @@ export default {
                 // .attr("x2", function(d) { return d3.select(this.parentNode.parentNode).attr("x2")})
                 // .attr("y1", function(d) { return d3.select(this.parentNode.parentNode).attr("y1")})
                 // .attr("y2", function(d) { return d3.select(this.parentNode.parentNode).attr("y2")} 
-            const start = 
-            ( gradient.selectAll("stop.start").node()
-            ? gradient.selectAll("stop.start")
-            : gradient.append("stop").attr("class", "start"))
-            start.attr("offset", "0%")
-                .attr("stop-color", function(d) {
-                    const node = (entity_graph[d.source].x < entity_graph[d.target].x)? entity_graph[d.source]:entity_graph[d.target]
-                    const sentiment = node.sentiment
-                    if(sentiment == "pos") return self.pos_color_range[1]
-                    if(sentiment == "neg") return self.neg_color_range[1] 
-                    if(sentiment == "neu") return "grey"
+            
+            // const start = 
+            // ( gradient.selectAll("stop.start").node()
+            // ? gradient.selectAll("stop.start")
+            // : gradient.append("stop").attr("class", "start"))
+            // start.attr("offset", "0%")
+            //     .attr("stop-color", function(d) {
+            //         const node = (entity_graph[d.source].x < entity_graph[d.target].x)? entity_graph[d.source]:entity_graph[d.target]
+            //         const sentiment = node.sentiment
+            //         if(sentiment == "pos") return self.pos_color
+            //         if(sentiment == "neg") return self.neg_color 
+            //         if(sentiment == "neu") return "grey"
+            //     })
+            // const end = 
+            // ( gradient.selectAll("stop.end").node()
+            // ? gradient.selectAll("stop.end")
+            // : gradient.append("stop").attr("class", "end"))
+            // end.attr("offset", "100%")
+            // .attr("stop-color", function(d) {
+            //         const node = (entity_graph[d.source].x > entity_graph[d.target].x)? entity_graph[d.source]:entity_graph[d.target]
+            //         const sentiment = node.sentiment 
+            //         if(sentiment == "pos") return self.pos_color
+            //         if(sentiment == "neg") return self.neg_color 
+            //         if(sentiment == "neu") return "grey"
+            //     })
+            edges.attr("stroke", (d) => {
+                    const source_sst = entity_graph[d.source].sentiment
+                    const target_sst = entity_graph[d.target].sentiment
+                    if(source_sst == 'pos' && target_sst == 'pos') return this.pos_color                    
+                    if(source_sst == 'neg' && target_sst == 'neg') return this.neg_color                    
+                    if(source_sst == 'neu' && target_sst == 'neu') return this.neu_color                    
+                    // neu-pos
+                    if((source_sst == 'pos' && target_sst == 'neu') ||
+                        source_sst == 'neu' && target_sst == 'pos') return `url(#neu-pos)`
+                    // neg-neu
+                    if((source_sst == 'neg' && target_sst == 'neu') ||
+                        source_sst == 'neu' && target_sst == 'neg') return `url(#neg-neu)`
+                    // neg-pos
+                    if((source_sst == 'neg' && target_sst == 'pos') ||
+                        source_sst == 'pos' && target_sst == 'neg') return `url(#neg-pos)`
+                    // `url(#${entity_graph[d.source].text}-${entity_graph[d.target].text})`
                 })
-            const end = 
-            ( gradient.selectAll("stop.end").node()
-            ? gradient.selectAll("stop.ent")
-            : gradient.append("stop").attr("class", "end"))
-            end.attr("offset", "100%")
-            .attr("stop-color", function(d) {
-                    const node = (entity_graph[d.source].x > entity_graph[d.target].x)? entity_graph[d.source]:entity_graph[d.target]
-                    const sentiment = node.sentiment 
-                    if(sentiment == "pos") return "blue" 
-                    if(sentiment == "neg") return "red" 
-                    if(sentiment == "neu") return "grey" 
+                .attr("transform", (d) => {
+                    const source = entity_graph[d.source] 
+                    const target = entity_graph[d.target] 
+                    const source_sst = source.sentiment
+                    const target_sst = target.sentiment
+                    const mid_point = [(source.x + target.x)/2, (source.y + target.y)/2]
+                    var angle = 0
+                    if(source_sst == 'pos' && target_sst == 'pos') angle = 0 
+                    if(source_sst == 'neg' && target_sst == 'neg') angle = 0
+                    if(source_sst == 'neu' && target_sst == 'neu') angle = 0 
+                    // neu-pos
+                    if((source_sst == 'pos' && target_sst == 'neu') ||
+                       (source_sst == 'neu' && target_sst == 'pos')) { angle = this.edgeRotation(source, target, 'neu', 'pos')}
+                    // neg-neu
+                    if((source_sst == 'neg' && target_sst == 'neu') ||
+                       (source_sst == 'neu' && target_sst == 'neg')) { angle = this.edgeRotation(source, target, 'neg', 'neu')}
+                    // neg-pos
+                    if((source_sst == 'neg' && target_sst == 'pos') ||
+                       (source_sst == 'pos' && target_sst == 'neg')) { angle = this.edgeRotation(source, target, 'neg', 'pos')}
+
+                    return `rotate(${angle}, ${mid_point[0]}, ${mid_point[1]})`
                 })
-            edges.attr("stroke", (d) => (`url(#${entity_graph[d.source].text}-${entity_graph[d.target].text})`))
                 .attr("stroke-width", function(d) {
                     const entity_1 = entity_graph[d.source].text
                     const entity_2 = entity_graph[d.target].text
@@ -1009,6 +1077,39 @@ export default {
             const min = (node_level === "node" ? this.minimum_outlet_radius : this.minimum_entity_radius)
             const max = (node_level === "node" ? this.maximum_outlet_radius : this.maximum_entity_radius)
             return articles_ratio*(max-min) + min
+        },
+        edgeRotation(source, target, left_sst, right_sst) {
+            const source_sst = source.sentiment
+            const target_sst = target.sentiment
+            const p = (source_sst == right_sst) ? [source.x, source.y]:[target.x, target.y]
+            const n = (source_sst == left_sst) ? [source.x, source.y]:[target.x, target.y]
+            const dx = p[0]-n[0]
+            return (dx > 0) ? 0 : 180 
+            // const dy = p[1]-n[1]
+            // const theta = Math.atan(Math.abs(dy/dx)) * (180/Math.PI)
+            if(dx > 0 && dy > 0) return theta
+            if(dx < 0 && dy > 0) return 180 - theta
+            if(dx < 0 && dy < 0) return 180 + theta
+            if(dx > 0 && dy < 0) return -theta
+        },
+        RGBToHex(rgb) {
+            // Choose correct separator
+            let sep = rgb.indexOf(",") > -1 ? "," : " ";
+            // Turn "rgb(r,g,b)" into [r,g,b]
+            rgb = rgb.substr(4).split(")")[0].split(sep);
+
+            let r = (+rgb[0]).toString(16),
+                g = (+rgb[1]).toString(16),
+                b = (+rgb[2]).toString(16);
+
+            if (r.length == 1)
+                r = "0" + r;
+            if (g.length == 1)
+                g = "0" + g;
+            if (b.length == 1)
+                b = "0" + b;
+
+            return "#" + r + g + b;
         }
     }
 }
