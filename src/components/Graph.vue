@@ -405,8 +405,8 @@ export default {
             // move text
             clickedNode.selectAll("text.node_outlet").transition().duration(1000)
                 .attr("x", clicked_center[0])
-                .attr("y", clicked_center[1])
-                // move circles
+                .attr("y", clicked_center[1] - expanded_r + 30)
+            // move circles
             const circles = clickedNode.selectAll("circle")
             circles.transition().duration(1000)
             .attr("cx", clicked_center[0])
@@ -447,19 +447,6 @@ export default {
             })
 
             self.force_layout(otherNodes, [origin_x, origin_y, shrinked_width, shrinked_height], center, shrink_ratio, data, clickedNode.data()[0].text)
-
-            // draw bounding box for dev
-            // svg.append("rect")
-            // .attr("x", origin_x) 
-            // .attr("y", origin_y)
-            // .attr("width", shrinked_width)
-            // .attr("height", shrinked_height)
-            // .attr("fill", "none")
-            // .attr("stroke-width", 5)
-            // .attr("stroke", "black")
-
-
-
         },
         updateCenterNode(pos_moved=false) {
             var svg = this.canvas
@@ -678,10 +665,15 @@ export default {
             ? node.selectAll(`text.${node_level}_${class_name}`)
             : node.append("text").attr("class", `${node_level}_${class_name}`))
             nodeText.attr("x", function(d) { return d3.select(this.parentNode).attr("cx"); })
-                .attr("y", function(d) { return d3.select(this.parentNode).attr("cy"); })
+                .attr("y", function(d) { 
+                    const center_y = d3.select(this.parentNode).attr("cy"); 
+                    if(node_level === "node" && r != 0) return center_y - r + 30
+                    return center_y
+                })
                 .each(function(d) {
                     if(node_level === "node" && class_name === "outlet") {
                         d3.select(this).text(d => self.abbr_dict[d.text])
+
                     } else {
                         var break_text = d.text.split('_')
                         var break_num = break_text.length
@@ -697,7 +689,12 @@ export default {
                         .text(d => d)
                         .attr("x", node_text.attr("x"))
                         .attr("dy", () => (node_level === "node" ? "1.4em":"1.4em"))
-                        node_text.attr("y", function(d) { return d3.select(this).attr("y") - (node_level === "node"? 18:14)*(1+(break_num-1)/2)})
+                        node_text.attr("y", function(d) { 
+                            const center_y = d3.select(this).attr("y")  
+                            const offset = 1+(break_num-1)/2
+                            if(node_level == "node") return center_y - 18*offset
+                            if(node_level == "subnode") return center_y - 14*offset
+                        })
                     }
                 })
                 .attr("text-anchor", "middle")
