@@ -14,7 +14,8 @@ export default {
     data() {
         return {
             articles: {},
-            entity_mentions: {}
+            entity_mentions: {},
+            isLoading: true,
         }
     },
     async mounted() {
@@ -35,6 +36,7 @@ export default {
             response => {
                 console.log("Error loading articles.")
             })
+        this.isLoading = false
         return
         for(const article of this.articles) {
             // topic
@@ -113,7 +115,7 @@ export default {
 <template>
 
     <Button label="Import" class="p-button-secondary"></Button>
-    <Button label="Test" @click="testClicked" class="p-button-secondary"></Button>
+    <Button label="Test" @click="testClicked" class="p-button-secondary" :loading="isLoading"></Button>
 </template> 
 
 <style scoped>
