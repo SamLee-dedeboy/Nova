@@ -366,7 +366,7 @@ export default {
         updateOutletGraph() {
             this.updateCenterNode()
             this.updateNodes()
-            const width = this.canvas_width
+            const width = this.canvas_width - 100
             const height = this.canvas_height
             const center = [this.canvas_width/2, this.canvas_height/2]
             const data = this.graph.nodes.map(node => {
@@ -481,6 +481,7 @@ export default {
                     .attr("class", "node center")
                     .attr("cx", self.canvas_width/2) 
                     .attr("cy", self.canvas_height/2)
+                    .style("filter", "brightness(140%)")
                     self.applyNodeStyling(node, "node", "center", undefined, "enter center")
                 },
                 update => {
@@ -509,6 +510,7 @@ export default {
                     .attr("class", "node outlet")
                     .attr("cx", self.canvas_width/2)
                     .attr("cy", self.canvas_height/2)
+                    .attr("filter", "brightness(140%)")
                     self.applyNodeStyling(node, "node", "outlet", undefined, "enter node")
                 },
                 update => {
@@ -710,17 +712,18 @@ export default {
                         .join("tspan")
                         .text(d => d)
                         .attr("x", node_text.attr("x"))
-                        .attr("dy", () => (node_level === "node" ? "1.4em":"1.4em"))
+                        .attr("dy", () => (node_level === "node" ? (class_name==="center"?"1.5em":"1.4em"):"1.4em"))
                         node_text.attr("y", function(d) { 
                             const center_y = d3.select(this).attr("y")  
                             const offset = 1+(break_num-1)/2
-                            if(node_level == "node") return center_y - 18*offset
+                            if(node_level == "node") return center_y - 27*offset
                             if(node_level == "subnode") return center_y - 14*offset
                         })
                     }
                 })
                 .attr("text-anchor", "middle")
-                .attr("font-size", () => (node_level === "node" ? "0.8em":"0.6em"))
+                .attr("font-size", () => (node_level === "node" ? (class_name==="center"?"1em":"0.8em"):"0.6em"))
+                .attr("font-family", () => (class_name === "center")? "cursive":"system-ui")
                 .attr("dominant-baseline", "central")
                 .style("display:block")
                 // .text(d => self.abbr_dict[d.outlet] || d.text)
@@ -754,7 +757,7 @@ export default {
             .attr("r",  function(d) { return parseFloat(d3.select(this.parentNode).attr("r"));})
             .attr("stroke", "black")
             .attr("stroke-dasharray", function(d) { return d.dotted? 2.5 : 0})
-            .attr("fill", "white") 
+            .attr("fill", () => (class_name === "center"? "#f0a8af" : "white")) 
             .lower()
 
             // set outer rings to represent sentiments
