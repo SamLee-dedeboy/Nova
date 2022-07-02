@@ -1,6 +1,7 @@
 <script>
 import Graph from "./Graph.vue";
 import Cloud from "./Cloud.vue"
+import OpacityController from "./OpacityController.vue";
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
 import Legend from './Legend.vue'
@@ -13,7 +14,8 @@ export default ({
       TabView,
       TabPanel,
       Legend,
-      TimeAxes
+      TimeAxes,
+      OpacityController,
 
     },
     props:['articles', 'enabled_outlet_set','targets', 'topic', 'selectedTimeRange'],
@@ -22,7 +24,9 @@ export default ({
             entity_graph: {
                 nodes:[]
             },
-            cooccur_matrix: {}
+            cooccur_matrix: {},
+            clicked_outlet: undefined,
+            opacityThreshold: 0,
         }
     },
     computed: {
@@ -118,14 +122,7 @@ export default ({
             })
             this.entity_graph.nodes = nodes
             this.cooccur_matrix = cooccur_matrix
-            // // var nodes = [] 
-            // // for (const [entity_id, article_ids] of Object.entries(cooccur_freq)) {
-            // //     const articles = this.idsToArticles(article_ids) 
-            // //     const node = this.construct_node(articles, entity_id) 
-            // //     nodes.push(node)
-            // // }
-            // this.entity_graph.nodes = nodes.sort((a,b) => (a.articles.length < b.articles.length)).slice(0, max_node_num)
-
+            // this.clicked_outlet = clicked_node.text
         },
         construct_node(articles, label) {
             let node = {}
@@ -183,19 +180,28 @@ export default ({
 
 <template>
 <TabView>
-    <TabPanel v-for="(target, index) in targets" :key="target" :header="topic">
-            <Graph 
+    <TabPanel v-for="(target, index) in targets" :key="target" :header="targets[0] + (clicked_outlet?`->${clicked_outlet}` : '')" >
+        <Graph 
             :graph="graph_dict[target]"
             :graph_index="index"
             :id="`graph-${index}`"
             :entity_graph="entity_graph.nodes"
             :cooccur_matrix="cooccur_matrix"
+            :opacityThreshold="opacityThreshold"
             @node-clicked="handleNodeClicked"
             >
         </Graph >
         <!-- <Legend v-if="targets.length!=0"></Legend> -->
         <TimeAxes v-if="targets.length!=0" :selectedTimeRange="selectedTimeRange"></TimeAxes>
-
+        <OpacityController class="opacity-controller" v-if="targets.length!=0" v-model:opacityThreshold="opacityThreshold"></OpacityController>
     </TabPanel>
 </TabView>
 </template>
+
+<style scoped>
+.opacity-controller {
+    position:absolute;
+    top:30%;
+    left: 92%;
+}
+</style>
