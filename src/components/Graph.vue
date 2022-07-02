@@ -4,7 +4,7 @@ import Node from "./Node.vue"
 import { nextTick } from 'vue'
 
 export default {
-    props: ['graph', 'graph_index', "id", "entity_graph", "cooccur_matrix"],
+    props: ['graph', 'graph_index', "id", "entity_graph", "cooccur_matrix", "opacityThreshold"],
     components: {
         Node
     },
@@ -131,6 +131,25 @@ export default {
         }
     },
     watch: {
+        opacityThreshold(new_value) {
+            if(!this.nodeClicked) return 
+            var self = this
+            d3.selectAll("g.edge_group").selectAll("line")
+            .each(function(d) {
+                d3.select(this).style("stroke-opacity", function(d) {
+                    const entity_1 = self.entity_graph[d.source].text
+                    const entity_2 = self.entity_graph[d.target].text
+                    const freq = self.cooccur_matrix[entity_1][entity_2]
+                    const min_opacity = 0.1
+                    const max_opacity = 0.9
+                    const powerScale = d3.scalePow().exponent(1.8)
+                        .domain([self.min_entity_cooccurr, self.max_entity_cooccurr])
+                        .range([min_opacity, max_opacity])
+                    return (powerScale(freq) > self.opacityThreshold)?powerScale(freq):0
+
+                })
+            })
+        },
         graph: function(new_graph, old_graph) {
             if(this.clickedNode) {
                 this.clickedNode.selectAll("g.subnode, g.edge_group").remove()
@@ -141,118 +160,7 @@ export default {
             //     this.handleNodeClick(undefined, this.clickedNodeData)
         },
         entity_graph: function(new_entity_graph, old_entity_graph) {
-            var self = this
-            const selected_node = this.clickedNode
-            const center = [parseFloat(selected_node.attr("cx")), parseFloat(selected_node.attr("cy"))]
-            const bounded_r = selected_node.attr("r")
-            const entity_nodes = selected_node.selectAll("g.subnode.entity").data(new_entity_graph, (d) => (d.text))
-            .join(
-                enter => {
-                    const node = enter.append("g")
-                    .attr("class", "subnode entity")
-                    .attr("cx", center[0])
-                    .attr("cy", center[1])
-                    self.applyNodeStyling(node, "subnode", "entity", undefined, "enter entity")
-                }
-            )
-            d3.selectAll("g.subnode.entity").selectAll("text.subnode_entity")
-                .style("pointer-events", "none")
-            d3.selectAll("g.subnode.entity")
-            .style("cursor", "pointer")
-            .on("mousemove", function(e) {
-                const node_data = d3.select(this).data()[0]
-                const tooltip_title = "entity"
-                const tooltipText = 
-                `${tooltip_title}: ${(node_data.text)} <br>` + 
-                `#posArticle/score: ${node_data.pos_articles}/${parseFloat(node_data.pos_sent).toFixed(2)}  <br>` + 
-                `#negArticle/score: ${node_data.neg_articles}/${parseFloat(node_data.neg_sent).toFixed(2)} <br>` +
-                `#neuArticle/score: ${node_data.neu_articles}/${parseFloat(node_data.neu_sent).toFixed(2)} <br>` +
-                `#articles: ${(node_data.articles.length)} <br>` 
-                // const tooltipText = 
-                // "entity: " + (entity_data.text) + "<br>" +
-                // "positive: " + parseFloat(entity_data.pos_sent).toFixed(2) + "<br>" + 
-                // "negative: " + parseFloat(entity_data.neg_sent).toFixed(2) + "<br>" +
-                // "neutral: " +  parseFloat(entity_data.neu_sent).toFixed(2 )+ "<br>" +
-                // "#articles: " + (entity_data.articles?.length) + "<br>" 
-
-                self.tooltip.html(tooltipText)
-                .style("left", e.offsetX + 15 + "px")
-                .style("top", e.offsetY - 5 + "px")
-            })
-            .on("mouseover", function(d) {
-                if(self.animating_click) return
-                self.tooltip.transition().duration(100).style("scale", 1)
-            })
-            .on("mouseout", function(d) {
-                if(self.animating_click) return
-                self.tooltip.transition().duration(100).style("scale", 0)
-            })
-            new_entity_graph.forEach(node => {
-                node.x = parseInt(center[0])
-                node.y = parseInt(center[1])
-            })
-            var simulation = d3.forceSimulation(new_entity_graph)
-                .alphaMin(0.2)
-                .velocityDecay(0.6) 
-                // .force("x", d3.forceX().x(center[0]))
-                // .force("y", d3.forceY().y(center[1]))
-                .force("center", d3.forceCenter(center[0], center[1]).strength(0.1))
-                .force("charge", d3.forceManyBody().strength(-180))
-                .force("link", d3.forceLink(self.entity_links).strength(function(d) {
-                    const entity_1 = d.source.text
-                    const entity_2 = d.target.text
-                    const freq = self.cooccur_matrix[entity_1][entity_2] || 0
-                    var res = (freq - self.mean_entity_cooccurr)/self.std_entity_cooccurr
-                    res = 1 / (1 + Math.exp(-res));
-                    const min = 0.001
-                    const max = 0.005
-                    res = (max-min)*res + min
-                    return res 
-                }))
-                .force('collision', d3.forceCollide().iterations(50).radius(d => {
-                    const r = self.getRadiusBytext("subnode", d.text)
-                    return r
-                }))
-                .on('tick', function() {
-                    this.nodes().forEach(node => {
-                        const distance = Math.sqrt(Math.pow(node.x-center[0], 2) + Math.pow(node.y-center[1], 2))
-                        const r = bounded_r-self.getRadiusBytext("subnode", node.text) - 10
-                        if(distance > r) {
-                            node.x = (node.x-center[0])*r/distance + center[0]
-                            node.y = (node.y-center[1])*r/distance + center[1]
-                        }
-                    })
-                    d3.selectAll("g.subnode.entity")
-                    .data(new_entity_graph, (d) => (d.text))
-                    .join(
-                        enter => {
-                            const node = enter.append("g")
-                            .attr("class", "subnode entity")
-                            .attr('cx', function (d) { 
-                                return d.x
-                            })
-                            .attr('cy', function (d) { 
-                                return d.y
-                            });
-                            self.applyNodeStyling(node, "subnode", "entity", undefined, "enter entity")
-                            self.add_entity_edges(new_entity_graph, selected_node)
-                        },
-                        update => {
-                            var node = d3.selectAll("g.subnode.entity")
-                            .attr('cx', function (d) { 
-                                return d.x
-                            })
-                            .attr('cy', function (d) { 
-                                return d.y
-                            });
-                            self.applyNodeStyling(node, "subnode", "entity", undefined, "update entity")
-                            self.add_entity_edges(new_entity_graph, selected_node)
-                        }
-                    )
-                })
-                .on("end", function() {
-                    self.animating_click=false
-                })
+            this.updateEntityGraph()
         }
     },
     mounted() {
@@ -341,6 +249,120 @@ export default {
     },
 
     methods: {
+        updateEntityGraph() {
+            var self = this
+            const selected_node = this.clickedNode
+            const bounded_r = selected_node.attr("r")
+            const center = [parseFloat(selected_node.attr("cx")), parseFloat(selected_node.attr("cy"))]
+            const entity_nodes = selected_node.selectAll("g.subnode.entity").data(this.entity_graph, (d) => (d.text))
+            .join(
+                enter => {
+                    const node = enter.append("g")
+                    .attr("class", "subnode entity")
+                    .attr("cx", center[0])
+                    .attr("cy", center[1])
+                    self.applyNodeStyling(node, "subnode", "entity", undefined, "enter entity")
+                }
+            )
+            d3.selectAll("g.subnode.entity").selectAll("text.subnode_entity")
+                .style("pointer-events", "none")
+            d3.selectAll("g.subnode.entity")
+            .style("cursor", "pointer")
+            .on("mousemove", function(e) {
+                const node_data = d3.select(this).data()[0]
+                const tooltip_title = "entity"
+                const tooltipText = 
+                `${tooltip_title}: ${(node_data.text)} <br>` + 
+                `#posArticle/score: ${node_data.pos_articles}/${parseFloat(node_data.pos_sent).toFixed(2)}  <br>` + 
+                `#negArticle/score: ${node_data.neg_articles}/${parseFloat(node_data.neg_sent).toFixed(2)} <br>` +
+                `#neuArticle/score: ${node_data.neu_articles}/${parseFloat(node_data.neu_sent).toFixed(2)} <br>` +
+                `#articles: ${(node_data.articles.length)} <br>` 
+                // const tooltipText = 
+                // "entity: " + (entity_data.text) + "<br>" +
+                // "positive: " + parseFloat(entity_data.pos_sent).toFixed(2) + "<br>" + 
+                // "negative: " + parseFloat(entity_data.neg_sent).toFixed(2) + "<br>" +
+                // "neutral: " +  parseFloat(entity_data.neu_sent).toFixed(2 )+ "<br>" +
+                // "#articles: " + (entity_data.articles?.length) + "<br>" 
+
+                self.tooltip.html(tooltipText)
+                .style("left", e.offsetX + 15 + "px")
+                .style("top", e.offsetY - 5 + "px")
+            })
+            .on("mouseover", function(d) {
+                if(self.animating_click) return
+                self.tooltip.transition().duration(100).style("scale", 1)
+            })
+            .on("mouseout", function(d) {
+                if(self.animating_click) return
+                self.tooltip.transition().duration(100).style("scale", 0)
+            })
+            this.entity_graph.forEach(node => {
+                node.x = parseInt(center[0])
+                node.y = parseInt(center[1])
+            })
+            var simulation = d3.forceSimulation(this.entity_graph)
+                .alphaMin(0.2)
+                .velocityDecay(0.6) 
+                // .force("x", d3.forceX().x(center[0]))
+                // .force("y", d3.forceY().y(center[1]))
+                .force("center", d3.forceCenter(center[0], center[1]).strength(0.1))
+                .force("charge", d3.forceManyBody().strength(-180))
+                .force("link", d3.forceLink(self.entity_links).strength(function(d) {
+                    const entity_1 = d.source.text
+                    const entity_2 = d.target.text
+                    const freq = self.cooccur_matrix[entity_1][entity_2] || 0
+                    var res = (freq - self.mean_entity_cooccurr)/self.std_entity_cooccurr
+                    res = 1 / (1 + Math.exp(-res));
+                    const min = 0.001
+                    const max = 0.005
+                    res = (max-min)*res + min
+                    return res 
+                }))
+                .force('collision', d3.forceCollide().iterations(50).radius(d => {
+                    const r = self.getRadiusBytext("subnode", d.text)
+                    return r
+                }))
+                .on('tick', function() {
+                    this.nodes().forEach(node => {
+                        const distance = Math.sqrt(Math.pow(node.x-center[0], 2) + Math.pow(node.y-center[1], 2))
+                        const r = bounded_r-self.getRadiusBytext("subnode", node.text) - 10
+                        if(distance > r) {
+                            node.x = (node.x-center[0])*r/distance + center[0]
+                            node.y = (node.y-center[1])*r/distance + center[1]
+                        }
+                    })
+                    d3.selectAll("g.subnode.entity")
+                    .data(self.entity_graph, (d) => (d.text))
+                    .join(
+                        enter => {
+                            const node = enter.append("g")
+                            .attr("class", "subnode entity")
+                            .attr('cx', function (d) { 
+                                return d.x
+                            })
+                            .attr('cy', function (d) { 
+                                return d.y
+                            });
+                            self.applyNodeStyling(node, "subnode", "entity", undefined, "enter entity")
+                            self.add_entity_edges(self.entity_graph, selected_node)
+                        },
+                        update => {
+                            var node = d3.selectAll("g.subnode.entity")
+                            .attr('cx', function (d) { 
+                                return d.x
+                            })
+                            .attr('cy', function (d) { 
+                                return d.y
+                            });
+                            self.applyNodeStyling(node, "subnode", "entity", undefined, "update entity")
+                            self.add_entity_edges(self.entity_graph, selected_node)
+                        }
+                    )
+                })
+                .on("end", function() {
+                    self.animating_click=false
+                })
+        },
         updateOutletGraph() {
             this.updateCenterNode()
             this.updateNodes()
@@ -422,6 +444,7 @@ export default {
             .on("end", function() {
                 self.applyNodeStyling(clickedNode,  "node", "outlet", expanded_r, "on click")
                 self.addEdges(d3.selectAll("g.node.outlet"))
+                self.animating_click = false
                 self.$emit("node-clicked", d)
                 self.clickedNodeData = d
             })
@@ -445,7 +468,6 @@ export default {
                 }
                 return node
             })
-
             self.force_layout(otherNodes, [origin_x, origin_y, shrinked_width, shrinked_height], center, shrink_ratio, data, clickedNode.data()[0].text)
         },
         updateCenterNode(pos_moved=false) {
@@ -598,7 +620,7 @@ export default {
                 .force("link", d3.forceLink(self.graph_links).strength(0.0001))
                 .force('collision', d3.forceCollide().iterations(50).radius(d => {
                     const r = self.getRadiusBytext("node", d.text)*scale_ratio
-                    return r
+                    return r+5
                 }))
                 .on('tick', function() {
                     tick_num += 1
@@ -953,8 +975,7 @@ export default {
                     const powerScale = d3.scalePow().exponent(1.8)
                         .domain([self.min_entity_cooccurr, self.max_entity_cooccurr])
                         .range([min_opacity, max_opacity])
-                    return powerScale(freq)
-
+                    return (powerScale(freq) > self.opacityThreshold)?powerScale(freq):0
                 })
                 .style("stroke-linecap","round")
                 .style("cursor", "pointer")
