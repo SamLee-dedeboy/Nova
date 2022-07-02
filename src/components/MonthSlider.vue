@@ -36,13 +36,13 @@ export default {
         <svg  viewBox="0 0 200 30" class="slideraxes" overflow="visible" style="position:absolute;left:20px;right:20px"></svg>
     </div>
 </template>
-<style>
+<style scoped lang="scss">
 .p-slider-horizontal {
     margin-top: 20px;
     margin-left: 20px;
     margin-right: 20px;
 }
-.p-slider .p-slider-handle{
+:deep(.p-slider-handle){
     border-radius: 10px !important;
 }
 svg {
