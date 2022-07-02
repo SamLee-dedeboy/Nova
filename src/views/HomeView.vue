@@ -27,21 +27,17 @@ export default {
       original_dataset: {
         graphList:[],
         outlet_set:[],
-        topic_dict:[],
         np_list:[]
       },
       dataset: {
         graphList:[],
         outlet_set:[],
-        topic_dict:[],
         np_list:[]
       },
       outlet_set: [],
       enabled_outlet_set:[],
       selected_articles: [],
-      topic_list:[],
       np_list:[],
-      selected_topic:"",
       selected_target:[],
       timeRange:[1,13],
       outlet_article_dict: {}
@@ -121,9 +117,7 @@ export default {
       const neg_mean = -25.86358780825294
       const neg_std = 29.437169285743654 
 
-      // group by topic 
       // clear
-      const topic_dict = {}
       // for(let outlet of Object.keys(this.outlet_article_dict)) {
       //   this.outlet_article_dict[outlet] = []
       // }
@@ -133,16 +127,12 @@ export default {
           const pos = article.sentiment.pos
           const neg = article.sentiment.neg
           Object.assign(article.sentiment, {"normalized_sst": (Math.tanh((pos-pos_mean)/pos_std) + Math.tanh((neg-neg_mean)/neg_std))/2})
-          // topic
-          topic_dict[article.top_level_topic] = topic_dict[article.top_level_topic] || []
-          topic_dict[article.top_level_topic].push(article.id)
           // outlet
           this.outlet_article_dict[article.journal] = this.outlet_article_dict[article.journal] || []
           this.outlet_article_dict[article.journal].push(article)
       }
       this.outlet_set = Object.keys(this.outlet_article_dict)
       this.enabled_outlet_set = this.outlet_set
-      this.topic_list = Object.keys(topic_dict)
       this.normalized_articles = target_articles
     }
   },
@@ -177,7 +167,6 @@ export default {
             :articles="normalized_articles"
             :enabled_outlet_set="enabled_outlet_set"
             :targets="selected_target"
-            :topic="selected_topic"
             :selectedTimeRange="timeRange"
             >
             </TargetContainer>
