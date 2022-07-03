@@ -481,7 +481,6 @@ export default {
                     .attr("class", "node center")
                     .attr("cx", self.canvas_width/2) 
                     .attr("cy", self.canvas_height/2)
-                    .style("filter", "brightness(140%)")
                     self.applyNodeStyling(node, "node", "center", undefined, "enter center")
                 },
                 update => {
@@ -510,7 +509,6 @@ export default {
                     .attr("class", "node outlet")
                     .attr("cx", self.canvas_width/2)
                     .attr("cy", self.canvas_height/2)
-                    .attr("filter", "brightness(140%)")
                     self.applyNodeStyling(node, "node", "outlet", undefined, "enter node")
                 },
                 update => {
@@ -757,7 +755,7 @@ export default {
             .attr("r",  function(d) { return parseFloat(d3.select(this.parentNode).attr("r"));})
             .attr("stroke", "black")
             .attr("stroke-dasharray", function(d) { return d.dotted? 2.5 : 0})
-            .attr("fill", () => (class_name === "center"? "#f0a8af" : "white")) 
+            .attr("fill", () => (class_name === "center"? "#f7cfd2" : "white")) 
             .lower()
 
             // set outer rings to represent sentiments
@@ -771,6 +769,7 @@ export default {
             ? node.selectAll(`g.outer_ring_${node_level}_${class_name}`) 
             : node.append("g").attr("class", `outer_ring_${node_level}_${class_name}`))
 
+            outer_ring.style("filter", "brightness(140%)")
             // positive ring
             const pos_ring = 
             ( outer_ring.select(`path.pos_${node_level}_${class_name}`).node()
