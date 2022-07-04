@@ -435,10 +435,17 @@ export default {
             clickedNode.selectAll("circle.expand_node_outlet").style("filter", "brightness(100%)")
 
             const clicked_center = [width/2, height/2]
+            console.log("transition: ", clicked_center[1] - expanded_r + 30)
             // move text
-            clickedNode.selectAll("text.node_outlet").transition().duration(1000)
-                .attr("x", clicked_center[0])
-                .attr("y", clicked_center[1] - expanded_r + 30)
+            if(this.useOutletImage) {
+                clickedNode.selectAll("image.label_node_outlet").transition().duration(1000)
+                    .attr("x", function(d) { return clicked_center[0] - parseFloat(d3.select(this).attr("width")/2); })
+                    .attr("y", clicked_center[1] - expanded_r + 30)
+            } else {
+                clickedNode.selectAll("text.node_outlet").transition().duration(1000)
+                    .attr("x", clicked_center[0])
+                    .attr("y", clicked_center[1] - expanded_r + 30)
+            }
             // move circles
             const circles = clickedNode.selectAll("circle")
             circles.transition().duration(1000)
@@ -733,19 +740,7 @@ export default {
                 .attr("font-size", () => (node_level === "node" ? (class_name==="center"?"1em":"0.8em"):"0.6em"))
                 .attr("font-family", () => (class_name === "center")? "cursive":"system-ui")
                 .attr("dominant-baseline", "central")
-                // .style("opacity", () => (node_level === "center"? 1:0))
-                // .text(d => self.abbr_dict[d.outlet] || d.text)
-            // var textLength = nodeText.node().getComputedTextLength()
-            // var text = nodeText.text()
-            // const maxLength = 80
-            // while(textLength > maxLength && text.length > 0) {
-            //     text = text.slice(0, -1)
-            //     nodeText.text(text + "...")
-            //     textLength = nodeText.node().getComputedTextLength()
-            // }
-            //set size and styling according to label width
-            //node.selectAll("circle." + class_name)
-                //.attr("r", function(d){  return d3.select(this.parentNode).select("text").node().getComputedTextLength()/1.5 + d.dotted?0:d.articles.length; })
+
             node.attr("r", function(d) { 
                 return self.articlesToRadius(node_level, d, r)
             })
@@ -757,10 +752,15 @@ export default {
                 ? node.selectAll(`image.label_${node_level}_${class_name}`)
                 : node.append("image").attr("class", `label_${node_level}_${class_name}`))
                 label_img.attr("href", (d) => (`src/assets/${self.abbr_dict[d.text]}.png`))
-                .attr("x", function(d) { return d3.select(this.parentNode).attr("cx") - d3.select(this.parentNode).attr("r")/2})
-                .attr("y", function(d) { return d3.select(this.parentNode).attr("cy") - d3.select(this.parentNode).attr("r")/2})
-                .attr("height", function(d) { return d3.select(this.parentNode).attr("r")})
-                .attr("width", function(d) { return d3.select(this.parentNode).attr("r")})
+                .attr("height", function(d) { return r!=0?self.articlesToRadius(node_level, d, 0):d3.select(this.parentNode).attr("r")})
+                .attr("width", function(d) { return r!=0?self.articlesToRadius(node_level, d, 0):d3.select(this.parentNode).attr("r")})
+                .attr("x", function(d) { return d3.select(this.parentNode).attr("cx") - d3.select(this).attr("width")/2})
+                .attr("y", function(d) { 
+                    const center_y = d3.select(this.parentNode).attr("cy") 
+                    if(node_level === "node" && r != 0) return center_y - d3.select(this.parentNode).attr("r") + 30
+                    else return center_y - d3.select(this).attr("height")/2 
+                })
+                console.log("apply: ", label_img.attr("y"))
             }
             node.selectAll(`circle.${node_level}_${class_name}`)
                 .attr("r", function(d) { 
@@ -1108,9 +1108,13 @@ export default {
     </svg>
     <div class="outlet-image-controller-container">
         <div class="outlet-image-controller-header">Logo mode</div>
-        <InputSwitch class='outlet-image-controller' v-model="useOutletImage"></InputSwitch>
+        <InputSwitch class='outlet-image-controller' 
+        v-model="useOutletImage" 
+        :disabled="nodeClicked" ></InputSwitch>
     </div>
-    <OpacityController class="opacity-controller" v-if="nodeClicked" v-model:opacityThreshold="opacityThreshold"></OpacityController>
+    <OpacityController class="opacity-controller" v-if="nodeClicked" 
+    v-model:opacityThreshold="opacityThreshold"
+    ></OpacityController>
 
 </div>
 </template>
