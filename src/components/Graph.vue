@@ -1,12 +1,17 @@
 <script>
 import * as d3 from "d3";
 import Node from "./Node.vue"
+import OpacityController from "./OpacityController.vue";
+import InputSwitch from 'primevue/inputswitch';
+
 import { nextTick } from 'vue'
 
 export default {
     props: ['graph', 'graph_index', "id", "entity_graph", "cooccur_matrix", "opacityThreshold"],
     components: {
-        Node
+        Node,
+        OpacityController,
+        InputSwitch,
     },
     computed: {
         total_articles() { return this.graph.nodes.filter(node => node.articles).reduce((sum, node) => sum + node.articles.length, 0) },
@@ -127,10 +132,16 @@ export default {
     data() {
         return {
             nodeClicked: false,
-            outlet_expanded: false,
+            opacityThreshold: 0,
+            useOutletImage: true,
         }
     },
     watch: {
+        useOutletImage(new_value, old_value) {
+            const nodes = d3.selectAll("g.node.outlet")
+            if(old_value == true) nodes.selectAll("image").remove()
+            this.applyNodeStyling(nodes, "node", "outlet", undefined, "update node label")
+        },
         opacityThreshold(new_value) {
             if(!this.nodeClicked) return 
             var self = this
@@ -178,8 +189,8 @@ export default {
         this.neu_color = "grey"
         this.abbr_dict={
             "CNN": "CNN",
-            "FoxNews": "Fox",
-            "Breitbart": "Brb",
+            "FoxNews": "FOX",
+            "Breitbart": "BRB",
             "ABC News": "ABC",
             "New York Times": "NYT",
             "Washington Post": "WP"
@@ -496,7 +507,6 @@ export default {
         },
         updateNodes(pos_moved=false, clicked_outlet=null, scale_ratio = 1, add_edges=false) {
             var svg = this.canvas
-            this.outlet_expanded = false
             var self = this
             const nodes = svg.selectAll("g.node.outlet").filter(node => node.text != clicked_outlet)
 
@@ -695,7 +705,7 @@ export default {
                 .each(function(d) {
                     if(node_level === "node" && class_name === "outlet") {
                         d3.select(this).text(d => self.abbr_dict[d.text])
-
+                        .style("opacity", self.useOutletImage?0:1)
                     } else {
                         var break_text = d.text.split('_')
                         var break_num = break_text.length
@@ -723,7 +733,7 @@ export default {
                 .attr("font-size", () => (node_level === "node" ? (class_name==="center"?"1em":"0.8em"):"0.6em"))
                 .attr("font-family", () => (class_name === "center")? "cursive":"system-ui")
                 .attr("dominant-baseline", "central")
-                .style("display:block")
+                // .style("opacity", () => (node_level === "center"? 1:0))
                 // .text(d => self.abbr_dict[d.outlet] || d.text)
             // var textLength = nodeText.node().getComputedTextLength()
             // var text = nodeText.text()
@@ -739,8 +749,19 @@ export default {
             node.attr("r", function(d) { 
                 return self.articlesToRadius(node_level, d, r)
             })
-            //return 
 
+            // use svg img instead of plain text for outlet nodes
+            if(this.useOutletImage && node_level == "node" && class_name == "outlet") {
+                const label_img = 
+                ( node.selectAll(`image.label_${node_level}_${class_name}`).node()
+                ? node.selectAll(`image.label_${node_level}_${class_name}`)
+                : node.append("image").attr("class", `label_${node_level}_${class_name}`))
+                label_img.attr("href", (d) => (`src/assets/${self.abbr_dict[d.text]}.png`))
+                .attr("x", function(d) { return d3.select(this.parentNode).attr("cx") - d3.select(this.parentNode).attr("r")/2})
+                .attr("y", function(d) { return d3.select(this.parentNode).attr("cy") - d3.select(this.parentNode).attr("r")/2})
+                .attr("height", function(d) { return d3.select(this.parentNode).attr("r")})
+                .attr("width", function(d) { return d3.select(this.parentNode).attr("r")})
+            }
             node.selectAll(`circle.${node_level}_${class_name}`)
                 .attr("r", function(d) { 
                     return d3.select(this.parentNode).attr("r")
@@ -1085,10 +1106,16 @@ export default {
     <svg  class="graph" viewBox="0 0 800 600" :id="id">
         
     </svg>
+    <div class="outlet-image-controller-container">
+        <div class="outlet-image-controller-header">Logo mode</div>
+        <InputSwitch class='outlet-image-controller' v-model="useOutletImage"></InputSwitch>
+    </div>
+    <OpacityController class="opacity-controller" v-if="nodeClicked" v-model:opacityThreshold="opacityThreshold"></OpacityController>
+
 </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 /* .class {
     width: 100%;
     height: 100%;
@@ -1099,4 +1126,23 @@ export default {
 .graphContainer {
     overflow: auto
 }
+.opacity-controller {
+    position:absolute;
+    left:92%;
+    top:45%;
+}
+.outlet-image-controller-container {
+    text-align:center;
+    position:absolute;
+    left: 92%;
+    top: 30%;
+}
+:deep(.p-inputswitch .p-inputswitch-slider) {
+    vertical-align:center;
+    border-radius: 15px;
+}
+:deep(.p-inputswitch .p-inputswitch-slider::before) {
+    border-radius: 10px;
+}
+
 </style>
