@@ -2,6 +2,7 @@
 import * as d3 from "d3";
 import Node from "./Node.vue"
 import OpacityController from "./OpacityController.vue";
+import Tooltip from "./Tooltip.vue";
 import InputSwitch from 'primevue/inputswitch';
 
 import { nextTick } from 'vue'
@@ -12,6 +13,7 @@ export default {
         Node,
         OpacityController,
         InputSwitch,
+        Tooltip,
     },
     computed: {
         total_articles() { return this.graph.nodes.filter(node => node.articles).reduce((sum, node) => sum + node.articles.length, 0) },
@@ -134,6 +136,7 @@ export default {
             nodeClicked: false,
             opacityThreshold: 0,
             useOutletImage: true,
+            tooltip_content: "",
         }
     },
     watch: {
@@ -207,18 +210,19 @@ export default {
             }
         })
         // tooltip
-        this.tooltip = d3.select(".graphContainer").append("div")
-        .style("scale", 0)
-        .style("position", "absolute")
-        .attr("class", "tooltip")
-        .style("background-color", "white")
-        .style("border", "solid")
-        .style("border-width", "2px")
-        .style("border-radius", "5px")
-        .style("padding", "5px")
-        .style("pointer-events", "none")
-        .style("transform-origin", "top left")
-        .html("tooltip")
+        this.tooltip = d3.select("div.tooltip").style("scale", 0)
+        // this.tooltip = d3.select(".graphContainer").append("div")
+        // .style("scale", 0)
+        // .style("position", "absolute")
+        // .attr("class", "tooltip")
+        // .style("background-color", "white")
+        // .style("border", "solid")
+        // .style("border-width", "2px")
+        // .style("border-radius", "5px")
+        // .style("padding", "5px")
+        // .style("pointer-events", "none")
+        // .style("transform-origin", "top left")
+        // .html("tooltip")
 
         // create gradient for entity graph
         var svg = this.canvas
@@ -249,14 +253,6 @@ export default {
             .attr("stop-color", () => ( this.sst_range(Math.min(0+step_percentage/2, 0.2)) ))
         })
         this.updateOutletGraph()
-        // this.tooltip = this.tooltipContainer.append("text")
-        // .style("opacity", 0)
-        // .attr("class", "tooltip")
-        // .attr("text-anchor", "middle")
-        // .attr("font-size","small")
-        // .attr("dominant-baseline", "central")
-        // .text("tooltip")
-        //this.updateEdges()
     },
 
     methods: {
@@ -288,14 +284,9 @@ export default {
                 `#negArticle/score: ${node_data.neg_articles}/${parseFloat(node_data.neg_sent).toFixed(2)} <br>` +
                 `#neuArticle/score: ${node_data.neu_articles}/${parseFloat(node_data.neu_sent).toFixed(2)} <br>` +
                 `#articles: ${(node_data.articles.length)} <br>` 
-                // const tooltipText = 
-                // "entity: " + (entity_data.text) + "<br>" +
-                // "positive: " + parseFloat(entity_data.pos_sent).toFixed(2) + "<br>" + 
-                // "negative: " + parseFloat(entity_data.neg_sent).toFixed(2) + "<br>" +
-                // "neutral: " +  parseFloat(entity_data.neu_sent).toFixed(2 )+ "<br>" +
-                // "#articles: " + (entity_data.articles?.length) + "<br>" 
 
-                self.tooltip.html(tooltipText)
+                self.tooltip_content = tooltipText
+                self.tooltip
                 .style("left", e.offsetX + 15 + "px")
                 .style("top", e.offsetY - 5 + "px")
             })
@@ -570,7 +561,8 @@ export default {
                 `#neuArticle/score: ${node_data.neu_articles}/${parseFloat(node_data.neu_sent).toFixed(2)} <br>` +
                 `#articles: ${node_data.dotted?0:(node_data.articles?.length || self.total_articles)} <br>` 
 
-                self.tooltip.html(tooltipText)
+                self.tooltip_content = tooltipText
+                self.tooltip
                 .style("left", e.offsetX + 15 + "px")
                 .style("top", e.offsetY - 5 + "px")
 
@@ -1011,7 +1003,9 @@ export default {
                     `entity_1: ${entity_1} <br>` +
                     `entity_2: ${entity_2} <br>` + 
                     `#co-occur: ${freq} <br>` 
-                    self.tooltip.html(tooltipText)
+
+                    self.tooltip_content = tooltipText
+                    self.tooltip
                     .style("left", e.offsetX + 15 + "px")
                     .style("top", e.offsetY - 5 + "px")
                 })
@@ -1115,6 +1109,7 @@ export default {
     <OpacityController class="opacity-controller" v-if="nodeClicked" 
     v-model:opacityThreshold="opacityThreshold"
     ></OpacityController>
+    <Tooltip :content="tooltip_content"></Tooltip>
 
 </div>
 </template>

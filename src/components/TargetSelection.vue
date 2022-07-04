@@ -6,6 +6,7 @@ import {FilterMatchMode,FilterService} from 'primevue/api';
 import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'
 import Chip from "primevue/chip"
+import Tooltip from './Tooltip.vue';
 export default defineComponent({
     components: {
         MegaMenu,
@@ -13,6 +14,7 @@ export default defineComponent({
         Column,
         InputText,
         Chip,
+        Tooltip,
     },
     props:['targets'],
     emits: ["target-selected"],
@@ -64,7 +66,7 @@ export default defineComponent({
             if(this.targets.includes(event.target.textContent)){
                 this.$emit("target-selected", event.target.textContent)
             }
-        }
+        },
     }
 
 })
@@ -90,6 +92,17 @@ export default defineComponent({
                     <span>
                         <InputText v-model="filters['global'].value" placeholder="Search by Name" />
                     </span>
+                    <Button 
+                    class="p-button-rounded p-button-outlined p-button-text"
+                    icon="pi pi-info-circle"
+                    style="left:15px"
+                    @mouseover="() => this.$refs.entity_tooltip.show()"
+                    @mouseleave="() => this.$refs.entity_tooltip.hide()"
+                    ></Button>
+                    <Tooltip 
+                    ref="entity_tooltip"
+                    :content="'wikipedia entity with #(mentioned articles)'"
+                    style="font-size:smaller; position:absolute; left:-20px; top:-25px;"></Tooltip>
                  </div>
             </template>
             <template #empty>
@@ -113,7 +126,6 @@ export default defineComponent({
             header="Num"
             sortable
             style="text-overflow:ellipsis;overflow:hidden;display: inline-block; width:110px">
-
                 <template #body="{data}">
                     <span :title="data.num" style="font-size:14px">{{data.num}}</span>
                 </template>
