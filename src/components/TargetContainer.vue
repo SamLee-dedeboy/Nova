@@ -1,7 +1,6 @@
 <script>
 import Graph from "./Graph.vue";
 import Cloud from "./Cloud.vue"
-import OpacityController from "./OpacityController.vue";
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
 import Legend from './Legend.vue'
@@ -15,7 +14,6 @@ export default ({
       TabPanel,
       Legend,
       TimeAxes,
-      OpacityController,
 
     },
     props:['articles', 'enabled_outlet_set','targets', 'topic', 'selectedTimeRange'],
@@ -87,6 +85,7 @@ export default ({
         },
         handleNodeClicked(clicked_node) {
             this.$emit("node-clicked", clicked_node)        
+            this.nodeClicked = true
             const target = this.targets[0]
             const articles = clicked_node.articles
             const max_node_num = 10
@@ -122,7 +121,7 @@ export default ({
             })
             this.entity_graph.nodes = nodes
             this.cooccur_matrix = cooccur_matrix
-            // this.clicked_outlet = clicked_node.text
+            this.clicked_outlet = clicked_node.text
         },
         construct_node(articles, label) {
             let node = {}
@@ -180,7 +179,7 @@ export default ({
 
 <template>
 <TabView>
-    <TabPanel v-for="(target, index) in targets" :key="target" :header="targets[0] + (clicked_outlet?`->${clicked_outlet}` : '')" >
+    <TabPanel v-for="(target, index) in targets" :key="target" :header="targets[0]" >
         <Graph 
             :graph="graph_dict[target]"
             :graph_index="index"
@@ -193,15 +192,10 @@ export default ({
         </Graph >
         <!-- <Legend v-if="targets.length!=0"></Legend> -->
         <TimeAxes v-if="targets.length!=0" :selectedTimeRange="selectedTimeRange"></TimeAxes>
-        <OpacityController class="opacity-controller" v-if="targets.length!=0" v-model:opacityThreshold="opacityThreshold"></OpacityController>
+        
     </TabPanel>
 </TabView>
 </template>
 
 <style scoped>
-.opacity-controller {
-    position:absolute;
-    top:30%;
-    left: 92%;
-}
 </style>
