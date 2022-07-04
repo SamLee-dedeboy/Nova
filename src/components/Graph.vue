@@ -1100,15 +1100,19 @@ export default {
     <svg  class="graph" viewBox="0 0 800 600" :id="id">
         
     </svg>
-    <div class="outlet-image-controller-container">
-        <div class="outlet-image-controller-header">Logo mode</div>
-        <InputSwitch class='outlet-image-controller' 
-        v-model="useOutletImage" 
-        :disabled="nodeClicked" ></InputSwitch>
+    <div class="controll-panel">
+        <div class="outlet-image-controller-container">
+            <div class="outlet-image-controller-header" style="width:100px;">Logo mode</div>
+            <InputSwitch class='outlet-image-controller' 
+            v-model="useOutletImage" 
+            :disabled="nodeClicked" 
+            style="margin-top:10px" ></InputSwitch>
+            
+        </div>
+        <OpacityController class="opacity-controller" v-if="nodeClicked" 
+        v-model:opacityThreshold="opacityThreshold"
+        ></OpacityController>
     </div>
-    <OpacityController class="opacity-controller" v-if="nodeClicked" 
-    v-model:opacityThreshold="opacityThreshold"
-    ></OpacityController>
     <Tooltip :content="tooltip_content"></Tooltip>
 
 </div>
@@ -1125,16 +1129,14 @@ export default {
 .graphContainer {
     overflow: auto
 }
-.opacity-controller {
+.controll-panel {
+    text-align:center;
     position:absolute;
-    left:92%;
-    top:45%;
+    left: 90%;
+    top: 30%;
 }
 .outlet-image-controller-container {
     text-align:center;
-    position:absolute;
-    left: 92%;
-    top: 30%;
 }
 :deep(.p-inputswitch .p-inputswitch-slider) {
     vertical-align:center;
