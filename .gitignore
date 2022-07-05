@@ -33,3 +33,4 @@ src/preprocess/mediabias-*.json
 src/preprocess/rel_ned/*
 !src/preprocess/rel_ned/*.py
 *.pem
+public/*.json
