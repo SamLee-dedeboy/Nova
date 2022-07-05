@@ -190,6 +190,9 @@ export default {
     },
     beforeMount() {
         const offset = 0.15 
+        this.outlet_font = undefined 
+        this.center_font= "cursive"
+        this.entity_selected_color = "#007bff"
         this.sst_range = d3.interpolateBrBG
         this.neg_color = this.sst_range(0+offset)
         this.pos_color = this.sst_range(1-offset)
@@ -318,12 +321,18 @@ export default {
                 const container = d3.select(this)
                 container.selectAll("circle.expand_subnode_entity")
                 .style("filter", "brightness(90%)")
+                .style("fill", self.entity_selected_color)
+                container.selectAll("text.subnode_entity")
+                .style("fill", "white")
                 self.selected_entities.push(d.text) 
                 if(self.selected_entities.length > 2) {
                     const first_element = self.selected_entities[0]
                     const unselect_node = d3.selectAll("g.subnode.entity").filter(d => (d.text == first_element))
                     unselect_node.selectAll("circle.expand_subnode_entity")
                     .style("filter", "brightness(100%)")
+                    .style("fill", "white")
+                    unselect_node.selectAll("text.subnode_entity")
+                    .style("fill", "black")
 
                     self.selected_entities.shift()
                 }
@@ -335,10 +344,11 @@ export default {
             var simulation = d3.forceSimulation(this.entity_graph)
                 .alphaMin(0.2)
                 .velocityDecay(0.6) 
+
                 // .force("x", d3.forceX().x(center[0]))
                 // .force("y", d3.forceY().y(center[1]))
                 .force("center", d3.forceCenter(center[0], center[1]).strength(0.1))
-                .force("charge", d3.forceManyBody().strength(-100))
+                .force("charge", d3.forceManyBody().strength(-120))
                 .force("link", d3.forceLink(self.entity_links).strength(function(d) {
                     const entity_1 = d.source.text
                     const entity_2 = d.target.text
@@ -436,6 +446,9 @@ export default {
                 const selected_node = d3.selectAll("g.subnode.entity").filter(d => this.selected_entities.find(x => x == d.text))
                 selected_node.selectAll("circle.expand_subnode_entity")
                 .style("filter", "brightness(100%)")
+                .style("fill", "white")
+                selected_node.selectAll("text.subnode_entity")
+                .style("fill", "black")
                 this.selected_entities = []
                 return
             }
@@ -769,7 +782,7 @@ export default {
                 })
                 .attr("text-anchor", "middle")
                 .attr("font-size", () => (node_level === "node" ? (class_name==="center"?"1em":"0.8em"):"0.6em"))
-                .attr("font-family", () => (class_name === "center")? "var(--center-font)":"var(--outlet-font)")
+                .attr("font-family", () => (class_name === "center")? self.center_font:self.outlet_font)
                 .attr("dominant-baseline", "central")
 
             node.attr("r", function(d) { 
@@ -1162,10 +1175,6 @@ export default {
     width: 100%;
     height: 100%;
 } */
-:svg {
-    --outlet-font: Arial;
-    --center-font: cursive;
-}
 .graph {
    display: inline-block; 
 }
