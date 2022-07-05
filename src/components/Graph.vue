@@ -307,7 +307,7 @@ export default {
                 // .force("x", d3.forceX().x(center[0]))
                 // .force("y", d3.forceY().y(center[1]))
                 .force("center", d3.forceCenter(center[0], center[1]).strength(0.1))
-                .force("charge", d3.forceManyBody().strength(-180))
+                .force("charge", d3.forceManyBody().strength(-100))
                 .force("link", d3.forceLink(self.entity_links).strength(function(d) {
                     const entity_1 = d.source.text
                     const entity_2 = d.target.text
@@ -425,12 +425,13 @@ export default {
             clickedNode.selectAll("circle.expand_node_outlet").style("filter", "brightness(100%)")
 
             const clicked_center = [width/2, height/2]
-            console.log("transition: ", clicked_center[1] - expanded_r + 30)
             // move text
             if(this.useOutletImage) {
                 clickedNode.selectAll("image.label_node_outlet").transition().duration(1000)
                     .attr("x", function(d) { return clicked_center[0] - parseFloat(d3.select(this).attr("width")/2); })
                     .attr("y", clicked_center[1] - expanded_r + 30)
+                    .attr("width", function(d) { return self.articlesToRadius("node", d, 0) + 30})
+                    .attr("height", function(d) { return self.articlesToRadius("node", d, 0) + 30})
             } else {
                 clickedNode.selectAll("text.node_outlet").transition().duration(1000)
                     .attr("x", clicked_center[0])
@@ -743,8 +744,8 @@ export default {
                 ? node.selectAll(`image.label_${node_level}_${class_name}`)
                 : node.append("image").attr("class", `label_${node_level}_${class_name}`))
                 label_img.attr("href", (d) => (`src/assets/${self.abbr_dict[d.text]}.png`))
-                .attr("height", function(d) { return r!=0?self.articlesToRadius(node_level, d, 0):d3.select(this.parentNode).attr("r")})
-                .attr("width", function(d) { return r!=0?self.articlesToRadius(node_level, d, 0):d3.select(this.parentNode).attr("r")})
+                .attr("height", function(d) { return r!=0?self.articlesToRadius(node_level, d, 0)+30:d3.select(this.parentNode).attr("r")})
+                .attr("width", function(d) { return r!=0?self.articlesToRadius(node_level, d, 0)+30:d3.select(this.parentNode).attr("r")})
                 .attr("x", function(d) { return d3.select(this.parentNode).attr("cx") - d3.select(this).attr("width")/2})
                 .attr("y", function(d) { 
                     const center_y = d3.select(this.parentNode).attr("cy") 
@@ -1099,7 +1100,7 @@ export default {
         
     </svg>
     <div class="controll-panel">
-        <div class="outlet-image-controller-container">
+        <div v-if="!nodeClicked" class="outlet-image-controller-container">
             <div class="outlet-image-controller-header" >Logo mode</div>
             <InputSwitch class='outlet-image-controller' 
             v-model="useOutletImage" 
@@ -1152,6 +1153,7 @@ export default {
 }
 :deep(.p-inputswitch.p-inputswitch-checked .p-inputswitch-slider) {
     background: #0768cf !important;
+
 }
 :deep(.p-inputswitch .p-inputswitch-slider::before) {
     border-radius: 10px;
