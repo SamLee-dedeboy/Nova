@@ -3,6 +3,7 @@ import * as d3 from "d3";
 import Node from "./Node.vue"
 import OpacityController from "./OpacityController.vue";
 import Tooltip from "./Tooltip.vue";
+import Legend from './Legend.vue'
 import InputSwitch from 'primevue/inputswitch';
 
 import { nextTick } from 'vue'
@@ -14,8 +15,17 @@ export default {
         OpacityController,
         InputSwitch,
         Tooltip,
+        Legend,
     },
     computed: {
+        key_color_pair() {
+            return [
+                ["negative", this.neg_color],
+                ["positive", this.pos_color],
+                ["neutral", this.neu_color],
+                ["no mention", 'white'],
+            ] 
+        },
         total_articles() { return this.graph.nodes.filter(node => node.articles).reduce((sum, node) => sum + node.articles.length, 0) },
         center_node() {
             const center_node = this.graph.nodes.filter(node => node.isCenter)[0]
@@ -177,18 +187,11 @@ export default {
             this.updateEntityGraph()
         }
     },
-    mounted() {
-        this.canvas = d3.select("#graph-" + this.graph_index)
-        // .call(d3.zoom().on("zoom", function (e) {
-        //     d3.select(this).attr("transform", e.transform)
-        // }))
+    beforeMount() {
         const offset = 0.15 
         this.sst_range = d3.interpolateBrBG
         this.neg_color = this.sst_range(0+offset)
         this.pos_color = this.sst_range(1-offset)
-        // this.sst_range = d3.interpolateBrBG
-        // this.neg_color = this.RGBToHex(this.sst_range(0+offset))
-        // this.pos_color = this.RGBToHex(this.sst_range(1-offset))
         this.neu_color = "grey"
         this.abbr_dict={
             "CNN": "CNN",
@@ -198,6 +201,14 @@ export default {
             "New York Times": "NYT",
             "Washington Post": "WP"
         }
+        this.brightness = 140
+
+    },
+    mounted() {
+        this.canvas = d3.select("#graph-" + this.graph_index)
+        // .call(d3.zoom().on("zoom", function (e) {
+        //     d3.select(this).attr("transform", e.transform)
+        // }))
         this.animating_click = false
         // handle canvas clicked
         this.canvas.on("click", () => {
@@ -211,18 +222,6 @@ export default {
         })
         // tooltip
         this.tooltip = d3.select("div.tooltip").style("scale", 0)
-        // this.tooltip = d3.select(".graphContainer").append("div")
-        // .style("scale", 0)
-        // .style("position", "absolute")
-        // .attr("class", "tooltip")
-        // .style("background-color", "white")
-        // .style("border", "solid")
-        // .style("border-width", "2px")
-        // .style("border-radius", "5px")
-        // .style("padding", "5px")
-        // .style("pointer-events", "none")
-        // .style("transform-origin", "top left")
-        // .html("tooltip")
 
         // create gradient for entity graph
         var svg = this.canvas
@@ -730,7 +729,7 @@ export default {
                 })
                 .attr("text-anchor", "middle")
                 .attr("font-size", () => (node_level === "node" ? (class_name==="center"?"1em":"0.8em"):"0.6em"))
-                .attr("font-family", () => (class_name === "center")? "cursive":"system-ui")
+                .attr("font-family", () => (class_name === "center")? "var(--center-font)":"var(--outlet-font)")
                 .attr("dominant-baseline", "central")
 
             node.attr("r", function(d) { 
@@ -752,7 +751,6 @@ export default {
                     if(node_level === "node" && r != 0) return center_y - d3.select(this.parentNode).attr("r") + 30
                     else return center_y - d3.select(this).attr("height")/2 
                 })
-                console.log("apply: ", label_img.attr("y"))
             }
             node.selectAll(`circle.${node_level}_${class_name}`)
                 .attr("r", function(d) { 
@@ -768,7 +766,7 @@ export default {
             .attr("r",  function(d) { return parseFloat(d3.select(this.parentNode).attr("r"));})
             .attr("stroke", "black")
             .attr("stroke-dasharray", function(d) { return d.dotted? 2.5 : 0})
-            .attr("fill", () => (class_name === "center"? "#f7cfd2" : "white")) 
+            .attr("fill", () => (class_name === "center"? "#effefd" : "white")) 
             .lower()
 
             // set outer rings to represent sentiments
@@ -782,7 +780,7 @@ export default {
             ? node.selectAll(`g.outer_ring_${node_level}_${class_name}`) 
             : node.append("g").attr("class", `outer_ring_${node_level}_${class_name}`))
 
-            outer_ring.style("filter", "brightness(140%)")
+            outer_ring.style("filter", `brightness(${this.brightness}%)`)
             // positive ring
             const pos_ring = 
             ( outer_ring.select(`path.pos_${node_level}_${class_name}`).node()
@@ -1102,7 +1100,7 @@ export default {
     </svg>
     <div class="controll-panel">
         <div class="outlet-image-controller-container">
-            <div class="outlet-image-controller-header" style="width:100px;">Logo mode</div>
+            <div class="outlet-image-controller-header" >Logo mode</div>
             <InputSwitch class='outlet-image-controller' 
             v-model="useOutletImage" 
             :disabled="nodeClicked" 
@@ -1114,6 +1112,7 @@ export default {
         ></OpacityController>
     </div>
     <Tooltip :content="tooltip_content"></Tooltip>
+    <Legend :key_color_pair="key_color_pair" :brightness="brightness" style="position:absolute;left:83%;top:80%;"></Legend>
 
 </div>
 </template>
@@ -1123,6 +1122,10 @@ export default {
     width: 100%;
     height: 100%;
 } */
+:svg {
+    --outlet-font: Arial;
+    --center-font: cursive;
+}
 .graph {
    display: inline-block; 
 }
@@ -1130,9 +1133,14 @@ export default {
     overflow: auto
 }
 .controll-panel {
+    min-width: 110px;
+    border: solid;
+    border-width: 2px;
+    border-radius: 5px;
+    background-color: #a1bff8;
     text-align:center;
     position:absolute;
-    left: 90%;
+    left: 88%;
     top: 30%;
 }
 .outlet-image-controller-container {
@@ -1141,6 +1149,9 @@ export default {
 :deep(.p-inputswitch .p-inputswitch-slider) {
     vertical-align:center;
     border-radius: 15px;
+}
+:deep(.p-inputswitch.p-inputswitch-checked .p-inputswitch-slider) {
+    background: #0768cf !important;
 }
 :deep(.p-inputswitch .p-inputswitch-slider::before) {
     border-radius: 10px;

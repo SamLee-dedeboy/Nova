@@ -3,7 +3,6 @@ import Graph from "./Graph.vue";
 import Cloud from "./Cloud.vue"
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
-import Legend from './Legend.vue'
 import TimeAxes from './TimeAxes.vue'
 import * as dfd from "danfojs"
 export default ({
@@ -12,7 +11,6 @@ export default ({
       Cloud,
       TabView,
       TabPanel,
-      Legend,
       TimeAxes,
 
     },
@@ -190,7 +188,6 @@ export default ({
             @node-clicked="handleNodeClicked"
             >
         </Graph >
-        <!-- <Legend v-if="targets.length!=0"></Legend> -->
         <TimeAxes v-if="targets.length!=0" :selectedTimeRange="selectedTimeRange"></TimeAxes>
         
     </TabPanel>
