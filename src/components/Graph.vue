@@ -147,6 +147,7 @@ export default {
             opacityThreshold: 0,
             useOutletImage: true,
             tooltip_content: "",
+            selected_entities: [],
         }
     },
     watch: {
@@ -292,10 +293,40 @@ export default {
             .on("mouseover", function(d) {
                 if(self.animating_click) return
                 self.tooltip.transition().duration(100).style("scale", 1)
+                const container = d3.select(this)
+                // container.select("circle.expand_subnode_entity")
+                // .transition()
+                // .duration(100)
+                // .attr("r", function(d) { return parseFloat(container.select("circle.subnode_entity").attr("r")) + 10;})
+                
+                container.selectAll("circle.expand_subnode_entity")
+                .style("filter", "brightness(90%)")
             })
             .on("mouseout", function(d) {
                 if(self.animating_click) return
                 self.tooltip.transition().duration(100).style("scale", 0)
+                const container = d3.select(this)
+                const entity_name = container.data()[0].text
+                if(self.selected_entities.find(entity => entity == entity_name)) return
+                
+                container.selectAll("circle.expand_subnode_entity")
+                .style("filter", "brightness(100%)")
+            })
+            .on("click", function(e, d) {
+                e.stopPropagation() 
+                if(self.animating_click) return
+                const container = d3.select(this)
+                container.selectAll("circle.expand_subnode_entity")
+                .style("filter", "brightness(90%)")
+                self.selected_entities.push(d.text) 
+                if(self.selected_entities.length > 2) {
+                    const first_element = self.selected_entities[0]
+                    const unselect_node = d3.selectAll("g.subnode.entity").filter(d => (d.text == first_element))
+                    unselect_node.selectAll("circle.expand_subnode_entity")
+                    .style("filter", "brightness(100%)")
+
+                    self.selected_entities.shift()
+                }
             })
             this.entity_graph.forEach(node => {
                 node.x = parseInt(center[0])
@@ -400,6 +431,14 @@ export default {
         handleNodeClick(e, d) {
             e.stopPropagation()
             if(this.animating_click) return
+            if(this.clickedNode?.data()[0].text == d.text) {
+                // in this case, clear all the selected subnodes
+                const selected_node = d3.selectAll("g.subnode.entity").filter(d => this.selected_entities.find(x => x == d.text))
+                selected_node.selectAll("circle.expand_subnode_entity")
+                .style("filter", "brightness(100%)")
+                this.selected_entities = []
+                return
+            }
             this.nodeClicked = true
             var self = this
             var svg = this.canvas
