@@ -170,7 +170,11 @@ export default {
                     const powerScale = d3.scalePow().exponent(1.8)
                         .domain([self.min_entity_cooccurr, self.max_entity_cooccurr])
                         .range([min_opacity, max_opacity])
-                    return (powerScale(freq) > self.opacityThreshold)?powerScale(freq):0
+
+                    const opacity = (powerScale(freq) > self.opacityThreshold)?powerScale(freq):0
+                    if(opacity == 0) { d3.select(this.parentNode).style("pointer-events", "none") }
+                    else { d3.select(this.parentNode).style("pointer-events", undefined)}
+                    return opacity
 
                 })
             })
@@ -206,6 +210,8 @@ export default {
             "Washington Post": "WP"
         }
         this.brightness = 140
+        this.selected_entities = []
+        this.selected_entity_edge = undefined 
 
     },
     mounted() {
@@ -259,8 +265,7 @@ export default {
     },
 
     methods: {
-        updateEntityGraph() {
-            var self = this
+        updateEntityGraph() { var self = this
             const selected_node = this.clickedNode
             const bounded_r = selected_node.attr("r")
             const center = [parseFloat(selected_node.attr("cx")), parseFloat(selected_node.attr("cy"))]
@@ -319,23 +324,41 @@ export default {
                 e.stopPropagation() 
                 if(self.animating_click) return
                 const container = d3.select(this)
-                container.selectAll("circle.expand_subnode_entity")
-                .style("filter", "brightness(90%)")
-                .style("fill", self.entity_selected_color)
-                container.selectAll("text.subnode_entity")
-                .style("fill", "white")
-                self.selected_entities.push(d.text) 
+                const selected_entity = container.data()[0].text
+
+                // clicking on an already selected node, should unselect it
+                // and remove from selected list
+                if(self.selected_entities.includes(selected_entity)) {
+                    self.applyEntityNodeClickedStyle(container, false)
+                    const index = self.selected_entities.indexOf(selected_entity);
+                    if (index > -1) { self.selected_entities.splice(index, 1); }
+                    return
+                }
+                // clicking on an unselected node
+                self.applyEntityNodeClickedStyle(container, true)
+                self.selected_entities.push(d.text)
+
+                // can only select 2 nodes. remove the first node in list
                 if(self.selected_entities.length > 2) {
                     const first_element = self.selected_entities[0]
                     const unselect_node = d3.selectAll("g.subnode.entity").filter(d => (d.text == first_element))
-                    unselect_node.selectAll("circle.expand_subnode_entity")
-                    .style("filter", "brightness(100%)")
-                    .style("fill", "white")
-                    unselect_node.selectAll("text.subnode_entity")
-                    .style("fill", "black")
-
+                    self.applyEntityNodeClickedStyle(unselect_node, false)
+                    // update previous selected edge style
+                    const entity_1 = CSS.escape(self.selected_entities[0])
+                    const entity_2 = CSS.escape(self.selected_entities[1])
+                    const edge_group = d3.select(`#${entity_1}-${entity_2},#${entity_2}-${entity_1}`)
+                    self.applyEntityEdgeSelectedStyle(edge_group, false)
                     self.selected_entities.shift()
                 }
+
+                // highlight selected edge if two nodes are selected
+                if(self.selected_entities.length == 2) {
+                    const entity_1 = CSS.escape(self.selected_entities[0])
+                    const entity_2 = CSS.escape(self.selected_entities[1])
+                    const edge_group = d3.select(`#${entity_1}-${entity_2},#${entity_2}-${entity_1}`)
+                    self.applyEntityEdgeSelectedStyle(edge_group, false)
+                }
+
             })
             this.entity_graph.forEach(node => {
                 node.x = parseInt(center[0])
@@ -344,7 +367,6 @@ export default {
             var simulation = d3.forceSimulation(this.entity_graph)
                 .alphaMin(0.2)
                 .velocityDecay(0.6) 
-
                 // .force("x", d3.forceX().x(center[0]))
                 // .force("y", d3.forceY().y(center[1]))
                 .force("center", d3.forceCenter(center[0], center[1]).strength(0.1))
@@ -439,16 +461,19 @@ export default {
             return coord;
         },
         handleNodeClick(e, d) {
+            var self = this
             e.stopPropagation()
             if(this.animating_click) return
             if(this.clickedNode?.data()[0].text == d.text) {
                 // in this case, clear all the selected subnodes
-                const selected_node = d3.selectAll("g.subnode.entity").filter(d => this.selected_entities.find(x => x == d.text))
-                selected_node.selectAll("circle.expand_subnode_entity")
-                .style("filter", "brightness(100%)")
-                .style("fill", "white")
-                selected_node.selectAll("text.subnode_entity")
-                .style("fill", "black")
+                const selected_nodes = d3.selectAll("g.subnode.entity").filter(d => this.selected_entities.includes(d.text))
+                this.applyEntityNodeClickedStyle(selected_nodes, false)
+                // if(this.selected_entities.length == 2) {
+                //     const entity_1 = CSS.escape(self.selected_entities[0])
+                //     const entity_2 = CSS.escape(self.selected_entities[1])
+                //     const edge_group = d3.select(`#${entity_1}-${entity_2},#${entity_2}-${entity_1}`)
+                //     this.applyEntityEdgeSelectedStyle(edge_group, false)
+                // }
                 this.selected_entities = []
                 return
             }
@@ -976,16 +1001,33 @@ export default {
                 .data(this.undirected_entity_links, (d) => (`${entity_graph[d.source].text}-${entity_graph[d.target].text}`))
                 .join(
                     enter => {
-                        const edge_group = enter.append("g").attr("class", "edge_group")
-                        const edges = edge_group.append("line").attr("class", "edge entity")
-                        const gradient = edge_group.append("defs").append("linearGradient")
+                        const edge_group = enter.append("g").attr("class", "edge_group").attr("id", (d) => (`${entity_graph[d.source].text}-${entity_graph[d.target].text}`))
+                        edge_group.append("line").attr("class", "expand_edge_entity").attr("stroke", "grey").lower()
+                        edge_group.append("line").attr("class", "edge_entity")
                     }
                 )
-                .selectAll("line")
-                .attr("x1", function(d) { return entity_graph[d.source].x; })
-                .attr("x2", function(d) { return entity_graph[d.target].x; }) 
-                .attr("y1", function(d) { return entity_graph[d.source].y; })
-                .attr("y2", function(d) { return entity_graph[d.target].y; })
+                .selectAll("line.edge_entity")
+                .style("cursor", "pointer")
+                .attr("x1", function(d) { 
+                    const x = entity_graph[d.source].x 
+                    d3.select(this.parentNode).select("line.expand_edge_entity").attr("x1", x)
+                    return x
+                })
+                .attr("x2", function(d) { 
+                    const x = entity_graph[d.target].x 
+                    d3.select(this.parentNode).select("line.expand_edge_entity").attr("x2", x)
+                    return x
+                }) 
+                .attr("y1", function(d) {
+                    const y = entity_graph[d.source].y 
+                    d3.select(this.parentNode).select("line.expand_edge_entity").attr("y1", y)
+                    return y
+                })
+                .attr("y2", function(d) {
+                    const y = entity_graph[d.target].y 
+                    d3.select(this.parentNode).select("line.expand_edge_entity").attr("y2", y)
+                    return y
+                })
                 .attr("stroke", (d) => {
                     const source_sst = entity_graph[d.source].sentiment
                     const target_sst = entity_graph[d.target].sentiment
@@ -1001,7 +1043,6 @@ export default {
                     // neg-pos
                     if((source_sst == 'neg' && target_sst == 'pos') ||
                         source_sst == 'pos' && target_sst == 'neg') return `url(#neg-pos)`
-                    // `url(#${entity_graph[d.source].text}-${entity_graph[d.target].text})`
                 })
                 .attr("transform", (d) => {
                     const source = entity_graph[d.source] 
@@ -1024,13 +1065,15 @@ export default {
                        (source_sst == 'pos' && target_sst == 'neg')) { angle = this.edgeRotation(source, target, 'neg', 'pos')}
                     return (angle==180)?`rotate(${angle}, ${mid_point[0]}, ${mid_point[1]})`:0
                 })
-                .attr("stroke-width", function(d) {
+                .style("stroke-width", function(d) {
                     const entity_1 = entity_graph[d.source].text
                     const entity_2 = entity_graph[d.target].text
                     const freq = self.cooccur_matrix[entity_1][entity_2] || 0
                     const min_width = 5
                     const max_width = 30
-                    return (max_width-min_width)*(freq/self.max_entity_cooccurr) + min_width  
+                    const width = (max_width-min_width)*(freq/self.max_entity_cooccurr) + min_width  
+                    d3.select(this.parentNode).select("line.expand_edge_entity").style("stroke-width", width)
+                    return width
                 })
                 .style("stroke-opacity", function(d) {
                     const entity_1 = entity_graph[d.source].text
@@ -1041,10 +1084,12 @@ export default {
                     const powerScale = d3.scalePow().exponent(1.8)
                         .domain([self.min_entity_cooccurr, self.max_entity_cooccurr])
                         .range([min_opacity, max_opacity])
-                    return (powerScale(freq) > self.opacityThreshold)?powerScale(freq):0
+                    const opacity = (powerScale(freq) > self.opacityThreshold)?powerScale(freq):0
+                    if(opacity == 0) { d3.select(this.parentNode).style("pointer-events", "none") }
+                    d3.select(this.parentNode).select("line.expand_edge_entity").style("stroke-opacity", opacity)
+                    return opacity 
                 })
                 .style("stroke-linecap","round")
-                .style("cursor", "pointer")
                 .on("mousemove", function(e) {
                     const edge_data = d3.select(this).data()[0]
                     const entity_1 = entity_graph[edge_data.source].text
@@ -1061,14 +1106,89 @@ export default {
                     .style("top", e.offsetY - 5 + "px")
                 })
                 .on("mouseover", function(d) {
+                    if(d3.select(this).style("stroke-opacity") == 0) return
                     if(self.animating_click) return
                     self.tooltip.transition().duration(100).style("scale", 1)
+                    const edge_group = d3.select(this.parentNode)
+                    self.applyEntityEdgeSelectedStyle(edge_group, true)
                 })
                 .on("mouseout", function(d) {
                     if(self.animating_click) return
+                    // if(self.selected_entity_edge == this) return
                     self.tooltip.transition().duration(100).style("scale", 0)
+                    const edge_group = d3.select(this.parentNode)
+                    self.applyEntityEdgeSelectedStyle(edge_group, false)
+                })
+                .on("click", function(e, d) {
+                    if(d3.select(this).style("stroke-opacity") == 0) return
+                    e.stopPropagation()
+                    if(self.animating_click) return
+                    const edge_group = d3.select(this.parentNode)
+                    self.applyEntityEdgeSelectedStyle(edge_group, true)
+                    self.selected_entity_edge = this
+
+                    // unclick previous nodes 
+                    const prev_nodes = d3.selectAll("g.subnode.entity").filter(d => self.selected_entities.includes(d.text))
+                    self.applyEntityNodeClickedStyle(prev_nodes, false)
+
+                    // apply click style changes on new nodes
+                    self.selected_entities = edge_group.attr("id").split("-")
+                    const new_nodes = d3.selectAll("g.subnode.entity").filter(d => self.selected_entities.includes(d.text))
+                    self.applyEntityNodeClickedStyle(new_nodes, true)
                 })
             clickedNode.selectAll("g.subnode.entity").raise()
+        },
+        applyEntityNodeClickedStyle(nodes, clicked=true) {
+            var self = this
+            if(clicked) {
+                nodes.selectAll("circle.expand_subnode_entity")
+                    .style("filter", "brightness(90%)")
+                    .style("fill", self.entity_selected_color)
+                nodes.selectAll("text.subnode_entity")
+                    .style("fill", "white")
+            } else {
+                nodes.selectAll("circle.expand_subnode_entity")
+                .style("filter", "brightness(100%)")
+                .style("fill", "white")
+                nodes.selectAll("text.subnode_entity")
+                .style("fill", "black")
+
+            }
+        },
+        applyEntityNodeSelectedStyle(nodes, selected=true) {
+            if(selected) {
+                nodes.selectAll("circle.expand_subnode_entity")
+                    .style("filter", "brightness(90%)")
+            } else {
+                nodes.selectAll("circle.expand_subnode_entity")
+                .style("filter", "brightness(100%)")
+            }
+
+        },
+        applyEntityEdgeSelectedStyle(edge_group, selected=true) {
+            var self = this
+            const entities = edge_group.attr("id").split("-")
+            const nodes = d3.selectAll("g.subnode.entity")
+            .filter(d => entities.includes(d.text))
+            .filter(d => !self.selected_entities.includes(d.text))
+            if(selected) {
+                nodes.selectAll("circle.expand_subnode_entity")
+                .style("filter", "brightness(90%)")
+
+                edge_group.select("line.expand_edge_entity")
+                .style("filter", "brightness(90%)")
+                .style("stroke-opacity", function(d) { return 0.5; return Math.min(1, parseFloat(edge_group.select("line.edge_entity").style("stroke-opacity"))+0.2) })
+                .style("stroke-width", function(d) { return parseFloat(edge_group.select("line.edge_entity").style("stroke-width"))+10 })
+            } else {
+                nodes.selectAll("circle.expand_subnode_entity")
+                .style("filter", "brightness(100%)")
+                edge_group.select("line.expand_edge_entity")
+                .style("filter", "brightness(100%)")
+                .style("stroke-opacity", function(d) { return parseFloat(edge_group.select("line.edge_entity").style("stroke-opacity")) })
+                .style("stroke-width", function(d) { return parseFloat(edge_group.select("line.edge_entity").style("stroke-width")) })
+
+            }
+
         },
         sentiment_classify(node_data) {
             const pos = node_data.pos_sent
