@@ -13,7 +13,6 @@ export default {
         this.key_color_pair.forEach((pair,index) => {
             const key = pair[0]
             const color = pair[1]
-            console.log("🚀 ~ file: Legend.vue ~ line 17 ~ this.key_color_pair.forEach ~ color", color)
             const circle = svg.append("circle")
                 .attr("cx", x_offset)
                 .attr("cy", y_offset + index*(2*r + vertical_margin))
