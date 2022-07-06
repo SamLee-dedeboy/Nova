@@ -5,6 +5,7 @@ import OpacityController from "./OpacityController.vue";
 import Tooltip from "./Tooltip.vue";
 import Legend from './Legend.vue'
 import InputSwitch from 'primevue/inputswitch';
+import InfoButtonVue from "./InfoButton.vue";
 
 import { nextTick } from 'vue'
 
@@ -16,6 +17,7 @@ export default {
         InputSwitch,
         Tooltip,
         Legend,
+        InfoButtonVue,
     },
     computed: {
         key_color_pair() {
@@ -1286,6 +1288,7 @@ export default {
     </div>
     <Tooltip :content="tooltip_content"></Tooltip>
     <Legend :key_color_pair="key_color_pair" :brightness="brightness" style="position:absolute;left:83%;top:80%;"></Legend>
+    <InfoButtonVue :info_content="'Explanation of the graph'" style="position:absolute; left:95%; top:79%"></InfoButtonVue>
 
 </div>
 </template>
@@ -1326,5 +1329,9 @@ export default {
 :deep(.p-inputswitch .p-inputswitch-slider::before) {
     border-radius: 10px;
 }
-
+:deep(.info-button-container > .tooltip) {
+    position:relative;
+    left:-20px; 
+    top:-25px;
+}
 </style>

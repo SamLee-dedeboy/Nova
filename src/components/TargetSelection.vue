@@ -7,6 +7,7 @@ import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'
 import Chip from "primevue/chip"
 import Tooltip from './Tooltip.vue';
+import InfoButton from './InfoButton.vue';
 export default defineComponent({
     components: {
         MegaMenu,
@@ -15,6 +16,7 @@ export default defineComponent({
         InputText,
         Chip,
         Tooltip,
+        InfoButton,
     },
     props:['targets'],
     emits: ["target-selected"],
@@ -92,7 +94,11 @@ export default defineComponent({
                     <span>
                         <InputText v-model="filters['global'].value" placeholder="Search by Name" />
                     </span>
-                    <Button 
+                    <InfoButton class='info-button' :info_content="'wikipedia entity with #(mentioned articles)'"
+                        style="display:contents"
+                    ></InfoButton>
+
+                    <!-- <Button 
                     class="p-button-rounded p-button-outlined p-button-text"
                     icon="pi pi-info-circle"
                     style="left:15px"
@@ -102,7 +108,7 @@ export default defineComponent({
                     <Tooltip 
                     ref="entity_tooltip"
                     :content="'wikipedia entity with #(mentioned articles)'"
-                    style="font-size:smaller; position:absolute; left:-20px; top:-25px;"></Tooltip>
+                    style="font-size:smaller; position:absolute; left:-20px; top:-25px;"></Tooltip> -->
                  </div>
             </template>
             <template #empty>
@@ -111,7 +117,7 @@ export default defineComponent({
             <Column field="name" 
             header="Name"
             sortable
-            style="text-overflow:ellipsis;overflow:hidden;display: inline-block; width:110px">
+            style="text-overflow:ellipsis;overflow:hidden;display: inline-block; white-space:nowrap; width:0.2rem">
                 <template #body="{data}">
                     <span :title="data.name" style="font-size:14px">{{data.name}}</span>
                 </template>
@@ -125,7 +131,7 @@ export default defineComponent({
             <Column field="num" 
             header="Num"
             sortable
-            style="text-overflow:ellipsis;overflow:hidden;display: inline-block; width:110px">
+            style="text-overflow:ellipsis;overflow:hidden;display: inline-block; white-space:nowrap; width:0.2rem;">
                 <template #body="{data}">
                     <span :title="data.num" style="font-size:14px">{{data.num}}</span>
                 </template>
@@ -139,42 +145,40 @@ export default defineComponent({
         </DataTable>
     </div>
 </template>
-<style>
-.p-fluid.p-column-filter-element {
+<style scoped lang="scss">
+:deep(.p-fluid.p-column-filter-element) {
   display: contents !important;
 }
-.p-inputtext {
+:deep(.p-inputtext) {
     left: 10px;
     font-size: 0.8rem !important;
     width: 60% !important; 
 }
-.p-datatable .p-datatable-thead > tr > th {
+:deep(.p-datatable .p-datatable-thead > tr > th) {
     border: none !important;
 }
-.p-datatable-header {
-    display: block ruby;
+:deep(.p-datatable-header) {
+    white-space: nowrap;
+    // display: inline-block ;
 }
-.p-chip {
-    margin-bottom:10px;
-    top:10px;
-    padding: 0 2em !important;
-    background-color: rgb(219, 221, 223) !important 
-}
-.p-megamenu .p-megamenu-submenu {
+:deep(.p-megamenu .p-megamenu-submenu) {
   width: auto !important;
 }
-.p-megamenu.p-component.p-megamenu-horizontal {
+:deep(.p-megamenu.p-component.p-megamenu-horizontal) {
   --margin-horizontal: 10px;
   margin-left: var(--margin-horizontal);
   margin-right: var(--margin-horizontal);
   padding: inherit;
   width:fit-content;
 }
-.p-megamenu .p-megamenu-submenu-header {
+:deep(.p-megamenu .p-megamenu-submenu-header) {
   padding: 0rem !important;
 }
-.p-megamenu-panel {
+:deep(.p-megamenu-panel) {
   width: max-content;
+}
+:deep(.p-datatable .p-column-header-content) {
+    display: inline-block;
 }
 .TargetSelection {
     border-style: solid;
@@ -184,5 +188,13 @@ export default defineComponent({
     margin: 5px;
     padding-left: 5px;
     padding-right: 5px;
+}
+:deep(.p-button) {
+    left: 7px;
+}
+:deep(.tooltip) {
+    position:absolute;
+    left:-20px; 
+    top:-25px;
 }
 </style>
