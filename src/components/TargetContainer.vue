@@ -5,6 +5,10 @@ import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
 import TimeAxes from './TimeAxes.vue'
 import * as dfd from "danfojs"
+import Dropdown from 'primevue/dropdown';
+import InfoButton from "./InfoButton.vue";
+
+
 export default ({
     components: {
       Graph,
@@ -12,7 +16,8 @@ export default ({
       TabView,
       TabPanel,
       TimeAxes,
-
+      Dropdown,
+      InfoButton,
     },
     props:['articles', 'enabled_outlet_set','targets', 'topic', 'selectedTimeRange'],
     data() {
@@ -23,6 +28,11 @@ export default ({
             cooccur_matrix: {},
             clicked_outlet: undefined,
             opacityThreshold: 0,
+            modes: [
+                {label: "avg_score", value: "avg_score"},
+                {label: "score", value: "score"},
+                {label: "#articles", value: "#articles"}],
+            selected_mode: "#articles",
         }
     },
     computed: {
@@ -38,6 +48,12 @@ export default ({
             return this.articles.reduce((dict, article) => (dict[article.id]=article, dict), {})
         },
         graph_dict: function() {
+            return this.constructOutletGraph()
+        }
+    },
+
+    methods: {
+        constructOutletGraph() {
             var graph_dict = {}
             var graph = {
                 nodes: []
@@ -54,28 +70,11 @@ export default ({
                 var center_node = self.construct_node(self.articles, target)
                 center_node["isCenter"] = true
                 graph.nodes.push(center_node)
-                // graph.nodes.push({
-                //     text: target,
-                //     pos_sent: 0,
-                //     neg_sent: 0,
-                //     neu_sent: 0,
-                //     isCenter: true
-                // })
                 graph_dict[target] = graph
             })
-            // var clone_dataset = JSON.parse(JSON.stringify(this.dataset.graphList));
-            // clone_dataset.forEach(graph => {
-            //     const center_node = graph.nodes.filter(node => node.isCenter)[0]
-            //     graph_dict[center_node.text] = graph
-            // })
-            // Object.keys(graph_dict).forEach(key => {
-            //     graph_dict[key].nodes =  graph_dict[key].nodes.filter(node => node.text||(this.enabled_outlet_set.includes(node.outlet)))
-            // });
             return graph_dict
-        }
-    },
 
-    methods: {
+        },
         idsToArticles(article_ids) {
             if(!article_ids) return []
             var self = this
@@ -99,8 +98,8 @@ export default ({
             })
             // get top k candidates
             var freq_list = Array.from(Object.entries(entity_mentioned_articles).map(item => [item[0], item[1].size])).sort((a,b) => (b[1] - a[1])).slice(0, max_node_num).map(item => item[0]) 
-            // console.log("🚀 ~ file: TargetContainer.vue ~ line 97 ~ handleNodeClicked ~ freq_list", freq_list)
             var cooccur_matrix = {}
+
             var nodes = []
             freq_list.forEach(entity_id => {
                 // generate candidate cooccur matrix
@@ -140,11 +139,18 @@ export default ({
                 // const neu_sst = sst_df.iloc({rows: sst_df["normalized_sst"].lt(neu_threshold).and(sst_df["normalized_sst"].gt(-neu_threshold))}).count({axis:0}).at("normalized_sst",1) || 0
                 const pos_dfs = sst_df.iloc({rows: sst_df["normalized_sst"].gt(neu_threshold)})
                 const neg_dfs = sst_df.iloc({rows: sst_df["normalized_sst"].lt(-neu_threshold)})
-                const neu_dfs = sst_df.iloc({rows: sst_df["normalized_sst"].lt(neu_threshold).and(sst_df["normalized_sst"].gt(-neu_threshold))})
+                const neu_dfs = sst_df.iloc({rows: sst_df["normalized_sst"].lt(neu_threshold).and(sst_df["normalized_sst"].gt(0))})
+                const neu_pos_dfs = sst_df.iloc({rows: sst_df["normalized_sst"].lt(neu_threshold).and((sst_df["normalized_sst"].gt(0).or(sst_df["normalized_sst"].eq(0))))})
+                const neu_neg_dfs = sst_df.iloc({rows: (sst_df["normalized_sst"].lt(0).or(sst_df["normalized_sst"].eq(0))).and(sst_df["normalized_sst"].gt(-neu_threshold))})
 
                 const pos_sst = pos_dfs.sum({axis:0}).at("normalized_sst",1) || 0
                 const neg_sst = neg_dfs.sum({axis:0}).at("normalized_sst",1) || 0
-                const neu_sst = (1/neu_threshold)*neu_dfs.sum({axis:0}).at("normalized_sst",1) || 0
+                const neu_pos_sst = neu_pos_dfs.sum({axis:0}).at("normalized_sst",1) || 0
+                const neu_neg_sst = neu_neg_dfs.sum({axis:0}).at("normalized_sst",1) || 0
+                // const neu_pos_sst = (1/neu_threshold)*neu_pos_dfs.sum({axis:0}).at("normalized_sst",1) || 0
+                // const neu_neg_sst = (1/neu_threshold)*neu_neg_dfs.sum({axis:0}).at("normalized_sst",1) || 0
+                const neu_sst = Math.abs(neu_neg_sst) + neu_pos_sst 
+
 
                 const pos_atcs = pos_dfs.count({axis:0}).at("normalized_sst", 1) || 0
                 const neg_atcs = neg_dfs.count({axis:0}).at("normalized_sst", 1) || 0
@@ -153,17 +159,32 @@ export default ({
                 // const pos_sst = sst_df.iloc({rows: sst_df["normalized_sst"].gt(neu_threshold)}).at("normalized_sst",1) || 0
                 // const neg_sst = sst_df.iloc({rows: sst_df["normalized_sst"].lt(-neu_threshold)}).at("normalized_sst",1) || 0
                 // const neu_sst = sst_df.iloc({rows: sst_df["normalized_sst"].lt(neu_threshold).and(sst_df["normalized_sst"].gt(-neu_threshold))}).at("normalized_sst",1) || 0
-                const sst_array = [pos_sst, Math.abs(neg_sst), Math.abs(neu_sst)]
+                let sst_array;
+                let sentiment;
+                const classes = ["pos", "neg", "neu"]
+                if(this.selected_mode === "avg_score") {
+                    sst_array = [pos_sst/pos_atcs, Math.abs(neg_sst)/neg_atcs, Math.abs(neu_sst)/neu_atcs]
+                    sentiment = classes[sst_array.indexOf(Math.max(...sst_array))]
+                } else if (this.selected_mode === "score") {
+                    sst_array = [pos_sst, Math.abs(neg_sst), Math.abs(neu_sst)]
+                    sentiment = classes[sst_array.indexOf(Math.max(...sst_array))]
+                } else if(this.selected_mode === "#articles") {
+                    sst_array = [pos_atcs, neg_atcs, neu_atcs]
+                    sentiment = classes[sst_array.indexOf(Math.max(...sst_array))]
+                }
                 node = {
                     text: label,
-                    sentiment: ["pos", "neg", "neu"][sst_array.indexOf(Math.max(...sst_array))],
+                    sentiment: sentiment, 
                     pos_articles: pos_atcs,
                     neg_articles: neg_atcs,
                     neu_articles: neu_atcs,
                     pos_sent: pos_sst,
                     neg_sent: neg_sst,
                     neu_sent: neu_sst,
-                    articles: articles 
+                    neu_pos_sent: neu_pos_sst,
+                    neu_neg_sent: neu_neg_sst,
+                    articles: articles,
+                    dotted: false 
                 }
             }
             return node
@@ -189,10 +210,39 @@ export default ({
             >
         </Graph >
         <TimeAxes v-if="targets.length!=0" :selectedTimeRange="selectedTimeRange"></TimeAxes>
-        
+        <div class="dropdown-container">
+            <div class="dropdown-header-container">
+                <div class="dropdown-header"> Classifier </div>
+                <InfoButton info_content="Choose a mode to classify nodes as 'pos'/'neg'/'neu'"></InfoButton>
+            </div>
+            <Dropdown class="clf-dropdown" 
+            v-model="selected_mode" 
+            :options="modes" 
+            optionLabel="label" 
+            optionValue="value"
+            placeholder="Select a clfer" />
+        </div>
     </TabPanel>
 </TabView>
 </template>
 
 <style scoped>
+.dropdown-container {
+    position: absolute;
+    left: 88.2%;
+    top: 15%;
+}
+.dropdown-header-container {
+    display: flex;
+}
+.dropdown-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+:deep(.tooltip) {
+    position:absolute;
+    left:-100px; 
+    top:-75px;
+}
 </style>
