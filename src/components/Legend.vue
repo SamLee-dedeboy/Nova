@@ -1,8 +1,7 @@
 <script>
 import * as d3 from "d3";
-
+import * as SstColors from "./ColorUtils"
 export default {
-    props:["key_color_pair", "brightness"],
     mounted() {
         const r = 7
         const x_offset = 30
@@ -10,14 +9,14 @@ export default {
         const vertical_margin = 2*r 
         const horizontal_margin = 2*r
         var svg = d3.select("#legend")
-        this.key_color_pair.forEach((pair,index) => {
+        SstColors.key_color_pair.forEach((pair,index) => {
             const key = pair[0]
             const color = pair[1]
             const circle = svg.append("circle")
                 .attr("cx", x_offset)
                 .attr("cy", y_offset + index*(2*r + vertical_margin))
                 .attr("r", r)
-                .style("filter", `brightness(${this.brightness}%)`)
+                .style("filter", `brightness(${SstColors.brightness}%)`)
                 .style("fill", color)
             if(key === "no mention") {
                 circle.attr("stroke", "black")

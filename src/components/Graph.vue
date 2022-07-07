@@ -39,14 +39,6 @@ const props = defineProps({
 <script lang="ts">
 export default defineComponent({
     computed: {
-        key_color_pair() {
-            return [
-                ["negative", this.neg_color],
-                ["positive", this.pos_color],
-                ["neutral", this.neu_color],
-                ["no mention", 'white'],
-            ] 
-        },
         total_articles() { return this.graph.nodes.filter(node => node.articles).reduce((sum, node) => sum + node.articles.length, 0) },
         center_node() { return this.graph.nodes.filter(node => node.isCenter)[0] },
         graph_links() {
@@ -916,7 +908,7 @@ export default defineComponent({
         ></OpacityController>
     </div>
     <Tooltip :content="tooltip_content"></Tooltip>
-    <Legend :key_color_pair="key_color_pair" :brightness="brightness" style="position:absolute;left:83%;top:80%;"></Legend>
+    <Legend style="position:absolute;left:83%;top:80%;"></Legend>
     <InfoButtonVue :info_content="'Explanation of the graph'" style="position:absolute; left:95%; top:79%"></InfoButtonVue>
 
 </div>
