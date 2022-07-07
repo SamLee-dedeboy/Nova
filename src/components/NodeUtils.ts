@@ -288,7 +288,7 @@ function centerNodeRadius(
     total_articles: number,
     min_articles: number,
     max_articles: number) {
-    return normalizedLength(node_level, total_articles/6, min_articles, max_articles)
+    return normalizedLength(node_level, total_articles/4, min_articles, max_articles)
 }
 
 const minimum_outlet_radius = 20

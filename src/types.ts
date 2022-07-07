@@ -9,6 +9,8 @@ export interface OutletNode {
     pos_sent: number,
     neg_sent: number,
     neu_sent: number,
+    neu_pos_sent: number,
+    neu_neg_sent: number,
     articles: Article[],
     dotted?: Boolean,
     isCenter?: Boolean, 

@@ -274,7 +274,7 @@ export default defineComponent({
                 `${tooltip_title}: ${(node_data.text)} <br>` + 
                 `#posArticle/score: ${node_data.pos_articles}/${parseFloat(node_data.pos_sent).toFixed(2)}  <br>` + 
                 `#negArticle/score: ${node_data.neg_articles}/${parseFloat(node_data.neg_sent).toFixed(2)} <br>` +
-                `#neuArticle/score: ${node_data.neu_articles}/${parseFloat(node_data.neu_sent).toFixed(2)} <br>` +
+                `#neuArticle/score: ${node_data.neu_articles}/(${parseFloat(node_data.neu_neg_sent).toFixed(2)},${parseFloat(node_data.neu_pos_sent).toFixed(2)}) <br>` +
                 `#articles: ${(node_data.articles.length)} <br>` 
 
                 self.tooltip_content = tooltipText
@@ -592,7 +592,7 @@ export default defineComponent({
                 `${tooltip_title}: ${(node_data.text)} <br>` + 
                 `#posArticle/score: ${node_data.pos_articles}/${parseFloat(node_data.pos_sent).toFixed(2)}  <br>` + 
                 `#negArticle/score: ${node_data.neg_articles}/${parseFloat(node_data.neg_sent).toFixed(2)} <br>` +
-                `#neuArticle/score: ${node_data.neu_articles}/${parseFloat(node_data.neu_sent).toFixed(2)} <br>` +
+                `#neuArticle/score: ${node_data.neu_articles}/(${parseFloat(node_data.neu_neg_sent).toFixed(2)},${parseFloat(node_data.neu_pos_sent).toFixed(2)}) <br>` +
                 `#articles: ${node_data.dotted?0:(node_data.articles?.length || self.total_articles)} <br>` 
                 self.tooltip_content = tooltipText
                 self.tooltip
@@ -952,7 +952,9 @@ export default defineComponent({
 }
 :deep(.info-button-container > .tooltip) {
     position:relative;
-    left:-20px; 
-    top:-25px;
+    white-space: nowrap;
+    max-width: 200px;
+    left:-140px; 
+    top:-55px;
 }
 </style>
