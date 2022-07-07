@@ -1,4 +1,4 @@
-<script lang="ts">
+<script setup lang="ts">
 import * as d3 from "d3";
 import Node from "./Node.vue"
 import OpacityController from "./OpacityController.vue";
@@ -8,34 +8,34 @@ import InputSwitch from 'primevue/inputswitch';
 import InfoButtonVue from "./InfoButton.vue";
 
 import { defineComponent, nextTick , PropType} from 'vue'
-import {OutletNode, OutletEdge} from '../types'
-
+import { OutletNode, OutletEdge } from '../types'
+import { edgeRotation,
+         applyEntityEdgeSelectedStyle, 
+         addEdges,
+        } from './EdgeUtils'
+import { applyEntityNodeSelectedStyle,
+         applyEntityNodeClickedStyle,
+         applyNodeStyling,
+         articlesToRadius,
+       } from './NodeUtils'
+const props = defineProps({
+    graph: { 
+        type: Object as () => {
+            nodes: OutletNode[], 
+        }
+    },
+    graph_index: Number,
+    id: String,
+    entity_graph: Array as PropType<Array<Node>>,
+    cooccur_matrix: {
+        type: Object as () => {
+            [id1: string] : { [id2: string]: number }
+        }
+    },
+})
+</script>
+<script lang="ts">
 export default defineComponent({
-    props: {
-        graph: { 
-            type: Object as () => {
-                nodes: OutletNode[], 
-            }
-        },
-        graph_index: Number,
-        id: String,
-        entity_graph: Array as PropType<Array<Node>>,
-        cooccur_matrix: {
-            type: Object as () => {
-                [id1: string] : { [id2: string]: number }
-            }
-        },
-        opacityThreshold: Number,
-    },
-    // props: ['graph', 'graph_index', "id", "entity_graph", "cooccur_matrix", "opacityThreshold"],
-    components: {
-        Node,
-        OpacityController,
-        InputSwitch,
-        Tooltip,
-        Legend,
-        InfoButtonVue,
-    },
     computed: {
         key_color_pair() {
             return [
@@ -46,14 +46,7 @@ export default defineComponent({
             ] 
         },
         total_articles() { return this.graph.nodes.filter(node => node.articles).reduce((sum, node) => sum + node.articles.length, 0) },
-        center_node() {
-            const center_node = this.graph.nodes.filter(node => node.isCenter)[0]
-            // center_node.pos_sent = this.graph.nodes.reduce((pos_sum, node) => pos_sum + (node.dotted? 0:node.pos_sent), 0)
-            // center_node.neg_sent = this.graph.nodes.reduce((neg_sum, node) => neg_sum + (node.dotted? 0:node.neg_sent), 0)
-            // center_node.neu_sent = this.graph.nodes.reduce((neu_sum, node) => neu_sum + (node.dotted? 0:node.neu_sent), 0)
-            //console.log(center_node)
-            return center_node
-        },
+        center_node() { return this.graph.nodes.filter(node => node.isCenter)[0] },
         graph_links() {
             const center_node_index = this.graph.nodes.findIndex(node => node.isCenter) 
             const links: OutletEdge[] = []
@@ -103,15 +96,11 @@ export default defineComponent({
         canvas_width() { return parseInt(this.canvas.attr("viewBox").split(" ")[2]) },
         canvas_height() { return parseInt(this.canvas.attr("viewBox").split(" ")[3]) },
         // outlet
-        minimum_outlet_radius() { return 20 },
-        maximum_outlet_radius() { return 80 },
         outlet_article_num_list() { return this.graph.nodes.filter(node => !node.isCenter ).map(node => node.dotted? 0:node.articles.length) },
         outlet_avg_articles() { return this.article_num_list.reduce((sum, cur) => sum + cur, 0) / this.article_num_list.length },
         outlet_min_articles() { return Math.min(...this.outlet_article_num_list) },
         outlet_max_articles() { return Math.max(...this.outlet_article_num_list) },
         // entity articles
-        minimum_entity_radius() { return 35},
-        maximum_entity_radius() { return 80 },
         entity_article_num_list() { return this.entity_graph.map(node => node.articles.length)  },
         entity_min_articles() { return Math.min(...this.entity_article_num_list) },
         entity_max_articles() { return Math.max(...this.entity_article_num_list) },
@@ -172,12 +161,12 @@ export default defineComponent({
         }
     },
     watch: {
-        useOutletImage(new_value, old_value) {
+        useOutletImage(new_value: Boolean, old_value: Boolean) {
             const nodes = d3.selectAll("g.node.outlet")
-            if(old_value == true) nodes.selectAll("image").remove()
-            this.applyNodeStyling(nodes, "node", "outlet", undefined, "update node label")
+            if(old_value === true) nodes.selectAll("image").remove()
+            applyNodeStyling(nodes, "node", "outlet", undefined, new_value, this.total_articles, this.outlet_min_articles, this.outlet_max_articles, "update node label")
         },
-        opacityThreshold(new_value) {
+        opacityThreshold(new_value: Number, old_value: Number) {
             if(!this.nodeClicked) return 
             var self = this
             d3.selectAll("g.edge_group").selectAll("line")
@@ -215,20 +204,14 @@ export default defineComponent({
     },
     beforeMount() {
         const offset = 0.15 
-        this.outlet_font = undefined 
-        this.center_font= "cursive"
-        this.entity_selected_color = "#007bff"
         this.sst_range = d3.interpolateBrBG
         this.neg_color = this.sst_range(0+offset)
         this.pos_color = this.sst_range(1-offset)
         this.neu_color = "grey"
-        this.abbr_dict={
-            "CNN": "CNN",
-            "FoxNews": "FOX",
-            "Breitbart": "BRB",
-            "ABC News": "ABC",
-            "New York Times": "NYT",
-            "Washington Post": "WP"
+        this.sentiment_colors = { 
+            pos_color: this.pos_color, 
+            neg_color: this.neg_color, 
+            neu_color: this.neu_color
         }
         this.brightness = 140
         this.selected_entities = []
@@ -286,7 +269,8 @@ export default defineComponent({
     },
 
     methods: {
-        updateEntityGraph() { var self = this
+        updateEntityGraph() { 
+            var self = this
             const selected_node = this.clickedNode
             const bounded_r = selected_node.attr("r")
             const center = [parseFloat(selected_node.attr("cx")), parseFloat(selected_node.attr("cy"))]
@@ -297,7 +281,7 @@ export default defineComponent({
                     .attr("class", "subnode entity")
                     .attr("cx", center[0])
                     .attr("cy", center[1])
-                    self.applyNodeStyling(node, "subnode", "entity", undefined, "enter entity")
+                    applyNodeStyling(node, "subnode", "entity", undefined, self.useOutletImage, self.total_articles, self.entity_min_articles, self.entity_max_articles, "enter entity")
                 }
             )
             d3.selectAll("g.subnode.entity").selectAll("text.subnode_entity")
@@ -350,25 +334,25 @@ export default defineComponent({
                 // clicking on an already selected node, should unselect it
                 // and remove from selected list
                 if(self.selected_entities.includes(selected_entity)) {
-                    self.applyEntityNodeClickedStyle(container, false)
+                    applyEntityNodeClickedStyle(container, false)
                     const index = self.selected_entities.indexOf(selected_entity);
                     if (index > -1) { self.selected_entities.splice(index, 1); }
                     return
                 }
                 // clicking on an unselected node
-                self.applyEntityNodeClickedStyle(container, true)
+                applyEntityNodeClickedStyle(container, true)
                 self.selected_entities.push(d.text)
 
                 // can only select 2 nodes. remove the first node in list
                 if(self.selected_entities.length > 2) {
                     const first_element = self.selected_entities[0]
                     const unselect_node = d3.selectAll("g.subnode.entity").filter(d => (d.text == first_element))
-                    self.applyEntityNodeClickedStyle(unselect_node, false)
+                    applyEntityNodeClickedStyle(unselect_node, false)
                     // update previous selected edge style
                     const entity_1 = CSS.escape(self.selected_entities[0])
                     const entity_2 = CSS.escape(self.selected_entities[1])
                     const edge_group = d3.select(`#${entity_1}-${entity_2},#${entity_2}-${entity_1}`)
-                    self.applyEntityEdgeSelectedStyle(edge_group, false)
+                    applyEntityEdgeSelectedStyle(self.selected_entities, edge_group, false)
                     self.selected_entities.shift()
                 }
 
@@ -377,7 +361,7 @@ export default defineComponent({
                     const entity_1 = CSS.escape(self.selected_entities[0])
                     const entity_2 = CSS.escape(self.selected_entities[1])
                     const edge_group = d3.select(`#${entity_1}-${entity_2},#${entity_2}-${entity_1}`)
-                    self.applyEntityEdgeSelectedStyle(edge_group, false)
+                    applyEntityEdgeSelectedStyle(self.selected_entities, edge_group, false)
                 }
 
             })
@@ -428,7 +412,7 @@ export default defineComponent({
                             .attr('cy', function (d) { 
                                 return d.y
                             });
-                            self.applyNodeStyling(node, "subnode", "entity", undefined, "enter entity")
+                            applyNodeStyling(node, "subnode", "entity", undefined,self.useOutletImage, self.total_articles, self.entity_min_articles, self.entity_max_articles,  "enter entity")
                             self.add_entity_edges(self.entity_graph, selected_node)
                         },
                         update => {
@@ -439,7 +423,7 @@ export default defineComponent({
                             .attr('cy', function (d) { 
                                 return d.y
                             });
-                            self.applyNodeStyling(node, "subnode", "entity", undefined, "update entity")
+                            applyNodeStyling(node, "subnode", "entity", undefined,self.useOutletImage, self.total_articles, self.entity_min_articles, self.entity_max_articles,  "update entity")
                             self.add_entity_edges(self.entity_graph, selected_node)
                         }
                     )
@@ -464,23 +448,6 @@ export default defineComponent({
             this.force_layout(d3.selectAll("g.node.outlet"), [0, 0, width, height], center, 1, data)
 
         },
-        pythag(r, b, coord) {
-            const strokeWidth = 0
-            const w = 500
-            const bound_radius = w/2
-            const hyp2 = Math.pow(bound_radius, 2)
-            // force use of b coord that exists in circle to avoid sqrt(x<0)
-            b = Math.min(w - r - strokeWidth, Math.max(r + strokeWidth, b));
-
-            var b2 = Math.pow((b - bound_radius), 2),
-                a = Math.sqrt(hyp2 - b2);
-
-            // radius - sqrt(hyp^2 - b^2) < coord < sqrt(hyp^2 - b^2) + radius
-            coord = Math.max(bound_radius - a + r + strokeWidth,
-                        Math.min(a + bound_radius - r - strokeWidth, coord));
-
-            return coord;
-        },
         handleNodeClick(e, d) {
             var self = this
             e.stopPropagation()
@@ -488,7 +455,7 @@ export default defineComponent({
             if(this.clickedNode?.data()[0].text == d.text) {
                 // in this case, clear all the selected subnodes
                 const selected_nodes = d3.selectAll("g.subnode.entity").filter(d => this.selected_entities.includes(d.text))
-                this.applyEntityNodeClickedStyle(selected_nodes, false)
+                applyEntityNodeClickedStyle(selected_nodes, false)
                 // if(this.selected_entities.length == 2) {
                 //     const entity_1 = CSS.escape(self.selected_entities[0])
                 //     const entity_2 = CSS.escape(self.selected_entities[1])
@@ -528,8 +495,8 @@ export default defineComponent({
                 clickedNode.selectAll("image.label_node_outlet").transition().duration(1000)
                     .attr("x", function(d) { return clicked_center[0] - d3.select(this).attr("width")/2; })
                     .attr("y", clicked_center[1] - expanded_r + 30)
-                    .attr("width", function(d) { return self.articlesToRadius("node", d, 0) + 30})
-                    .attr("height", function(d) { return self.articlesToRadius("node", d, 0) + 30})
+                    .attr("width", function(d) { return articlesToRadius("node", self.total_articles, self.outlet_min_articles, self.outlet_max_articles, d, 0) + 30})
+                    .attr("height", function(d) { return articlesToRadius("node", self.total_articles, self.outlet_min_articles, self.outlet_max_articles, d, 0) + 30})
             } else {
                 clickedNode.selectAll("text.node_outlet").transition().duration(1000)
                     .attr("x", clicked_center[0])
@@ -549,8 +516,8 @@ export default defineComponent({
             .attr("r", expanded_r)
             .attr("transform", "scale(1)")
             .on("end", function() {
-                self.applyNodeStyling(clickedNode,  "node", "outlet", expanded_r, "on click")
-                self.addEdges(d3.selectAll("g.node.outlet"))
+                applyNodeStyling(clickedNode,  "node", "outlet", expanded_r, self.useOutletImage, self.total_articles, self.outlet_min_articles, self.outlet_max_articles, "on click")
+                addEdges(self.canvas, d3.selectAll("g.node.outlet"), self.sentiment_colors)
                 self.animating_click = false
                 self.$emit("node-clicked", d)
                 self.clickedNodeData = d
@@ -588,7 +555,7 @@ export default defineComponent({
                     .attr("class", "node center")
                     .attr("cx", self.canvas_width/2) 
                     .attr("cy", self.canvas_height/2)
-                    self.applyNodeStyling(node, "node", "center", undefined, "enter center")
+                    applyNodeStyling(node, "node", "center", undefined,  self.useOutletImage, self.total_articles, self.outlet_min_articles, self.outlet_max_articles, "enter center")
                 },
                 update => {
                     var node = svg.selectAll("g.node.center")
@@ -596,7 +563,7 @@ export default defineComponent({
                         node.attr("cx", function(d) { return d.x; })
                         .attr("cy", function(d) { return d.y; })
                     }
-                    self.applyNodeStyling(node, "node",  "center", undefined, "update center")
+                    applyNodeStyling(node, "node",  "center", undefined,  self.useOutletImage, self.total_articles, self.outlet_min_articles, self.outlet_max_articles, "update center")
                 }
             )
             
@@ -615,7 +582,7 @@ export default defineComponent({
                     .attr("class", "node outlet")
                     .attr("cx", self.canvas_width/2)
                     .attr("cy", self.canvas_height/2)
-                    self.applyNodeStyling(node, "node", "outlet", undefined, "enter node")
+                    applyNodeStyling(node, "node", "outlet", undefined,  self.useOutletImage, self.total_articles, self.outlet_min_articles, self.outlet_max_articles, "enter node")
                 },
                 update => {
                     var node = svg.selectAll("g.node.outlet").filter(node => node.text != clicked_outlet)
@@ -623,27 +590,13 @@ export default defineComponent({
                         node.attr("cx", function(d) {   return d.x; })
                         .attr("cy", function(d) { return d.y; })
                     }
-                    self.applyNodeStyling(node, "node", "outlet", undefined, "update node")
-                    //self.addEdges(update)
+                    applyNodeStyling(node, "node", "outlet", undefined,  self.useOutletImage, self.total_articles, self.outlet_min_articles, self.outlet_max_articles, "update node")
                 },
                 exit => {
-                    // const duration = 1000
-                    // exit.selectAll("circle.node_outlet")
-                    // .transition()
-                    // .duration(duration)
-                    // .attr("r", 0)
-                    // .remove()
-                    // exit.selectAll("text.node_outlet")
-                    // .transition()
-                    // .duration(duration)
-                    // .attr("font-size", "0em")
-                    // .remove()
-                    
                     exit.remove()
-                    // .on("end", function(d) { self.addEdges(d3.selectAll("g.node.outlet")) })
                 }
             )
-            if(add_edges) this.addEdges(svg.selectAll("g.node.outlet"))
+            if(add_edges) addEdges(svg, svg.selectAll("g.node.outlet"), self.sentiment_colors)
             svg.selectAll("g.node").selectAll("text.node_outlet,text.node_center")
                 .style("pointer-events", "none")
             svg.selectAll("g.node")
@@ -769,253 +722,6 @@ export default defineComponent({
             
         },
         
-        applyNodeStyling(node, node_level, class_name,r=0, msg="???") {
-            if(node.empty()) return 
-            //var node = append_flag?enter.append("g"):enter
-            // console.log(d3.select(enter).node())
-            // ? enter.select("g." + class_name)
-            // : enter.append("g").attr("class", class_name)
-            // .attr("cx", function(d) { return cx<0?d.x:cx;})
-            // .attr("cy", function(d) { return cy<0?d.y:cy;})
-            var self = this
-            // add circles for node
-            const innerCircle = 
-            ( node.selectAll(`circle.${node_level}_${class_name}`).node()
-            ? node.selectAll(`circle.${node_level}_${class_name}`)
-            : node.append("circle").attr("class",`${node_level}_${class_name}`))
-            innerCircle.attr("cx", function(d) { return d3.select(this.parentNode).attr('cx') })
-                .attr("cy", function(d) { return d3.select(this.parentNode).attr('cy') })
-                .attr("opacity", 0)
-                .attr("stroke-dasharray", function(d) { return d.dotted? 2.5 : 0})
-
-            // add label
-            const nodeText = 
-            ( node.selectAll(`text.${node_level}_${class_name}`).node()
-            ? node.selectAll(`text.${node_level}_${class_name}`)
-            : node.append("text").attr("class", `${node_level}_${class_name}`))
-            nodeText.attr("x", function(d) { return d3.select(this.parentNode).attr("cx"); })
-                .attr("y", function(d) { 
-                    const center_y = d3.select(this.parentNode).attr("cy"); 
-                    if(node_level === "node" && r != 0) return center_y - r + 30
-                    return center_y
-                })
-                .each(function(d) {
-                    if(node_level === "node" && class_name === "outlet") {
-                        d3.select(this).text(d => self.abbr_dict[d.text])
-                        .style("opacity", self.useOutletImage?0:1)
-                    } else {
-                        var break_text = d.text.split('_')
-                        var break_num = break_text.length
-                        if(break_num >= 4) {
-                            break_text = [break_text[0], break_text[1], break_text[2], '...']
-                            break_num = 4
-                        }
-                             
-                        var node_text = d3.select(this)
-                        node_text.selectAll("tspan")
-                        .data(break_text)
-                        .join("tspan")
-                        .text(d => d)
-                        .attr("x", node_text.attr("x"))
-                        .attr("dy", () => (node_level === "node" ? (class_name==="center"?"1.5em":"1.4em"):"1.4em"))
-                        node_text.attr("y", function(d) { 
-                            const center_y = d3.select(this).attr("y")  
-                            const offset = 1+(break_num-1)/2
-                            if(node_level == "node") return center_y - 27*offset
-                            if(node_level == "subnode") return center_y - 14*offset
-                        })
-                    }
-                })
-                .attr("text-anchor", "middle")
-                .attr("font-size", () => (node_level === "node" ? (class_name==="center"?"1em":"0.8em"):"0.6em"))
-                .attr("font-family", () => (class_name === "center")? self.center_font:self.outlet_font)
-                .attr("dominant-baseline", "central")
-
-            node.attr("r", function(d) { 
-                return self.articlesToRadius(node_level, d, r)
-            })
-
-            // use svg img instead of plain text for outlet nodes
-            if(this.useOutletImage && node_level == "node" && class_name == "outlet") {
-                const label_img = 
-                ( node.selectAll(`image.label_${node_level}_${class_name}`).node()
-                ? node.selectAll(`image.label_${node_level}_${class_name}`)
-                : node.append("image").attr("class", `label_${node_level}_${class_name}`))
-                label_img.attr("href", (d) => (`src/assets/${self.abbr_dict[d.text]}.png`))
-                .attr("height", function(d) { return r!=0?self.articlesToRadius(node_level, d, 0)+30:d3.select(this.parentNode).attr("r")})
-                .attr("width", function(d) { return r!=0?self.articlesToRadius(node_level, d, 0)+30:d3.select(this.parentNode).attr("r")})
-                .attr("x", function(d) { return d3.select(this.parentNode).attr("cx") - d3.select(this).attr("width")/2})
-                .attr("y", function(d) { 
-                    const center_y = d3.select(this.parentNode).attr("cy") 
-                    if(node_level === "node" && r != 0) return center_y - d3.select(this.parentNode).attr("r") + 30
-                    else return center_y - d3.select(this).attr("height")/2 
-                })
-            }
-            node.selectAll(`circle.${node_level}_${class_name}`)
-                .attr("r", function(d) { 
-                    return d3.select(this.parentNode).attr("r")
-                })
-            // append outer circle for expand animation
-            const outer_circle = 
-            ( node.selectAll(`circle.expand_${node_level}_${class_name}`).node()
-            ? node.selectAll(`circle.expand_${node_level}_${class_name}`)
-            : node.append("circle").attr("class", `expand_${node_level}_${class_name}`))
-            outer_circle.attr("cx", function(d) { return d3.select(this.parentNode).attr("cx"); })
-            .attr("cy", function(d) { return d3.select(this.parentNode).attr("cy"); })
-            .attr("r",  function(d) { return parseFloat(d3.select(this.parentNode).attr("r"));})
-            .attr("stroke", "black")
-            .attr("stroke-dasharray", function(d) { return d.dotted? 2.5 : 0})
-            .attr("fill", () => (class_name === "center"? "#effefd" : "white")) 
-            .lower()
-
-            // set outer rings to represent sentiments
-            // no outer rings if node is dotted
-            const animate_duration = 1000
-            const outer_ring = 
-            // ( node.selectAll(`g.outer_ring`).node()
-            // ? node.selectAll(`g.outer_ring`)
-            // : node.append("g").attr("class", `outer_ring`))
-            ( node.selectAll(`g.outer_ring_${node_level}_${class_name}`).node()
-            ? node.selectAll(`g.outer_ring_${node_level}_${class_name}`) 
-            : node.append("g").attr("class", `outer_ring_${node_level}_${class_name}`))
-
-            outer_ring.style("filter", `brightness(${this.brightness}%)`)
-            // positive ring
-            const pos_ring = 
-            ( outer_ring.select(`path.pos_${node_level}_${class_name}`).node()
-            ? outer_ring.select(`path.pos_${node_level}_${class_name}`)
-            : outer_ring.append("path").attr("class", `pos_${node_level}_${class_name}`))
-            pos_ring.attr("fill", this.pos_color)     
-                .attr("transform", function(d) {
-                    const cx = d3.select(this.parentNode.parentNode).attr("cx")
-                    const cy = d3.select(this.parentNode.parentNode).attr("cy")
-                    return "translate(" + cx + "," + cy + ")"
-                })
-                .transition()
-                .duration(animate_duration)
-                .tween('ring-effect', function(d) {
-                    var percentage = parseFloat(d.pos_sent)/(d.pos_sent+Math.abs(d.neg_sent)+Math.abs(d.neu_sent))
-                    //var start_percentage = parseFloat(d.pos_sent)/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
-                    var start_percentage = 0
-                    var radius = parseFloat(d3.select(this.parentNode.parentNode).attr("r"))
-
-                    let startAngle = 2*Math.PI*start_percentage;
-                    let targetAngle = 2 * Math.PI*(start_percentage+percentage);
-                    let i = d3.interpolate(startAngle, targetAngle);
-                    return function(t) {
-                        let currentAngle = i(t);
-                    
-                        d3.select(this)
-                        .attr('d', d3.arc() ({
-                                innerRadius: radius-2.5,
-                                outerRadius: radius+2.5,
-                                startAngle: startAngle,
-                                endAngle: currentAngle
-                        }))
-                    };
-                })
-
-                
-            // negative ring
-            const neg_ring = 
-            ( outer_ring.select(`path.neg_${node_level}_${class_name}`).node()
-            ? outer_ring.select(`path.neg_${node_level}_${class_name}`)
-            : outer_ring.append("path").attr("class", `neg_${node_level}_${class_name}`))
-            neg_ring.attr("fill", this.neg_color)     
-                .attr("transform", function(d) {
-                    const cx = d3.select(this.parentNode.parentNode).attr("cx")
-                    const cy = d3.select(this.parentNode.parentNode).attr("cy")
-                    return "translate(" + cx + "," + cy + ")"
-                })     
-                .transition()
-                .duration(animate_duration)
-                .tween('ring-effect', function(d) {
-                    var percentage = Math.abs(d.neg_sent)/(d.pos_sent+Math.abs(d.neg_sent)+Math.abs(d.neu_sent))
-                    var start_percentage = parseFloat(d.pos_sent)/(d.pos_sent+Math.abs(d.neg_sent)+Math.abs(d.neu_sent))
-                    var radius = parseFloat(d3.select(this.parentNode.parentNode).attr("r"))
-                    
-                    let startAngle = 2*Math.PI*start_percentage;
-                    let targetAngle = 2 * Math.PI*(start_percentage+percentage);
-                    let i = d3.interpolate(startAngle, targetAngle);
-                    return function(t) {
-                        let currentAngle = i(t);
-                    
-                        d3.select(this)
-                        .attr('d', d3.arc() ({
-                                innerRadius: radius-2.5,
-                                outerRadius: radius+2.5,
-                                startAngle: startAngle,
-                                endAngle: currentAngle
-                        }))
-                    }
-                })
-                
-                
-            // neutral ring
-            const neu_ring = 
-            ( outer_ring.select(`path.neu_${node_level}_${class_name}`).node()
-            ? outer_ring.select(`path.neu_${node_level}_${class_name}`)
-            : outer_ring.append("path").attr("class", `neu_${node_level}_${class_name}`))
-            neu_ring.attr("fill", "grey")     
-                .attr("transform", function(d) {
-                    const cx = d3.select(this.parentNode.parentNode).attr("cx")
-                    const cy = d3.select(this.parentNode.parentNode).attr("cy")
-                    return "translate(" + cx + "," + cy + ")"
-                })     
-                .transition()
-                .duration(animate_duration)
-                .tween('ring-effect', function(d) {
-                    var percentage = Math.abs(d.neu_sent)/(d.pos_sent+Math.abs(d.neg_sent)+Math.abs(d.neu_sent))
-                    var start_percentage = parseFloat(d.pos_sent + Math.abs(d.neg_sent))/(d.pos_sent+Math.abs(d.neg_sent)+Math.abs(d.neu_sent))
-                    var radius = parseFloat(d3.select(this.parentNode.parentNode).attr("r"))
-                    
-                    let startAngle = 2*Math.PI*start_percentage;
-                    let targetAngle = 2 * Math.PI*(start_percentage+percentage);
-                    let i = d3.interpolate(startAngle, targetAngle);
-                    return function(t) {
-                        let currentAngle = i(t);
-                    
-                        d3.select(this)
-                        .attr('d', d3.arc() ({
-                                innerRadius: radius-2.5,
-                                outerRadius: radius+2.5,
-                                startAngle: startAngle,
-                                endAngle: currentAngle
-                        }))
-                    };
-                })
-        },
-        addEdges(node, class_name) {
-            if(node.empty()) return
-            // edges
-            var svg = this.canvas
-            // bind edges to node circles, so that edges can bind to circle center
-            var center_node = svg.select("g.node.center")
-
-            const edge_color = {"pos": this.pos_color, "neg": this.neg_color, "neu": this.neu_color }
-            var edges = svg.selectAll("line.edge.outlet")
-            .data(node, function(d) { return d.text})
-            .join("line")
-            .attr("class", "edge outlet")
-            .attr("x1", function(d) { return d3.select(d).attr("cx");})
-            .attr("x2", function(d) { return parseInt(center_node.attr("cx")); })
-            .attr("y1", function(d) { return d3.select(d).attr("cy")})
-            .attr("y2", function(d) { return parseInt(center_node.attr("cy")); })
-            .attr("stroke", function(d) { return d3.select(d).data()[0].dotted?"black":(edge_color[d3.select(d).data()[0].sentiment])})
-            .attr("stroke-dasharray", function(d) { return d3.select(d).data()[0].dotted ? 2.5:0; })
-            .lower()
-            // node.append("line")
-            // .attr("class", "graph_edge")
-            // .attr("x1", function(d) { return d3.select(this.parentNode).attr("cx");})
-            // .attr("x2", function(d) { return parseInt(center_node.attr("cx")); })
-            // .attr("y1", function(d) { return d3.select(this.parentNode).attr("cy")})
-            // .attr("y2", function(d) { return parseInt(center_node.attr("cy")); })
-            // .attr("stroke", function(d) { return d3.select(this.parentNode).data()[0].dotted?"black":(d3.select(this.parentNode).data()[0].sentiment>0?"blue":"red")})
-            // .attr("stroke-dasharray", function(d) { return d3.select(this.parentNode).data()[0].dotted ? 2.5:0; })
-            // .lower()
-
-            center_node.raise()
-        },  
         add_entity_edges(entity_graph, clickedNode) {
             var self = this
             const edge_group = clickedNode.selectAll("g.edge_group")
@@ -1077,13 +783,13 @@ export default defineComponent({
                     if(source_sst == 'neu' && target_sst == 'neu') angle = 0 
                     // neu-pos
                     if((source_sst == 'pos' && target_sst == 'neu') ||
-                       (source_sst == 'neu' && target_sst == 'pos')) { angle = this.edgeRotation(source, target, 'neu', 'pos')}
+                       (source_sst == 'neu' && target_sst == 'pos')) { angle = edgeRotation(source, target, 'neu', 'pos')}
                     // neg-neu
                     if((source_sst == 'neg' && target_sst == 'neu') ||
-                       (source_sst == 'neu' && target_sst == 'neg')) { angle = this.edgeRotation(source, target, 'neg', 'neu')}
+                       (source_sst == 'neu' && target_sst == 'neg')) { angle = edgeRotation(source, target, 'neg', 'neu')}
                     // neg-pos
                     if((source_sst == 'neg' && target_sst == 'pos') ||
-                       (source_sst == 'pos' && target_sst == 'neg')) { angle = this.edgeRotation(source, target, 'neg', 'pos')}
+                       (source_sst == 'pos' && target_sst == 'neg')) { angle = edgeRotation(source, target, 'neg', 'pos')}
                     return (angle==180)?`rotate(${angle}, ${mid_point[0]}, ${mid_point[1]})`:0
                 })
                 .style("stroke-width", function(d) {
@@ -1131,130 +837,47 @@ export default defineComponent({
                     if(self.animating_click) return
                     self.tooltip.transition().duration(100).style("scale", 1)
                     const edge_group = d3.select(this.parentNode)
-                    self.applyEntityEdgeSelectedStyle(edge_group, true)
+                    applyEntityEdgeSelectedStyle(self.selected_entities, edge_group, true)
                 })
                 .on("mouseout", function(d) {
                     if(self.animating_click) return
                     // if(self.selected_entity_edge == this) return
                     self.tooltip.transition().duration(100).style("scale", 0)
                     const edge_group = d3.select(this.parentNode)
-                    self.applyEntityEdgeSelectedStyle(edge_group, false)
+                    applyEntityEdgeSelectedStyle(self.selected_entities, edge_group, false)
                 })
                 .on("click", function(e, d) {
                     if(d3.select(this).style("stroke-opacity") == 0) return
                     e.stopPropagation()
                     if(self.animating_click) return
                     const edge_group = d3.select(this.parentNode)
-                    self.applyEntityEdgeSelectedStyle(edge_group, true)
+                    applyEntityEdgeSelectedStyle(self.selected_entities, edge_group, true)
                     self.selected_entity_edge = this
 
                     // unclick previous nodes 
                     const prev_nodes = d3.selectAll("g.subnode.entity").filter(d => self.selected_entities.includes(d.text))
-                    self.applyEntityNodeClickedStyle(prev_nodes, false)
+                    applyEntityNodeClickedStyle(prev_nodes, false)
 
                     // apply click style changes on new nodes
                     self.selected_entities = edge_group.attr("id").split("-")
                     const new_nodes = d3.selectAll("g.subnode.entity").filter(d => self.selected_entities.includes(d.text))
-                    self.applyEntityNodeClickedStyle(new_nodes, true)
+                    applyEntityNodeClickedStyle(new_nodes, true)
                 })
             clickedNode.selectAll("g.subnode.entity").raise()
         },
-        applyEntityNodeClickedStyle(nodes, clicked=true) {
-            var self = this
-            if(clicked) {
-                nodes.selectAll("circle.expand_subnode_entity")
-                    .style("filter", "brightness(90%)")
-                    .style("fill", self.entity_selected_color)
-                nodes.selectAll("text.subnode_entity")
-                    .style("fill", "white")
-            } else {
-                nodes.selectAll("circle.expand_subnode_entity")
-                .style("filter", "brightness(100%)")
-                .style("fill", "white")
-                nodes.selectAll("text.subnode_entity")
-                .style("fill", "black")
 
-            }
-        },
-        applyEntityNodeSelectedStyle(nodes, selected=true) {
-            if(selected) {
-                nodes.selectAll("circle.expand_subnode_entity")
-                    .style("filter", "brightness(90%)")
-            } else {
-                nodes.selectAll("circle.expand_subnode_entity")
-                .style("filter", "brightness(100%)")
-            }
-
-        },
-        applyEntityEdgeSelectedStyle(edge_group, selected=true) {
-            var self = this
-            const entities = edge_group.attr("id").split("-")
-            const nodes = d3.selectAll("g.subnode.entity")
-            .filter(d => entities.includes(d.text))
-            .filter(d => !self.selected_entities.includes(d.text))
-            if(selected) {
-                nodes.selectAll("circle.expand_subnode_entity")
-                .style("filter", "brightness(90%)")
-
-                edge_group.select("line.expand_edge_entity")
-                .style("filter", "brightness(90%)")
-                .style("stroke-opacity", function(d) { return 0.5; return Math.min(1, parseFloat(edge_group.select("line.edge_entity").style("stroke-opacity"))+0.2) })
-                .style("stroke-width", function(d) { return parseFloat(edge_group.select("line.edge_entity").style("stroke-width"))+10 })
-            } else {
-                nodes.selectAll("circle.expand_subnode_entity")
-                .style("filter", "brightness(100%)")
-                edge_group.select("line.expand_edge_entity")
-                .style("filter", "brightness(100%)")
-                .style("stroke-opacity", function(d) { return parseFloat(edge_group.select("line.edge_entity").style("stroke-opacity")) })
-                .style("stroke-width", function(d) { return parseFloat(edge_group.select("line.edge_entity").style("stroke-width")) })
-
-            }
-
-        },
-        sentiment_classify(node_data) {
-            const pos = node_data.pos_sent
-            const neg = Math.abs(node_data.neg_sent)
-            const neu = Math.abs(node_data.neu_sent)
-            const max = Math.max(pos, neg, neu) 
-            if(max == pos) return "positive"
-            if(max == neg) return "negative"
-            if(max == neu) return "neutral"
-        },
         getArticleNumByOutlet(outlet) {
             const node = this.graph.nodes.filter(node => node.text == outlet)
             if(!node) return 0;
             return node[0].articles.length
         },
+
         getRadiusBytext(node_level, label) {
             const target = d3.selectAll(`g.${node_level}`).filter(d => d.text == label)
             return parseFloat(target.attr("r"))
         },
-        articlesToRadius(node_level, d, r=0) {
-            return r>0?r:(d.dotted?this.minimum_outlet_radius:(d.isCenter?this.centerNodeRadius(node_level):this.normalizedLength(d.articles.length, node_level)));
 
-            // return r>0?r:((r<0?r:1)*d3.select(node).select("text.node_text").node().getComputedTextLength()/1.5 + (d.dotted?5:(d.articles?this.normalizedLength(d.articles.length):this.centerNodeRadius())));
-        },
-        centerNodeRadius(node_level) {
-            return this.normalizedLength(this.total_articles/6, node_level)
-        },
-        normalizedLength(num_articles, node_level) {
-            const articles_ratio = 
-            (node_level === "node"
-            ? (num_articles - this.outlet_min_articles)/(this.outlet_max_articles+1) 
-            : (num_articles - this.entity_min_articles)/(this.entity_max_articles+1))
 
-            const min = (node_level === "node" ? this.minimum_outlet_radius : this.minimum_entity_radius)
-            const max = (node_level === "node" ? this.maximum_outlet_radius : this.maximum_entity_radius)
-            return articles_ratio*(max-min) + min
-        },
-        edgeRotation(source, target, left_sst, right_sst) {
-            const source_sst = source.sentiment
-            const target_sst = target.sentiment
-            const p = (source_sst == right_sst) ? [source.x, source.y]:[target.x, target.y]
-            const n = (source_sst == left_sst) ? [source.x, source.y]:[target.x, target.y]
-            const dx = p[0]-n[0]
-            return (dx > 0) ? 0 : 180 
-        },
         RGBToHex(rgb) {
             // Choose correct separator
             let sep = rgb.indexOf(",") > -1 ? "," : " ";
@@ -1274,12 +897,9 @@ export default defineComponent({
 
             return "#" + r + g + b;
         }
+
     }
 })
-
-
-
-
 </script>
 <template>
 <div class="graphContainer">

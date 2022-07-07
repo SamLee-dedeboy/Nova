@@ -1,4 +1,6 @@
 export interface OutletNode {
+    x?: number,
+    y?: number,
     text: string,
     sentiment: string,
     pos_articles: number,
@@ -7,7 +9,9 @@ export interface OutletNode {
     pos_sent: number,
     neg_sent: number,
     neu_sent: number,
-    articles: Article[]
+    articles: Article[],
+    dotted?: Boolean,
+    isCenter?: Boolean, 
 }
 export interface OutletEdge {
     source: number,
