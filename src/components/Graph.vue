@@ -18,6 +18,8 @@ import { applyEntityNodeSelectedStyle,
          applyNodeStyling,
          articlesToRadius,
        } from './NodeUtils'
+import * as SstColors from "./ColorUtils"
+
 const props = defineProps({
     graph: { 
         type: Object as () => {
@@ -158,6 +160,7 @@ export default defineComponent({
             tooltip_content: "",
             selected_entities: [],
             brightness: 0,
+            selected_entity_edge: undefined,
         }
     },
     watch: {
@@ -166,6 +169,7 @@ export default defineComponent({
             if(old_value === true) nodes.selectAll("image").remove()
             applyNodeStyling(nodes, "node", "outlet", undefined, new_value, this.total_articles, this.outlet_min_articles, this.outlet_max_articles, "update node label")
         },
+
         opacityThreshold(new_value: Number, old_value: Number) {
             if(!this.nodeClicked) return 
             var self = this
@@ -189,6 +193,7 @@ export default defineComponent({
                 })
             })
         },
+
         graph: function(new_graph, old_graph) {
             if(this.clickedNode) {
                 this.clickedNode.selectAll("g.subnode, g.edge_group").remove()
@@ -198,31 +203,14 @@ export default defineComponent({
             // if(this.clickedNodeData && new_graph.nodes.length > old_graph.nodes.length)
             //     this.handleNodeClick(undefined, this.clickedNodeData)
         },
+
         entity_graph: function(new_entity_graph, old_entity_graph) {
             this.updateEntityGraph()
         }
     },
-    beforeMount() {
-        const offset = 0.15 
-        this.sst_range = d3.interpolateBrBG
-        this.neg_color = this.sst_range(0+offset)
-        this.pos_color = this.sst_range(1-offset)
-        this.neu_color = "grey"
-        this.sentiment_colors = { 
-            pos_color: this.pos_color, 
-            neg_color: this.neg_color, 
-            neu_color: this.neu_color
-        }
-        this.brightness = 140
-        this.selected_entities = []
-        this.selected_entity_edge = undefined 
 
-    },
     mounted() {
         this.canvas = d3.select("#graph-" + this.graph_index)
-        // .call(d3.zoom().on("zoom", function (e) {
-        //     d3.select(this).attr("transform", e.transform)
-        // }))
         this.animating_click = false
         // handle canvas clicked
         this.canvas.on("click", () => {
@@ -236,7 +224,6 @@ export default defineComponent({
         })
         // tooltip
         this.tooltip = d3.select("div.tooltip").style("scale", 0)
-
         // create gradient for entity graph
         var svg = this.canvas
         const steps = 11
@@ -247,7 +234,7 @@ export default defineComponent({
         interpolation.forEach(step_percentage => {
             gradient_neg2pos.append('stop')
             .attr("offset", `${step_percentage*100}%`)
-            .attr("stop-color", () => ( this.sst_range((step_percentage<0.5)? Math.min(step_percentage, 0.2):Math.max(step_percentage, 0.8)) ))
+            .attr("stop-color", () => ( SstColors.sst_range((step_percentage<0.5)? Math.min(step_percentage, 0.2):Math.max(step_percentage, 0.8)) ))
         })
         // neu to pos 
         const gradient_neu2pos = svg.append("defs").append("linearGradient")
@@ -255,7 +242,7 @@ export default defineComponent({
         interpolation.forEach(step_percentage => {
             gradient_neu2pos.append('stop')
             .attr("offset", `${step_percentage*100}%`)
-            .attr("stop-color", () => ( this.sst_range(Math.min(0.8+step_percentage/2, 1)) ))
+            .attr("stop-color", () => ( SstColors.sst_range(Math.min(0.8+step_percentage/2, 1)) ))
         })
         // neg to neu
         const gradient_neg2neu = svg.append("defs").append("linearGradient")
@@ -263,7 +250,7 @@ export default defineComponent({
         interpolation.forEach(step_percentage => {
             gradient_neg2neu.append('stop')
             .attr("offset", `${step_percentage*100}%`)
-            .attr("stop-color", () => ( this.sst_range(Math.min(0+step_percentage/2, 0.2)) ))
+            .attr("stop-color", () => ( SstColors.sst_range(Math.min(0+step_percentage/2, 0.2)) ))
         })
         this.updateOutletGraph()
     },
@@ -342,7 +329,6 @@ export default defineComponent({
                 // clicking on an unselected node
                 applyEntityNodeClickedStyle(container, true)
                 self.selected_entities.push(d.text)
-
                 // can only select 2 nodes. remove the first node in list
                 if(self.selected_entities.length > 2) {
                     const first_element = self.selected_entities[0]
@@ -355,7 +341,6 @@ export default defineComponent({
                     applyEntityEdgeSelectedStyle(self.selected_entities, edge_group, false)
                     self.selected_entities.shift()
                 }
-
                 // highlight selected edge if two nodes are selected
                 if(self.selected_entities.length == 2) {
                     const entity_1 = CSS.escape(self.selected_entities[0])
@@ -363,7 +348,6 @@ export default defineComponent({
                     const edge_group = d3.select(`#${entity_1}-${entity_2},#${entity_2}-${entity_1}`)
                     applyEntityEdgeSelectedStyle(self.selected_entities, edge_group, false)
                 }
-
             })
             this.entity_graph.forEach(node => {
                 node.x = center[0]
@@ -432,6 +416,7 @@ export default defineComponent({
                     self.animating_click=false
                 })
         },
+
         updateOutletGraph() {
             this.updateCenterNode()
             this.updateNodes()
@@ -446,8 +431,8 @@ export default defineComponent({
                 return node
             })
             this.force_layout(d3.selectAll("g.node.outlet"), [0, 0, width, height], center, 1, data)
-
         },
+
         handleNodeClick(e, d) {
             var self = this
             e.stopPropagation()
@@ -480,15 +465,15 @@ export default defineComponent({
             d3.selectAll("div.tooltip").style("scale", 0)
             // clicked node
             const expanded_r = 0.49*height
-            //const expanded_r = 0.2*height
             const clickedNode = d3.selectAll("g.node.outlet").filter(node => node.text == d.text)
             this.clickedNode = clickedNode
-
+            // remove sentiment rings
             clickedNode.select("g.outer_ring_node_outlet").remove()
+            // remove edges
             svg.selectAll("line.edge.outlet").filter(line => d3.select(line).data()[0].text == clickedNode.data()[0].text).remove()
-            
+            // restore clicked node styling from hovering
             clickedNode.selectAll("circle.expand_node_outlet").style("filter", "brightness(100%)")
-
+            // start animation
             const clicked_center = [width/2, height/2]
             // move text
             if(this.useOutletImage) {
@@ -517,14 +502,14 @@ export default defineComponent({
             .attr("transform", "scale(1)")
             .on("end", function() {
                 applyNodeStyling(clickedNode,  "node", "outlet", expanded_r, self.useOutletImage, self.total_articles, self.outlet_min_articles, self.outlet_max_articles, "on click")
-                addEdges(self.canvas, d3.selectAll("g.node.outlet"), self.sentiment_colors)
+                addEdges(self.canvas, d3.selectAll("g.node.outlet"))
                 self.animating_click = false
                 self.$emit("node-clicked", d)
                 self.clickedNodeData = d
             })
-            
+            // handle other nodes
             const clicked_node_sentiment = clickedNode.data()[0].sentiment
-            //other nodes
+            // define shrunk variables
             const shrink_ratio = 0.45
             const origin_x = {"pos": 0, "neg": 600, "neu": 0}[clicked_node_sentiment]
             const origin_y = 0
@@ -533,7 +518,7 @@ export default defineComponent({
             const center_x = origin_x + shrinked_width/2
             const center_y = origin_y + shrinked_height/2
             const otherNodes = d3.selectAll("g.node.outlet").filter((d) => d.text != clickedNode.data()[0].text)                
-            //self.moveNodesToCorner(otherNodes, [200, 150], [600, 0], [center_x, center_y], shrink_ratio)
+            // center nodes before starting force layout
             const center = [center_x, center_y]
             const data = this.graph.nodes.map(node => {
                 if(node.isCenter) {
@@ -544,6 +529,7 @@ export default defineComponent({
             })
             self.force_layout(otherNodes, [origin_x, origin_y, shrinked_width, shrinked_height], center, shrink_ratio, data, clickedNode.data()[0].text)
         },
+
         updateCenterNode(pos_moved=false) {
             var svg = this.canvas
             var self = this
@@ -568,11 +554,12 @@ export default defineComponent({
             )
             
         },
+
         updateNodes(pos_moved=false, clicked_outlet=null, scale_ratio = 1, add_edges=false) {
             var svg = this.canvas
             var self = this
             const nodes = svg.selectAll("g.node.outlet").filter(node => node.text != clicked_outlet)
-
+            // filter out clicked node and center node
             const filtered_nodes = this.graph.nodes.filter(node => !node.isCenter && node.text != clicked_outlet)
             // create g for outlet nodes and bind data
             nodes.data(filtered_nodes, function(d) { return d.text })
@@ -596,13 +583,17 @@ export default defineComponent({
                     exit.remove()
                 }
             )
-            if(add_edges) addEdges(svg, svg.selectAll("g.node.outlet"), self.sentiment_colors)
+            // add edges
+            if(add_edges) addEdges(svg, svg.selectAll("g.node.outlet"))
+            // remove text pointer events to prevent interfering with node mouse event
             svg.selectAll("g.node").selectAll("text.node_outlet,text.node_center")
                 .style("pointer-events", "none")
+            // add mouse events
             svg.selectAll("g.node")
             .style("cursor", "pointer")
             .on("mousemove", function(e) {
                 if(self.nodeClicked) return
+                // update tooltip (if node changes)
                 const node_data = d3.select(this).data()[0]
                 const tooltip_title = node_data.isCenter? "entity":"outlet"
                 const tooltipText = 
@@ -611,49 +602,45 @@ export default defineComponent({
                 `#negArticle/score: ${node_data.neg_articles}/${parseFloat(node_data.neg_sent).toFixed(2)} <br>` +
                 `#neuArticle/score: ${node_data.neu_articles}/${parseFloat(node_data.neu_sent).toFixed(2)} <br>` +
                 `#articles: ${node_data.dotted?0:(node_data.articles?.length || self.total_articles)} <br>` 
-
                 self.tooltip_content = tooltipText
                 self.tooltip
                 .style("left", e.offsetX + 15 + "px")
                 .style("top", e.offsetY - 5 + "px")
-
             })
             .on("mouseover", function(d) {
                 if(self.animating_click) return
-                
+                // animate hovering effect 
                 const container = d3.select(this)
                 if(container.data()[0].text === self.clickedNode?.data()[0].text) return
                 container.select("circle.expand_node_outlet")
                 .transition()
                 .duration(100)
                 .attr("r", function(d) { return parseFloat(container.select("circle.node_outlet").attr("r")) + 10;})
-                
                 container.selectAll("circle.expand_node_outlet")
                 .style("filter", "brightness(90%)")
-
+                // show tooltip 
                 if(self.nodeClicked) return
                 self.tooltip.transition().duration(100).style("scale", 1)
             })
             .on("mouseout", function(d) {
                 if(self.animating_click) return
-
+                // restore hovering effect
                 const container = d3.select(this)
                 if(container.data()[0].text === self.clickedNode?.data()[0].text) return
                 container.select("circle.expand_node_outlet")
                 .transition()
                 .duration(100)
                 .attr("r", function(d) { return parseFloat(container.select("circle.node_outlet").attr("r"));})
-
                 container.selectAll("circle.expand_node_outlet")
                 .style("filter", "brightness(100%)")
-
+                // hide tooltip
                 if(self.nodeClicked) return
                 self.tooltip.transition().duration(100).style("scale", 0)
             })
+            // no click event on center node          
             svg.selectAll("g.node.outlet").on("click", this.handleNodeClick)
-
-          
         },
+
         force_layout(nodes, boundingBox, center, scale_ratio, data, clicked_outlet=null) {
             const origin = [boundingBox[0], boundingBox[1]]
             const width = boundingBox[2]
@@ -690,9 +677,7 @@ export default defineComponent({
                             if(node.y > center[1]-reigon_height && node.y < center[1]) node.y += 3*reigon_height
                         }
                     })
-                    // const center_node = this.nodes().filter(node => node.isCenter)[0]
-                    // center_node.fx = center[0]
-                    // center_node.fy = center[1]
+                    // clip nodes to border
                     if(true || tick_num > 95) {
                         this.nodes().forEach(node => {
                             const radius = self.getRadiusBytext("node", node.text)*scale_ratio 
@@ -705,8 +690,10 @@ export default defineComponent({
                             }
                         })
                     }
+                    // update node stylings
                     self.updateNodes(true, clicked_outlet, scale_ratio, true)
                     self.updateCenterNode(true, scale_ratio)
+                    // apply scale_ratio on shrunk nodes
                     nodes.attr("transform-origin", function(d) {
                         const container = d3.select(this)
                         return (container.attr("cx") || container.attr("x")) + " " + (container.attr("cy") || container.attr("y"))
@@ -719,11 +706,11 @@ export default defineComponent({
                 .on("end", function() {
                     // self.addEdges(d3.selectAll("g.node.outlet"))
                 })
-            
         },
         
         add_entity_edges(entity_graph, clickedNode) {
             var self = this
+            // bind links to undirected edges
             const edge_group = clickedNode.selectAll("g.edge_group")
                 .data(this.undirected_entity_links, (d) => (`${entity_graph[d.source].text}-${entity_graph[d.target].text}`))
                 .join(
@@ -758,9 +745,10 @@ export default defineComponent({
                 .attr("stroke", (d) => {
                     const source_sst = entity_graph[d.source].sentiment
                     const target_sst = entity_graph[d.target].sentiment
-                    if(source_sst == 'pos' && target_sst == 'pos') return this.pos_color                    
-                    if(source_sst == 'neg' && target_sst == 'neg') return this.neg_color                    
-                    if(source_sst == 'neu' && target_sst == 'neu') return this.neu_color                    
+                    if(source_sst == 'pos' && target_sst == 'pos') return SstColors.pos_color                    
+                    if(source_sst == 'neg' && target_sst == 'neg') return SstColors.neg_color                    
+                    if(source_sst == 'neu' && target_sst == 'neu') return SstColors.neu_color                    
+                    // apply gradient colors defined in mounted()
                     // neu-pos
                     if((source_sst == 'pos' && target_sst == 'neu') ||
                         source_sst == 'neu' && target_sst == 'pos') return `url(#neu-pos)`
@@ -772,6 +760,9 @@ export default defineComponent({
                         source_sst == 'pos' && target_sst == 'neg') return `url(#neg-pos)`
                 })
                 .attr("transform", (d) => {
+                    // edges need to be rotated to make sure target and source sentiments
+                    // aligned with the edge colors
+                    // because gradient always starts from left to right
                     const source = entity_graph[d.source] 
                     const target = entity_graph[d.target] 
                     const source_sst = source.sentiment
@@ -818,6 +809,7 @@ export default defineComponent({
                 })
                 .style("stroke-linecap","round")
                 .on("mousemove", function(e) {
+                    // update tooltip location on moved
                     const edge_data = d3.select(this).data()[0]
                     const entity_1 = entity_graph[edge_data.source].text
                     const entity_2 = entity_graph[edge_data.target].text
@@ -826,34 +818,39 @@ export default defineComponent({
                     `entity_1: ${entity_1} <br>` +
                     `entity_2: ${entity_2} <br>` + 
                     `#co-occur: ${freq} <br>` 
-
                     self.tooltip_content = tooltipText
                     self.tooltip
                     .style("left", e.offsetX + 15 + "px")
                     .style("top", e.offsetY - 5 + "px")
                 })
                 .on("mouseover", function(d) {
+                    // skip 0 opacity edges
                     if(d3.select(this).style("stroke-opacity") == 0) return
                     if(self.animating_click) return
+                    // apply tooltip
                     self.tooltip.transition().duration(100).style("scale", 1)
+                    // apply hovered edge style changes
                     const edge_group = d3.select(this.parentNode)
                     applyEntityEdgeSelectedStyle(self.selected_entities, edge_group, true)
                 })
                 .on("mouseout", function(d) {
                     if(self.animating_click) return
-                    // if(self.selected_entity_edge == this) return
+                    // hide tooltip
                     self.tooltip.transition().duration(100).style("scale", 0)
+                    // remove hovered edge style changes
                     const edge_group = d3.select(this.parentNode)
                     applyEntityEdgeSelectedStyle(self.selected_entities, edge_group, false)
                 })
                 .on("click", function(e, d) {
+                    // skip 0 opacity edges
                     if(d3.select(this).style("stroke-opacity") == 0) return
                     e.stopPropagation()
                     if(self.animating_click) return
+                    // apply selected style changes
                     const edge_group = d3.select(this.parentNode)
                     applyEntityEdgeSelectedStyle(self.selected_entities, edge_group, true)
+                    // record selected edge
                     self.selected_entity_edge = this
-
                     // unclick previous nodes 
                     const prev_nodes = d3.selectAll("g.subnode.entity").filter(d => self.selected_entities.includes(d.text))
                     applyEntityNodeClickedStyle(prev_nodes, false)
@@ -876,7 +873,6 @@ export default defineComponent({
             const target = d3.selectAll(`g.${node_level}`).filter(d => d.text == label)
             return parseFloat(target.attr("r"))
         },
-
 
         RGBToHex(rgb) {
             // Choose correct separator
