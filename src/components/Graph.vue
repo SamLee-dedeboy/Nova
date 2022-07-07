@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 import * as d3 from "d3";
 import Node from "./Node.vue"
 import OpacityController from "./OpacityController.vue";
@@ -7,10 +7,27 @@ import Legend from './Legend.vue'
 import InputSwitch from 'primevue/inputswitch';
 import InfoButtonVue from "./InfoButton.vue";
 
-import { nextTick } from 'vue'
+import { defineComponent, nextTick , PropType} from 'vue'
+import {OutletNode, OutletEdge} from '../types'
 
-export default {
-    props: ['graph', 'graph_index', "id", "entity_graph", "cooccur_matrix", "opacityThreshold"],
+export default defineComponent({
+    props: {
+        graph: { 
+            type: Object as () => {
+                nodes: OutletNode[], 
+            }
+        },
+        graph_index: Number,
+        id: String,
+        entity_graph: Array as PropType<Array<Node>>,
+        cooccur_matrix: {
+            type: Object as () => {
+                [id1: string] : { [id2: string]: number }
+            }
+        },
+        opacityThreshold: Number,
+    },
+    // props: ['graph', 'graph_index', "id", "entity_graph", "cooccur_matrix", "opacityThreshold"],
     components: {
         Node,
         OpacityController,
@@ -39,27 +56,27 @@ export default {
         },
         graph_links() {
             const center_node_index = this.graph.nodes.findIndex(node => node.isCenter) 
-            const links = []
+            const links: OutletEdge[] = []
             this.graph.nodes.forEach((node, index) => {
                 if(index != center_node_index) {
-                    const edge = {
-                        "source": index,
-                        "target": center_node_index
-                    }
+                    const edge: OutletEdge = {
+                        source: index,
+                        target: center_node_index
+                    } 
                     links.push(edge)
                 }
             })
             return links
         },
         entity_links() {
-            const links = []   
+            const links: OutletEdge[] = []   
             this.entity_graph.forEach((node_a, index_a) => {
                 this.entity_graph.forEach((node_b, index_b) => {
                     if(index_a != index_b) {
-                        const edge = {
-                            "source": index_a,
-                            "target": index_b
-                        }
+                        const edge: OutletEdge = {
+                            source: index_a,
+                            target: index_b
+                        } 
                         links.push(edge)
                     }
                 })
@@ -67,14 +84,14 @@ export default {
             return links
         },
         undirected_entity_links() {
-            const links = []   
+            const links: OutletEdge[] = []   
             this.entity_graph.forEach((node_a, index_a) => {
                 this.entity_graph.forEach((node_b, index_b) => {
                     if(index_a < index_b) {
-                        const edge = {
-                            "source": index_a,
-                            "target": index_b
-                        }
+                        const edge: OutletEdge = {
+                            source: index_a,
+                            target: index_b
+                        } 
                         links.push(edge)
                     }
                 })
@@ -83,11 +100,6 @@ export default {
 
         },
         outlet_set() { return this.graph.nodes.map(node => node.text) },
-        graph_dict() {
-            // var graph_dict = Object.assign({}, ...this.graph.nodes.map((node) => ({[node.text]: node})));
-            // graph_dict[this.center_node.text] = this.center_node
-            return graph_dict
-        },
         canvas_width() { return parseInt(this.canvas.attr("viewBox").split(" ")[2]) },
         canvas_height() { return parseInt(this.canvas.attr("viewBox").split(" ")[3]) },
         // outlet
@@ -106,7 +118,8 @@ export default {
         // entity cooccurr freqs
         min_entity_cooccurr() { 
             var min = 0
-            for(const [entity_1, cooccurrs] of Object.entries(this.cooccur_matrix)) {
+            for(const entity_1 in this.cooccur_matrix) {
+                const cooccurrs = this.cooccur_matrix[entity_1]
                 const min_of_entity_1 = Math.min(...Object.keys(cooccurrs).map(entity_2 => cooccurrs[entity_2]))
                 min = Math.min(min, min_of_entity_1)
             }   
@@ -114,7 +127,8 @@ export default {
         },
         max_entity_cooccurr() { 
             var max = 0
-            for(const [entity_1, cooccurrs] of Object.entries(this.cooccur_matrix)) {
+            for(const entity_1 in this.cooccur_matrix) {
+                const cooccurrs = this.cooccur_matrix[entity_1]
                 const max_of_entity_1 = Math.max(...Object.keys(cooccurrs).filter(entity_2 => entity_2 != entity_1).map(entity_2 => cooccurrs[entity_2]))
                 max = Math.max(max, max_of_entity_1)
             }   
@@ -123,8 +137,10 @@ export default {
         mean_entity_cooccurr() {
             var sum = 0
             var count = 0 
-            for(const [entity_1, cooccurrs] of Object.entries(this.cooccur_matrix)) {
-                for(const [entity_2, freq] of Object.entries(cooccurrs)) {
+            for(const entity_1 in this.cooccur_matrix) {
+                const cooccurrs = this.cooccur_matrix[entity_1]
+                for(const entity_2 in cooccurrs) {
+                    const freq = cooccurrs[entity_1]
                     sum += freq
                     count += 1
                 }
@@ -134,8 +150,10 @@ export default {
         std_entity_cooccurr() {
             var sum = 0
             var count = 0
-            for(const [entity_1, cooccurrs] of Object.entries(this.cooccur_matrix)) {
-                for(const [entity_2, freq] of Object.entries(cooccurrs)) {
+            for(const entity_1 in this.cooccur_matrix) {
+                const cooccurrs = this.cooccur_matrix[entity_1]
+                for(const entity_2 in cooccurrs) {
+                    const freq = cooccurrs[entity_2]
                     sum += Math.pow(freq - this.mean_entity_cooccurr, 2)
                     count += 1
                 }
@@ -150,6 +168,7 @@ export default {
             useOutletImage: true,
             tooltip_content: "",
             selected_entities: [],
+            brightness: 0,
         }
     },
     watch: {
@@ -363,8 +382,8 @@ export default {
 
             })
             this.entity_graph.forEach(node => {
-                node.x = parseInt(center[0])
-                node.y = parseInt(center[1])
+                node.x = center[0]
+                node.y = center[1]
             })
             var simulation = d3.forceSimulation(this.entity_graph)
                 .alphaMin(0.2)
@@ -507,7 +526,7 @@ export default {
             // move text
             if(this.useOutletImage) {
                 clickedNode.selectAll("image.label_node_outlet").transition().duration(1000)
-                    .attr("x", function(d) { return clicked_center[0] - parseFloat(d3.select(this).attr("width")/2); })
+                    .attr("x", function(d) { return clicked_center[0] - d3.select(this).attr("width")/2; })
                     .attr("y", clicked_center[1] - expanded_r + 30)
                     .attr("width", function(d) { return self.articlesToRadius("node", d, 0) + 30})
                     .attr("height", function(d) { return self.articlesToRadius("node", d, 0) + 30})
@@ -911,7 +930,7 @@ export default {
                 .transition()
                 .duration(animate_duration)
                 .tween('ring-effect', function(d) {
-                    var percentage = parseFloat(Math.abs(d.neg_sent))/(d.pos_sent+Math.abs(d.neg_sent)+Math.abs(d.neu_sent))
+                    var percentage = Math.abs(d.neg_sent)/(d.pos_sent+Math.abs(d.neg_sent)+Math.abs(d.neu_sent))
                     var start_percentage = parseFloat(d.pos_sent)/(d.pos_sent+Math.abs(d.neg_sent)+Math.abs(d.neu_sent))
                     var radius = parseFloat(d3.select(this.parentNode.parentNode).attr("r"))
                     
@@ -946,7 +965,7 @@ export default {
                 .transition()
                 .duration(animate_duration)
                 .tween('ring-effect', function(d) {
-                    var percentage = parseFloat(Math.abs(d.neu_sent))/(d.pos_sent+Math.abs(d.neg_sent)+Math.abs(d.neu_sent))
+                    var percentage = Math.abs(d.neu_sent)/(d.pos_sent+Math.abs(d.neg_sent)+Math.abs(d.neu_sent))
                     var start_percentage = parseFloat(d.pos_sent + Math.abs(d.neg_sent))/(d.pos_sent+Math.abs(d.neg_sent)+Math.abs(d.neu_sent))
                     var radius = parseFloat(d3.select(this.parentNode.parentNode).attr("r"))
                     
@@ -1235,12 +1254,6 @@ export default {
             const n = (source_sst == left_sst) ? [source.x, source.y]:[target.x, target.y]
             const dx = p[0]-n[0]
             return (dx > 0) ? 0 : 180 
-            // const dy = p[1]-n[1]
-            // const theta = Math.atan(Math.abs(dy/dx)) * (180/Math.PI)
-            if(dx > 0 && dy > 0) return theta
-            if(dx < 0 && dy > 0) return 180 - theta
-            if(dx < 0 && dy < 0) return 180 + theta
-            if(dx > 0 && dy < 0) return -theta
         },
         RGBToHex(rgb) {
             // Choose correct separator
@@ -1262,7 +1275,7 @@ export default {
             return "#" + r + g + b;
         }
     }
-}
+})
 
 
 
