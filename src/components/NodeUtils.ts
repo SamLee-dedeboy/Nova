@@ -1,4 +1,5 @@
 import { OutletNode } from '../types'
+import * as SstColors from './ColorUtils'
 import * as d3 from "d3";
 export function sentiment_classify(node_data: OutletNode) {
 const pos = node_data.pos_sent
@@ -20,12 +21,11 @@ if(selected) {
 
 }
 
-const entity_selected_color = "#007bff"
 export function applyEntityNodeClickedStyle(nodes: any, clicked:Boolean=true) {
     if(clicked) {
         nodes.selectAll("circle.expand_subnode_entity")
             .style("filter", "brightness(90%)")
-            .style("fill", entity_selected_color)
+            .style("fill", SstColors.entity_selected_color)
         nodes.selectAll("text.subnode_entity")
             .style("fill", "white")
     } else {
@@ -48,12 +48,6 @@ const abbr_dict: { [id: string]: string } = {
 }
 const outlet_font = undefined 
 const center_font= "cursive"
-const brightness = 140
-const offset = 0.15
-const sst_range = d3.interpolateBrBG
-const neg_color = sst_range(0+offset)
-const pos_color = sst_range(1-offset)
-const neu_color = "grey"
 export function applyNodeStyling(
     node: any, 
     node_level: string, 
@@ -172,13 +166,13 @@ export function applyNodeStyling(
     ? node.selectAll(`g.outer_ring_${node_level}_${class_name}`) 
     : node.append("g").attr("class", `outer_ring_${node_level}_${class_name}`))
 
-    outer_ring.style("filter", `brightness(${brightness}%)`)
+    outer_ring.style("filter", `brightness(${SstColors.brightness}%)`)
     // positive ring
     const pos_ring = 
     ( outer_ring.select(`path.pos_${node_level}_${class_name}`).node()
     ? outer_ring.select(`path.pos_${node_level}_${class_name}`)
     : outer_ring.append("path").attr("class", `pos_${node_level}_${class_name}`))
-    pos_ring.attr("fill", pos_color)     
+    pos_ring.attr("fill", SstColors.pos_color)     
         .attr("transform", function(d) {
             const cx = d3.select(this.parentNode.parentNode).attr("cx")
             const cy = d3.select(this.parentNode.parentNode).attr("cy")
@@ -214,7 +208,7 @@ export function applyNodeStyling(
     ( outer_ring.select(`path.neg_${node_level}_${class_name}`).node()
     ? outer_ring.select(`path.neg_${node_level}_${class_name}`)
     : outer_ring.append("path").attr("class", `neg_${node_level}_${class_name}`))
-    neg_ring.attr("fill", neg_color)     
+    neg_ring.attr("fill", SstColors.neg_color)     
         .attr("transform", function(d) {
             const cx = d3.select(this.parentNode.parentNode).attr("cx")
             const cy = d3.select(this.parentNode.parentNode).attr("cy")
@@ -249,7 +243,7 @@ export function applyNodeStyling(
     ( outer_ring.select(`path.neu_${node_level}_${class_name}`).node()
     ? outer_ring.select(`path.neu_${node_level}_${class_name}`)
     : outer_ring.append("path").attr("class", `neu_${node_level}_${class_name}`))
-    neu_ring.attr("fill", neu_color)     
+    neu_ring.attr("fill", SstColors.neu_color)     
         .attr("transform", function(d) {
             const cx = d3.select(this.parentNode.parentNode).attr("cx")
             const cy = d3.select(this.parentNode.parentNode).attr("cy")

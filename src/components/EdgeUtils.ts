@@ -1,5 +1,7 @@
 import * as d3 from "d3";
 import { OutletEdge, OutletNode } from "../types"
+import * as SstColors from './ColorUtils'
+
 export function edgeRotation(
     source: OutletNode, 
     target: OutletNode, 
@@ -39,12 +41,12 @@ export function applyEntityEdgeSelectedStyle(
         .style("stroke-width", function(d) { return parseFloat(edge_group.select("line.edge_entity").style("stroke-width")) })
     }
 }
-export function addEdges(svg: any, node: any, {pos_color, neg_color, neu_color}) {
+export function addEdges(svg: any, node: any) {
     if(node.empty()) return
     // edges
     // bind edges to node circles, so that edges can bind to circle center
     var center_node = d3.select("g.node.center")
-    const edge_color = {"pos": pos_color, "neg": neg_color, "neu": neu_color }
+    const edge_color = {"pos": SstColors.pos_color, "neg": SstColors.neg_color, "neu": SstColors.neu_color }
     var edges = svg.selectAll("line.edge.outlet")
     .data(node, function(d) { return d3.select(d).data()[0].text})
     .join("line")
