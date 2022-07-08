@@ -907,7 +907,7 @@ export default defineComponent({
         v-model:opacityThreshold="opacityThreshold"
         ></OpacityController>
     </div>
-    <Tooltip :content="tooltip_content"></Tooltip>
+    <Tooltip :content="tooltip_content" style="z-index: 1000;"></Tooltip>
     <Legend style="position:absolute;left:83%;top:80%;"></Legend>
     <InfoButtonVue :info_content="'Explanation of the graph'" style="position:absolute; left:95%; top:79%"></InfoButtonVue>
 
