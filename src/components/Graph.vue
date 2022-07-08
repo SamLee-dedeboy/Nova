@@ -6,6 +6,7 @@ import Tooltip from "./Tooltip.vue";
 import Legend from './Legend.vue'
 import InputSwitch from 'primevue/inputswitch';
 import InfoButtonVue from "./InfoButton.vue";
+import NodeInfo from "./NodeInfo.vue";
 
 import { defineComponent, nextTick , PropType} from 'vue'
 import { OutletNode, OutletEdge } from '../types'
@@ -39,6 +40,19 @@ const props = defineProps({
 <script lang="ts">
 export default defineComponent({
     computed: {
+        hovered_node_info() {
+            const node = this.hovered_node
+            if(!node) return undefined
+            return {
+                text: node.text,
+                pos_articles: node.pos_articles,
+                neg_articles: node.neg_articles,
+                neu_articles: node.neu_articles,
+                pos_score: node.pos_sent,
+                neg_score: node.neg_sent,
+                neu_score: node.neu_sent,
+            }
+        },
         total_articles() { return this.graph.nodes.filter(node => node.articles).reduce((sum, node) => sum + node.articles.length, 0) },
         center_node() { return this.graph.nodes.filter(node => node.isCenter)[0] },
         graph_links() {
@@ -153,6 +167,7 @@ export default defineComponent({
             selected_entities: [],
             brightness: 0,
             selected_entity_edge: undefined,
+            hovered_node: undefined,
         }
     },
     watch: {
@@ -215,7 +230,10 @@ export default defineComponent({
             }
         })
         // tooltip
-        this.tooltip = d3.select("div.tooltip").style("scale", 0)
+        // this.tooltip = d3.select("div.tooltip").style("scale", 0)
+        this.hovered_node = this.graph.nodes[0]
+        this.tooltip = d3.select("table.node-info").style("scale", 0)
+        
         // create gradient for entity graph
         var svg = this.canvas
         const steps = 11
@@ -612,6 +630,7 @@ export default defineComponent({
                 .style("filter", "brightness(90%)")
                 // show tooltip 
                 if(self.nodeClicked) return
+                self.hovered_node = container.data()[0]
                 self.tooltip.transition().duration(100).style("scale", 1)
             })
             .on("mouseout", function(d) {
@@ -907,9 +926,10 @@ export default defineComponent({
         v-model:opacityThreshold="opacityThreshold"
         ></OpacityController>
     </div>
-    <Tooltip :content="tooltip_content" style="z-index: 1000;"></Tooltip>
+    <!-- <Tooltip :content="tooltip_content" style="z-index: 1000;"></Tooltip> -->
     <Legend style="position:absolute;left:83%;top:80%;"></Legend>
     <InfoButtonVue :info_content="'Explanation of the graph'" style="position:absolute; left:95%; top:79%"></InfoButtonVue>
+    <NodeInfo class="node-info" :node="hovered_node_info" :total_articles="total_articles" style="z-index: 1000"></NodeInfo>
 
 </div>
 </template>
@@ -957,4 +977,9 @@ export default defineComponent({
     left:-140px; 
     top:-55px;
 }
+.node-info {
+    position:absolute;
+//     left: 60%;
+//     top: 50%;
+} 
 </style>

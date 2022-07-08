@@ -12,6 +12,11 @@ const key_color_pair = [
                 ["neutral",  neu_color],
                 ["no mention", 'white'],
             ] 
+const color_dict = {
+    "pos": pos_color,
+    "neg": neg_color,
+    "neu": neu_color,
+}
 
 export {
     brightness,
@@ -21,4 +26,5 @@ export {
     neu_color,
     entity_selected_color,
     key_color_pair,
+    color_dict,
 }
