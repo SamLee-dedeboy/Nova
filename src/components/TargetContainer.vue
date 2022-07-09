@@ -139,8 +139,7 @@ export default ({
                 // const neu_sst = sst_df.iloc({rows: sst_df["normalized_sst"].lt(neu_threshold).and(sst_df["normalized_sst"].gt(-neu_threshold))}).count({axis:0}).at("normalized_sst",1) || 0
                 const pos_dfs = sst_df.iloc({rows: sst_df["normalized_sst"].gt(neu_threshold)})
                 const neg_dfs = sst_df.iloc({rows: sst_df["normalized_sst"].lt(-neu_threshold)})
-                const neu_dfs = sst_df.iloc({rows: sst_df["normalized_sst"].lt(neu_threshold).and(sst_df["normalized_sst"].gt(0))})
-                const neu_pos_dfs = sst_df.iloc({rows: sst_df["normalized_sst"].lt(neu_threshold).and((sst_df["normalized_sst"].gt(0).or(sst_df["normalized_sst"].eq(0))))})
+                const neu_pos_dfs = sst_df.iloc({rows: sst_df["normalized_sst"].lt(neu_threshold).and((sst_df["normalized_sst"].gt(0)))})
                 const neu_neg_dfs = sst_df.iloc({rows: (sst_df["normalized_sst"].lt(0).or(sst_df["normalized_sst"].eq(0))).and(sst_df["normalized_sst"].gt(-neu_threshold))})
 
                 const pos_sst = pos_dfs.sum({axis:0}).at("normalized_sst",1) || 0
@@ -154,8 +153,9 @@ export default ({
 
                 const pos_atcs = pos_dfs.count({axis:0}).at("normalized_sst", 1) || 0
                 const neg_atcs = neg_dfs.count({axis:0}).at("normalized_sst", 1) || 0
-                const neu_atcs = neu_dfs.count({axis:0}).at("normalized_sst", 1) || 0
-
+                const neu_pos_atcs = neu_pos_dfs.count({axis:0}).at("normalized_sst", 1) || 0
+                const neu_neg_atcs = neu_neg_dfs.count({axis:0}).at("normalized_sst", 1) || 0
+                const neu_atcs = neu_pos_atcs + neu_neg_atcs
                 // const pos_sst = sst_df.iloc({rows: sst_df["normalized_sst"].gt(neu_threshold)}).at("normalized_sst",1) || 0
                 // const neg_sst = sst_df.iloc({rows: sst_df["normalized_sst"].lt(-neu_threshold)}).at("normalized_sst",1) || 0
                 // const neu_sst = sst_df.iloc({rows: sst_df["normalized_sst"].lt(neu_threshold).and(sst_df["normalized_sst"].gt(-neu_threshold))}).at("normalized_sst",1) || 0

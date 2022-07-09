@@ -140,8 +140,8 @@ export default {
     timeRange: function(new_range, old_range) {
       if(new_range[0] != old_range[0] || new_range[1] != old_range[1]) {
         const startIndex = this.original_dataset.findIndex(article => parseInt(article.timestamp.split('-')[1]) >= new_range[0])
-        const endIndex = this.original_dataset.findIndex(article => parseInt(article.timestamp.split('-')[1]) > new_range[1]-1)
-        const subset = this.original_dataset.slice(startIndex, endIndex)
+        const endIndex = this.original_dataset.findIndex(article => parseInt(article.timestamp.split('-')[1]) > new_range[1])
+        const subset = this.original_dataset.slice(startIndex, (endIndex == -1? this.original_dataset.length : endIndex))
         this.updateDicts(subset)
       }
     }
