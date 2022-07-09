@@ -54,6 +54,13 @@ export default defineComponent({
             }
         },
         total_articles() { return this.graph.nodes.filter(node => node.articles && !node.isCenter).reduce((sum, node) => sum + node.articles.length, 0) },
+        node_info_total_articles() { 
+            const node = this.hovered_node
+            if(!node) return
+            if(this.nodeClicked) return this.clickedNode.data()[0].articles.length
+            else return this.total_articles
+
+        },
         center_node() { return this.graph.nodes.filter(node => node.isCenter)[0] },
         graph_links() {
             const center_node_index = this.graph.nodes.findIndex(node => node.isCenter) 
@@ -232,7 +239,7 @@ export default defineComponent({
         // tooltip
         // this.tooltip = d3.select("div.tooltip").style("scale", 0)
         this.hovered_node = this.graph.nodes[0]
-        this.tooltip = d3.select("table.node-info").style("scale", 0)
+        this.node_info = d3.select("table.node-info").style("scale", 0)
         
         // create gradient for entity graph
         var svg = this.canvas
@@ -286,24 +293,25 @@ export default defineComponent({
             d3.selectAll("g.subnode.entity")
             .style("cursor", "pointer")
             .on("mousemove", function(e) {
-                const node_data = d3.select(this).data()[0]
-                const tooltip_title = "entity"
-                const tooltipText = 
-                `${tooltip_title}: ${(node_data.text)} <br>` + 
-                `#posArticle/score: ${node_data.pos_articles}/${parseFloat(node_data.pos_sent).toFixed(2)}  <br>` + 
-                `#negArticle/score: ${node_data.neg_articles}/${parseFloat(node_data.neg_sent).toFixed(2)} <br>` +
-                `#neuArticle/score: ${node_data.neu_articles}/(${parseFloat(node_data.neu_neg_sent).toFixed(2)},${parseFloat(node_data.neu_pos_sent).toFixed(2)}) <br>` +
-                `#articles: ${(node_data.articles.length)} <br>` 
+                // const node_data = d3.select(this).data()[0]
+                // const tooltip_title = "entity"
+                // const tooltipText = 
+                // `${tooltip_title}: ${(node_data.text)} <br>` + 
+                // `#posArticle/score: ${node_data.pos_articles}/${parseFloat(node_data.pos_sent).toFixed(2)}  <br>` + 
+                // `#negArticle/score: ${node_data.neg_articles}/${parseFloat(node_data.neg_sent).toFixed(2)} <br>` +
+                // `#neuArticle/score: ${node_data.neu_articles}/(${parseFloat(node_data.neu_neg_sent).toFixed(2)},${parseFloat(node_data.neu_pos_sent).toFixed(2)}) <br>` +
+                // `#articles: ${(node_data.articles.length)} <br>` 
 
-                self.tooltip_content = tooltipText
-                self.tooltip
+                // self.tooltip_content = tooltipText
+                self.node_info
                 .style("left", e.offsetX + 15 + "px")
                 .style("top", e.offsetY - 5 + "px")
             })
             .on("mouseover", function(d) {
                 if(self.animating_click) return
-                self.tooltip.transition().duration(100).style("scale", 1)
                 const container = d3.select(this)
+                self.hovered_node = container.data()[0]
+                self.node_info.transition().duration(100).style("scale", 1)
                 // container.select("circle.expand_subnode_entity")
                 // .transition()
                 // .duration(100)
@@ -314,7 +322,7 @@ export default defineComponent({
             })
             .on("mouseout", function(d) {
                 if(self.animating_click) return
-                self.tooltip.transition().duration(100).style("scale", 0)
+                self.node_info.transition().duration(100).style("scale", 0)
                 const container = d3.select(this)
                 const entity_name = container.data()[0].text
                 if(self.selected_entities.find(entity => entity == entity_name)) return
@@ -472,7 +480,7 @@ export default defineComponent({
             // animate clicked node
             this.animating_click = true
             // remove tooltip
-            d3.selectAll("div.tooltip").style("scale", 0)
+            d3.selectAll(".node-info").style("scale", 0)
             // clicked node
             const expanded_r = 0.49*height
             const clickedNode = d3.selectAll("g.node.outlet").filter(node => node.text == d.text)
@@ -604,16 +612,16 @@ export default defineComponent({
             .on("mousemove", function(e) {
                 if(self.nodeClicked) return
                 // update tooltip (if node changes)
-                const node_data = d3.select(this).data()[0]
-                const tooltip_title = node_data.isCenter? "entity":"outlet"
-                const tooltipText = 
-                `${tooltip_title}: ${(node_data.text)} <br>` + 
-                `#posArticle/score: ${node_data.pos_articles}/${parseFloat(node_data.pos_sent).toFixed(2)}  <br>` + 
-                `#negArticle/score: ${node_data.neg_articles}/${parseFloat(node_data.neg_sent).toFixed(2)} <br>` +
-                `#neuArticle/score: ${node_data.neu_articles}/(${parseFloat(node_data.neu_neg_sent).toFixed(2)},${parseFloat(node_data.neu_pos_sent).toFixed(2)}) <br>` +
-                `#articles: ${node_data.dotted?0:(node_data.articles?.length || self.total_articles)} <br>` 
-                self.tooltip_content = tooltipText
-                self.tooltip
+                // const node_data = d3.select(this).data()[0]
+                // const tooltip_title = node_data.isCenter? "entity":"outlet"
+                // const tooltipText = 
+                // `${tooltip_title}: ${(node_data.text)} <br>` + 
+                // `#posArticle/score: ${node_data.pos_articles}/${parseFloat(node_data.pos_sent).toFixed(2)}  <br>` + 
+                // `#negArticle/score: ${node_data.neg_articles}/${parseFloat(node_data.neg_sent).toFixed(2)} <br>` +
+                // `#neuArticle/score: ${node_data.neu_articles}/(${parseFloat(node_data.neu_neg_sent).toFixed(2)},${parseFloat(node_data.neu_pos_sent).toFixed(2)}) <br>` +
+                // `#articles: ${node_data.dotted?0:(node_data.articles?.length || self.total_articles)} <br>` 
+                // self.tooltip_content = tooltipText
+                self.node_info
                 .style("left", e.offsetX + 15 + "px")
                 .style("top", e.offsetY - 5 + "px")
             })
@@ -631,7 +639,7 @@ export default defineComponent({
                 // show tooltip 
                 if(self.nodeClicked) return
                 self.hovered_node = container.data()[0]
-                self.tooltip.transition().duration(100).style("scale", 1)
+                self.node_info.transition().duration(100).style("scale", 1)
             })
             .on("mouseout", function(d) {
                 if(self.animating_click) return
@@ -646,7 +654,7 @@ export default defineComponent({
                 .style("filter", "brightness(100%)")
                 // hide tooltip
                 if(self.nodeClicked) return
-                self.tooltip.transition().duration(100).style("scale", 0)
+                self.node_info.transition().duration(100).style("scale", 0)
             })
             // no click event on center node          
             svg.selectAll("g.node.outlet").on("click", this.handleNodeClick)
@@ -821,16 +829,16 @@ export default defineComponent({
                 .style("stroke-linecap","round")
                 .on("mousemove", function(e) {
                     // update tooltip location on moved
-                    const edge_data = d3.select(this).data()[0]
-                    const entity_1 = entity_graph[edge_data.source].text
-                    const entity_2 = entity_graph[edge_data.target].text
-                    const freq = self.cooccur_matrix[entity_1][entity_2] || 0
-                    const tooltipText = 
-                    `entity_1: ${entity_1} <br>` +
-                    `entity_2: ${entity_2} <br>` + 
-                    `#co-occur: ${freq} <br>` 
-                    self.tooltip_content = tooltipText
-                    self.tooltip
+                    // const edge_data = d3.select(this).data()[0]
+                    // const entity_1 = entity_graph[edge_data.source].text
+                    // const entity_2 = entity_graph[edge_data.target].text
+                    // const freq = self.cooccur_matrix[entity_1][entity_2] || 0
+                    // const tooltipText = 
+                    // `entity_1: ${entity_1} <br>` +
+                    // `entity_2: ${entity_2} <br>` + 
+                    // `#co-occur: ${freq} <br>` 
+                    // self.tooltip_content = tooltipText
+                    self.node_info
                     .style("left", e.offsetX + 15 + "px")
                     .style("top", e.offsetY - 5 + "px")
                 })
@@ -839,7 +847,7 @@ export default defineComponent({
                     if(d3.select(this).style("stroke-opacity") == 0) return
                     if(self.animating_click) return
                     // apply tooltip
-                    self.tooltip.transition().duration(100).style("scale", 1)
+                    self.node_info.transition().duration(100).style("scale", 1)
                     // apply hovered edge style changes
                     const edge_group = d3.select(this.parentNode)
                     applyEntityEdgeSelectedStyle(self.selected_entities, edge_group, true)
@@ -847,7 +855,7 @@ export default defineComponent({
                 .on("mouseout", function(d) {
                     if(self.animating_click) return
                     // hide tooltip
-                    self.tooltip.transition().duration(100).style("scale", 0)
+                    self.node_info.transition().duration(100).style("scale", 0)
                     // remove hovered edge style changes
                     const edge_group = d3.select(this.parentNode)
                     applyEntityEdgeSelectedStyle(self.selected_entities, edge_group, false)
@@ -929,7 +937,7 @@ export default defineComponent({
     <!-- <Tooltip :content="tooltip_content" style="z-index: 1000;"></Tooltip> -->
     <Legend style="position:absolute;left:83%;top:80%;"></Legend>
     <InfoButtonVue :info_content="'Explanation of the graph'" style="position:absolute; left:95%; top:79%"></InfoButtonVue>
-    <NodeInfo class="node-info" :node="hovered_node_info" :total_articles="total_articles" style="z-index: 1000"></NodeInfo>
+    <NodeInfo class="node-info" :node="hovered_node_info" :total_articles="node_info_total_articles" style="z-index: 1000"></NodeInfo>
 
 </div>
 </template>
@@ -943,7 +951,7 @@ export default defineComponent({
    display: inline-block; 
 }
 .graphContainer {
-    overflow: auto
+    overflow: visible;
 }
 .controll-panel {
     min-width: 110px;
