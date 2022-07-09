@@ -162,9 +162,9 @@ function updateTotalArticles(pos_articles, neg_articles, neu_articles, total_art
         .attr("class", "frame")
         .attr("height", svgViewBox[1])
         .attr("width", 2*svgViewBox[0])
-        .attr("fill", "white")
-        .attr("stroke", "black")
-        .attr("stroke-width", 1)
+        .style("fill", "white")
+        .style("stroke", "black")
+        .style("stroke-width", 1)
 
     svg.selectAll("rect.bar")
     .data([node_total_articles])
@@ -172,7 +172,9 @@ function updateTotalArticles(pos_articles, neg_articles, neu_articles, total_art
         enter => {
             enter.append("rect")
             .attr("class", "bar")
-            .attr("height", svgViewBox[1])
+            .attr("x", 1)
+            .attr("y", 1)
+            .attr("height", svgViewBox[1]-1)
             .attr("filter", `brightness(${SstColors.brightness}%)`)
             .attr("width", (d) => (d/total_articles)*2*svgViewBox[0])
             .attr("fill", "#0d6efd") 
@@ -181,7 +183,7 @@ function updateTotalArticles(pos_articles, neg_articles, neu_articles, total_art
             update.attr("width", (d) => (d/total_articles)*2*svgViewBox[0])
         }
     )
-    const percentage = parseFloat((node_total_articles/total_articles).toFixed(2))*100
+    const percentage = Math.round((node_total_articles/total_articles)*100)
     const node_text = svg.selectAll("text")
     .data([`${node_total_articles}/${total_articles}(${percentage}%)`])
 
