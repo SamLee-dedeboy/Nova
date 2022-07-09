@@ -53,7 +53,7 @@ export default defineComponent({
                 neu_score: node.neu_sent,
             }
         },
-        total_articles() { return this.graph.nodes.filter(node => node.articles).reduce((sum, node) => sum + node.articles.length, 0) },
+        total_articles() { return this.graph.nodes.filter(node => node.articles && !node.isCenter).reduce((sum, node) => sum + node.articles.length, 0) },
         center_node() { return this.graph.nodes.filter(node => node.isCenter)[0] },
         graph_links() {
             const center_node_index = this.graph.nodes.findIndex(node => node.isCenter) 
@@ -979,6 +979,7 @@ export default defineComponent({
 }
 .node-info {
     position:absolute;
+    transform-origin: top left;
 //     left: 60%;
 //     top: 50%;
 } 
