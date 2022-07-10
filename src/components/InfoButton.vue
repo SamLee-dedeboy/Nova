@@ -17,11 +17,15 @@ export default {
         @mouseleave="() => this.$refs.entity_tooltip.hide()"
         ></Button>
         <Tooltip 
+        class="info-tooltip"
         ref="entity_tooltip"
         :content="info_content"
         style="font-size:smaller; "></Tooltip>
     </div>
 </template>
-<style>
+<style scoped>
+.info-tooltip {
+    background-color: #fcf1dd;
+}
 
 </style>

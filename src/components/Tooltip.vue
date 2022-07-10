@@ -25,7 +25,7 @@ export default {
 <style scoped>
 .tooltip {
     position: absolute;
-    background-color: white;
+    background-color: #fcf1dd;
     border: solid;
     border-width: 2px;
     border-radius: 5px;
