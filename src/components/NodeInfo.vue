@@ -237,11 +237,12 @@ th, tr, td {
 }
 .node-info-table {
     border-collapse: collapse;
-    background-color: white;
+    background-color: #fcf1dd;
     border: solid;
-    border-width: 2px;
-    border-radius: 5px;
+    border-radius: 3px;
     padding: 5px;
+    border-style: hidden; /* hide standard table (collapsed) border */
+    box-shadow: 0 0 0 2px #666; /* this draws the table border  */ 
 }
 svg {
     left: 1px;
