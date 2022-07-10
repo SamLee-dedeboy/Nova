@@ -237,7 +237,7 @@ export default defineComponent({
             }
         })
         // tooltip
-        // this.tooltip = d3.select("div.tooltip").style("scale", 0)
+        this.tooltip = d3.select("div.tooltip").style("scale", 0)
         this.hovered_node = this.graph.nodes[0]
         this.node_info = d3.select("table.node-info").style("scale", 0)
         
@@ -829,16 +829,16 @@ export default defineComponent({
                 .style("stroke-linecap","round")
                 .on("mousemove", function(e) {
                     // update tooltip location on moved
-                    // const edge_data = d3.select(this).data()[0]
-                    // const entity_1 = entity_graph[edge_data.source].text
-                    // const entity_2 = entity_graph[edge_data.target].text
-                    // const freq = self.cooccur_matrix[entity_1][entity_2] || 0
-                    // const tooltipText = 
-                    // `entity_1: ${entity_1} <br>` +
-                    // `entity_2: ${entity_2} <br>` + 
-                    // `#co-occur: ${freq} <br>` 
-                    // self.tooltip_content = tooltipText
-                    self.node_info
+                    const edge_data = d3.select(this).data()[0]
+                    const entity_1 = entity_graph[edge_data.source].text
+                    const entity_2 = entity_graph[edge_data.target].text
+                    const freq = self.cooccur_matrix[entity_1][entity_2] || 0
+                    const tooltipText = 
+                    `entity_1: ${entity_1} <br>` +
+                    `entity_2: ${entity_2} <br>` + 
+                    `#co-occur: ${freq} <br>` 
+                    self.tooltip_content = tooltipText
+                    self.tooltip
                     .style("left", e.offsetX + 15 + "px")
                     .style("top", e.offsetY - 5 + "px")
                 })
@@ -847,7 +847,8 @@ export default defineComponent({
                     if(d3.select(this).style("stroke-opacity") == 0) return
                     if(self.animating_click) return
                     // apply tooltip
-                    self.node_info.transition().duration(100).style("scale", 1)
+                    // self.node_info.transition().duration(100).style("scale", 1)
+                    self.tooltip.transition().duration(100).style("scale", 1)
                     // apply hovered edge style changes
                     const edge_group = d3.select(this.parentNode)
                     applyEntityEdgeSelectedStyle(self.selected_entities, edge_group, true)
@@ -855,7 +856,8 @@ export default defineComponent({
                 .on("mouseout", function(d) {
                     if(self.animating_click) return
                     // hide tooltip
-                    self.node_info.transition().duration(100).style("scale", 0)
+                    // self.node_info.transition().duration(100).style("scale", 0)
+                    self.tooltip.transition().duration(100).style("scale", 0)
                     // remove hovered edge style changes
                     const edge_group = d3.select(this.parentNode)
                     applyEntityEdgeSelectedStyle(self.selected_entities, edge_group, false)
@@ -934,7 +936,7 @@ export default defineComponent({
         v-model:opacityThreshold="opacityThreshold"
         ></OpacityController>
     </div>
-    <!-- <Tooltip :content="tooltip_content" style="z-index: 1000;"></Tooltip> -->
+    <Tooltip :content="tooltip_content" style="z-index: 1000;"></Tooltip>
     <Legend style="position:absolute;left:83%;top:80%;"></Legend>
     <InfoButtonVue :info_content="'Explanation of the graph'" style="position:absolute; left:95%; top:79%"></InfoButtonVue>
     <NodeInfo class="node-info" :node="hovered_node_info" :total_articles="node_info_total_articles" style="z-index: 1000"></NodeInfo>
