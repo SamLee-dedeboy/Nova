@@ -23,7 +23,6 @@ export default defineComponent({
     computed: {
         target_list: function() {
             return this.targets
-            return this.targets.map(target => Object({name: target}))
         } 
     },
     data() {
@@ -75,7 +74,6 @@ export default defineComponent({
 </script>
 
 <template>
-    <!-- <MegaMenu :model="targets" @click=targetClicked /> -->
     <div class="TargetSelection">
         <DataTable 
         :value="target_list" 
@@ -98,17 +96,6 @@ export default defineComponent({
                         style="display:contents"
                     ></InfoButton>
 
-                    <!-- <Button 
-                    class="p-button-rounded p-button-outlined p-button-text"
-                    icon="pi pi-info-circle"
-                    style="left:15px"
-                    @mouseover="() => this.$refs.entity_tooltip.show()"
-                    @mouseleave="() => this.$refs.entity_tooltip.hide()"
-                    ></Button>
-                    <Tooltip 
-                    ref="entity_tooltip"
-                    :content="'wikipedia entity with #(mentioned articles)'"
-                    style="font-size:smaller; position:absolute; left:-20px; top:-25px;"></Tooltip> -->
                  </div>
             </template>
             <template #empty>
@@ -121,26 +108,14 @@ export default defineComponent({
                 <template #body="{data}">
                     <span :title="data.name" style="font-size:14px">{{data.name}}</span>
                 </template>
-                <!-- <template #filter="{filterModel}">
-                    <InputText type="text" v-model="filterModel.value" class="p-column-filter" :placeholder="`Entity search by name`"/>
-                </template> -->
-                <!-- <template #filter="{filterModel, filterCallback}">
-                    <InputText type="text" v-model="filterModel.value"  @input="filterCallback()" class="p-column-filter" :placeholder="`Entity search by name`"/>
-                </template> -->
             </Column>
             <Column field="num" 
-            header="Num"
+            header="Freq"
             sortable
             style="text-overflow:ellipsis;overflow:hidden;display: inline-block; white-space:nowrap; width:0.2rem;">
                 <template #body="{data}">
                     <span :title="data.num" style="font-size:14px">{{data.num}}</span>
                 </template>
-                <!-- <template #filter="{filterModel}">
-                    <InputText type="text" v-model="filterModel.value" class="p-column-filter" :placeholder="`Entity search by name`"/>
-                </template> -->
-                <!-- <template #filter="{filterModel, filterCallback}">
-                    <InputText type="text" v-model="filterModel.value"  @input="filterCallback()" class="p-column-filter" :placeholder="`Entity search by name`"/>
-                </template> -->
             </Column>
         </DataTable>
     </div>
