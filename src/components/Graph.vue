@@ -937,8 +937,8 @@ export default defineComponent({
         ></OpacityController>
     </div>
     <Tooltip :content="tooltip_content" style="z-index: 1000;"></Tooltip>
-    <Legend style="position:absolute;left:83%;top:80%;"></Legend>
-    <InfoButtonVue :info_content="'Explanation of the graph'" style="position:absolute; left:95%; top:79%"></InfoButtonVue>
+    <Legend style="position:absolute;left:83%;top:70%;"></Legend>
+    <InfoButtonVue :info_content="'Explanation of the graph'" style="position:absolute; left:95%; top:69%"></InfoButtonVue>
     <NodeInfo class="node-info" :node="hovered_node_info" :total_articles="node_info_total_articles" style="z-index: 1000"></NodeInfo>
 
 </div>
@@ -951,8 +951,6 @@ export default defineComponent({
 } */
 .graph {
    display: inline-block; 
-}
-.graphContainer {
     overflow: visible;
 }
 .controll-panel {

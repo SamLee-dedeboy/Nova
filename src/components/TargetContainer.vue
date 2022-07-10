@@ -200,6 +200,7 @@ export default ({
 <TabView>
     <TabPanel v-for="(target, index) in targets" :key="target" :header="targets[0]" >
         <Graph 
+            class="graph"
             :graph="graph_dict[target]"
             :graph_index="index"
             :id="`graph-${index}`"
@@ -209,11 +210,11 @@ export default ({
             @node-clicked="handleNodeClicked"
             >
         </Graph >
-        <TimeAxes v-if="targets.length!=0" :selectedTimeRange="selectedTimeRange"></TimeAxes>
+        <TimeAxes class='time-axes' v-if="targets.length!=0" :selectedTimeRange="selectedTimeRange"></TimeAxes>
         <div class="dropdown-container">
             <div class="dropdown-header-container">
                 <div class="dropdown-header"> Classifier </div>
-                <InfoButton info_content="Choose a mode to classify nodes as 'pos'/'neg'/'neu'"></InfoButton>
+                <InfoButton class='clf-info' info_content="Choose a mode to classify nodes as 'pos'/'neg'/'neu'"></InfoButton>
             </div>
             <Dropdown class="clf-dropdown" 
             v-model="selected_mode" 
@@ -244,5 +245,13 @@ export default ({
     position:absolute;
     left:-100px; 
     top:-75px;
+}
+.graph {
+    /* height: 600px; */
+}
+.time-axes {
+    position:absolute;
+    top:23%;
+    left:2%;
 }
 </style>
