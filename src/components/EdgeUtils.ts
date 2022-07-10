@@ -34,9 +34,9 @@ export function applyEntityEdgeSelectedStyle(
         .style("stroke-width", function(d) { return parseFloat(edge_group.select("line.edge_entity").style("stroke-width"))+10 })
     } else {
         nodes.selectAll("circle.expand_subnode_entity")
-        .style("filter", "brightness(100%)")
+        .style("filter", `brightness(${SstColors.brightness}%)`)
         edge_group.select("line.expand_edge_entity")
-        .style("filter", "brightness(100%)")
+        .style("filter", `brightness(${SstColors.brightness}%)`)
         .style("stroke-opacity", function(d) { return parseFloat(edge_group.select("line.edge_entity").style("stroke-opacity")) })
         .style("stroke-width", function(d) { return parseFloat(edge_group.select("line.edge_entity").style("stroke-width")) })
     }
@@ -57,6 +57,7 @@ export function addEdges(svg: any, node: any) {
     .attr("y2", function(d) { return parseInt(center_node.attr("cy")); })
     .attr("stroke", function(d) { return d3.select(d).data()[0].dotted?"black":(edge_color[d3.select(d).data()[0].sentiment])})
     .attr("stroke-dasharray", function(d) { return d3.select(d).data()[0].dotted ? 2.5:0; })
+    .style("filter", `brightness(${SstColors.brightness}%)`)
     .lower()
     // node.append("line")
     // .attr("class", "graph_edge")
