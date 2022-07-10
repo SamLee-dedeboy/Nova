@@ -183,11 +183,11 @@ export function applyNodeStyling(
         .tween('ring-effect', function(d) {
             var percentage = parseFloat(d.pos_sent)/(d.pos_sent+Math.abs(d.neg_sent)+Math.abs(d.neu_sent))
             //var start_percentage = parseFloat(d.pos_sent)/(d.pos_sent+Math.abs(d.neg_sent)+d.neu_sent)
-            var start_percentage = 0
             var radius = parseFloat(d3.select(this.parentNode.parentNode).attr("r"))
 
-            let startAngle = 2*Math.PI*start_percentage;
-            let targetAngle = 2 * Math.PI*(start_percentage+percentage);
+            let offsetAngle = 2 * Math.PI*(percentage);
+            let startAngle = (1/2)*Math.PI - offsetAngle/2; 
+            let targetAngle = startAngle + offsetAngle
             let i = d3.interpolate(startAngle, targetAngle);
             return function(t) {
                 let currentAngle = i(t);
@@ -201,7 +201,6 @@ export function applyNodeStyling(
                 }))
             };
         })
-
         
     // negative ring
     const neg_ring = 
@@ -218,11 +217,13 @@ export function applyNodeStyling(
         .duration(animate_duration)
         .tween('ring-effect', function(d) {
             var percentage = Math.abs(d.neg_sent)/(d.pos_sent+Math.abs(d.neg_sent)+Math.abs(d.neu_sent))
-            var start_percentage = parseFloat(d.pos_sent)/(d.pos_sent+Math.abs(d.neg_sent)+Math.abs(d.neu_sent))
             var radius = parseFloat(d3.select(this.parentNode.parentNode).attr("r"))
-            
-            let startAngle = 2*Math.PI*start_percentage;
-            let targetAngle = 2 * Math.PI*(start_percentage+percentage);
+            var prev_percentage = parseFloat(d.pos_sent)/(d.pos_sent+Math.abs(d.neg_sent)+Math.abs(d.neu_sent))
+            let prev_offsetAngle = 2 * Math.PI*(0+prev_percentage);
+
+            let startAngle = (1/2)*Math.PI + prev_offsetAngle/2; 
+            let offsetAngle = 2 * Math.PI*(percentage);
+            let targetAngle = startAngle + offsetAngle
             let i = d3.interpolate(startAngle, targetAngle);
             return function(t) {
                 let currentAngle = i(t);
@@ -253,11 +254,20 @@ export function applyNodeStyling(
         .duration(animate_duration)
         .tween('ring-effect', function(d) {
             var percentage = Math.abs(d.neu_sent)/(d.pos_sent+Math.abs(d.neg_sent)+Math.abs(d.neu_sent))
-            var start_percentage = parseFloat(d.pos_sent + Math.abs(d.neg_sent))/(d.pos_sent+Math.abs(d.neg_sent)+Math.abs(d.neu_sent))
             var radius = parseFloat(d3.select(this.parentNode.parentNode).attr("r"))
+
+            var prev_percentage = parseFloat(d.pos_sent + Math.abs(d.neg_sent))/(d.pos_sent+Math.abs(d.neg_sent)+Math.abs(d.neu_sent))
+            var pos_percentage = parseFloat(d.pos_sent)/(d.pos_sent+Math.abs(d.neg_sent)+Math.abs(d.neu_sent))
+            let prev_offsetAngle = 2 * Math.PI*(0+prev_percentage);
+            let pos_offsetAngle = 2 * Math.PI*(0+pos_percentage);
+
+            let startAngle = (1/2)*Math.PI  - pos_offsetAngle/2 + prev_offsetAngle; 
+            let offsetAngle = 2 * Math.PI*(percentage);
+            let targetAngle = startAngle + offsetAngle
+
             
-            let startAngle = 2*Math.PI*start_percentage;
-            let targetAngle = 2 * Math.PI*(start_percentage+percentage);
+            // let startAngle = 2*Math.PI*start_percentage;
+            // let targetAngle = 2 * Math.PI*(start_percentage+percentage);
             let i = d3.interpolate(startAngle, targetAngle);
             return function(t) {
                 let currentAngle = i(t);

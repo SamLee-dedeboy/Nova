@@ -335,6 +335,7 @@ export default defineComponent({
                 if(self.animating_click) return
                 const container = d3.select(this)
                 const selected_entity = container.data()[0].text
+                console.log("🚀 ~ file: Graph.vue ~ line 334 ~ .on ~ d", d.sentiment)
 
                 // clicking on an already selected node, should unselect it
                 // and remove from selected list
@@ -741,6 +742,7 @@ export default defineComponent({
                 )
                 .selectAll("line.edge_entity")
                 .style("cursor", "pointer")
+                .style("filter", `brightness(${SstColors.brightness}%)`)
                 .attr("x1", function(d) { 
                     const x = entity_graph[d.source].x 
                     d3.select(this.parentNode).select("line.expand_edge_entity").attr("x1", x)
