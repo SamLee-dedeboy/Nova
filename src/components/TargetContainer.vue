@@ -32,7 +32,7 @@ export default ({
                 {label: "avg_score", value: "avg_score"},
                 {label: "score", value: "score"},
                 {label: "#articles", value: "#articles"}],
-            selected_mode: "#articles",
+            selected_mode: "score",
         }
     },
     computed: {
