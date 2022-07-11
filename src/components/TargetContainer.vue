@@ -133,7 +133,7 @@ export default ({
                 // const neg_sst = articles.map(article => article.sentiment.neg).reduce((sum, cur) => sum + cur, 0)
                 // const neu_sst = 0
                 const sst_df = new dfd.DataFrame(articles.map(article=>article.sentiment))
-                const neu_threshold = 0.2
+                const neu_threshold = 0.1
                 // const pos_sst = sst_df.iloc({rows: sst_df["normalized_sst"].gt(neu_threshold)}).count({axis:0}).at("normalized_sst",1) || 0
                 // const neg_sst = sst_df.iloc({rows: sst_df["normalized_sst"].lt(-neu_threshold)}).count({axis:0}).at("normalized_sst",1) || 0
                 // const neu_sst = sst_df.iloc({rows: sst_df["normalized_sst"].lt(neu_threshold).and(sst_df["normalized_sst"].gt(-neu_threshold))}).count({axis:0}).at("normalized_sst",1) || 0
@@ -149,7 +149,10 @@ export default ({
                 // const neu_pos_sst = (1/neu_threshold)*neu_pos_dfs.sum({axis:0}).at("normalized_sst",1) || 0
                 // const neu_neg_sst = (1/neu_threshold)*neu_neg_dfs.sum({axis:0}).at("normalized_sst",1) || 0
                 const neu_sst = Math.abs(neu_neg_sst) + neu_pos_sst 
-
+                const mean = sst_df["normalized_sst"].mean()
+                const median = sst_df["normalized_sst"].median()
+                const std = sst_df["normalized_sst"].std()
+                const avg_score = 3*(mean-median)/std 
 
                 const pos_atcs = pos_dfs.count({axis:0}).at("normalized_sst", 1) || 0
                 const neg_atcs = neg_dfs.count({axis:0}).at("normalized_sst", 1) || 0
@@ -166,8 +169,13 @@ export default ({
                     sst_array = [pos_sst/pos_atcs, Math.abs(neg_sst)/neg_atcs, Math.abs(neu_sst)/neu_atcs]
                     sentiment = classes[sst_array.indexOf(Math.max(...sst_array))]
                 } else if (this.selected_mode === "score") {
-                    sst_array = [pos_sst, Math.abs(neg_sst), Math.abs(neu_sst)]
-                    sentiment = classes[sst_array.indexOf(Math.max(...sst_array))]
+                    if(avg_score > neu_threshold) sentiment = 'pos'
+                    else if(avg_score < -neu_threshold) sentiment = 'neg'
+                    else sentiment = 'neu'
+                    console.log("🚀 ~ file: TargetContainer.vue ~ line 174 ~ construct_node ~ sentiment", avg_score, sentiment)
+
+                    // sst_array = [pos_sst, Math.abs(neg_sst), Math.abs(neu_sst)]
+                    // sentiment = classes[sst_array.indexOf(Math.max(...sst_array))]
                 } else if(this.selected_mode === "#articles") {
                     sst_array = [pos_atcs, neg_atcs, neu_atcs]
                     sentiment = classes[sst_array.indexOf(Math.max(...sst_array))]
@@ -197,8 +205,8 @@ export default ({
 </script>
 
 <template>
-<TabView>
-    <TabPanel v-for="(target, index) in targets" :key="target" :header="targets[0]" >
+<TabView class="graph-container">
+    <TabPanel class="graph-panel" v-for="(target, index) in targets" :key="target" :header="targets[0]" >
         <Graph 
             class="graph"
             :graph="graph_dict[target]"
@@ -228,6 +236,10 @@ export default ({
 </template>
 
 <style scoped>
+.graph-container .graph-panel {
+    width: inherit;
+    height: inherit;
+}
 .dropdown-container {
     position: absolute;
     left: 88.2%;
@@ -247,6 +259,8 @@ export default ({
     top:-75px;
 }
 .graph {
+    width: inherit;
+    height: inherit;
     /* height: 600px; */
 }
 .time-axes {

@@ -953,7 +953,9 @@ export default defineComponent({
 } */
 .graph {
    display: inline-block; 
-    overflow: visible;
+   overflow: visible;
+   width: inherit;
+   height: inherit;
 }
 .controll-panel {
     min-width: 110px;

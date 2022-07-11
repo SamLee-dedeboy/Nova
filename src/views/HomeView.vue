@@ -40,7 +40,8 @@ export default {
       np_list:[],
       selected_target:[],
       timeRange:[1,13],
-      outlet_article_dict: {}
+      outlet_article_dict: {},
+      dataset_matadata: {},
     }
   },
   methods: {
@@ -51,6 +52,7 @@ export default {
       // this.topic_list = Object.keys(dataset.topic_dict)
       this.np_list = np_list
       this.outlet_article_dict
+      this.dataset_metadata = this.$refs.toolbar.getMetaData()  
     }, 
     updateEnabledOutlet(outlet_set_info) {
       this.enabled_outlet_set = outlet_set_info.filter(outlet => outlet.enabled).map(outlet => outlet.outlet)
@@ -159,10 +161,10 @@ export default {
 
 <template>
   <main>
-    <Splitter style="height:120vh" layout="vertical">
-      <SplitterPanel id="overview-section" class="flex align-items-center justify-content-center" :size="80">
+    <Splitter class="splitter-outmost" layout="vertical">
+      <SplitterPanel id="overview-section" class="flex align-items-center justify-content-center" :size="78">
         <Splitter>
-          <SplitterPanel id='target-section' class="flex align-items-center justify-content-center" :size="85"> 
+          <SplitterPanel id='target-section' class="flex align-items-center justify-content-center" :size="75"> 
             <TargetContainer
             :articles="normalized_articles"
             :enabled_outlet_set="enabled_outlet_set"
@@ -171,10 +173,10 @@ export default {
             >
             </TargetContainer>
           </SplitterPanel>
-          <SplitterPanel id='sidebar' class="flex align-items-center justify-content-center" :size="20" :min-size="20">
+          <SplitterPanel id='sidebar' class="flex align-items-center justify-content-center" :size="25" :min-size="20">
             <MyToolbar ref="toolbar" @candidate_updated="updateNpList"  ></MyToolbar>
             <div class="selection_container" style="display:flex">
-              <TargetSelection v-if="np_list.length!=0" :targets="entity_data" @target-selected="updateTarget"></TargetSelection>
+              <TargetSelection v-if="np_list.length!=0" :dataset_metadata="dataset_metadata" :targets="entity_data" @target-selected="updateTarget"></TargetSelection>
               <!-- <TopicSelection  v-if="topic_list.length!=0"  :topics="topic_list" @topic-selected="updateTopic" style="flex:0.5"></TopicSelection> -->
             </div>
             <Filter v-if="selected_target.length!=0" :outlet_set="outlet_set"
@@ -185,16 +187,16 @@ export default {
           </SplitterPanel>
         </Splitter>
       </SplitterPanel>
-      <SplitterPanel id='detail-section' class="flex align-items-center justify-content-center" :size="20">
+      <!-- <SplitterPanel id='detail-section' class="flex align-items-center justify-content-center" :size="22">
         <p> detail </p>
-      </SplitterPanel>
+      </SplitterPanel> -->
     </Splitter>
   </main>
 </template>
 
 <style scoped>
-main {
-  max-width:1280px;
+.splitter-outmost {
+  width: 97vw;
+  height: 95vh;
 }
-
 </style>
