@@ -19,6 +19,7 @@ export default {
         }
     },
     async mounted() {
+        // await fetch("candidate_entities.json")
         await fetch("candidate_entities.json")
             .then(res => res.json())
             .then(json => {
@@ -57,6 +58,12 @@ export default {
             const article_id_list = this.np_article_dict[target_entity] 
             var self = this
             return article_id_list.reduce(function(article_list, id) { article_list.push(self.article_dict[id]); return article_list; }, [])
+        },
+        getMetaData() {
+            return {
+                total_articles: this.articles.length,
+                entities: this.entity_mentions.length,
+            }
         },
         
         testClicked() {

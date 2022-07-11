@@ -18,7 +18,7 @@ export default defineComponent({
         Tooltip,
         InfoButton,
     },
-    props:['targets'],
+    props:['targets', 'dataset_metadata'],
     emits: ["target-selected"],
     computed: {
         target_list: function() {
@@ -92,7 +92,14 @@ export default defineComponent({
                     <span>
                         <InputText v-model="filters['global'].value" placeholder="Search by Name" />
                     </span>
-                    <InfoButton class='info-button' :info_content="'wikipedia entity with #(mentioned articles)'"
+                    <InfoButton class='info-button'
+                     :info_content="`
+                     <b>Dataset Metadata:</b><br>
+                     Total articles: <b>${dataset_metadata.total_articles}</b> <br>
+                     #Candidate_entities: <b>${dataset_metadata.entities}</b> <br>
+                     Name: <b>Wiki_entity id</b> <br>
+                     Freq: <b>#(mentioned_articles)</b>
+                     `"
                         style="display:contents"
                     ></InfoButton>
 
@@ -169,7 +176,10 @@ export default defineComponent({
 }
 :deep(.tooltip) {
     position:absolute;
-    left:-20px; 
-    top:-25px;
+    left:9px; 
+    top:-100px;
+}
+.info-button {
+    font-weight: bold;
 }
 </style>

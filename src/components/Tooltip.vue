@@ -32,5 +32,6 @@ export default {
     padding: 5px;
     pointer-events: none;
     transform-origin: top left;
+    z-index: 1000;
 }
 </style>
