@@ -17,7 +17,14 @@ const color_dict = {
     "neg": neg_color,
     "neu": neu_color,
 }
-
+const outlet_color_dict = {
+    "CNN": "rgb(205 0 0)",
+    "FoxNews": "rgb(0 51 102)",
+    "Breitbart": "rgb(247 82 0)",
+    "ABC News": "rgb(0 37 96)",
+    "New York Times": "rgb(17 17 17)",
+    "Washington Post": "#b7b7b8"
+}
 export {
     brightness,
     sst_range,
@@ -27,4 +34,5 @@ export {
     entity_selected_color,
     key_color_pair,
     color_dict,
+    outlet_color_dict,
 }
