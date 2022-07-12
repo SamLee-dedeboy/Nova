@@ -27,10 +27,6 @@ watch(() => props.node, (node, prev_node) => {
     updateBars(node, prev_node)
 })
 
-// onMounted(() => {
-//     if(props.node === undefined) return
-//     updateBars(props.node, undefined)
-// }) 
 function updateBars(node, prev_node) {
     const node_articles = (node.pos_articles || 0) + (node.neg_articles || 0) + (node.neu_articles || 0)
     // articles

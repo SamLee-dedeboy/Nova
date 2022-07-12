@@ -61,8 +61,9 @@ def gen_candidate_entities(filepath="data/rel_entities_ner.json", min_mentions=5
     file = open(filepath)
     entity_dict = json.load(file)
     sorted_entity_list = sorted(entity_dict.items(), key=lambda item: len(item[1]), reverse=True)
-    candidates = dict({"ranked_entity_list": list(filter(lambda entity: len(entity[1]) >= min_mentions, sorted_entity_list))})
-    dict_to_json(candidates, filepath="data/candidate_entities.json")
+    # candidates = dict({"ranked_entity_list": list(filter(lambda entity: len(entity[1]) >= min_mentions, sorted_entity_list))})
+    # dict_to_json(candidates, filepath="data/candidate_entities.json")
+    dict_to_json(dict({"ranked_entity_list": sorted_entity_list}), filepath="data/entities.json")
 
 def gen_entity_cooccurrence(filepath="data/candidate_entities.json"):
     file = open(filepath)
@@ -81,33 +82,37 @@ def gen_entity_cooccurrence(filepath="data/candidate_entities.json"):
 
 # import json
 # import csv
-filepath="data/processed_articles_rel_hugFace.json"
-dirname = os.path.dirname(__file__)
-relative_path = os.path.join(dirname, filepath)
-file = open(filepath)
-articles = json.load(file)
-article_dict = {}
-pos_sentiments = []
-neg_sentiments = []
-for article in articles:
-    article_sentiment=article["sentiment"]
-    pos = article_sentiment["pos"]
-    neg = article_sentiment["neg"]
-    pos_sentiments.append(pos)
-    neg_sentiments.append(neg)
-def myNorm(input):
-    mean = np.mean(input)
-    std = np.std(input)
-    print(mean,std)
-    return [np.tanh((i-mean)/std) for i in input]
+gen_candidate_entities()
 
-def mySigmoid(x):
-    return 1/(1+np.exp(-x))
-pos_mean = np.mean(pos_sentiments)
-pos_std = np.std(pos_sentiments)
-neg_mean = np.mean(neg_sentiments)
-neg_std = np.std(neg_sentiments)
-meta_json = {"pos_mean": pos_mean, "pos_std": pos_std, "neg_mean": neg_mean, "neg_std": neg_std}
+# filepath="data/processed_articles_rel_hugFace.json"
+# dirname = os.path.dirname(__file__)
+# relative_path = os.path.join(dirname, filepath)
+# file = open(filepath)
+# articles = json.load(file)
+# article_dict = {}
+# pos_sentiments = []
+# neg_sentiments = []
+# for article in articles:
+#     article_sentiment=article["sentiment"]
+#     pos = article_sentiment["pos"]
+#     neg = article_sentiment["neg"]
+#     pos_sentiments.append(pos)
+#     neg_sentiments.append(neg)
+# def myNorm(input):
+#     mean = np.mean(input)
+#     std = np.std(input)
+#     print(mean,std)
+#     return [np.tanh((i-mean)/std) for i in input]
+
+# def mySigmoid(x):
+#     return 1/(1+np.exp(-x))
+# pos_mean = np.mean(pos_sentiments)
+# pos_std = np.std(pos_sentiments)
+# neg_mean = np.mean(neg_sentiments)
+# neg_std = np.std(neg_sentiments)
+# meta_json = {"pos_mean": pos_mean, "pos_std": pos_std, "neg_mean": neg_mean, "neg_std": neg_std}
+
+
 # pos_norm = myNorm(pos_sentiments)
 # neg_norm = myNorm(neg_sentiments)
 # import matplotlib.pyplot as plt
@@ -133,11 +138,11 @@ meta_json = {"pos_mean": pos_mean, "pos_std": pos_std, "neg_mean": neg_mean, "ne
 #         article_mention_json_list.append(entity_json)
 #     article_dict[article_id] = {"mention_list": article_mention_json_list}
 import csv
-csv_file = open("data/sentiment_metadata.csv", "w", encoding='utf-8', newline="")
-csv_writer = csv.writer(csv_file)
-count = 0
-csv_writer.writerow(["pos_mean", "pos_std", "neg_mean", "neg_std"])
-csv_writer.writerow([pos_mean, pos_std, neg_mean, neg_std])
+# csv_file = open("data/sentiment_metadata.csv", "w", encoding='utf-8', newline="")
+# csv_writer = csv.writer(csv_file)
+# count = 0
+# csv_writer.writerow(["pos_mean", "pos_std", "neg_mean", "neg_std"])
+# csv_writer.writerow([pos_mean, pos_std, neg_mean, neg_std])
 # for (article_id, sentiment) in article_dict.items():
 #     if count == 0:
 #         header = ["id", "sentiment"]
@@ -146,7 +151,7 @@ csv_writer.writerow([pos_mean, pos_std, neg_mean, neg_std])
 #     sentiment_string = json.dumps(sentiment)
 #     # mention_list_string = "{" + ",".join([str(mention) for mention in mention_list]) + "}"
 #     csv_writer.writerow([article_id, mention_list_string])
-csv_file.close()
+# csv_file.close()
 # --------
 # sorted_entity_list = sorted(entity_dict.items(), key=lambda item: len(item[1]), reverse=True)
 

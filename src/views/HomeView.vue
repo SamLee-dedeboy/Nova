@@ -46,14 +46,33 @@ export default {
   },
   methods: {
     updateNpList(np_list) {
+      console.log("🚀 ~ file: HomeView.vue ~ line 49 ~ updateNpList ~ np_list", np_list)
       // this.dataset = dataset
       // this.outlet_set = dataset.outlet_set
       // this.enabled_outlet_set = dataset.outlet_set
       // this.topic_list = Object.keys(dataset.topic_dict)
       this.np_list = np_list
-      this.outlet_article_dict
       this.dataset_metadata = this.$refs.toolbar.getMetaData()  
+
     }, 
+    processDataset(dataset) {
+      this.np_list = dataset.entity_mentions
+      this.dataset_metadata = dataset.metadata
+
+      // save raw dataset 
+      this.original_dataset = JSON.parse(JSON.stringify(dataset.articles))
+
+      // get time period
+      const dataset_articles = dataset.articles
+      dataset_articles.sort((a1, a2) => Date.parse(a1.timestamp) > Date.parse(a2.timestamp))
+      const startMonth = parseInt(dataset_articles[0].timestamp.split('-')[1])
+      const endMonth = parseInt(dataset_articles[dataset_articles.length-1].timestamp.split('-')[1])
+      this.timeRange = [startMonth, endMonth+1]
+      this.updateDicts(dataset_articles)
+
+
+
+    },
     updateEnabledOutlet(outlet_set_info) {
       this.enabled_outlet_set = outlet_set_info.filter(outlet => outlet.enabled).map(outlet => outlet.outlet)
     },
@@ -166,15 +185,18 @@ export default {
         <Splitter>
           <SplitterPanel id='target-section' class="flex align-items-center justify-content-center" :size="75"> 
             <TargetContainer
+            v-if="np_list.length!=0"
             :articles="normalized_articles"
             :enabled_outlet_set="enabled_outlet_set"
-            :targets="selected_target"
+            :entity_mentions="np_list"
             :selectedTimeRange="timeRange"
             >
             </TargetContainer>
           </SplitterPanel>
           <SplitterPanel id='sidebar' class="flex align-items-center justify-content-center" :size="25" :min-size="20">
-            <MyToolbar ref="toolbar" @candidate_updated="updateNpList"  ></MyToolbar>
+            <MyToolbar ref="toolbar" 
+            @candidate_updated="updateNpList"
+            @dataset_imported="processDataset"  ></MyToolbar>
             <div class="selection_container" style="display:flex">
               <TargetSelection v-if="np_list.length!=0" :dataset_metadata="dataset_metadata" :targets="entity_data" @target-selected="updateTarget"></TargetSelection>
               <!-- <TopicSelection  v-if="topic_list.length!=0"  :topics="topic_list" @topic-selected="updateTopic" style="flex:0.5"></TopicSelection> -->

@@ -7,6 +7,7 @@ import TimeAxes from './TimeAxes.vue'
 import * as dfd from "danfojs"
 import Dropdown from 'primevue/dropdown';
 import InfoButton from "./InfoButton.vue";
+import OutletScatter from "./OutletScatter.vue";
 
 
 export default ({
@@ -18,8 +19,9 @@ export default ({
       TimeAxes,
       Dropdown,
       InfoButton,
+      OutletScatter,
     },
-    props:['articles', 'enabled_outlet_set','targets', 'topic', 'selectedTimeRange'],
+    props:['articles', 'enabled_outlet_set','entity_mentions', 'topic', 'selectedTimeRange'],
     data() {
         return {
             entity_graph: {
@@ -33,47 +35,62 @@ export default ({
                 {label: "score", value: "score"},
                 {label: "#articles", value: "#articles"}],
             selected_mode: "score",
+            graph_constructed: false,
         }
     },
     computed: {
-        outlet_article_dict: function() {
+        article_dict: function() {
+            return this.articles.reduce((dict, article) => (dict[article.id]=article, dict), {})
+        },
+        // graph_dict: function() {
+        //     return this.constructOutletGraph()
+        // },
+        entity_list: function() {
+            return this.entity_mentions.map(entity_mention => entity_mention[0])
+        },
+    },
+    mounted() {
+        this.graph_dict = this.constructOutletGraph()
+        this.graph_constructed = true
+        console.log("🚀 ~ file: TargetContainer.vue ~ line 53 ~ mounted ~ graph_dict", this.graph_dict)
+    },
+
+    methods: {
+        outlet_article_dict(articles) {
             var outlet_article_dict = {} 
-            this.articles.forEach(article => {
+            articles.forEach(article => {
                 outlet_article_dict[article.journal] = outlet_article_dict[article.journal] || []
                 outlet_article_dict[article.journal].push(article.id)
             })
             return outlet_article_dict
         },
-        article_dict: function() {
-            return this.articles.reduce((dict, article) => (dict[article.id]=article, dict), {})
-        },
-        graph_dict: function() {
-            return this.constructOutletGraph()
-        }
-    },
-
-    methods: {
         constructOutletGraph() {
+            console.log("constructing graphs!")
             var graph_dict = {}
-            var graph = {
-                nodes: []
-            }
             var self = this
-            this.targets.forEach(target => {
+            this.entity_mentions.forEach(entity_mention => {
+                var graph = {
+                    nodes: []
+                }
+                const entity = entity_mention[0]
+                // get articles mentioneding this entity
+                const mentioned_articles = this.idsToArticles(entity_mention[1])
+                const outlet_article_dict = this.outlet_article_dict(mentioned_articles)
+
                 this.enabled_outlet_set.forEach(outlet => {
-                    const article_ids = this.outlet_article_dict[outlet]
+                    const article_ids = outlet_article_dict[outlet]
                     const articles = this.idsToArticles(article_ids)
                     const node = self.construct_node(articles, outlet) 
                     graph.nodes.push(node)
                 }) 
                 // center node
-                var center_node = self.construct_node(self.articles, target)
-                center_node["isCenter"] = true
-                graph.nodes.push(center_node)
-                graph_dict[target] = graph
+                // var center_node = self.construct_node(self.articles, target)
+                // center_node["isCenter"] = true
+                // graph.nodes.push(center_node)
+                graph_dict[entity] = graph
             })
+            console.log("construction done!")
             return graph_dict
-
         },
         idsToArticles(article_ids) {
             if(!article_ids) return []
@@ -83,7 +100,7 @@ export default ({
         handleNodeClicked(clicked_node) {
             this.$emit("node-clicked", clicked_node)        
             this.nodeClicked = true
-            const target = this.targets[0]
+            const target = this.entities[0]
             const articles = clicked_node.articles
             const max_node_num = 10
             // generate candidates that cooccur frequently with target
@@ -125,34 +142,48 @@ export default ({
             if(articles.length == 0) {
                 node = {
                     text: label,
-                    sentiment: 0,
-                    dotted: true,
+                    articles: 0,
+                    pos_sst: 0,
+                    neg_sst: 0,
                 }
+
+                // node = {
+                //     text: label,
+                //     sentiment: 0,
+                //     dotted: true,
+                // }
             } else {
                 // const pos_sst = articles.map(article => article.sentiment.pos).reduce((sum, cur) => sum + cur, 0)
                 // const neg_sst = articles.map(article => article.sentiment.neg).reduce((sum, cur) => sum + cur, 0)
                 // const neu_sst = 0
                 const sst_df = new dfd.DataFrame(articles.map(article=>article.sentiment))
                 const neu_threshold = 0.1
-                // const pos_sst = sst_df.iloc({rows: sst_df["normalized_sst"].gt(neu_threshold)}).count({axis:0}).at("normalized_sst",1) || 0
-                // const neg_sst = sst_df.iloc({rows: sst_df["normalized_sst"].lt(-neu_threshold)}).count({axis:0}).at("normalized_sst",1) || 0
-                // const neu_sst = sst_df.iloc({rows: sst_df["normalized_sst"].lt(neu_threshold).and(sst_df["normalized_sst"].gt(-neu_threshold))}).count({axis:0}).at("normalized_sst",1) || 0
-                const pos_dfs = sst_df.iloc({rows: sst_df["normalized_sst"].gt(neu_threshold)})
-                const neg_dfs = sst_df.iloc({rows: sst_df["normalized_sst"].lt(-neu_threshold)})
+                // const pos_dfs = sst_df.iloc({rows: sst_df["normalized_sst"].gt(neu_threshold)})
+                // const neg_dfs = sst_df.iloc({rows: sst_df["normalized_sst"].lt(-neu_threshold)})
+                const pos_dfs = sst_df.iloc({rows: sst_df["normalized_sst"].gt(0).or(sst_df["normalized_sst"].eq(0))})
+                const neg_dfs = sst_df.iloc({rows: sst_df["normalized_sst"].lt(0)})
+
                 const neu_pos_dfs = sst_df.iloc({rows: sst_df["normalized_sst"].lt(neu_threshold).and((sst_df["normalized_sst"].gt(0)))})
                 const neu_neg_dfs = sst_df.iloc({rows: (sst_df["normalized_sst"].lt(0).or(sst_df["normalized_sst"].eq(0))).and(sst_df["normalized_sst"].gt(-neu_threshold))})
 
-                const pos_sst = pos_dfs.sum({axis:0}).at("normalized_sst",1) || 0
-                const neg_sst = neg_dfs.sum({axis:0}).at("normalized_sst",1) || 0
-                const neu_pos_sst = neu_pos_dfs.sum({axis:0}).at("normalized_sst",1) || 0
-                const neu_neg_sst = neu_neg_dfs.sum({axis:0}).at("normalized_sst",1) || 0
+                // const pos_sst = pos_dfs.sum({axis:0}).at("normalized_sst",1) || 0
+                // const neg_sst = neg_dfs.sum({axis:0}).at("normalized_sst",1) || 0
+                const pos_sst = pos_dfs["normalized_sst"].mean()
+                const neg_sst = neg_dfs["normalized_sst"].mean()
+                // const neu_pos_sst = neu_pos_dfs.sum({axis:0}).at("normalized_sst",1) || 0
+                // const neu_neg_sst = neu_neg_dfs.sum({axis:0}).at("normalized_sst",1) || 0
                 // const neu_pos_sst = (1/neu_threshold)*neu_pos_dfs.sum({axis:0}).at("normalized_sst",1) || 0
                 // const neu_neg_sst = (1/neu_threshold)*neu_neg_dfs.sum({axis:0}).at("normalized_sst",1) || 0
-                const neu_sst = Math.abs(neu_neg_sst) + neu_pos_sst 
-                const mean = sst_df["normalized_sst"].mean()
-                const median = sst_df["normalized_sst"].median()
-                const std = sst_df["normalized_sst"].std()
-                const avg_score = 3*(mean-median)/std 
+                // const neu_sst = Math.abs(neu_neg_sst) + neu_pos_sst 
+                const pos_mean = pos_dfs["normalized_sst"].mean()
+                const pos_median = pos_dfs["normalized_sst"].median()
+                const pos_std = pos_dfs["normalized_sst"].std()
+                const pos_score = Math.tanh(3*(pos_mean-pos_median)/pos_std)
+                const neg_mean = neg_dfs["normalized_sst"].mean()
+                const neg_median = neg_dfs["normalized_sst"].median()
+                const neg_std = neg_dfs["normalized_sst"].std()
+                const neg_score = Math.tanh(3*(neg_mean-neg_median)/neg_std)
+                const avg_score = 3
 
                 const pos_atcs = pos_dfs.count({axis:0}).at("normalized_sst", 1) || 0
                 const neg_atcs = neg_dfs.count({axis:0}).at("normalized_sst", 1) || 0
@@ -172,7 +203,6 @@ export default ({
                     if(avg_score > neu_threshold) sentiment = 'pos'
                     else if(avg_score < -neu_threshold) sentiment = 'neg'
                     else sentiment = 'neu'
-                    console.log("🚀 ~ file: TargetContainer.vue ~ line 174 ~ construct_node ~ sentiment", avg_score, sentiment)
 
                     // sst_array = [pos_sst, Math.abs(neg_sst), Math.abs(neu_sst)]
                     // sentiment = classes[sst_array.indexOf(Math.max(...sst_array))]
@@ -182,18 +212,24 @@ export default ({
                 }
                 node = {
                     text: label,
-                    sentiment: sentiment, 
-                    pos_articles: pos_atcs,
-                    neg_articles: neg_atcs,
-                    neu_articles: neu_atcs,
-                    pos_sent: pos_sst,
-                    neg_sent: neg_sst,
-                    neu_sent: neu_sst,
-                    neu_pos_sent: neu_pos_sst,
-                    neu_neg_sent: neu_neg_sst,
-                    articles: articles,
-                    dotted: false 
+                    articles: articles.length,
+                    pos_sst: pos_score,
+                    neg_sst: neg_score,
                 }
+                // node = {
+                //     text: label,
+                //     sentiment: sentiment, 
+                //     pos_articles: pos_atcs,
+                //     neg_articles: neg_atcs,
+                //     neu_articles: neu_atcs,
+                //     pos_sent: pos_sst,
+                //     neg_sent: neg_sst,
+                //     neu_sent: neu_sst,
+                //     neu_pos_sent: neu_pos_sst,
+                //     neu_neg_sent: neu_neg_sst,
+                //     articles: articles.length,
+                //     dotted: false 
+                // }
             }
             return node
         },
@@ -206,8 +242,8 @@ export default ({
 
 <template>
 <TabView class="graph-container">
-    <TabPanel class="graph-panel" v-for="(target, index) in targets" :key="target" :header="targets[0]" >
-        <Graph 
+    <TabPanel class="graph-panel" header="Overview" >
+        <!-- <Graph 
             class="graph"
             :graph="graph_dict[target]"
             :graph_index="index"
@@ -217,19 +253,30 @@ export default ({
             :opacityThreshold="opacityThreshold"
             @node-clicked="handleNodeClicked"
             >
-        </Graph >
-        <TimeAxes class='time-axes' v-if="targets.length!=0" :selectedTimeRange="selectedTimeRange"></TimeAxes>
-        <div class="dropdown-container">
-            <div class="dropdown-header-container">
-                <div class="dropdown-header"> Classifier </div>
-                <InfoButton class='clf-info' info_content="Choose a mode to classify nodes as 'pos'/'neg'/'neu'"></InfoButton>
-            </div>
-            <Dropdown class="clf-dropdown" 
-            v-model="selected_mode" 
-            :options="modes" 
-            optionLabel="label" 
-            optionValue="value"
-            placeholder="Select a clfer" />
+        </Graph > -->
+        <div class="entity-grid-container" v-if="graph_constructed">
+            <OutletScatter
+            v-for="(entity, index) in entity_list" :key="entity" 
+            class="outlet-scatter"
+            :graph="graph_dict[entity]"
+            :graph_index="index"
+            :id="`scatter-${index}`"
+            style="width: "
+            >
+            </OutletScatter>
+            <!-- <TimeAxes class='time-axes' v-if="targets.length!=0" :selectedTimeRange="selectedTimeRange"></TimeAxes> -->
+            <!-- <div class="dropdown-container">
+                <div class="dropdown-header-container">
+                    <div class="dropdown-header"> Classifier </div>
+                    <InfoButton class='clf-info' info_content="Choose a mode to classify nodes as 'pos'/'neg'/'neu'"></InfoButton>
+                </div>
+                <Dropdown class="clf-dropdown" 
+                v-model="selected_mode" 
+                :options="modes" 
+                optionLabel="label" 
+                optionValue="value"
+                placeholder="Select a clfer" />
+            </div> -->
         </div>
     </TabPanel>
 </TabView>
@@ -261,11 +308,16 @@ export default ({
 .graph {
     width: inherit;
     height: inherit;
-    /* height: 600px; */
 }
 .time-axes {
     position:absolute;
     top:23%;
     left:2%;
+}
+.entity-grid-container {
+    display: grid;
+    height: 97vh;
+    grid-template-columns: repeat(10, 1fr);
+    grid-template-rows: repeat(4, 1fr);  
 }
 </style>
