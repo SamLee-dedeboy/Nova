@@ -69,6 +69,7 @@ export default {
             return {
                 total_articles: this.articles.length,
                 entities: this.entity_mentions.length,
+                outlets: ["CNN", "FoxNews", "Breitbart", "ABC News", "New York Times", "Washington Post"]
             }
         },
         
@@ -76,7 +77,7 @@ export default {
             this.$emit("dataset_imported", 
             {articles: this.articles, 
             entity_mentions: this.entity_mentions,
-            metadata: {total_articles: this.articles.length, entities: this.entity_mentions.length}})
+            metadata: this.getMetaData()})
 
 //            this.$emit("candidate_updated", this.entity_mentions);
         }

@@ -63,8 +63,6 @@ watch(() => props.graph, (graph, prev_graph) => {
 })
 
 function updateGraph(graph) {
-    if(props.expanded)
-        console.log("🚀 ~ file: OutletScatter.vue ~ line 66 ~ updateGraph ~ graph", graph)
     const svg = d3.select(`#${props.id}`).select("svg")
     const article_radius_scale = d3.scalePow()
     .exponent(1)

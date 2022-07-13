@@ -59,14 +59,6 @@ export default ({
     },
 
     methods: {
-        outlet_article_dict(articles) {
-            var outlet_article_dict = {} 
-            articles.forEach(article => {
-                outlet_article_dict[article.journal] = outlet_article_dict[article.journal] || []
-                outlet_article_dict[article.journal].push(article.id)
-            })
-            return outlet_article_dict
-        },
         constructOutletGraph() {
             console.log("constructing graphs!")
             var graph_dict = {}
@@ -94,11 +86,6 @@ export default ({
             })
             console.log("construction done!")
             return graph_dict
-        },
-        idsToArticles(article_ids) {
-            if(!article_ids) return []
-            var self = this
-            return article_ids.reduce(function(article_list, id) { article_list.push(self.article_dict[id]); return article_list; }, [])
         },
         handleScatterClicked(index) {
             const clicked_entity = this.entity_mentions[index][0]
@@ -146,108 +133,6 @@ export default ({
             this.cooccur_matrix = cooccur_matrix
             this.clicked_outlet = clicked_node.text
         },
-        construct_node(articles, label) {
-            let node = {}
-            if(articles.length == 0) {
-                node = {
-                    text: label,
-                    articles: 0,
-                    pos_sst: 0,
-                    neg_sst: 0,
-                }
-
-                // node = {
-                //     text: label,
-                //     sentiment: 0,
-                //     dotted: true,
-                // }
-            } else {
-                // const pos_sst = articles.map(article => article.sentiment.pos).reduce((sum, cur) => sum + cur, 0)
-                // const neg_sst = articles.map(article => article.sentiment.neg).reduce((sum, cur) => sum + cur, 0)
-                // const neu_sst = 0
-                const sst_df = new dfd.DataFrame(articles.map(article=>article.sentiment))
-                const neu_threshold = 0.1
-                // const pos_dfs = sst_df.iloc({rows: sst_df["normalized_sst"].gt(neu_threshold)})
-                // const neg_dfs = sst_df.iloc({rows: sst_df["normalized_sst"].lt(-neu_threshold)})
-                const pos_dfs = sst_df.iloc({rows: sst_df["normalized_sst"].gt(0).or(sst_df["normalized_sst"].eq(0))})
-                const neg_dfs = sst_df.iloc({rows: sst_df["normalized_sst"].lt(0)})
-
-                const neu_pos_dfs = sst_df.iloc({rows: sst_df["normalized_sst"].lt(neu_threshold).and((sst_df["normalized_sst"].gt(0)))})
-                const neu_neg_dfs = sst_df.iloc({rows: (sst_df["normalized_sst"].lt(0).or(sst_df["normalized_sst"].eq(0))).and(sst_df["normalized_sst"].gt(-neu_threshold))})
-
-                // const pos_sst = pos_dfs.sum({axis:0}).at("normalized_sst",1) || 0
-                // const neg_sst = neg_dfs.sum({axis:0}).at("normalized_sst",1) || 0
-                const pos_sst = pos_dfs["normalized_sst"].mean()
-                const neg_sst = neg_dfs["normalized_sst"].mean()
-                // const neu_pos_sst = neu_pos_dfs.sum({axis:0}).at("normalized_sst",1) || 0
-                // const neu_neg_sst = neu_neg_dfs.sum({axis:0}).at("normalized_sst",1) || 0
-                // const neu_pos_sst = (1/neu_threshold)*neu_pos_dfs.sum({axis:0}).at("normalized_sst",1) || 0
-                // const neu_neg_sst = (1/neu_threshold)*neu_neg_dfs.sum({axis:0}).at("normalized_sst",1) || 0
-                // const neu_sst = Math.abs(neu_neg_sst) + neu_pos_sst 
-                const pos_mean = pos_dfs["normalized_sst"].mean()
-                const pos_median = pos_dfs["normalized_sst"].median()
-                const pos_std = pos_dfs["normalized_sst"].std()
-                const pos_score = this.sigmoid(3*(pos_mean-pos_median)/pos_std) || 0
-                const neg_mean = neg_dfs["normalized_sst"].mean()
-                const neg_median = neg_dfs["normalized_sst"].median()
-                const neg_std = neg_dfs["normalized_sst"].std()
-                const neg_score = this.sigmoid(3*(neg_mean-neg_median)/neg_std)
-                const avg_score = 3
-
-                const pos_atcs = pos_dfs.count({axis:0}).at("normalized_sst", 1) || 0
-                const neg_atcs = neg_dfs.count({axis:0}).at("normalized_sst", 1) || 0
-                const neu_pos_atcs = neu_pos_dfs.count({axis:0}).at("normalized_sst", 1) || 0
-                const neu_neg_atcs = neu_neg_dfs.count({axis:0}).at("normalized_sst", 1) || 0
-                const neu_atcs = neu_pos_atcs + neu_neg_atcs
-                // const pos_sst = sst_df.iloc({rows: sst_df["normalized_sst"].gt(neu_threshold)}).at("normalized_sst",1) || 0
-                // const neg_sst = sst_df.iloc({rows: sst_df["normalized_sst"].lt(-neu_threshold)}).at("normalized_sst",1) || 0
-                // const neu_sst = sst_df.iloc({rows: sst_df["normalized_sst"].lt(neu_threshold).and(sst_df["normalized_sst"].gt(-neu_threshold))}).at("normalized_sst",1) || 0
-                let sst_array;
-                let sentiment;
-                const classes = ["pos", "neg", "neu"]
-                if(this.selected_mode === "avg_score") {
-                    sst_array = [pos_sst/pos_atcs, Math.abs(neg_sst)/neg_atcs, Math.abs(neu_sst)/neu_atcs]
-                    sentiment = classes[sst_array.indexOf(Math.max(...sst_array))]
-                } else if (this.selected_mode === "score") {
-                    if(avg_score > neu_threshold) sentiment = 'pos'
-                    else if(avg_score < -neu_threshold) sentiment = 'neg'
-                    else sentiment = 'neu'
-
-                    // sst_array = [pos_sst, Math.abs(neg_sst), Math.abs(neu_sst)]
-                    // sentiment = classes[sst_array.indexOf(Math.max(...sst_array))]
-                } else if(this.selected_mode === "#articles") {
-                    sst_array = [pos_atcs, neg_atcs, neu_atcs]
-                    sentiment = classes[sst_array.indexOf(Math.max(...sst_array))]
-                }
-                node = {
-                    text: label,
-                    articles: articles.length,
-                    pos_sst: pos_score,
-                    neg_sst: neg_score,
-                }
-                // node = {
-                //     text: label,
-                //     sentiment: sentiment, 
-                //     pos_articles: pos_atcs,
-                //     neg_articles: neg_atcs,
-                //     neu_articles: neu_atcs,
-                //     pos_sent: pos_sst,
-                //     neg_sent: neg_sst,
-                //     neu_sent: neu_sst,
-                //     neu_pos_sent: neu_pos_sst,
-                //     neu_neg_sent: neu_neg_sst,
-                //     articles: articles.length,
-                //     dotted: false 
-                // }
-            }
-            return node
-        },
-        normalization(x, mean, std) {
-            return Math.tanh((x-mean)/std)
-        },
-        sigmoid(x) {
-            return 1/(1+Math.exp(-x))
-        }
     }
 })
 </script>
@@ -266,18 +151,6 @@ export default ({
             @node-clicked="handleNodeClicked"
             >
         </Graph > -->
-        <div class="entity-grid-container" v-if="graph_constructed" >
-            <OutletScatter
-                v-for="(entity, index) in entity_list" :key="entity" 
-                class="outlet-scatter"
-                :graph="graph_dict[entity]"
-                :graph_index="index"
-                :id="`scatter-${index}`"
-                style="cursor: pointer"
-                expanded="false"
-                @click="handleScatterClicked(index)"
-            >
-            </OutletScatter>
             <!-- <TimeAxes class='time-axes' v-if="targets.length!=0" :selectedTimeRange="selectedTimeRange"></TimeAxes> -->
             <!-- <div class="dropdown-container">
                 <div class="dropdown-header-container">
@@ -291,7 +164,7 @@ export default ({
                 optionValue="value"
                 placeholder="Select a clfer" />
             </div> -->
-        </div>
+        <!-- </div> -->
         <OutletScatter
         v-if="scatterClicked"
         :graph="clickedScatter.graph"
@@ -336,17 +209,6 @@ export default ({
     position:absolute;
     top:23%;
     left:2%;
-}
-.entity-grid-container {
-    display: grid;
-    height: 90vh;
-    width: 95vh;
-    grid-template-columns: repeat(7, 1fr);
-    grid-template-rows: repeat(7, 1fr);  
-}
-:deep(.outlet-scatter:hover .outlet-scatterplot) {
-    filter: brightness(80%);
-    background-color: rgb(191, 189, 189);
 }
 :deep(.p-tabview-panel) {
     display: flex;

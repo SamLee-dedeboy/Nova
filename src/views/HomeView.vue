@@ -10,6 +10,8 @@ import ArticleView from "../components/ArticleView.vue";
 import TopicSelection from "../components/TopicSelection.vue";
 import TargetSelection from "../components/TargetSelection.vue"
 import MonthSlider from "../components/MonthSlider.vue"
+import OutletScatter from "../components/OutletScatter.vue";
+import * as preprocess from "../components/preprocessUtils.ts"
 export default {
   components: {
     Filter,
@@ -21,6 +23,7 @@ export default {
     TopicSelection,
     TargetSelection,
     MonthSlider,
+    OutletScatter,
 },
   data() {
     return {
@@ -40,13 +43,13 @@ export default {
       np_list:[],
       selected_target:[],
       timeRange:[1,13],
-      outlet_article_dict: {},
       dataset_matadata: {},
+      graph_constructed: false,
+      graph_dict: {},
     }
   },
   methods: {
     updateNpList(np_list) {
-      console.log("🚀 ~ file: HomeView.vue ~ line 49 ~ updateNpList ~ np_list", np_list)
       // this.dataset = dataset
       // this.outlet_set = dataset.outlet_set
       // this.enabled_outlet_set = dataset.outlet_set
@@ -68,10 +71,12 @@ export default {
       const startMonth = parseInt(dataset_articles[0].timestamp.split('-')[1])
       const endMonth = parseInt(dataset_articles[dataset_articles.length-1].timestamp.split('-')[1])
       this.timeRange = [startMonth, endMonth+1]
-      this.updateDicts(dataset_articles)
-
-
-
+      let {outlet_set, normalized_articles, article_dict} = preprocess.processArticles(dataset_articles)
+      this.enabled_outlet_set = outlet_set
+      this.articles = normalized_articles
+      this.article_dict = article_dict
+      this.graph_dict = preprocess.constructOutletGraph(this.np_list, this.enabled_outlet_set, this.article_dict)
+      this.graph_constructed = true
     },
     updateEnabledOutlet(outlet_set_info) {
       this.enabled_outlet_set = outlet_set_info.filter(outlet => outlet.enabled).map(outlet => outlet.outlet)
@@ -132,30 +137,6 @@ export default {
       this.timeRange = [startMonth, endMonth+1]
       this.updateDicts(target_articles)
     },
-    updateDicts(target_articles) {
-      const pos_mean = 12.506365768116687
-      const pos_std = 18.00385412093575
-      const neg_mean = -25.86358780825294
-      const neg_std = 29.437169285743654 
-
-      // clear
-      // for(let outlet of Object.keys(this.outlet_article_dict)) {
-      //   this.outlet_article_dict[outlet] = []
-      // }
-      var count = 0
-      for(var article of target_articles) {
-          // normalization
-          const pos = article.sentiment.pos
-          const neg = article.sentiment.neg
-          Object.assign(article.sentiment, {"normalized_sst": (Math.tanh((pos-pos_mean)/pos_std) + Math.tanh((neg-neg_mean)/neg_std))/2})
-          // outlet
-          this.outlet_article_dict[article.journal] = this.outlet_article_dict[article.journal] || []
-          this.outlet_article_dict[article.journal].push(article)
-      }
-      this.outlet_set = Object.keys(this.outlet_article_dict)
-      this.enabled_outlet_set = this.outlet_set
-      this.normalized_articles = target_articles
-    }
   },
   watch: {
     timeRange: function(new_range, old_range) {
@@ -163,7 +144,7 @@ export default {
         const startIndex = this.original_dataset.findIndex(article => parseInt(article.timestamp.split('-')[1]) >= new_range[0])
         const endIndex = this.original_dataset.findIndex(article => parseInt(article.timestamp.split('-')[1]) > new_range[1])
         const subset = this.original_dataset.slice(startIndex, (endIndex == -1? this.original_dataset.length : endIndex))
-        this.updateDicts(subset)
+        // this.updateDicts(subset)
       }
     }
   },
@@ -184,27 +165,41 @@ export default {
       <SplitterPanel id="overview-section" class="flex align-items-center justify-content-center" :size="100">
         <Splitter>
           <SplitterPanel id='target-section' class="flex align-items-center justify-content-center" :size="55"> 
-            <TargetContainer
+            <!-- <TargetContainer
             v-if="np_list.length!=0"
             :articles="normalized_articles"
             :enabled_outlet_set="enabled_outlet_set"
-            :entity_mentions="np_list"
+            :selected_entities="selected_entities"
             :selectedTimeRange="timeRange"
             >
-            </TargetContainer>
+            </TargetContainer> -->
           </SplitterPanel>
           <SplitterPanel id='sidebar' class="flex align-items-center justify-content-center" :size="45" :min-size="20">
             <MyToolbar ref="toolbar" 
             @candidate_updated="updateNpList"
             @dataset_imported="processDataset"  ></MyToolbar>
-            <div class="selection_container" style="display:flex">
-              <TargetSelection v-if="np_list.length!=0" :dataset_metadata="dataset_metadata" :targets="entity_data" @target-selected="updateTarget"></TargetSelection>
-              <!-- <TopicSelection  v-if="topic_list.length!=0"  :topics="topic_list" @topic-selected="updateTopic" style="flex:0.5"></TopicSelection> -->
+          <div class="entity-grid-container" v-if="graph_constructed" >
+            <OutletScatter
+                v-for="(entity, index) in entity_list" :key="entity" 
+                class="outlet-scatter"
+                :graph="graph_dict[entity]"
+                :graph_index="index"
+                :id="`scatter-${index}`"
+                style="cursor: pointer"
+                expanded="false"
+                @click="handleScatterClicked(index)"
+            >
+            </OutletScatter>
             </div>
-            <Filter v-if="selected_target.length!=0" :outlet_set="outlet_set"
+
+            <!-- <div class="selection_container" style="display:flex">
+              <TargetSelection v-if="np_list.length!=0" :dataset_metadata="dataset_metadata" :targets="entity_data" @target-selected="updateTarget"></TargetSelection>
+              <TopicSelection  v-if="topic_list.length!=0"  :topics="topic_list" @topic-selected="updateTopic" style="flex:0.5"></TopicSelection>
+            </div> -->
+            <!-- <Filter v-if="selected_target.length!=0" :outlet_set="outlet_set"
             @outlet-filtered="updateEnabledOutlet"
             ></Filter>
-          <MonthSlider v-if="selected_target.length!=0" v-model:selectedRange="timeRange" ></MonthSlider>
+          <MonthSlider v-if="selected_target.length!=0" v-model:selectedRange="timeRange" ></MonthSlider> -->
 
           </SplitterPanel>
         </Splitter>
@@ -220,5 +215,16 @@ export default {
 .splitter-outmost {
   width: 97vw;
   height: 95vh;
+}
+.entity-grid-container {
+    display: grid;
+    height: 90vh;
+    width: 95vh;
+    grid-template-columns: repeat(7, 1fr);
+    grid-template-rows: repeat(7, 1fr);  
+}
+:deep(.outlet-scatter:hover .outlet-scatterplot) {
+    filter: brightness(80%);
+    background-color: rgb(191, 189, 189);
 }
 </style>
