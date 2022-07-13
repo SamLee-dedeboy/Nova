@@ -9,7 +9,7 @@ import Dropdown from 'primevue/dropdown';
 import InfoButton from "./InfoButton.vue";
 import OutletScatter from "./OutletScatter.vue";
 import * as d3 from "d3"
-import { watch, onMounted, PropType} from 'vue'
+import { watch, onMounted, PropType, ref, Ref} from 'vue'
 import { ScatterOutletNode, ScatterOutletGraph } from "../types";
 
 const props = defineProps({
@@ -18,8 +18,8 @@ const props = defineProps({
     selectedScatters: Object as () => ScatterOutletGraph[],
     selectedTimeRange: Object as () => {start: number, end: number} 
 })
-let scatterClicked: Boolean = false
-var active: number = 0
+const scatterClicked: Ref<Boolean> = ref(false)
+const active: Ref<number> = ref(0)
         // data() {
         // return {
         //     entity_graph: {
@@ -48,8 +48,8 @@ var active: number = 0
     //     },
     // },
 watch(() => props.selectedScatters, (new_scatters, old_scatters) => {
-    active = props.selectedScatters?.length || 1 - 1 
-})
+    active.value = (props.selectedScatters?.length || 1) - 1 
+}, {deep:true})
 function handleNodeClicked(clicked_node) {
     this.$emit("node-clicked", clicked_node)        
     this.nodeClicked = true
