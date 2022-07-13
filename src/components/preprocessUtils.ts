@@ -82,19 +82,19 @@ export function processArticles(articles) {
     const neg_std = 29.437169285743654 
 
     let outlet_set = new Set<string>()
-    let article_dict: {[id: string]: any} = {}
+    let r_article_dict: {[id: string]: any} = {}
     for(var article of articles) {
         // normalization
         const pos = article.sentiment.pos
         const neg = article.sentiment.neg
         Object.assign(article.sentiment, {"normalized_sst": (Math.tanh((pos-pos_mean)/pos_std) + Math.tanh((neg-neg_mean)/neg_std))/2})
         // article dict
-        if(!article_dict[article.id]) article_dict[article.id] = []
-        article_dict[article.id] = article
+        if(!r_article_dict[article.id]) r_article_dict[article.id] = []
+        r_article_dict[article.id] = article
         outlet_set.add(article.journal)
     }
     const normalized_articles = articles
-    return {outlet_set, normalized_articles, article_dict}
+    return {outlet_set, normalized_articles, r_article_dict}
 }
 
 export function sliceDatasetByTime(range, articles) {
