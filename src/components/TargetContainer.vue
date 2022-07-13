@@ -8,7 +8,7 @@ import * as dfd from "danfojs"
 import Dropdown from 'primevue/dropdown';
 import InfoButton from "./InfoButton.vue";
 import OutletScatter from "./OutletScatter.vue";
-
+import * as d3 from "d3"
 
 export default ({
     components: {
@@ -36,6 +36,8 @@ export default ({
                 {label: "#articles", value: "#articles"}],
             selected_mode: "score",
             graph_constructed: false,
+            scatterClicked: false,
+            clickedScatter: {graph: {}, index: undefined},
         }
     },
     computed: {
@@ -52,6 +54,7 @@ export default ({
     mounted() {
         this.graph_dict = this.constructOutletGraph()
         this.graph_constructed = true
+
         console.log("🚀 ~ file: TargetContainer.vue ~ line 53 ~ mounted ~ graph_dict", this.graph_dict)
     },
 
@@ -96,6 +99,12 @@ export default ({
             if(!article_ids) return []
             var self = this
             return article_ids.reduce(function(article_list, id) { article_list.push(self.article_dict[id]); return article_list; }, [])
+        },
+        handleScatterClicked(index) {
+            const clicked_entity = this.entity_mentions[index][0]
+            this.clickedScatter.graph = this.graph_dict[clicked_entity],
+            this.clickedScatter.index = index 
+            this.scatterClicked = true
         },
         handleNodeClicked(clicked_node) {
             this.$emit("node-clicked", clicked_node)        
@@ -178,11 +187,11 @@ export default ({
                 const pos_mean = pos_dfs["normalized_sst"].mean()
                 const pos_median = pos_dfs["normalized_sst"].median()
                 const pos_std = pos_dfs["normalized_sst"].std()
-                const pos_score = Math.tanh(3*(pos_mean-pos_median)/pos_std)
+                const pos_score = this.sigmoid(3*(pos_mean-pos_median)/pos_std) || 0
                 const neg_mean = neg_dfs["normalized_sst"].mean()
                 const neg_median = neg_dfs["normalized_sst"].median()
                 const neg_std = neg_dfs["normalized_sst"].std()
-                const neg_score = Math.tanh(3*(neg_mean-neg_median)/neg_std)
+                const neg_score = this.sigmoid(3*(neg_mean-neg_median)/neg_std)
                 const avg_score = 3
 
                 const pos_atcs = pos_dfs.count({axis:0}).at("normalized_sst", 1) || 0
@@ -235,6 +244,9 @@ export default ({
         },
         normalization(x, mean, std) {
             return Math.tanh((x-mean)/std)
+        },
+        sigmoid(x) {
+            return 1/(1+Math.exp(-x))
         }
     }
 })
@@ -254,14 +266,16 @@ export default ({
             @node-clicked="handleNodeClicked"
             >
         </Graph > -->
-        <div class="entity-grid-container" v-if="graph_constructed">
+        <div class="entity-grid-container" v-if="graph_constructed" >
             <OutletScatter
-            v-for="(entity, index) in entity_list" :key="entity" 
-            class="outlet-scatter"
-            :graph="graph_dict[entity]"
-            :graph_index="index"
-            :id="`scatter-${index}`"
-            style="width: "
+                v-for="(entity, index) in entity_list" :key="entity" 
+                class="outlet-scatter"
+                :graph="graph_dict[entity]"
+                :graph_index="index"
+                :id="`scatter-${index}`"
+                style="cursor: pointer"
+                expanded="false"
+                @click="handleScatterClicked(index)"
             >
             </OutletScatter>
             <!-- <TimeAxes class='time-axes' v-if="targets.length!=0" :selectedTimeRange="selectedTimeRange"></TimeAxes> -->
@@ -278,11 +292,20 @@ export default ({
                 placeholder="Select a clfer" />
             </div> -->
         </div>
+        <OutletScatter
+        v-if="scatterClicked"
+        :graph="clickedScatter.graph"
+        :graph_index="clickedScatter.index"
+        :id="`scatter-expanded`"
+        expanded="true"
+        style="z-index: 1000; height:97vh; position:absolute;"
+        
+        ></OutletScatter>
     </TabPanel>
 </TabView>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .graph-container .graph-panel {
     width: inherit;
     height: inherit;
@@ -316,8 +339,17 @@ export default ({
 }
 .entity-grid-container {
     display: grid;
-    height: 97vh;
-    grid-template-columns: repeat(10, 1fr);
-    grid-template-rows: repeat(4, 1fr);  
+    height: 90vh;
+    width: 95vh;
+    grid-template-columns: repeat(7, 1fr);
+    grid-template-rows: repeat(7, 1fr);  
 }
+:deep(.outlet-scatter:hover .outlet-scatterplot) {
+    filter: brightness(80%);
+    background-color: rgb(191, 189, 189);
+}
+:deep(.p-tabview-panel) {
+    display: flex;
+}
+
 </style>

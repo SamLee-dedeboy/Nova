@@ -181,9 +181,9 @@ export default {
 <template>
   <main>
     <Splitter class="splitter-outmost" layout="vertical">
-      <SplitterPanel id="overview-section" class="flex align-items-center justify-content-center" :size="78">
+      <SplitterPanel id="overview-section" class="flex align-items-center justify-content-center" :size="100">
         <Splitter>
-          <SplitterPanel id='target-section' class="flex align-items-center justify-content-center" :size="75"> 
+          <SplitterPanel id='target-section' class="flex align-items-center justify-content-center" :size="55"> 
             <TargetContainer
             v-if="np_list.length!=0"
             :articles="normalized_articles"
@@ -193,7 +193,7 @@ export default {
             >
             </TargetContainer>
           </SplitterPanel>
-          <SplitterPanel id='sidebar' class="flex align-items-center justify-content-center" :size="25" :min-size="20">
+          <SplitterPanel id='sidebar' class="flex align-items-center justify-content-center" :size="45" :min-size="20">
             <MyToolbar ref="toolbar" 
             @candidate_updated="updateNpList"
             @dataset_imported="processDataset"  ></MyToolbar>

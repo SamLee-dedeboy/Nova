@@ -1,5 +1,6 @@
 <template>
-<div :id="props.id" class="scatter-container">
+<div :id="props.id" class="scatter-container" @click="expandScatter">
+ 
     <svg class="outlet-scatterplot"></svg>
 
 </div>
@@ -29,6 +30,7 @@ const props = defineProps({
     },
     graph_index: Number,
     id: String,
+    expanded: Boolean,
 })
 const viewBox = [1000, 1000]
 const outlet_min_radius = 10
@@ -41,7 +43,7 @@ const y = d3.scalePow()
     .exponent(1)
     .domain([0, 1])
     .range([ 0.9*viewBox[1], 0]);
-
+const thumbnail_state = true
 onMounted(() => {
     const svg = d3.select(`#${props.id}`)
     .select("svg")
@@ -60,9 +62,9 @@ watch(() => props.graph, (graph, prev_graph) => {
     updateGraph(graph)
 })
 
-
 function updateGraph(graph) {
-    console.log("🚀 ~ file: OutletScatter.vue ~ line 58 ~ updateGraph ~ graph", graph)
+    if(props.expanded)
+        console.log("🚀 ~ file: OutletScatter.vue ~ line 66 ~ updateGraph ~ graph", graph)
     const svg = d3.select(`#${props.id}`).select("svg")
     const article_radius_scale = d3.scalePow()
     .exponent(1)
@@ -78,9 +80,22 @@ function updateGraph(graph) {
                 .attr("r", (d) => article_radius_scale(d.articles))
                 .attr("cx", (d) => x(d.pos_sst))
                 .attr("cy", (d) => y(Math.abs(d.neg_sst)))
-                .attr("fill", "grey")
+                .attr("fill", (d) => SstColors.outlet_color_dict[d.text])
+        },
+        update => {
+            update.attr("r", (d) => article_radius_scale(d.articles))
+            .attr("cx", (d) => x(d.pos_sst))
+            .attr("cy", (d) => y(Math.abs(d.neg_sst)))
+            .attr("fill", (d) => SstColors.outlet_color_dict[d.text])
         }
     ) 
+    if(thumbnail_state) {
+        svg.attr("pointer-events", "none")
+        // svg.each(function() {
+        //     d3.selectAll(this.childNodes).attr("pointer-events", "none")
+        // })
+        // svg.on("click") 
+    }
 
 }
 </script>
@@ -90,9 +105,11 @@ function updateGraph(graph) {
     height: auto;
     width: auto;
     display: block;
+    background-color: white;
 }
 .outlet-scatterplot {
     overflow: visible;
+    height: inherit;
     // height: 95vh;
     width:auto;
 }
