@@ -46,6 +46,8 @@ export default {
       dataset_matadata: {},
       graph_constructed: false,
       graph_dict: {},
+      scatterClicked: false,
+      selectedScatterGraphs: [],
     }
   },
   methods: {
@@ -137,6 +139,12 @@ export default {
       this.timeRange = [startMonth, endMonth+1]
       this.updateDicts(target_articles)
     },
+    handleScatterClicked(index) {
+        const clicked_entity = this.np_list[index][0]
+        this.selectedScatterGraphs = [this.graph_dict[clicked_entity]]
+        this.scatterClicked = true
+    },
+
   },
   watch: {
     timeRange: function(new_range, old_range) {
@@ -165,14 +173,14 @@ export default {
       <SplitterPanel id="overview-section" class="flex align-items-center justify-content-center" :size="100">
         <Splitter>
           <SplitterPanel id='target-section' class="flex align-items-center justify-content-center" :size="55"> 
-            <!-- <TargetContainer
-            v-if="np_list.length!=0"
-            :articles="normalized_articles"
+            <TargetContainer
+            v-if="scatterClicked"
+            :articles="articles"
             :enabled_outlet_set="enabled_outlet_set"
-            :selected_entities="selected_entities"
+            :selectedScatters="selectedScatterGraphs"
             :selectedTimeRange="timeRange"
             >
-            </TargetContainer> -->
+            </TargetContainer>
           </SplitterPanel>
           <SplitterPanel id='sidebar' class="flex align-items-center justify-content-center" :size="45" :min-size="20">
             <MyToolbar ref="toolbar" 

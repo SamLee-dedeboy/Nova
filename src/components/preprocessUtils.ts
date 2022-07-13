@@ -1,14 +1,12 @@
 import * as dfd from "danfojs"
-import { ScatterOutletNode } from "../types"
+import { ScatterOutletNode, ScatterOutletGraph } from "../types"
 
 export function constructOutletGraph(entity_mentions, outlet_set, article_dict) {
     console.log("constructing graphs!")
     var graph_dict = {}
     entity_mentions.forEach(entity_mention => {
-        var graph: {
-            nodes: ScatterOutletNode[]
-        } = {nodes: []}
         const entity = entity_mention[0]
+        var graph: ScatterOutletGraph= {entity: entity, nodes: []}
         // get articles mentioneding this entity
         const mentioned_articles = idsToArticles(entity_mention[1], article_dict)
         const outlet_article_dict = constructOutletArticleDict(mentioned_articles)

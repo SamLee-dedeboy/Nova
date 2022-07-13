@@ -21,7 +21,7 @@ export default ({
       InfoButton,
       OutletScatter,
     },
-    props:['articles', 'enabled_outlet_set','entity_mentions', 'topic', 'selectedTimeRange'],
+    props:['articles', 'enabled_outlet_set','selectedScatters', 'topic', 'selectedTimeRange'],
     data() {
         return {
             entity_graph: {
@@ -44,55 +44,11 @@ export default ({
         article_dict: function() {
             return this.articles.reduce((dict, article) => (dict[article.id]=article, dict), {})
         },
-        // graph_dict: function() {
-        //     return this.constructOutletGraph()
-        // },
         entity_list: function() {
             return this.entity_mentions.map(entity_mention => entity_mention[0])
         },
     },
-    mounted() {
-        this.graph_dict = this.constructOutletGraph()
-        this.graph_constructed = true
-
-        console.log("🚀 ~ file: TargetContainer.vue ~ line 53 ~ mounted ~ graph_dict", this.graph_dict)
-    },
-
     methods: {
-        constructOutletGraph() {
-            console.log("constructing graphs!")
-            var graph_dict = {}
-            var self = this
-            this.entity_mentions.forEach(entity_mention => {
-                var graph = {
-                    nodes: []
-                }
-                const entity = entity_mention[0]
-                // get articles mentioneding this entity
-                const mentioned_articles = this.idsToArticles(entity_mention[1])
-                const outlet_article_dict = this.outlet_article_dict(mentioned_articles)
-
-                this.enabled_outlet_set.forEach(outlet => {
-                    const article_ids = outlet_article_dict[outlet]
-                    const articles = this.idsToArticles(article_ids)
-                    const node = self.construct_node(articles, outlet) 
-                    graph.nodes.push(node)
-                }) 
-                // center node
-                // var center_node = self.construct_node(self.articles, target)
-                // center_node["isCenter"] = true
-                // graph.nodes.push(center_node)
-                graph_dict[entity] = graph
-            })
-            console.log("construction done!")
-            return graph_dict
-        },
-        handleScatterClicked(index) {
-            const clicked_entity = this.entity_mentions[index][0]
-            this.clickedScatter.graph = this.graph_dict[clicked_entity],
-            this.clickedScatter.index = index 
-            this.scatterClicked = true
-        },
         handleNodeClicked(clicked_node) {
             this.$emit("node-clicked", clicked_node)        
             this.nodeClicked = true
@@ -139,7 +95,16 @@ export default ({
 
 <template>
 <TabView class="graph-container">
-    <TabPanel class="graph-panel" header="Overview" >
+    <TabPanel class="graph-panel" header="Overview"
+     v-for="(graph, index) in selectedScatters" :key="graph.entity">
+        <OutletScatter
+        :graph="graph"
+        :graph_index="index"
+        :id="`scatter-expanded`"
+        expanded="true"
+        style="z-index: 1000; height:97vh; position:absolute;"
+        
+        ></OutletScatter>
         <!-- <Graph 
             class="graph"
             :graph="graph_dict[target]"
@@ -165,15 +130,6 @@ export default ({
                 placeholder="Select a clfer" />
             </div> -->
         <!-- </div> -->
-        <OutletScatter
-        v-if="scatterClicked"
-        :graph="clickedScatter.graph"
-        :graph_index="clickedScatter.index"
-        :id="`scatter-expanded`"
-        expanded="true"
-        style="z-index: 1000; height:97vh; position:absolute;"
-        
-        ></OutletScatter>
     </TabPanel>
 </TabView>
 </template>

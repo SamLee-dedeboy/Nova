@@ -1,3 +1,7 @@
+export interface ScatterOutletGraph {
+    entity: string,
+    nodes: ScatterOutletNode[]
+}
 export interface ScatterOutletNode {
     text: string,
     articles: number,

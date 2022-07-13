@@ -8,7 +8,7 @@
 
 <script setup lang="ts">
 import * as d3 from "d3"
-import { ScatterOutletNode } from '../types'
+import { ScatterOutletNode, ScatterOutletGraph } from '../types'
 import { edgeRotation,
          applyEntityEdgeSelectedStyle, 
          addEdges,
@@ -23,11 +23,7 @@ import { watch, onMounted, PropType} from 'vue'
 
 // initialization
 const props = defineProps({
-    graph: { 
-        type: Object as () => {
-            nodes: ScatterOutletNode[], 
-        }
-    },
+    graph: Object as () => ScatterOutletGraph,
     graph_index: Number,
     id: String,
     expanded: Boolean,
