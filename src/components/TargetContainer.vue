@@ -102,7 +102,7 @@ export default ({
         :graph_index="index"
         :id="`scatter-expanded`"
         expanded="true"
-        style="z-index: 1000; height:97vh; position:absolute;"
+        style="z-index: 1000; height:90vh; position:absolute;"
         
         ></OutletScatter>
         <!-- <Graph 

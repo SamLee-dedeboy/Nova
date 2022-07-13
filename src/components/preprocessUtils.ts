@@ -1,4 +1,5 @@
 import * as dfd from "danfojs"
+import { Series } from "danfojs/dist/danfojs-base"
 import { ScatterOutletNode, ScatterOutletGraph } from "../types"
 
 export function constructOutletGraph(entity_mentions, outlet_set, article_dict) {
@@ -96,7 +97,12 @@ export function processArticles(articles) {
     return {outlet_set, normalized_articles, article_dict}
 }
 
+export function sliceDatasetByTime(range, articles) {
+    return
+    const article_df = new dfd.DataFrame(articles)
+    article_df["timestamp"].print()
 
+}
 function normalization(x, mean, std) {
     return Math.tanh((x-mean)/std)
 }

@@ -1,5 +1,5 @@
 <template>
-<div :id="props.id" class="scatter-container" @click="expandScatter">
+<div :id="props.id" class="scatter-container">
  
     <svg class="outlet-scatterplot"></svg>
 

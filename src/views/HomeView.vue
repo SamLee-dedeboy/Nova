@@ -61,11 +61,13 @@ export default {
 
     }, 
     processDataset(dataset) {
+      console.log("start processing dataset")
       this.np_list = dataset.entity_mentions
       this.dataset_metadata = dataset.metadata
 
       // save raw dataset 
-      this.original_dataset = JSON.parse(JSON.stringify(dataset.articles))
+      // possibly need deep clone?
+      this.original_dataset = dataset.articles 
 
       // get time period
       const dataset_articles = dataset.articles
@@ -73,12 +75,15 @@ export default {
       const startMonth = parseInt(dataset_articles[0].timestamp.split('-')[1])
       const endMonth = parseInt(dataset_articles[dataset_articles.length-1].timestamp.split('-')[1])
       this.timeRange = [startMonth, endMonth+1]
+
+      // process articles
       let {outlet_set, normalized_articles, article_dict} = preprocess.processArticles(dataset_articles)
       this.enabled_outlet_set = outlet_set
       this.articles = normalized_articles
       this.article_dict = article_dict
       this.graph_dict = preprocess.constructOutletGraph(this.np_list, this.enabled_outlet_set, this.article_dict)
       this.graph_constructed = true
+      console.log("processing done")
     },
     updateEnabledOutlet(outlet_set_info) {
       this.enabled_outlet_set = outlet_set_info.filter(outlet => outlet.enabled).map(outlet => outlet.outlet)
@@ -149,9 +154,11 @@ export default {
   watch: {
     timeRange: function(new_range, old_range) {
       if(new_range[0] != old_range[0] || new_range[1] != old_range[1]) {
-        const startIndex = this.original_dataset.findIndex(article => parseInt(article.timestamp.split('-')[1]) >= new_range[0])
-        const endIndex = this.original_dataset.findIndex(article => parseInt(article.timestamp.split('-')[1]) > new_range[1])
-        const subset = this.original_dataset.slice(startIndex, (endIndex == -1? this.original_dataset.length : endIndex))
+        // TODO: implement slicing with dataframe
+        const subset = preprocess.sliceDatasetByTime(new_range, this.original_dataset)
+        // const startIndex = this.original_dataset.findIndex(article => parseInt(article.timestamp.split('-')[1]) >= new_range[0])
+        // const endIndex = this.original_dataset.findIndex(article => parseInt(article.timestamp.split('-')[1]) > new_range[1])
+        // const subset = this.original_dataset.slice(startIndex, (endIndex == -1? this.original_dataset.length : endIndex))
         // this.updateDicts(subset)
       }
     }
@@ -182,7 +189,7 @@ export default {
             >
             </TargetContainer>
           </SplitterPanel>
-          <SplitterPanel id='sidebar' class="flex align-items-center justify-content-center" :size="45" :min-size="20">
+          <SplitterPanel id='sidebar' class="sidebar flex align-items-center justify-content-center" :size="45" :min-size="20">
             <MyToolbar ref="toolbar" 
             @candidate_updated="updateNpList"
             @dataset_imported="processDataset"  ></MyToolbar>
@@ -227,7 +234,7 @@ export default {
 .entity-grid-container {
     display: grid;
     height: 90vh;
-    width: 95vh;
+    width: auto;
     grid-template-columns: repeat(7, 1fr);
     grid-template-rows: repeat(7, 1fr);  
 }
