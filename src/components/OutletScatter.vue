@@ -40,7 +40,9 @@ const y = d3.scalePow()
     .domain([0, 1])
     .range([ 0.9*viewBox[1], 0]);
 const thumbnail_state = true
+
 onMounted(() => {
+    console.log(props.expanded)
     const svg = d3.select(`#${props.id}`)
     .select("svg")
     .attr("viewBox", `0 0 ${viewBox[0]} ${viewBox[1]}`)
@@ -50,6 +52,22 @@ onMounted(() => {
 
     svg.append("g")
         .call(d3.axisLeft(y));
+    let break_text = props.graph?.entity.split('_') || "known"
+    var break_num = break_text.length
+    if(break_num >= 4) {
+        break_text = [break_text[0], break_text[1], break_text[2], '...']
+        break_num = 4
+    }
+    svg.append("text")
+        .selectAll("tspan")
+        .data(break_text)
+        .join("tspan")
+        .text(d => d)
+        .attr("x", () => viewBox[0]/2)
+        .attr("dy", "1em")
+        .attr("text-anchor", "middle")
+        .attr("font-size", () => (props.expanded?"2em":"8em"))
+        .attr("dominant-baseline", "central")
     updateGraph(props.graph)
 
 })
@@ -98,11 +116,10 @@ function updateGraph(graph) {
 .scatter-container {
     height: auto;
     width: auto;
-    display: block;
     background-color: white;
 }
 .outlet-scatterplot {
-    overflow: visible;
+    overflow: hidden;
     height: inherit;
     // height: 95vh;
     width:auto;
