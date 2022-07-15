@@ -13,8 +13,9 @@ export function constructOutletGraph(entity_mentions, outlet_set, article_dict) 
         const outlet_article_dict = constructOutletArticleDict(mentioned_articles)
 
         outlet_set.forEach(outlet => {
-            const article_ids = outlet_article_dict[outlet]
-            const articles = idsToArticles(article_ids, article_dict)
+            // const article_ids = outlet_article_dict[outlet]
+            // const articles = idsToArticles(article_ids, article_dict)
+            const articles = outlet_article_dict[outlet]
 
             const node = construct_node(articles, outlet) 
             graph.nodes.push(node)
@@ -34,6 +35,10 @@ export function idsToArticles(article_ids, article_dict) {
     return article_ids.reduce(function(article_list, id) { article_list.push(article_dict[id]); return article_list; }, [])
 }
 export function constructOutletArticleDict(articles) {
+    const articles_df = new dfd.DataFrame(articles)
+    const grouped_df = articles_df.groupby(["journal"])
+    return grouped_df.colDict
+    
     var outlet_article_dict = {} 
     articles.forEach(article => {
         outlet_article_dict[article.journal] = outlet_article_dict[article.journal] || []
@@ -44,7 +49,8 @@ export function constructOutletArticleDict(articles) {
 
 export function construct_node(articles, label): ScatterOutletNode {
     let node: ScatterOutletNode;  
-    if(articles.length == 0) {
+    const article_num = articles.id.length
+    if(article_num == 0) {
         node = {
             text: label,
             articles: 0,
@@ -52,7 +58,7 @@ export function construct_node(articles, label): ScatterOutletNode {
             neg_sst: 0,
         }
     } else {
-        const sst_df = new dfd.DataFrame(articles.map(article=>article.sentiment))
+        const sst_df = new dfd.DataFrame(articles.sentiment)
         const pos_dfs = sst_df.iloc({rows: sst_df["normalized_sst"].gt(0).or(sst_df["normalized_sst"].eq(0))})
         const neg_dfs = sst_df.iloc({rows: sst_df["normalized_sst"].lt(0)})
 
@@ -68,7 +74,7 @@ export function construct_node(articles, label): ScatterOutletNode {
 
         node = {
             text: label,
-            articles: articles.length,
+            articles: article_num,
             pos_sst: pos_score,
             neg_sst: neg_score,
         }
