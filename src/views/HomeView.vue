@@ -49,7 +49,8 @@ const article_dict = ref({})
 const graph_dict = ref({})
 const graph_constructed: Ref<Boolean> = ref(false)
 const entity_list: Ref<string[]> = computed(() => entity_mentions.value.map(entity_mention => entity_mention[0]))
-const selectedScatterGraphs: Ref<ScatterOutletGraph[]> = ref([])
+const selectedScatterGraphs: Ref<Set<ScatterOutletGraph>> = ref(new Set())
+const selectedScatterGraphList = computed(() => Array.from(selectedScatterGraphs.value))
 const scatterClicked: Ref<Boolean> = ref(false)
 const entity_data = computed(() => entity_mentions.value.map(entity_mention => { return {"name": entity_mention[0], "num": entity_mention[1].length || 0}}))
 const graph_constructing: Ref<Boolean> = ref(false)
@@ -171,21 +172,31 @@ function updateEnabledOutlet(outlet_set_info) {
 
 function handleScatterClicked(index) {
     const clicked_entity = entity_mentions.value[index][0]
-    selectedScatterGraphs.value.push(graph_dict.value[clicked_entity])
+    selectedScatterGraphs.value.add(graph_dict.value[clicked_entity])
     scatterClicked.value = true
 }
 
 function handleDragScatter(evt, index) {
-  console.log("drag started")
   evt.dataTransfer.dropEffect = 'move'
   evt.dataTransfer.effectAllowed = 'move'
   evt.dataTransfer.setData('scatterIndex', index)  
 }
 
+function handleDragOver(e) {
+  e.preventDefault()
+  e.target.style.background = "#b8b8b8"
+}
+
+function handleDragLeave(e) {
+  e.preventDefault()
+  e.target.style.background = "white"
+}
+
 function handleDropScatter(evt) {
+  evt.target.style.background = "white"
   const index = evt.dataTransfer.getData('scatterIndex')
   const clicked_entity = entity_mentions.value[index][0]
-  selectedScatterGraphs.value.push(graph_dict.value[clicked_entity])
+  selectedScatterGraphs.value.add(graph_dict.value[clicked_entity])
   scatterClicked.value = true
 }
 
@@ -199,13 +210,14 @@ function handleDropScatter(evt) {
         <Splitter>
           <SplitterPanel id='target-section' class="flex align-items-center justify-content-center" :size="55"
             @drop="handleDropScatter($event)"
-            @dragover="(e) => (e.preventDefault())"
+            @dragover="handleDragOver($event)"
+            @dragleave="handleDragLeave($event)"
             @dragenter="(e) => (e.preventDefault())"
             >
             <TargetContainer
             :articles="articles"
             :enabled_outlet_set="enabled_outlet_set"
-            v-model:selectedScatters="selectedScatterGraphs"
+            v-model:selectedScatters="selectedScatterGraphList"
             :selectedTimeRange="timeRange"
             >
             </TargetContainer>
@@ -274,5 +286,14 @@ function handleDropScatter(evt) {
 :deep(.outlet-scatter:hover .outlet-scatterplot) {
     filter: brightness(80%);
     background-color: rgb(191, 189, 189);
+}
+:deep(.p-tabview-panels) {
+  height:95vh !important;
+}
+:deep(.p-tabview-panels:dragover) {
+  background: #b8b8b8 !important;
+}
+:deep(.p-tabview-panels) {
+  /* background: #b8b8b8 !important; */
 }
 </style>
