@@ -12,7 +12,7 @@ import TargetSelection from "../components/TargetSelection.vue"
 import MonthSlider from "../components/MonthSlider.vue"
 import OutletScatter from "../components/OutletScatter.vue";
 import * as preprocess from "../components/preprocessUtils"
-import { watch, computed, onMounted, PropType, ref, Ref, nextTick} from 'vue'
+import { watch, computed, onMounted, PropType, ref, Ref, nextTick, } from 'vue'
 import { ScatterOutletGraph } from "../types";
 import Legend from "../components/Legend.vue";
   // data() {
@@ -174,16 +174,35 @@ function handleScatterClicked(index) {
     selectedScatterGraphs.value.push(graph_dict.value[clicked_entity])
     scatterClicked.value = true
 }
+
+function handleDragScatter(evt, index) {
+  console.log("drag started")
+  evt.dataTransfer.dropEffect = 'move'
+  evt.dataTransfer.effectAllowed = 'move'
+  evt.dataTransfer.setData('scatterIndex', index)  
+}
+
+function handleDropScatter(evt) {
+  const index = evt.dataTransfer.getData('scatterIndex')
+  const clicked_entity = entity_mentions.value[index][0]
+  selectedScatterGraphs.value.push(graph_dict.value[clicked_entity])
+  scatterClicked.value = true
+}
+
 </script>
+
 
 <template>
   <main>
     <Splitter class="splitter-outmost" layout="vertical">
       <SplitterPanel id="overview-section" class="flex align-items-center justify-content-center" :size="100">
         <Splitter>
-          <SplitterPanel id='target-section' class="flex align-items-center justify-content-center" :size="55"> 
+          <SplitterPanel id='target-section' class="flex align-items-center justify-content-center" :size="55"
+            @drop="handleDropScatter($event)"
+            @dragover="(e) => (e.preventDefault())"
+            @dragenter="(e) => (e.preventDefault())"
+            >
             <TargetContainer
-            v-if="scatterClicked"
             :articles="articles"
             :enabled_outlet_set="enabled_outlet_set"
             :selectedScatters="selectedScatterGraphs"
@@ -213,6 +232,8 @@ function handleScatterClicked(index) {
                 :id="`scatter-${index}`"
                 style="cursor: pointer"
                 :expanded="false"
+                :draggable="true"
+                @dragstart="handleDragScatter($event, index)"
                 @click="handleScatterClicked(index)"
             >
             </OutletScatter>
