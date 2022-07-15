@@ -12,8 +12,9 @@ import TargetSelection from "../components/TargetSelection.vue"
 import MonthSlider from "../components/MonthSlider.vue"
 import OutletScatter from "../components/OutletScatter.vue";
 import * as preprocess from "../components/preprocessUtils"
-import { watch, computed, onMounted, PropType, ref, Ref} from 'vue'
+import { watch, computed, onMounted, PropType, ref, Ref, nextTick} from 'vue'
 import { ScatterOutletGraph } from "../types";
+import Legend from "../components/Legend.vue";
   // data() {
   //   return {
   //     original_dataset: {
@@ -51,7 +52,7 @@ const entity_list: Ref<string[]> = computed(() => entity_mentions.value.map(enti
 const selectedScatterGraphs: Ref<ScatterOutletGraph[]> = ref([])
 const scatterClicked: Ref<Boolean> = ref(false)
 const entity_data = computed(() => entity_mentions.value.map(entity_mention => { return {"name": entity_mention[0], "num": entity_mention[1].length || 0}}))
-
+const graph_constructing: Ref<Boolean> = ref(false)
 watch(() => timeRange, (new_range, old_range) => {
     if(new_range[0] != old_range[0] || new_range[1] != old_range[1]) {
       // TODO: implement slicing with dataframe
@@ -70,8 +71,22 @@ function updateNpList(np_list) {
   entity_mentions.value = np_list
   dataset_metadata = this.$refs.toolbar.getMetaData()  
 } 
+
+function datasetImported(dataset) {
+  nextTick(() => processDataset(dataset))
+  // const promise = new Promise((resolve) => { processDataset(dataset); resolve("nothing")})
+  // promise.then(() =>{
+  //   graph_constructing.value = false
+  // })
+  // const promise = new Promise((resolve) => { console.log("time out started");setTimeout(resolve, 5000) });
+  // promise.then(() => {console.log("promise finished"); graph_constructing.value = false })
+  // console.log("promise executed")
+  // graph_constructing.value = false
+}
+
 function processDataset(dataset) {
   console.log("start processing dataset")
+  const t0 = performance.now()
   entity_mentions.value = dataset.entity_mentions
   dataset_metadata = dataset.metadata
 
@@ -94,6 +109,8 @@ function processDataset(dataset) {
   graph_dict.value = preprocess.constructOutletGraph(entity_mentions.value, enabled_outlet_set.value, article_dict.value)
   graph_constructed.value = true
   console.log("processing done")
+  const t1 = performance.now()
+  console.log("Time: ", t1-t0)
 }
 
 function updateEnabledOutlet(outlet_set_info) {
@@ -177,7 +194,16 @@ function handleScatterClicked(index) {
           <SplitterPanel id='sidebar' class="sidebar flex align-items-center justify-content-center" :size="45" :min-size="20">
             <MyToolbar ref="toolbar" 
             @candidate_updated="updateNpList"
-            @dataset_imported="processDataset"  ></MyToolbar>
+            @dataset_imported="datasetImported"  >
+            </MyToolbar>
+            <i v-if="graph_constructing" class="pi pi-spin pi-spinner" 
+            style="
+            position:absolute;
+            left: 45%;
+            top: 30%;
+            font-size: 3rem;
+            z-index: 1000
+            "></i> 
           <div class="entity-grid-container" v-if="graph_constructed" >
             <OutletScatter
                 v-for="(entity, index) in entity_list" :key="entity" 
@@ -191,6 +217,7 @@ function handleScatterClicked(index) {
             >
             </OutletScatter>
             </div>
+            <Legend v-if="graph_constructed" style="position:absolute; left: 72%; top: 75%"></Legend>
 
             <!-- <div class="selection_container" style="display:flex">
               <TargetSelection v-if="np_list.length!=0" :dataset_metadata="dataset_metadata" :targets="entity_data" @target-selected="updateTarget"></TargetSelection>
