@@ -205,7 +205,7 @@ function handleDropScatter(evt) {
             <TargetContainer
             :articles="articles"
             :enabled_outlet_set="enabled_outlet_set"
-            :selectedScatters="selectedScatterGraphs"
+            v-model:selectedScatters="selectedScatterGraphs"
             :selectedTimeRange="timeRange"
             >
             </TargetContainer>

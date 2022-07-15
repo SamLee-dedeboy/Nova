@@ -50,6 +50,9 @@ const active: Ref<number> = ref(0)
 watch(() => props.selectedScatters, (new_scatters, old_scatters) => {
     active.value = (props.selectedScatters?.length || 1) - 1 
 }, {deep:true})
+
+const emit = defineEmits(['update:selectedScatters'])
+
 function handleNodeClicked(clicked_node) {
     this.$emit("node-clicked", clicked_node)        
     this.nodeClicked = true
@@ -90,13 +93,24 @@ function handleNodeClicked(clicked_node) {
     this.cooccur_matrix = cooccur_matrix
     this.clicked_outlet = clicked_node.text
 }
+
+function handleCloseTab(e, index) {
+    e.preventDefault()
+    props.selectedScatters?.splice(index,1)
+    emit("update:selectedScatters", props.selectedScatters)
+}
 </script>
 
 <template>
-<TabView class="graph-container" v-model:activeIndex="active">
+<TabView class="graph-container" v-model:activeIndex="active" :scrollable="true">
     <TabPanel class="graph-panel" 
      
-     v-for="(graph, index) in selectedScatters" :key="graph.entity" :header="graph.entity">
+     v-for="(graph, index) in selectedScatters" :key="graph.entity" >
+        <template #header>
+			<span>{{graph.entity}}</span>
+            <Button icon="pi pi-times" class="p-button-rounded p-button-danger p-button-text p-button-sm"
+            @click="handleCloseTab($event, index)"/>
+		</template>
         <OutletScatter
         :graph="graph"
         :graph_index="index"
@@ -167,6 +181,14 @@ function handleNodeClicked(clicked_node) {
     left:2%;
 }
 :deep(.p-tabview-panel) {
+}
+:deep(.p-tabview-nav-link) {
+    padding: unset !important;
+    padding-left: 0.75rem !important;
+
+}
+:deep(.p-button.p-button-danger.p-button-text, .p-buttonset.p-button-danger > .p-button.p-button-text, .p-splitbutton.p-button-danger > .p-button.p-button-text) {
+    color: #7c7576;
 }
 
 </style>
