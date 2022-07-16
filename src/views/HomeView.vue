@@ -76,20 +76,14 @@ function updateNpList(np_list) {
 } 
 
 function datasetImported(dataset) {
-  nextTick(() => processDataset(dataset))
-  // const promise = new Promise((resolve) => { processDataset(dataset); resolve("nothing")})
-  // promise.then(() =>{
-  //   graph_constructing.value = false
-  // })
-  // const promise = new Promise((resolve) => { console.log("time out started");setTimeout(resolve, 5000) });
-  // promise.then(() => {console.log("promise finished"); graph_constructing.value = false })
-  // console.log("promise executed")
-  // graph_constructing.value = false
+  graph_constructing.value = true
+  setTimeout(() => {
+    const promise = new Promise((resolve) => { processDataset(dataset); resolve(""); })
+    promise.then(() => graph_constructing.value = false)
+  }, 1)
 }
 
 function processDataset(dataset) {
-  console.log("start processing dataset")
-  const t0 = performance.now()
   entity_mentions.value = dataset.entity_mentions
   dataset_metadata = dataset.metadata
 
@@ -103,7 +97,6 @@ function processDataset(dataset) {
   const startMonth = parseInt(dataset_articles[0].timestamp.split('-')[1])
   const endMonth = parseInt(dataset_articles[dataset_articles.length-1].timestamp.split('-')[1])
   timeRange = {start: startMonth, end: endMonth+1}
-
   // process articles
   let {outlet_set, normalized_articles, r_article_dict} = preprocess.processArticles(dataset_articles)
   enabled_outlet_set.value = outlet_set
@@ -114,9 +107,6 @@ function processDataset(dataset) {
   max_articles.value = r_max_articles
   min_articles.value = r_min_articles
   graph_constructed.value = true
-  console.log("processing done")
-  const t1 = performance.now()
-  console.log("Time: ", t1-t0)
 }
 
 function updateEnabledOutlet(outlet_set_info) {
