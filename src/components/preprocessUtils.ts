@@ -4,7 +4,9 @@ import { ScatterOutletNode, ScatterOutletGraph } from "../types"
 
 export function constructOutletGraph(entity_mentions, outlet_set, article_dict) {
     console.log("constructing graphs!")
-    var graph_dict = {}
+    var r_graph_dict = {}
+    var r_min_articles = Object.keys(article_dict).length
+    var r_max_articles = 0
     entity_mentions.forEach(entity_mention => {
         const entity = entity_mention[0]
         var graph: ScatterOutletGraph= {entity: entity, nodes: []}
@@ -16,6 +18,9 @@ export function constructOutletGraph(entity_mentions, outlet_set, article_dict) 
             // const article_ids = outlet_article_dict[outlet]
             // const articles = idsToArticles(article_ids, article_dict)
             const articles = outlet_article_dict[outlet]
+            const article_num = articles.id.length
+            if(article_num > r_max_articles) r_max_articles = article_num
+            if(article_num < r_min_articles) r_min_articles = article_num
 
             const node = construct_node(articles, outlet) 
             graph.nodes.push(node)
@@ -24,10 +29,10 @@ export function constructOutletGraph(entity_mentions, outlet_set, article_dict) 
         // var center_node = self.construct_node(self.articles, target)
         // center_node["isCenter"] = true
         // graph.nodes.push(center_node)
-        graph_dict[entity] = graph
+        r_graph_dict[entity] = graph
     })
     console.log("construction done!")
-    return graph_dict
+    return {r_graph_dict, r_max_articles, r_min_articles}
 }
 
 export function idsToArticles(article_ids, article_dict) {
@@ -99,6 +104,7 @@ export function processArticles(articles) {
         r_article_dict[article.id] = article
         outlet_set.add(article.journal)
     }
+
     const normalized_articles = articles
     return {outlet_set, normalized_articles, r_article_dict}
 }

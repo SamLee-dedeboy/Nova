@@ -54,6 +54,8 @@ const selectedScatterGraphList = computed(() => Array.from(selectedScatterGraphs
 const scatterClicked: Ref<Boolean> = ref(false)
 const entity_data = computed(() => entity_mentions.value.map(entity_mention => { return {"name": entity_mention[0], "num": entity_mention[1].length || 0}}))
 const graph_constructing: Ref<Boolean> = ref(false)
+const max_articles: Ref<number> = ref(0)
+const min_articles: Ref<number> = ref(0)
 watch(() => timeRange, (new_range, old_range) => {
     if(new_range[0] != old_range[0] || new_range[1] != old_range[1]) {
       // TODO: implement slicing with dataframe
@@ -107,7 +109,10 @@ function processDataset(dataset) {
   enabled_outlet_set.value = outlet_set
   articles.value = normalized_articles
   article_dict.value = r_article_dict
-  graph_dict.value = preprocess.constructOutletGraph(entity_mentions.value, enabled_outlet_set.value, article_dict.value)
+  let {r_graph_dict, r_max_articles, r_min_articles} = preprocess.constructOutletGraph(entity_mentions.value, enabled_outlet_set.value, article_dict.value)
+  graph_dict.value = r_graph_dict
+  max_articles.value = r_max_articles
+  min_articles.value = r_min_articles
   graph_constructed.value = true
   console.log("processing done")
   const t1 = performance.now()
@@ -219,6 +224,8 @@ function handleDropScatter(evt) {
             :enabled_outlet_set="enabled_outlet_set"
             v-model:selectedScatters="selectedScatterGraphList"
             :selectedTimeRange="timeRange"
+            :min_articles="min_articles"
+            :max_articles="max_articles"
             >
             </TargetContainer>
           </SplitterPanel>
@@ -242,6 +249,8 @@ function handleDropScatter(evt) {
                 :graph="graph_dict[entity]"
                 :graph_index="index"
                 :id="`scatter-${index}`"
+                :max_articles="max_articles"
+                :min_articles="min_articles"
                 style="cursor: pointer"
                 :expanded="false"
                 :draggable="true"

@@ -27,6 +27,8 @@ const props = defineProps({
     graph_index: Number,
     id: String,
     expanded: Boolean,
+    min_articles: Number,
+    max_articles: Number,
 })
 const viewBox = [1000, 1000]
 const outlet_min_radius = 10
@@ -80,7 +82,7 @@ function updateGraph(graph) {
     const svg = d3.select(`#${props.id}`).select("svg")
     const article_radius_scale = d3.scalePow()
     .exponent(1)
-    .domain([0, 1000])
+    .domain([ props.min_articles, props.max_articles ])
     .range([ outlet_min_radius, outlet_max_radius ]);
     svg.selectAll("circle")
     .data(graph.nodes)

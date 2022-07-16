@@ -16,7 +16,9 @@ const props = defineProps({
     articles: Object as () => any[],
     enabled_outlet_set: Object as () => Set<string>,
     selectedScatters: Object as () => ScatterOutletGraph[],
-    selectedTimeRange: Object as () => {start: number, end: number} 
+    selectedTimeRange: Object as () => {start: number, end: number},
+    min_articles: Number,
+    max_articles: Number,
 })
 const scatterClicked: Ref<Boolean> = ref(false)
 const active: Ref<number> = ref(0)
@@ -116,6 +118,8 @@ function handleCloseTab(e, index) {
         :graph_index="index"
         :id="`scatter-${index}-expanded`"
         :expanded="true"
+        :min_articles="min_articles"
+        :max_articles="max_articles"
         style="height:90vh;"
         
         ></OutletScatter>
