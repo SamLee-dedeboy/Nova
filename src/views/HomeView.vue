@@ -6,6 +6,7 @@ import TargetContainer from "../components/TargetContainer.vue";
 import MyToolbar from "../components/MyToolbar.vue"
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
+import ToggleButton from 'primevue/togglebutton';
 import ArticleView from "../components/ArticleView.vue";
 import TopicSelection from "../components/TopicSelection.vue";
 import TargetSelection from "../components/TargetSelection.vue"
@@ -49,13 +50,14 @@ const article_dict = ref({})
 const graph_dict = ref({})
 const graph_constructed: Ref<Boolean> = ref(false)
 const entity_list: Ref<string[]> = computed(() => entity_mentions.value.map(entity_mention => entity_mention[0]))
-const selectedScatterGraphs: Ref<Set<ScatterOutletGraph>> = ref(new Set())
-const selectedScatterGraphList = computed(() => Array.from(selectedScatterGraphs.value))
+const selectedScatterGraphs_left: Ref<Set<ScatterOutletGraph>> = ref(new Set())
+const selectedScatterGraphs_right: Ref<Set<ScatterOutletGraph>> = ref(new Set())
 const scatterClicked: Ref<Boolean> = ref(false)
 const entity_data = computed(() => entity_mentions.value.map(entity_mention => { return {"name": entity_mention[0], "num": entity_mention[1].length || 0}}))
 const graph_constructing: Ref<Boolean> = ref(false)
 const max_articles: Ref<number> = ref(0)
 const min_articles: Ref<number> = ref(0)
+const compare_mode: Ref<Boolean> = ref(false)
 watch(() => timeRange, (new_range, old_range) => {
     if(new_range[0] != old_range[0] || new_range[1] != old_range[1]) {
       // TODO: implement slicing with dataframe
@@ -167,7 +169,7 @@ function updateEnabledOutlet(outlet_set_info) {
 
 function handleScatterClicked(index) {
     const clicked_entity = entity_mentions.value[index][0]
-    selectedScatterGraphs.value.add(graph_dict.value[clicked_entity])
+    selectedScatterGraphs_left.value.add(graph_dict.value[clicked_entity])
     scatterClicked.value = true
 }
 
@@ -187,11 +189,14 @@ function handleDragLeave(e) {
   e.target.style.background = "white"
 }
 
-function handleDropScatter(evt) {
-  evt.target.style.background = "white"
-  const index = evt.dataTransfer.getData('scatterIndex')
+function handleDropScatter(e) {
+  e.target.style.background = "white"
+  const index = e.dataTransfer.getData('scatterIndex')
   const clicked_entity = entity_mentions.value[index][0]
-  selectedScatterGraphs.value.add(graph_dict.value[clicked_entity])
+  if(e.target.classList.contains("panel-left"))
+    selectedScatterGraphs_left.value.add(graph_dict.value[clicked_entity])
+  else if(e.target.classList.contains("panel-right"))
+    selectedScatterGraphs_right.value.add(graph_dict.value[clicked_entity])
   scatterClicked.value = true
 }
 
@@ -203,19 +208,38 @@ function handleDropScatter(evt) {
     <Splitter class="splitter-outmost" layout="vertical">
       <SplitterPanel id="overview-section" class="flex align-items-center justify-content-center" :size="100">
         <Splitter>
-          <SplitterPanel id='target-section' class="flex align-items-center justify-content-center" :size="55"
+          <SplitterPanel class="target-selection flex align-items-center justify-content-center" :size="55"
+            >
+            <TargetContainer
+            :class="{compare: compare_mode}"
+            compare_part="panel-left"
+            :articles="articles"
+            :enabled_outlet_set="enabled_outlet_set"
+            v-model:selectedScatters="selectedScatterGraphs_left"
+            :selectedTimeRange="timeRange"
+            :min_articles="min_articles"
+            :max_articles="max_articles"
             @drop="handleDropScatter($event)"
             @dragover="handleDragOver($event)"
             @dragleave="handleDragLeave($event)"
             @dragenter="(e) => (e.preventDefault())"
             >
+            </TargetContainer>
+
             <TargetContainer
+            v-if="compare_mode"
+            :class="{compare: compare_mode}"
+            compare_part="panel-right"
             :articles="articles"
             :enabled_outlet_set="enabled_outlet_set"
-            v-model:selectedScatters="selectedScatterGraphList"
+            v-model:selectedScatters="selectedScatterGraphs_right"
             :selectedTimeRange="timeRange"
             :min_articles="min_articles"
             :max_articles="max_articles"
+            @drop="handleDropScatter($event)"
+            @dragover="handleDragOver($event)"
+            @dragleave="handleDragLeave($event)"
+            @dragenter="(e) => (e.preventDefault())"
             >
             </TargetContainer>
           </SplitterPanel>
@@ -224,6 +248,7 @@ function handleDropScatter(evt) {
             @candidate_updated="updateNpList"
             @dataset_imported="datasetImported"  >
             </MyToolbar>
+            <ToggleButton v-model="compare_mode" onLabel="Compare"></ToggleButton>
             <i v-if="graph_constructing" class="pi pi-spin pi-spinner" 
             style="
             position:absolute;
@@ -286,8 +311,15 @@ function handleDropScatter(evt) {
     filter: brightness(80%);
     background-color: rgb(191, 189, 189);
 }
-:deep(.p-tabview-panels) {
+:deep(.p-tabview) {
   height:95vh !important;
+  width: 100%;
+}
+.compare {
+  width: 50%;
+}
+.target-selection {
+  display: flex
 }
 :deep(.p-tabview-panels:dragover) {
   background: #b8b8b8 !important;

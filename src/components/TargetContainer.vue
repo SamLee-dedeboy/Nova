@@ -9,19 +9,22 @@ import Dropdown from 'primevue/dropdown';
 import InfoButton from "./InfoButton.vue";
 import OutletScatter from "./OutletScatter.vue";
 import * as d3 from "d3"
-import { watch, onMounted, PropType, ref, Ref} from 'vue'
+import { watch, onMounted, PropType, ref, Ref, toRef, computed } from 'vue'
 import { ScatterOutletNode, ScatterOutletGraph } from "../types";
 
 const props = defineProps({
     articles: Object as () => any[],
     enabled_outlet_set: Object as () => Set<string>,
-    selectedScatters: Object as () => ScatterOutletGraph[],
+    selectedScatters: Object as () => Set<ScatterOutletGraph>,
     selectedTimeRange: Object as () => {start: number, end: number},
     min_articles: Number,
     max_articles: Number,
+    compare_part: String,
 })
 const scatterClicked: Ref<Boolean> = ref(false)
 const active: Ref<number> = ref(0)
+const selectedScatters: Ref<Set<ScatterOutletGraph> | undefined> = toRef(props, 'selectedScatters')
+const selectedScatters_list = computed(() => Array.from(selectedScatters.value || []))
         // data() {
         // return {
         //     entity_graph: {
@@ -49,8 +52,8 @@ const active: Ref<number> = ref(0)
     //         return this.entity_mentions.map(entity_mention => entity_mention[0])
     //     },
     // },
-watch(() => props.selectedScatters, (new_scatters, old_scatters) => {
-    active.value = (props.selectedScatters?.length || 1) - 1 
+watch(() => selectedScatters, (new_scatters, old_scatters) => {
+    active.value = (selectedScatters.value?.size || 1) - 1 
 }, {deep:true})
 
 const emit = defineEmits(['update:selectedScatters'])
@@ -98,16 +101,18 @@ function handleNodeClicked(clicked_node) {
 
 function handleCloseTab(e, index) {
     e.preventDefault()
-    props.selectedScatters?.splice(index,1)
-    emit("update:selectedScatters", props.selectedScatters)
+    const closed_scatter = selectedScatters_list.value[index]
+    selectedScatters.value?.delete(closed_scatter)
+    emit("update:selectedScatters", selectedScatters.value)
 }
 </script>
 
 <template>
-<TabView class="graph-container" v-model:activeIndex="active" :scrollable="true">
+<TabView class="graph-container" :class="compare_part" v-model:activeIndex="active" :scrollable="true">
     <TabPanel class="graph-panel" 
-     
-     v-for="(graph, index) in selectedScatters" :key="graph.entity" >
+    :class="compare_part" 
+     v-for="(graph, index) in selectedScatters_list" :key="graph.entity"
+      >
         <template #header>
 			<span>{{graph.entity}}</span>
             <Button icon="pi pi-times" class="p-button-rounded p-button-danger p-button-text p-button-sm"
@@ -116,12 +121,11 @@ function handleCloseTab(e, index) {
         <OutletScatter
         :graph="graph"
         :graph_index="index"
-        :id="`scatter-${index}-expanded`"
+        :id="`${compare_part}-scatter-${index}-expanded`"
         :expanded="true"
         :min_articles="min_articles"
         :max_articles="max_articles"
-        style="height:90vh;"
-        
+        :class="compare_part" 
         ></OutletScatter>
         <!-- <Graph 
             class="graph"
@@ -153,7 +157,7 @@ function handleCloseTab(e, index) {
 </template>
 
 <style scoped lang="scss">
-.graph-container .graph-panel {
+.graph-container {
     width: inherit;
     height: inherit;
 }
@@ -183,8 +187,6 @@ function handleCloseTab(e, index) {
     position:absolute;
     top:23%;
     left:2%;
-}
-:deep(.p-tabview-panel) {
 }
 :deep(.p-tabview-nav-link) {
     padding: unset !important;
