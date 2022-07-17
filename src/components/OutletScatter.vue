@@ -32,14 +32,16 @@ const props = defineProps({
 const viewBox = [1000, 1000]
 const outlet_min_radius = 10
 const outlet_max_radius = 150
+const origin = [30, 30]
 const x = d3.scalePow()
     .exponent(1)
     .domain([0, 1])
-    .range([ 0, viewBox[0] ]);
+    .range([ origin[0], 0.9*viewBox[0] ]);
+
 const y = d3.scalePow()
     .exponent(1)
     .domain([0, 1])
-    .range([ 0.9*viewBox[1], 0]);
+    .range([ 0.9*viewBox[1], origin[1]]);
 const thumbnail_state = true
 
 onMounted(() => {
@@ -47,10 +49,11 @@ onMounted(() => {
     .select("svg")
     .attr("viewBox", `0 0 ${viewBox[0]} ${viewBox[1]}`)
     svg.append("g")
-        .attr("transform", "translate(0," + 0.9*viewBox[1] + ")")
+        .attr("transform", `translate(0, ${0.9*viewBox[1]})`)
         .call(d3.axisBottom(x));
 
     svg.append("g")
+        .attr("transform", `translate(${origin[0]},0)`)
         .call(d3.axisLeft(y));
     let break_text = props.graph?.entity.split('_') || "known"
     var break_num = break_text.length
@@ -93,15 +96,18 @@ function updateGraph(graph) {
                 .attr("cx", (d) => x(d.pos_sst))
                 .attr("cy", (d) => y(Math.abs(d.neg_sst)))
                 .attr("fill", (d) => SstColors.outlet_color_dict[d.text])
+                // .attr("opacity", 0.8)
         },
         update => {
             update.attr("r", (d) => article_radius_scale(d.articles))
             .attr("cx", (d) => x(d.pos_sst))
             .attr("cy", (d) => y(Math.abs(d.neg_sst)))
             .attr("fill", (d) => SstColors.outlet_color_dict[d.text])
+            // .attr("opacity", 0.8)
         }
     ) 
     svg.selectAll("circle").sort((da, db) => -(da.articles - db.articles))
+
     if(thumbnail_state) {
         svg.attr("pointer-events", "none")
         // svg.each(function() {
