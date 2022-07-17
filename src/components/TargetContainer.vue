@@ -111,7 +111,7 @@ function handleCloseTab(e, index) {
 <TabView class="graph-container" :class="compare_part" v-model:activeIndex="active" :scrollable="true">
     <TabPanel class="graph-panel" 
     :class="compare_part" 
-     v-for="(graph, index) in selectedScatters_list" :key="graph.entity"
+     v-for="(graph, index) in selectedScatters_list" :key="graph.entity" 
       >
         <template #header>
 			<span>{{graph.entity}}</span>
@@ -192,6 +192,9 @@ function handleCloseTab(e, index) {
     padding: unset !important;
     padding-left: 0.75rem !important;
 
+}
+:deep(.p-tabview-nav-content) {
+    width:90%;
 }
 :deep(.p-button.p-button-danger.p-button-text, .p-buttonset.p-button-danger > .p-button.p-button-text, .p-splitbutton.p-button-danger > .p-button.p-button-text) {
     color: #7c7576;

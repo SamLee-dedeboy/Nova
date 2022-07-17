@@ -208,7 +208,7 @@ function handleDropScatter(e) {
     <Splitter class="splitter-outmost" layout="vertical">
       <SplitterPanel id="overview-section" class="flex align-items-center justify-content-center" :size="100">
         <Splitter>
-          <SplitterPanel class="target-selection flex align-items-center justify-content-center" :size="55"
+          <SplitterPanel class="target-selection flex align-items-center justify-content-center" :size="55" 
             >
             <TargetContainer
             :class="{compare: compare_mode}"
@@ -243,7 +243,7 @@ function handleDropScatter(e) {
             >
             </TargetContainer>
           </SplitterPanel>
-          <SplitterPanel id='sidebar' class="sidebar flex align-items-center justify-content-center" :size="45" :min-size="20">
+          <SplitterPanel id='sidebar' class="sidebar flex align-items-center justify-content-center" :size="45" :min-size="45">
             <MyToolbar ref="toolbar" 
             @candidate_updated="updateNpList"
             @dataset_imported="datasetImported"  >
@@ -319,7 +319,8 @@ function handleDropScatter(e) {
   width: 50%;
 }
 .target-selection {
-  display: flex
+  display: flex;
+  width: 55vw;
 }
 :deep(.p-tabview-panels:dragover) {
   background: #b8b8b8 !important;
