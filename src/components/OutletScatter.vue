@@ -1,6 +1,5 @@
 <template>
 <div :id="props.id" class="scatter-container">
- 
     <svg class="outlet-scatterplot"></svg>
 
 </div>
@@ -44,7 +43,6 @@ const y = d3.scalePow()
 const thumbnail_state = true
 
 onMounted(() => {
-    console.log(props.expanded)
     const svg = d3.select(`#${props.id}`)
     .select("svg")
     .attr("viewBox", `0 0 ${viewBox[0]} ${viewBox[1]}`)
@@ -103,6 +101,7 @@ function updateGraph(graph) {
             .attr("fill", (d) => SstColors.outlet_color_dict[d.text])
         }
     ) 
+    svg.selectAll("circle").sort((da, db) => -(da.articles - db.articles))
     if(thumbnail_state) {
         svg.attr("pointer-events", "none")
         // svg.each(function() {
@@ -123,7 +122,7 @@ function updateGraph(graph) {
 .outlet-scatterplot {
     overflow: hidden;
     height: inherit;
+    aspect-ratio: 1;
     // height: 95vh;
-    width:auto;
 }
 </style>
