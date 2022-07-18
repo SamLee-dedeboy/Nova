@@ -16,6 +16,8 @@ import * as preprocess from "../components/preprocessUtils"
 import { watch, computed, onMounted, PropType, ref, Ref, nextTick, } from 'vue'
 import { ScatterOutletGraph } from "../types";
 import Legend from "../components/Legend.vue";
+import Divider from 'primevue/divider';
+
   // data() {
   //   return {
   //     original_dataset: {
@@ -225,6 +227,8 @@ function handleDropScatter(e) {
             @dragenter="(e) => (e.preventDefault())"
             >
             </TargetContainer>
+            <Divider v-if="compare_mode" layout="vertical">
+            </Divider>
 
             <TargetContainer
             v-if="compare_mode"
@@ -244,11 +248,11 @@ function handleDropScatter(e) {
             </TargetContainer>
           </SplitterPanel>
           <SplitterPanel id='sidebar' class="sidebar flex align-items-center justify-content-center" :size="45" :min-size="45">
+            <ToggleButton class='compare_toggle p-button-secondary' v-model="compare_mode" onIcon="pi pi-image" offIcon="pi pi-images"></ToggleButton>
             <MyToolbar ref="toolbar" 
             @candidate_updated="updateNpList"
             @dataset_imported="datasetImported"  >
             </MyToolbar>
-            <ToggleButton v-model="compare_mode" onLabel="Compare"></ToggleButton>
             <i v-if="graph_constructing" class="pi pi-spin pi-spinner" 
             style="
             position:absolute;
@@ -327,5 +331,12 @@ function handleDropScatter(e) {
 }
 :deep(.p-tabview-panels) {
   /* background: #b8b8b8 !important; */
+}
+.compare_toggle {
+  border-radius: 8px;
+    margin: 10px;
+}
+:deep(.p-divider.p-divider-vertical::before) {
+  border-left: 1px solid #dee2e6 !important;
 }
 </style>
