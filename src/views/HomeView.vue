@@ -1,6 +1,7 @@
 <script setup lang="ts">
 
 import Filter from "../components/Filter.vue";
+import Slider from "primevue/slider"
 //import Target from "../components/Target.vue";
 import TargetContainer from "../components/TargetContainer.vue";
 import MyToolbar from "../components/MyToolbar.vue"
@@ -60,6 +61,8 @@ const graph_constructing: Ref<Boolean> = ref(false)
 const max_articles: Ref<number> = ref(0)
 const min_articles: Ref<number> = ref(0)
 const compare_mode: Ref<Boolean> = ref(false)
+const article_num_threshold: Ref<number> = ref(10)
+
 watch(() => timeRange, (new_range, old_range) => {
     if(new_range[0] != old_range[0] || new_range[1] != old_range[1]) {
       // TODO: implement slicing with dataframe
@@ -106,7 +109,8 @@ function processDataset(dataset) {
   enabled_outlet_set.value = outlet_set
   articles.value = normalized_articles
   article_dict.value = r_article_dict
-  let {r_graph_dict, r_max_articles, r_min_articles} = preprocess.constructOutletGraph(entity_mentions.value, enabled_outlet_set.value, article_dict.value)
+  // let {r_graph_dict, r_max_articles, r_min_articles} = preprocess.constructOutletGraph(entity_mentions.value, enabled_outlet_set.value, article_dict.value)
+  let {r_graph_dict, r_max_articles, r_min_articles} = preprocess.constructEntityGraph(entity_mentions.value, enabled_outlet_set.value, article_dict.value, dataset_articles)
   graph_dict.value = r_graph_dict
   max_articles.value = r_max_articles
   min_articles.value = r_min_articles
@@ -170,9 +174,14 @@ function updateEnabledOutlet(outlet_set_info) {
 // }
 
 function handleScatterClicked(index) {
-    const clicked_entity = entity_mentions.value[index][0]
-    selectedScatterGraphs_left.value.add(graph_dict.value[clicked_entity])
+    // const clicked_scatter = entity_mentions.value[index][0]
+    const clicked_scatter = Array.from(enabled_outlet_set.value)[index]
+    selectedScatterGraphs_left.value.add(graph_dict.value[clicked_scatter])
     scatterClicked.value = true
+    const button_next = document.getElementsByClassName("p-tabview-nav-next")[0] || undefined
+    if(button_next != undefined) {
+      button_next.click()
+    }
 }
 
 function handleDragScatter(evt, index) {
@@ -194,12 +203,18 @@ function handleDragLeave(e) {
 function handleDropScatter(e) {
   e.target.style.background = "white"
   const index = e.dataTransfer.getData('scatterIndex')
-  const clicked_entity = entity_mentions.value[index][0]
+  // const clicked_scatter = entity_mentions.value[index][0]
+  const clicked_scatter = Array.from(enabled_outlet_set.value)[index]
+
   if(e.target.classList.contains("panel-left"))
-    selectedScatterGraphs_left.value.add(graph_dict.value[clicked_entity])
+    selectedScatterGraphs_left.value.add(graph_dict.value[clicked_scatter])
   else if(e.target.classList.contains("panel-right"))
-    selectedScatterGraphs_right.value.add(graph_dict.value[clicked_entity])
+    selectedScatterGraphs_right.value.add(graph_dict.value[clicked_scatter])
   scatterClicked.value = true
+  const button_next = document.getElementsByClassName("p-tabview-nav-next")[0] || undefined
+  if(button_next != undefined) {
+    button_next.click()
+  }
 }
 
 </script>
@@ -240,6 +255,7 @@ function handleDropScatter(e) {
             :selectedTimeRange="timeRange"
             :min_articles="min_articles"
             :max_articles="max_articles"
+            :article_num_threshold="article_num_threshold"
             @drop="handleDropScatter($event)"
             @dragover="handleDragOver($event)"
             @dragleave="handleDragLeave($event)"
@@ -262,14 +278,16 @@ function handleDropScatter(e) {
             z-index: 1000
             "></i> 
           <div class="entity-grid-container" v-if="graph_constructed" >
+                <!-- v-for="(entity, index) in entity_list" :key="entity"  -->
             <OutletScatter
-                v-for="(entity, index) in entity_list" :key="entity" 
+                v-for="(outlet, index) in enabled_outlet_set" :key="outlet" 
                 class="outlet-scatter"
-                :graph="graph_dict[entity]"
+                :graph="graph_dict[outlet]"
                 :graph_index="index"
                 :id="`scatter-${index}`"
                 :max_articles="max_articles"
                 :min_articles="min_articles"
+                :article_num_threshold="article_num_threshold"
                 style="cursor: pointer"
                 :expanded="false"
                 :draggable="true"
@@ -277,6 +295,9 @@ function handleDropScatter(e) {
                 @click="handleScatterClicked(index)"
             >
             </OutletScatter>
+            </div>
+            <div class="slider-container">
+              <Slider v-model="article_num_threshold" :step="1" :min="10" :max="max_articles||100"></Slider>
             </div>
             <Legend v-if="graph_constructed" style="position:absolute; left: 72%; top: 75%"></Legend>
 
@@ -306,21 +327,23 @@ function handleDropScatter(e) {
 }
 .entity-grid-container {
     display: grid;
-    height: 90vh;
+    height: inherit;
     width: auto;
-    grid-template-columns: repeat(7, 1fr);
-    grid-template-rows: repeat(7, 1fr);  
+    /* grid-template-columns: repeat(7, 1fr);
+    grid-template-rows: repeat(7, 1fr);   */
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);  
 }
 :deep(.outlet-scatter:hover .outlet-scatterplot) {
     filter: brightness(80%);
     background-color: rgb(191, 189, 189);
 }
-:deep(.p-tabview) {
+:deep(.p-tabview .p-tabview-panels .p-tabview-panel) {
   height:95vh !important;
   width: 100%;
 }
 .compare {
-  width: 50%;
+  width: 48%;
 }
 .target-selection {
   display: flex;
@@ -329,14 +352,14 @@ function handleDropScatter(e) {
 :deep(.p-tabview-panels:dragover) {
   background: #b8b8b8 !important;
 }
-:deep(.p-tabview-panels) {
-  /* background: #b8b8b8 !important; */
-}
 .compare_toggle {
   border-radius: 8px;
     margin: 10px;
 }
-:deep(.p-divider.p-divider-vertical::before) {
-  border-left: 1px solid #dee2e6 !important;
+.slider-container {
+  width: 100px;
 }
-</style>
+:deep(.p-slider-handle) {
+    border-radius: 10px !important; 
+} 
+ </style>

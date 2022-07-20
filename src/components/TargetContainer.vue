@@ -20,6 +20,7 @@ const props = defineProps({
     min_articles: Number,
     max_articles: Number,
     compare_part: String,
+    article_num_threshold: Number,
 })
 const scatterClicked: Ref<Boolean> = ref(false)
 const active: Ref<number> = ref(0)
@@ -111,10 +112,10 @@ function handleCloseTab(e, index) {
 <TabView class="graph-container" :class="compare_part" v-model:activeIndex="active" :scrollable="true">
     <TabPanel class="graph-panel" 
     :class="compare_part" 
-     v-for="(graph, index) in selectedScatters_list" :key="graph.entity" 
+     v-for="(graph, index) in selectedScatters_list" :key="graph.title" 
       >
         <template #header>
-			<span>{{graph.entity}}</span>
+			<span>{{graph.title}}</span>
             <Button icon="pi pi-times" class="p-button-rounded p-button-danger p-button-text p-button-sm"
             @click="handleCloseTab($event, index)"/>
 		</template>
@@ -125,7 +126,8 @@ function handleCloseTab(e, index) {
         :expanded="true"
         :min_articles="min_articles"
         :max_articles="max_articles"
-        :class="compare_part" 
+        :panel_class="compare_part" 
+        :article_num_threshold="article_num_threshold"
         ></OutletScatter>
         <!-- <Graph 
             class="graph"
@@ -157,7 +159,7 @@ function handleCloseTab(e, index) {
 </template>
 
 <style scoped lang="scss">
-.graph-container {
+.graph-container .graph-panel {
     width: inherit;
     height: inherit;
 }

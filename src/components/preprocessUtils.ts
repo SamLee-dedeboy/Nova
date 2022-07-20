@@ -1,15 +1,50 @@
 import * as dfd from "danfojs"
+import _ from 'lodash'
 import { Series } from "danfojs/dist/danfojs-base"
 import { ScatterOutletNode, ScatterOutletGraph } from "../types"
 
+export function constructEntityGraph(entity_mentions, outlet_set, article_dict, articles) {
+    var r_graph_dict = {}
+    var r_min_articles = articles.length
+    var r_max_articles = 0
+    console.log("construct outlet article dict begin....")
+    const outlet_article_dict = constructOutletArticleDict(articles)
+    console.log("construct outlet article dict done.")
+    console.log("-------------------")
+    outlet_set.forEach(outlet => {
+        console.log(`constructing ${outlet}...`)
+        const outlet_article_ids = outlet_article_dict[outlet].map(article => article.id)
+        var graph: ScatterOutletGraph= {title: outlet, nodes: []}
+        // filter out articles that mentioned an entity
+        console.log("--> going through entities...")
+        entity_mentions.forEach(entity_mention => {
+            const entity = entity_mention[0]
+            const mentioned_article_ids = entity_mention[1]
+            const intersect_article_ids = _.intersection(outlet_article_ids, mentioned_article_ids)
+            if(intersect_article_ids.length < 10) return;
+            const mentioned_articles = idsToArticles(intersect_article_ids, article_dict)
+            const article_num = mentioned_articles.length
+            if(article_num > r_max_articles) r_max_articles = article_num
+            if(article_num < r_min_articles) r_min_articles = article_num
+
+            const node = construct_node(mentioned_articles, entity) 
+            graph.nodes.push(node)
+        });
+        r_graph_dict[outlet] = graph
+        console.log(`${outlet} done.`)
+        console.log("-------------------")
+    })
+    return {r_graph_dict, r_max_articles, r_min_articles}
+
+}
+
 export function constructOutletGraph(entity_mentions, outlet_set, article_dict) {
-    console.log("constructing graphs!")
     var r_graph_dict = {}
     var r_min_articles = Object.keys(article_dict).length
     var r_max_articles = 0
     entity_mentions.forEach(entity_mention => {
         const entity = entity_mention[0]
-        var graph: ScatterOutletGraph= {entity: entity, nodes: []}
+        var graph: ScatterOutletGraph= {title: entity, nodes: []}
         // get articles mentioneding this entity
         const mentioned_articles = idsToArticles(entity_mention[1], article_dict)
         const outlet_article_dict = constructOutletArticleDict(mentioned_articles)
@@ -18,7 +53,7 @@ export function constructOutletGraph(entity_mentions, outlet_set, article_dict) 
             // const article_ids = outlet_article_dict[outlet]
             // const articles = idsToArticles(article_ids, article_dict)
             const articles = outlet_article_dict[outlet]
-            const article_num = articles.id.length
+            const article_num = articles.length
             if(article_num > r_max_articles) r_max_articles = article_num
             if(article_num < r_min_articles) r_min_articles = article_num
 
@@ -31,7 +66,6 @@ export function constructOutletGraph(entity_mentions, outlet_set, article_dict) 
         // graph.nodes.push(center_node)
         r_graph_dict[entity] = graph
     })
-    console.log("construction done!")
     return {r_graph_dict, r_max_articles, r_min_articles}
 }
 
@@ -40,9 +74,10 @@ export function idsToArticles(article_ids, article_dict) {
     return article_ids.reduce(function(article_list, id) { article_list.push(article_dict[id]); return article_list; }, [])
 }
 export function constructOutletArticleDict(articles) {
-    const articles_df = new dfd.DataFrame(articles)
-    const grouped_df = articles_df.groupby(["journal"])
-    return grouped_df.colDict
+    return _.groupBy(articles, (article) => (article.journal))
+    // const articles_df = new dfd.DataFrame(articles)
+    // const grouped_df = articles_df.groupby(["journal"])
+    // return grouped_df.colDict
     
     var outlet_article_dict = {} 
     articles.forEach(article => {
@@ -54,7 +89,7 @@ export function constructOutletArticleDict(articles) {
 
 export function construct_node(articles, label): ScatterOutletNode {
     let node: ScatterOutletNode;  
-    const article_num = articles.id.length
+    const article_num = articles.length
     if(article_num == 0) {
         node = {
             text: label,
@@ -63,19 +98,27 @@ export function construct_node(articles, label): ScatterOutletNode {
             neg_sst: 0,
         }
     } else {
-        const sst_df = new dfd.DataFrame(articles.sentiment)
-        const pos_dfs = sst_df.iloc({rows: sst_df["normalized_sst"].gt(0).or(sst_df["normalized_sst"].eq(0))})
-        const neg_dfs = sst_df.iloc({rows: sst_df["normalized_sst"].lt(0)})
+        const pos_artcs = articles.map(article => article.sentiment.normalized_sst).filter(sst => sst >= 0)
+        const neg_artcs = articles.map(article => article.sentiment.normalized_sst).filter(sst => sst < 0)
 
-        const pos_mean = pos_dfs["normalized_sst"].mean()
-        const pos_median = pos_dfs["normalized_sst"].median()
-        const pos_std = pos_dfs["normalized_sst"].std()
+        const median = (x) => {
+            x = x.sort();
+            var idx = Math.round(x.length / 2);
+            return x[idx];
+        }
+        const std = (x) => {
+            var avg = _.sum(x) / x.length;
+            return Math.sqrt(_.sum(_.map(x, (i) => Math.pow((i - avg), 2))) / x.length);
+        }
+        const pos_mean = _.mean(pos_artcs)
+        const pos_median = median(pos_artcs)
+        const pos_std = std(pos_artcs) 
         const pos_score = sigmoid(3*(pos_mean-pos_median)/pos_std) || 0
 
-        const neg_mean = neg_dfs["normalized_sst"].mean()
-        const neg_median = neg_dfs["normalized_sst"].median()
-        const neg_std = neg_dfs["normalized_sst"].std()
-        const neg_score = sigmoid(3*(neg_mean-neg_median)/neg_std)
+        const neg_mean = _.mean(neg_artcs)
+        const neg_median = median(neg_artcs)
+        const neg_std = std(neg_artcs) 
+        const neg_score = sigmoid(3*(neg_mean-neg_median)/neg_std) || 0
 
         node = {
             text: label,
@@ -86,6 +129,8 @@ export function construct_node(articles, label): ScatterOutletNode {
     }
     return node
 }
+
+
 export function processArticles(articles) {
     const pos_mean = 12.506365768116687
     const pos_std = 18.00385412093575
