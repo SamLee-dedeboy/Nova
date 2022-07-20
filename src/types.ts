@@ -1,5 +1,5 @@
 export interface ScatterOutletGraph {
-    entity: string,
+    title: string,
     nodes: ScatterOutletNode[]
 }
 export interface ScatterOutletNode {
