@@ -2,6 +2,7 @@
 
 import Filter from "../components/Filter.vue";
 import Slider from "primevue/slider"
+import InputText from "primevue/inputtext"
 //import Target from "../components/Target.vue";
 import TargetContainer from "../components/TargetContainer.vue";
 import MyToolbar from "../components/MyToolbar.vue"
@@ -61,6 +62,7 @@ const graph_constructing: Ref<Boolean> = ref(false)
 const max_articles: Ref<number> = ref(0)
 const min_articles: Ref<number> = ref(0)
 const compare_mode: Ref<Boolean> = ref(false)
+const segment_mode: Ref<Boolean> = ref(false)
 const article_num_threshold: Ref<number> = ref(10)
 
 watch(() => timeRange, (new_range, old_range) => {
@@ -73,6 +75,7 @@ watch(() => timeRange, (new_range, old_range) => {
       // this.updateDicts(subset)
     }
 })
+
 function updateNpList(np_list) {
   // this.dataset = dataset
   // this.outlet_set = dataset.outlet_set
@@ -85,9 +88,28 @@ function updateNpList(np_list) {
 function datasetImported(dataset) {
   graph_constructing.value = true
   setTimeout(() => {
-    const promise = new Promise((resolve) => { processDataset(dataset); resolve(""); })
+    const promise = new Promise((resolve) => { 
+      const outlet_article_dict = dataset.outlet_article_dict
+      const entity_mentions = dataset.entity_mentions
+      let {outlet_set, r_article_dict} = preprocess.processArticleDict(outlet_article_dict)
+      enabled_outlet_set.value = outlet_set
+      // articles.value = normalized_articles
+      article_dict.value = r_article_dict
+      let {r_graph_dict, r_max_articles, r_min_articles} = preprocess.constructEntityGraph(entity_mentions, article_dict.value)
+      graph_dict.value = r_graph_dict
+      max_articles.value = r_max_articles
+      min_articles.value = r_min_articles
+      graph_constructed.value = true
+      resolve(""); 
+    })
     promise.then(() => graph_constructing.value = false)
   }, 1)
+
+  // graph_constructing.value = true
+  // setTimeout(() => {
+  //   const promise = new Promise((resolve) => { processDataset(dataset); resolve(""); })
+  //   promise.then(() => graph_constructing.value = false)
+  // }, 1)
 }
 
 function processDataset(dataset) {
@@ -204,11 +226,11 @@ function handleDropScatter(e) {
   e.target.style.background = "white"
   const index = e.dataTransfer.getData('scatterIndex')
   // const clicked_scatter = entity_mentions.value[index][0]
+  console.log(e.target)
   const clicked_scatter = Array.from(enabled_outlet_set.value)[index]
-
-  if(e.target.classList.contains("panel-left"))
+  if(e.target.classList.contains("panel-left") || e.target.parentNode.classList.contains("panel-left"))
     selectedScatterGraphs_left.value.add(graph_dict.value[clicked_scatter])
-  else if(e.target.classList.contains("panel-right"))
+  else if(e.target.classList.contains("panel-right") || e.target.parentNode.classList.contains("panel-right"))
     selectedScatterGraphs_right.value.add(graph_dict.value[clicked_scatter])
   scatterClicked.value = true
   const button_next = document.getElementsByClassName("p-tabview-nav-next")[0] || undefined
@@ -236,6 +258,8 @@ function handleDropScatter(e) {
             :selectedTimeRange="timeRange"
             :min_articles="min_articles"
             :max_articles="max_articles"
+            :article_num_threshold="article_num_threshold"
+            :segment_mode="segment_mode"
             @drop="handleDropScatter($event)"
             @dragover="handleDragOver($event)"
             @dragleave="handleDragLeave($event)"
@@ -256,6 +280,7 @@ function handleDropScatter(e) {
             :min_articles="min_articles"
             :max_articles="max_articles"
             :article_num_threshold="article_num_threshold"
+            :segment_mode="segment_mode"
             @drop="handleDropScatter($event)"
             @dragover="handleDragOver($event)"
             @dragleave="handleDragLeave($event)"
@@ -288,6 +313,7 @@ function handleDropScatter(e) {
                 :max_articles="max_articles"
                 :min_articles="min_articles"
                 :article_num_threshold="article_num_threshold"
+                :segment_mode="segment_mode"
                 style="cursor: pointer"
                 :expanded="false"
                 :draggable="true"
@@ -296,8 +322,19 @@ function handleDropScatter(e) {
             >
             </OutletScatter>
             </div>
-            <div class="slider-container">
+            <div v-if="graph_constructed" class="slider-container">
+              <InputText class="threshold-input" v-model.number="article_num_threshold" />
+              <Button class="increment-button" @click="() => article_num_threshold=Math.min(article_num_threshold+=10, max_articles||100)">+</Button>
+              <Button class="decrease-button" @click="() => article_num_threshold=Math.max(article_num_threshold-10, 10)">-</Button>
               <Slider v-model="article_num_threshold" :step="1" :min="10" :max="max_articles||100"></Slider>
+              <div class="indicator-container">
+                <div class="min_indicator">10</div>
+                <div class="max_indicator">{{max_articles || 100}}</div>
+              </div>
+            </div>
+            <div v-if="graph_constructed" class="segment-toggler-container">
+              <ToggleButton class='segment-toggler p-button-secondary' v-model="segment_mode" onLabel="Segment On" offLabel="Segment off"></ToggleButton>
+
             </div>
             <Legend v-if="graph_constructed" style="position:absolute; left: 72%; top: 75%"></Legend>
 
@@ -332,15 +369,26 @@ function handleDropScatter(e) {
     /* grid-template-columns: repeat(7, 1fr);
     grid-template-rows: repeat(7, 1fr);   */
     grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(3, 1fr);  
+    grid-template-rows: repeat(2, 1fr);  
 }
-:deep(.outlet-scatter:hover .outlet-scatterplot) {
+/* :deep(.outlet-scatter:hover .outlet-scatterplot) {
     filter: brightness(80%);
     background-color: rgb(191, 189, 189);
+} */
+:deep(.p-tabview) {
+  height: 95vh !important;
+  width: 100% !important;
 }
-:deep(.p-tabview .p-tabview-panels .p-tabview-panel) {
-  height:95vh !important;
-  width: 100%;
+:deep(.p-tabview-panels) {
+  height: 100% !important;
+  width: 100% !important;
+}
+:deep(.p-tabview-panel) {
+  height: 100% !important;
+  width: 100% !important;
+}
+:deep(.p-tabview-nav-container) {
+  width: 100% !important;
 }
 .compare {
   width: 48%;
@@ -357,9 +405,39 @@ function handleDropScatter(e) {
     margin: 10px;
 }
 .slider-container {
-  width: 100px;
+  width: 200px;
+  left: 10px;
+}
+.increment-button {
+  display:inline-block;
+}
+.threshold-input {
+  width: 60% !important;
+  display:inline-block;
+}
+.increment-button, .decrease-button {
+  width: 20% !important;
+  display:inline-block;
+}
+.indicator-container {
+  top: 10px;
+  display: flex;
+  justify-content: space-between;
+}
+.segment-toggler-container {
+  top: 10px;
+  left: 10px;
+}
+:deep(.p-slider) {
+  width: 90%;
+  top: 10px;
+  left: 10px;
 }
 :deep(.p-slider-handle) {
     border-radius: 10px !important; 
+    background: white !important;
+} 
+:deep(.p-slider-handle:hover) {
+    background: #007bff !important;
 } 
  </style>

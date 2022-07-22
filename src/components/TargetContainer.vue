@@ -21,6 +21,7 @@ const props = defineProps({
     max_articles: Number,
     compare_part: String,
     article_num_threshold: Number,
+    segment_mode: Boolean,
 })
 const scatterClicked: Ref<Boolean> = ref(false)
 const active: Ref<number> = ref(0)
@@ -110,8 +111,7 @@ function handleCloseTab(e, index) {
 
 <template>
 <TabView class="graph-container" :class="compare_part" v-model:activeIndex="active" :scrollable="true">
-    <TabPanel class="graph-panel" 
-    :class="compare_part" 
+    <TabPanel class="graph-panel" :class="compare_part" 
      v-for="(graph, index) in selectedScatters_list" :key="graph.title" 
       >
         <template #header>
@@ -128,6 +128,7 @@ function handleCloseTab(e, index) {
         :max_articles="max_articles"
         :panel_class="compare_part" 
         :article_num_threshold="article_num_threshold"
+        :segment_mode="segment_mode"
         ></OutletScatter>
         <!-- <Graph 
             class="graph"
