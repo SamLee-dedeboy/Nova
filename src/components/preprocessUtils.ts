@@ -3,7 +3,31 @@ import _ from 'lodash'
 import { Series } from "danfojs/dist/danfojs-base"
 import { ScatterOutletNode, ScatterOutletGraph } from "../types"
 
-export function constructEntityGraph(entity_mentions, outlet_set, article_dict, articles) {
+export function constructEntityGraph(entity_mentions_grouped, article_dict) {
+    var r_graph_dict = {}
+    var r_min_articles = Object.keys(article_dict).length
+    var r_max_articles = 0
+    Object.keys(entity_mentions_grouped).forEach(outlet => {
+        const entity_mentions = entity_mentions_grouped[outlet]
+        var graph: ScatterOutletGraph= {title: outlet, nodes: []}
+        entity_mentions.forEach(entity_mention => {
+            const entity = entity_mention.entity
+            const mentioned_article_ids = entity_mention.article_ids
+            const mentioned_articles = idsToArticles(mentioned_article_ids, article_dict)
+            const article_num = mentioned_articles.length
+            if(article_num > r_max_articles) r_max_articles = article_num
+            if(article_num < r_min_articles) r_min_articles = article_num
+            const node = construct_node(mentioned_articles, entity) 
+            graph.nodes.push(node)
+
+        })
+        r_graph_dict[outlet] = graph
+    })
+    return {r_graph_dict, r_max_articles, r_min_articles}
+
+}
+
+export function constructEntityGraph2(entity_mentions, outlet_set, article_dict, articles) {
     var r_graph_dict = {}
     var r_min_articles = articles.length
     var r_max_articles = 0
@@ -131,12 +155,26 @@ export function construct_node(articles, label): ScatterOutletNode {
 }
 
 
-export function processArticles(articles) {
-    const pos_mean = 12.506365768116687
-    const pos_std = 18.00385412093575
-    const neg_mean = -25.86358780825294
-    const neg_std = 29.437169285743654 
+const pos_mean = 12.506365768116687
+const pos_std = 18.00385412093575
+const neg_mean = -25.86358780825294
+const neg_std = 29.437169285743654 
 
+export function processArticleDict(outlet_article_dict) {
+    let r_article_dict: {[id: string]: any} = {}
+    Object.keys(outlet_article_dict).forEach(outlet => {
+        const articles = outlet_article_dict[outlet]
+        articles.forEach(article => {
+            const pos = article.sentiment.pos
+            const neg = article.sentiment.neg
+            Object.assign(article.sentiment, {"normalized_sst": (Math.tanh((pos-pos_mean)/pos_std) + Math.tanh((neg-neg_mean)/neg_std))/2})
+            r_article_dict[article.id] = article
+        })
+    })
+    const outlet_set = new Set(Object.keys(outlet_article_dict))
+    return {outlet_set, r_article_dict}
+}
+export function processArticles(articles) {
     let outlet_set = new Set<string>()
     let r_article_dict: {[id: string]: any} = {}
     for(var article of articles) {

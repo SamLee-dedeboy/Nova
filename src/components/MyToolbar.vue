@@ -14,25 +14,31 @@ export default {
     data() {
         return {
             articles: {},
+            outlet_article_dict: {},
             entity_mentions: {},
             isLoading: true,
         }
     },
     async mounted() {
         // await fetch("candidate_entities.json")
-        await fetch("candidate_entities.json")
+        // await fetch("entities.json")
+        // await fetch("entities_gt10.json")
+        await fetch("entities_groupby_outlet.json")
             .then(res => res.json())
             .then(json => {
-                this.entity_mentions = json.ranked_entity_list
+                // this.entity_mentions = json.ranked_entity_list
+                this.entity_mentions = json
             },
             response => {
                 console.log("Error loading entity mentions.")
             })
 
-        await fetch("processed_articles_rel_hugFace.json")
+        // await fetch("processed_articles_rel_hugFace.json")
+        await fetch("outlet_article_dict.json")
             .then(res => res.json())
             .then(json => {
-                this.articles = json
+                // this.articles = json
+                this.outlet_article_dict = json
             },
             response => {
                 console.log("Error loading articles.")
@@ -56,7 +62,9 @@ export default {
     methods: {
         getDataset() {
             return {
-                articles: this.articles,
+                // articles: this.articles,
+                // entity_mentions: this.entity_mentions,
+                outlet_article_dict: this.outlet_article_dict,
                 entity_mentions: this.entity_mentions,
             }
         },
@@ -75,9 +83,13 @@ export default {
         
         testClicked() {
             this.$emit("dataset_imported", 
-            {articles: this.articles, 
-            entity_mentions: this.entity_mentions,
-            metadata: this.getMetaData()})
+            {outlet_article_dict: this.outlet_article_dict,
+            entity_mentions: this.entity_mentions}
+            // {
+                // articles: this.articles, 
+            // entity_mentions: this.entity_mentions,
+            // metadata: this.getMetaData()}
+            )
 
 //            this.$emit("candidate_updated", this.entity_mentions);
         }
