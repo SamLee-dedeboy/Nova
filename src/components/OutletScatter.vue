@@ -40,7 +40,7 @@ const tooltip_content: Ref<String> = ref("")
 const viewBox = [1000, 1000]
 const outlet_min_radius = 10
 const outlet_max_radius = 150
-const origin = [30, 30]
+const origin = [80, 30]
 const viewBox_width = 0.9*viewBox[0]
 const viewBox_height = 0.9*viewBox[1]
 const x = d3.scalePow()
@@ -52,7 +52,7 @@ const y = d3.scalePow()
     .exponent(1)
     .domain([0, 1])
     .range([ viewBox_height, origin[1]]);
-const zoom = d3.zoom().on("zoom", handleZoom)
+const zoom = d3.zoom().scaleExtent([1, 3]).on("zoom", handleZoom)
 const filtered_data = computed(() => props.graph?.nodes.filter(node => node.articles > (props.article_num_threshold || 0)))
 const avg_pos_sst = computed(() => (_.mean(props.graph?.nodes.map(node => node.pos_sst))))
 const avg_neg_sst = computed(() => (_.mean(props.graph?.nodes.map(node => node.neg_sst))))
@@ -73,17 +73,18 @@ onMounted(() => {
     svg.append("g")
         .attr("class", "axis_x")
         .attr("transform", `translate(0, ${viewBox_height})`)
-        .call(d3.axisBottom(x));
+        .call(d3.axisBottom(x))
+        .style("overflow", "visible")
 
     svg.append("g")
         .attr("class", "axis_y")
         .attr("transform", `translate(${origin[0]},0)`)
-        .call(d3.axisLeft(y));
+        .call(d3.axisLeft(y))
     if(props.expanded) {
         svg.append("text")
             .text(props.graph?.title)
             .attr("x", () => viewBox[0]/2)
-            .attr("dy", "1em")
+            .attr("y", "0em")
             .attr("text-anchor", "middle")
             .attr("font-size", () => (props.expanded?"2em":"8em"))
             .attr("dominant-baseline", "central")
@@ -149,8 +150,8 @@ onMounted(() => {
             .data(break_text)
             .join("tspan")
             .text(d => d)
-            .attr("x", () => viewBox[0]/2)
-            .attr("dy", "1em")
+            .attr("x", viewBox[0]/2)
+            .attr("y", viewBox_height + 50)
             .attr("text-anchor", "middle")
             .attr("font-size", () => (props.expanded?"2em":"5em"))
             .attr("dominant-baseline", "central")
@@ -409,7 +410,7 @@ function updateOverviewScatter(graph) {
     // height: inherit;
     max-height: 100%;
     aspect-ratio: 1;
-    overflow: visible;
+    overflow: hidden;
     // height: auto;
     // width: inherit;
     // aspect-ratio: 1;
