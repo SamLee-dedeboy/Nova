@@ -36,6 +36,8 @@ const props = defineProps({
     article_num_threshold: Number,
     segment_mode: Boolean,
 })
+const emit = defineEmits(['node_clicked'])
+
 const tooltip_content: Ref<String> = ref("") 
 const viewBox = [1000, 1000]
 const outlet_min_radius = 10
@@ -59,6 +61,7 @@ const avg_neg_sst = computed(() => (_.mean(props.graph?.nodes.map(node => node.n
 var segment_point = {x: x(avg_pos_sst.value), y: y(avg_neg_sst.value)}
 var segment_controller_start_x:number
 var segment_controller_start_y:number
+let current_zoom = undefined
 onMounted(() => {
     const svg = d3.select(`#${props.id}`)
     .select("svg")
@@ -204,6 +207,7 @@ function resetZoom() {
 }
 
 function handleZoom(e) {
+    current_zoom = e.transform
     const svg = d3.select(`#${props.id}`).select("svg")
     svg.selectAll("g.outlet")
         .attr("transform", e.transform)
@@ -340,7 +344,7 @@ function updateExpandedScatter(graph) {
             .style("scale", 0)
         })
         .on("click", function(e, d) {
-            console.log(d)
+           emit('node_clicked', d) 
         })
 
 
@@ -393,6 +397,9 @@ function updateOverviewScatter(graph) {
     ) 
     const dots = svg.selectAll("g.outlet")
     dots.sort((da, db) => (da.articles - db.articles))
+    if(current_zoom) {
+        dots.attr("transform", current_zoom)
+    }
     // dots.attr("opacity", (d) => (d.articles < props.article_num_threshold? 0:0.8))
 }
 </script>
