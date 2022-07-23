@@ -19,6 +19,8 @@ import { watch, computed, onMounted, PropType, ref, Ref, nextTick, } from 'vue'
 import { ScatterOutletGraph } from "../types";
 import Legend from "../components/Legend.vue";
 import Divider from 'primevue/divider';
+import ColorSpectrum from '../components/ColorSpectrum.vue'
+import * as SstColors from "../components/ColorUtils"
 
   // data() {
   //   return {
@@ -322,6 +324,7 @@ function handleDropScatter(e) {
             >
             </OutletScatter>
             </div>
+            <div class="utilities-container">
             <div v-if="graph_constructed" class="slider-container">
               <InputText class="threshold-input" v-model.number="article_num_threshold" />
               <Button class="increment-button" @click="() => article_num_threshold=Math.min(article_num_threshold+=10, max_articles||100)">+</Button>
@@ -331,10 +334,13 @@ function handleDropScatter(e) {
                 <div class="min_indicator">10</div>
                 <div class="max_indicator">{{max_articles || 100}}</div>
               </div>
+              <ColorSpectrum class="color-spectrum" v-if="graph_constructed" 
+              :color-scale="SstColors.article_num_color_scale"
+              ></ColorSpectrum>
+            </div>
             </div>
             <div v-if="graph_constructed" class="segment-toggler-container">
               <ToggleButton class='segment-toggler p-button-secondary' v-model="segment_mode" onLabel="Segment On" offLabel="Segment off"></ToggleButton>
-
             </div>
             <Legend v-if="graph_constructed" style="position:absolute; left: 72%; top: 75%"></Legend>
 
@@ -420,7 +426,7 @@ function handleDropScatter(e) {
   display:inline-block;
 }
 .indicator-container {
-  top: 10px;
+  top: 15px;
   display: flex;
   justify-content: space-between;
 }
@@ -428,15 +434,32 @@ function handleDropScatter(e) {
   top: 10px;
   left: 10px;
 }
+.color-spectrum {
+  position:absolute;
+  width: inherit;
+  height: 30px;
+  top: 40px;
+}
+.utilities-container {
+  display: inline-block;
+}
 :deep(.p-slider) {
-  width: 90%;
+  width: 100%;
   top: 10px;
-  left: 10px;
 }
 :deep(.p-slider-handle) {
     border-radius: 10px !important; 
     background: white !important;
+    z-index: 100;
 } 
+:deep(.p-slider.p-slider-horizontal .p-slider-handle) {
+  margin-left: unset !important;
+}
+:deep(.p-slider .p-slider-handle) {
+  height: 1.3rem !important;
+  width: 0.4rem !important;
+  border: 2px solid black !important;
+}
 :deep(.p-slider-handle:hover) {
     background: #007bff !important;
 } 
