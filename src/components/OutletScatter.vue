@@ -89,7 +89,7 @@ onMounted(() => {
             .attr("dominant-baseline", "central")
         svg.call(zoom)
 
-        const segment_controller_width = 10
+        const segment_controller_width = 12
 
         const drag = d3.drag()
             .on("start", function(e, d) { 
@@ -128,7 +128,14 @@ onMounted(() => {
             .attr("width", segment_controller_width)
             .attr("height", segment_controller_width)
             .attr("fill", "red")
+            .style("cursor", "pointer")
             .call(drag)
+            .on("mouseover", function(e, d) {
+                d3.select(this).attr("stroke", "black")
+            })
+            .on("mouseout", function(e, d) {
+                d3.select(this).attr("stroke", null)
+            })
 
     } else {
         let break_text = props.graph?.title.split('_') || "known"
@@ -176,8 +183,13 @@ watch(() => props.graph, (graph, prev_graph) => {
 watch(() => props.article_num_threshold, () => {
     updateCanvas()
 })
-watch(() => props.segment_mode, () => {
+watch(() => props.segment_mode, (new_value) => {
     updateSegmentation()
+    if(new_value) {
+        d3.select("rect.segment-controller").style("scale", 1)
+    } else {
+        d3.select("rect.segment-controller").style("scale", 0)
+    }
 })
 
 function resetZoom() {
