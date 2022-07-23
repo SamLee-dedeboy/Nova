@@ -25,6 +25,7 @@ const outlet_color_dict = {
     "New York Times": "rgb(17 17 17)",
     "Washington Post": "#b7b7b8"
 }
+const article_num_color_scale = (x) => d3.interpolateReds(0.3+x/(1-0.3))
 export {
     brightness,
     sst_range,
@@ -35,4 +36,5 @@ export {
     key_color_pair,
     color_dict,
     outlet_color_dict,
+    article_num_color_scale,
 }

@@ -40,7 +40,7 @@ const tooltip_content: Ref<String> = ref("")
 const viewBox = [1000, 1000]
 const outlet_min_radius = 10
 const outlet_max_radius = 150
-const origin = [80, 30]
+const origin = [80, 80]
 const viewBox_width = 0.9*viewBox[0]
 const viewBox_height = 0.9*viewBox[1]
 const x = d3.scalePow()
@@ -70,21 +70,11 @@ onMounted(() => {
     updateOverviewTooltipContent()
     updateSegmentation()
 
-    svg.append("g")
-        .attr("class", "axis_x")
-        .attr("transform", `translate(0, ${viewBox_height})`)
-        .call(d3.axisBottom(x))
-        .style("overflow", "visible")
-
-    svg.append("g")
-        .attr("class", "axis_y")
-        .attr("transform", `translate(${origin[0]},0)`)
-        .call(d3.axisLeft(y))
     if(props.expanded) {
         svg.append("text")
             .text(props.graph?.title)
             .attr("x", () => viewBox[0]/2)
-            .attr("y", "0em")
+            .attr("y", "1em")
             .attr("text-anchor", "middle")
             .attr("font-size", () => (props.expanded?"2em":"8em"))
             .attr("dominant-baseline", "central")
@@ -130,6 +120,7 @@ onMounted(() => {
             .attr("height", segment_controller_width)
             .attr("fill", "red")
             .style("cursor", "pointer")
+            .style("opacity", props.segment_mode?1:0)
             .call(drag)
             .on("mouseover", function(e, d) {
                 d3.select(this).attr("stroke", "black")
@@ -175,6 +166,16 @@ onMounted(() => {
         })
     }       
     updateCanvas()
+    svg.append("g")
+        .attr("class", "axis_x")
+        .attr("transform", `translate(0, ${viewBox_height})`)
+        .call(d3.axisBottom(x))
+
+    svg.append("g")
+        .attr("class", "axis_y")
+        .attr("transform", `translate(${origin[0]},0)`)
+        .call(d3.axisLeft(y))
+        .raise()
 })
 
 watch(() => props.graph, (graph, prev_graph) => {
@@ -186,11 +187,9 @@ watch(() => props.article_num_threshold, () => {
 })
 watch(() => props.segment_mode, (new_value) => {
     updateSegmentation()
-    if(new_value) {
-        d3.select("rect.segment-controller").style("scale", 1)
-    } else {
-        d3.select("rect.segment-controller").style("scale", 0)
-    }
+    const svg = d3.select(`#${props.id}`).select("svg")
+    svg.select("rect.segment-controller").style("opacity", new_value?1:0).raise()
+    console.log(d3.select("rect.segment-controller").node())
 })
 
 function resetZoom() {
@@ -273,11 +272,7 @@ function updateSegmentation() {
                 .attr("y", origin[1])
                 .attr("width", (d) => viewBox_width-segment_point.x)
                 .attr("height", (d) => segment_point.y-origin[1])
-    if(props.segment_mode === false) {
-        svg.selectAll("g.segmentation").style("scale", 0)
-    } else {
-        svg.selectAll("g.segmentation").style("scale", 1)
-    }
+        svg.selectAll("g.segmentation").style("scale", props.segment_mode?1:0)
 
 
 }
@@ -299,10 +294,12 @@ function updateOverviewTooltipContent() {
     tooltip_content.value = 
     `${title}: <br>` + 
     `&nbsp #entities: ${entity_num} <br>` +
-    `&nbsp top 3 entities:<ol> 
-    <li>${nodes[0].text}</li>
-    <li>${nodes[1].text}</li>
-    <li>${nodes[2].text}</li> </ol>` +
+    `&nbsp top entities:<ol>` 
+    for(let i = 0; i < Math.min(3, nodes.length); ++i) {
+        tooltip_content.value +=
+        `<li>${nodes[i].text}</li>`
+    }
+    tooltip_content.value += "</ol>" +
     `&nbsp avg_sst: (${avg_pos_sst.value.toFixed(2)}, ${avg_neg_sst.value.toFixed(2)}) <br>` 
 }
 
@@ -328,7 +325,7 @@ function updateExpandedScatter(graph) {
             container.style("filter", "brightness(90%)")
             container.selectAll("circle.expand_circle")
                 .transition().duration(100)
-                .attr("r", (d) => (parseFloat(container.select("circle.outlet_circle").attr("r")) + 10))
+                .attr("r", (d) => (parseFloat(container.select("circle.outlet_circle").attr("r")) + 5))
             updateExpandedTooltipContent(d)
             d3.select(`#${props.id}`).select("div.tooltip")
             .style("scale", 1)
@@ -368,8 +365,9 @@ function updateOverviewScatter(graph) {
                 .attr("cx", (d) => x(d.pos_sst))
                 .attr("cy", (d) => y(Math.abs(d.neg_sst)))
                 // .attr("fill", (d) => SstColors.outlet_color_dict[d.text])
-                .attr("fill", "black")
+                .attr("fill", (d) => SstColors.article_num_color_scale(d.articles/props.max_articles!))
                 .attr("opacity", 0.8)
+                .raise()
             group.append("circle")
                 .attr("class", "expand_circle")
                 // .attr("r", (d) => article_radius_scale(d.articles))
@@ -389,12 +387,12 @@ function updateOverviewScatter(graph) {
 
             update.selectAll("circle.outlet_circle")
             // .attr("fill", (d) => SstColors.outlet_color_dict[d.text])
-            .attr("fill", "black")
+            .attr("fill", (d) => SstColors.article_num_color_scale(d.articles/props.max_articles!))
             // .attr("opacity", 0.8)
         }
     ) 
     const dots = svg.selectAll("g.outlet")
-    dots.sort((da, db) => -(da.articles - db.articles))
+    dots.sort((da, db) => (da.articles - db.articles))
     // dots.attr("opacity", (d) => (d.articles < props.article_num_threshold? 0:0.8))
 }
 </script>
