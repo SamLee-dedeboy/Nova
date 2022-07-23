@@ -1,7 +1,7 @@
 <template>
 <div :id="props.id" class="scatter-container" :class="panel_class">
     <svg class="outlet-scatterplot" :class="panel_class"></svg>
-    <Button class="reset-zoom" @click="resetZoom">reset</Button>
+    <Button v-if="expanded" class="reset-zoom" @click="resetZoom">reset</Button>
     <TooltipVue class='tooltip' :content="tooltip_content" style="z-index: 1000;"></TooltipVue>
 
 </div>
@@ -52,16 +52,20 @@ const y = d3.scalePow()
     .exponent(1)
     .domain([0, 1])
     .range([ viewBox_height, origin[1]]);
+const zoom = d3.zoom().on("zoom", handleZoom)
 const filtered_data = computed(() => props.graph?.nodes.filter(node => node.articles > (props.article_num_threshold || 0)))
 const avg_pos_sst = computed(() => (_.mean(props.graph?.nodes.map(node => node.pos_sst))))
 const avg_neg_sst = computed(() => (_.mean(props.graph?.nodes.map(node => node.neg_sst))))
+var segment_point = {x: x(avg_pos_sst.value), y: y(avg_neg_sst.value)}
+var segment_controller_start_x:number
+var segment_controller_start_y:number
 onMounted(() => {
     const svg = d3.select(`#${props.id}`)
     .select("svg")
     .attr("viewBox", `0 0 ${viewBox[0]} ${viewBox[1]}`)
+
     d3.select(`#${props.id}`).select("div.tooltip")
     .style("scale", 0)
-    
 
     updateOverviewTooltipContent()
     updateSegmentation()
@@ -83,8 +87,49 @@ onMounted(() => {
             .attr("text-anchor", "middle")
             .attr("font-size", () => (props.expanded?"2em":"8em"))
             .attr("dominant-baseline", "central")
-        const zoom = d3.zoom().on("zoom", handleZoom)
         svg.call(zoom)
+
+        const segment_controller_width = 10
+
+        const drag = d3.drag()
+            .on("start", function(e, d) { 
+                segment_controller_start_x = e.x
+                segment_controller_start_y = e.y
+                d3.select(this).attr("stroke", "black")
+            })
+            .on("drag", function(e, d) { 
+                let current_scale
+                if (this.getAttribute("transform") === null)
+                {
+                    current_scale = 1; 
+                } 
+                //case where we have transformed the circle 
+                else {
+                    const current_scale_string = this.getAttribute("transform").split(' ')[1];
+                    current_scale = +current_scale_string.substring(6,current_scale_string.length-1);
+                }
+                const end_x = segment_controller_start_x + ((e.x - segment_controller_start_x) / current_scale) 
+                const end_y = segment_controller_start_y + ((e.y - segment_controller_start_y) / current_scale) 
+                d3.select(this)
+                    .attr("x", d.x=(end_x-segment_controller_width/2))
+                    .attr("y", d.y=(end_y-segment_controller_width/2))
+                    .raise()
+
+                segment_point = {x: Math.max(origin[0], Math.min(end_x, viewBox_width)), y: Math.max(origin[1], Math.min(end_y, viewBox_height))} 
+                updateSegmentation()
+            })
+            .on("end", function(e, d) { d3.select(this).attr("stroke", null)})
+
+        svg.append("rect")
+            .data([{x: x(avg_pos_sst.value)-segment_controller_width/2, y:y(avg_neg_sst.value)-segment_controller_width/2}])
+            .attr("class", "segment-controller")
+            .attr("x", (d) => d.x)
+            .attr("y", (d) => d.y)
+            .attr("width", segment_controller_width)
+            .attr("height", segment_controller_width)
+            .attr("fill", "red")
+            .call(drag)
+
     } else {
         let break_text = props.graph?.title.split('_') || "known"
         var break_num = break_text.length
@@ -137,72 +182,84 @@ watch(() => props.segment_mode, () => {
 
 function resetZoom() {
     const svg = d3.select(`#${props.id}`).select("svg")
+    svg.call(zoom.transform, d3.zoomIdentity)
+    svg.selectAll("g.axis_x")
+        .call(zoom.transform, d3.zoomIdentity)
+    svg.selectAll("g.axis_y")
+        .call(zoom.transform, d3.zoomIdentity)
     svg.selectAll("g.outlet")
-        .attr("transform", "none")
-    const axis_x = svg.selectAll("g.axis_x")
-    axis_x.attr("transform", `translate(0, ${viewBox_height})`)
-
-    const axis_y = svg.selectAll("g.axis_y")
-    axis_y.attr("transform", `translate(${origin[0]}, 0)` )
-
+        .call(zoom.transform, d3.zoomIdentity)
 }
 
 function handleZoom(e) {
-    if(e.transform.k === 1) {
-        resetZoom()
-        return
-    }
     const svg = d3.select(`#${props.id}`).select("svg")
     svg.selectAll("g.outlet")
         .attr("transform", e.transform)
-    const axis_x = svg.selectAll("g.axis_x")
-    axis_x.attr("transform", `translate(${e.transform.x}, ${viewBox_height}) scale(${e.transform.k})`)
+    svg.selectAll("g.axis_x")
+        .attr("transform", `translate(${e.transform.x}, ${viewBox_height}) scale(${e.transform.k})`)
 
-    const axis_y = svg.selectAll("g.axis_y")
-    axis_y.attr("transform", `translate(${origin[0]}, ${e.transform.y}) scale(${e.transform.k})` )
+    svg.selectAll("g.axis_y")
+        .attr("transform", `translate(${origin[0]}, ${e.transform.y}) scale(${e.transform.k})` )
+    svg.selectAll("g.segmentation > rect")
+        .attr("transform", e.transform)
+    svg.selectAll("rect.segment-controller")
+        .attr("transform", e.transform)
 }
 
 function updateSegmentation() {
     const svg = d3.select(`#${props.id}`).select("svg")
-    svg.selectAll("g.segmentation")
-    .data([{avg_pos_sst, avg_neg_sst}])
-    .join(
-        enter => {
-            const segment_group = enter.append("g").attr("class", "segmentation")
-            // neg
-            segment_group.append("rect")
+    const segment_group = svg.selectAll("g.segmentation")
+    .data([segment_point])
+
+    segment_group.enter().append("g")
+        .attr("class", "segmentation")
+
+    // neg
+    const neg_rect = segment_group.selectAll("rect.neg")
+    segment_group.enter().select("g.segmentation").append("rect")
                 .attr("class", "neg")
+                .attr("fill", SstColors.neg_color)
+                .style("filter", `brightness(${SstColors.brightness}%)`)
+                .merge(neg_rect)
                 .attr("x", origin[0])
                 .attr("y", origin[1])
-                .attr("width", (d) => x(d.avg_pos_sst.value)-origin[0])
-                .attr("height", (d) => y(d.avg_neg_sst.value)-origin[1])
-                .attr("fill", "red")
-            // neu
-            segment_group.append("rect")
+                .attr("width", (d) => segment_point.x-origin[0])
+                .attr("height", (d) => segment_point.y-origin[1])
+                .lower()
+    // neu
+    const neu_rect = segment_group.selectAll("rect.neu")
+    segment_group.enter().select("g.segmentation").append("rect")
                 .attr("class", "neu")
+                .attr("fill", SstColors.neu_color)
+                .style("filter", `brightness(${SstColors.brightness}%)`)
+                .merge(neu_rect)
                 .attr("x", origin[0])
-                .attr("y", (d) =>  y(d.avg_neg_sst.value))
-                .attr("width", (d) => x(d.avg_pos_sst.value)-origin[0])
-                .attr("height", (d) => y(1-d.avg_neg_sst.value)-origin[1])
-                .attr("fill", "grey")
-            // pos
-            segment_group.append("rect")
+                .attr("y", (d) =>  segment_point.y)
+                .attr("width", (d) => segment_point.x-origin[0])
+                .attr("height", (d) => viewBox_height-segment_point.y)
+
+    // pos
+    const pos_rect = segment_group.selectAll("rect.pos")
+    segment_group.enter().select("g.segmentation").append("rect")
                 .attr("class", "pos")
-                .attr("x", (d) => x(d.avg_pos_sst.value))
-                .attr("y", (d) => y(d.avg_neg_sst.value))
-                .attr("width", (d) => x(1-d.avg_pos_sst.value)-origin[0])
-                .attr("height", (d) => y(1-d.avg_neg_sst.value)-origin[1])
-                .attr("fill", "blue")
-            // mixed
-            segment_group.append("rect")
+                .attr("fill", SstColors.pos_color)
+                .style("filter", `brightness(${SstColors.brightness}%)`)
+                .merge(pos_rect)
+                .attr("x", (d) => segment_point.x)
+                .attr("y", (d) => segment_point.y)
+                .attr("width", (d) => viewBox_width-segment_point.x)
+                .attr("height", (d) => viewBox_height-segment_point.y)
+    // mixed
+    const mixed_rect = segment_group.selectAll("rect.mixed")
+    segment_group.enter().select("g.segmentation").append("rect")
                 .attr("class", "mixed")
-                .attr("x", (d) => x(d.avg_pos_sst.value))
+                .attr("fill", "#d9a406")
+                .style("filter", `brightness(${SstColors.brightness}%)`)
+                .merge(mixed_rect)
+                .attr("x", (d) => segment_point.x)
                 .attr("y", origin[1])
-                .attr("width", (d) => x(1-d.avg_pos_sst.value)-origin[0])
-                .attr("height", (d) => y(d.avg_neg_sst.value)-origin[1])
-                .attr("fill", "yellow")
-        }
-    )
+                .attr("width", (d) => viewBox_width-segment_point.x)
+                .attr("height", (d) => segment_point.y-origin[1])
     if(props.segment_mode === false) {
         svg.selectAll("g.segmentation").style("scale", 0)
     } else {
@@ -340,7 +397,7 @@ function updateOverviewScatter(graph) {
     // height: inherit;
     max-height: 100%;
     aspect-ratio: 1;
-    overflow: hidden;
+    overflow: visible;
     // height: auto;
     // width: inherit;
     // aspect-ratio: 1;
@@ -352,5 +409,6 @@ function updateOverviewScatter(graph) {
 }
 .reset-zoom {
     position: absolute;
+    left: 80%;
 }
 </style>
