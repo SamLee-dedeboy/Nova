@@ -21,6 +21,7 @@ import Legend from "../components/Legend.vue";
 import Divider from 'primevue/divider';
 import ColorSpectrum from '../components/ColorSpectrum.vue'
 import * as SstColors from "../components/ColorUtils"
+import * as _ from "lodash"
 
   // data() {
   //   return {
@@ -136,7 +137,6 @@ function processDataset(dataset) {
   // let {r_graph_dict, r_max_articles, r_min_articles} = preprocess.constructOutletGraph(entity_mentions.value, enabled_outlet_set.value, article_dict.value)
   let {r_graph_dict, r_max_articles, r_min_articles} = preprocess.constructEntityGraph(entity_mentions.value, enabled_outlet_set.value, article_dict.value, dataset_articles)
   graph_dict.value = r_graph_dict
-  console.log("🚀 ~ file: HomeView.vue ~ line 139 ~ processDataset ~ graph_dict", graph_dict.value)
   max_articles.value = r_max_articles
   min_articles.value = r_min_articles
   graph_constructed.value = true
@@ -247,8 +247,10 @@ function handleEntityClicked(entity) {
   enabled_outlet_set.value.forEach(outlet => {
     const graph = graph_dict.value[outlet]
     // find entity node in this graph
-    let entity_in_outlet = JSON.parse(JSON.stringify(graph.nodes.find(node => node.text === entity.text))) 
+    let entity_in_outlet = _.cloneDeep(graph.nodes.find(node => node.text === entity.text))
     || { text: outlet, articles: 0, pos_sst: 0, neg_sst: 0}
+    // let entity_in_outlet = graph.nodes.find(node => node.text === entity.text)
+    // || { text: outlet, articles: 0, pos_sst: 0, neg_sst: 0}
     entity_in_outlet.text = outlet
     outlet_graph.nodes.push(entity_in_outlet)
   })
@@ -358,7 +360,7 @@ function handleEntityClicked(entity) {
             <div v-if="graph_constructed" class="segment-toggler-container">
               <ToggleButton class='segment-toggler p-button-secondary' v-model="segment_mode" onLabel="Segment On" offLabel="Segment off"></ToggleButton>
             </div>
-            <Legend v-if="graph_constructed" style="position:absolute; left: 72%; top: 75%"></Legend>
+            <Legend v-if="graph_constructed" :color_dict="SstColors.key_color_dict" :filter="true" style="position:absolute; left: 72%; top: 75%"></Legend>
 
             <!-- <div class="selection_container" style="display:flex">
               <TargetSelection v-if="np_list.length!=0" :dataset_metadata="dataset_metadata" :targets="entity_data" @target-selected="updateTarget"></TargetSelection>
@@ -447,7 +449,7 @@ function handleEntityClicked(entity) {
   justify-content: space-between;
 }
 .segment-toggler-container {
-  top: 10px;
+  top: 20px;
   left: 10px;
 }
 .color-spectrum {

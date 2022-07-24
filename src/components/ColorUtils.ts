@@ -5,17 +5,20 @@ const sst_range = d3.interpolateBrBG
 const neg_color = sst_range(0+offset)
 const pos_color = sst_range(1-offset)
 const neu_color = "grey"
+const mixed_color = "#96245c"
 const entity_selected_color = "#007bff"
-const key_color_pair = [
-                ["negative", neg_color],
-                ["positive", pos_color],
-                ["neutral",  neu_color],
-                ["no mention", 'white'],
-            ] 
+const key_color_dict = {
+                "positive": pos_color,
+                "negative": neg_color,
+                "neutral": neu_color,
+                "mixed": mixed_color, 
+                "no mention": "white"
+            } 
 const color_dict = {
     "pos": pos_color,
     "neg": neg_color,
     "neu": neu_color,
+    "mixed": mixed_color, 
 }
 const outlet_color_dict = {
     "CNN": "rgb(205 0 0)",
@@ -33,8 +36,9 @@ export {
     neg_color,
     pos_color,
     neu_color,
+    mixed_color,
     entity_selected_color,
-    key_color_pair,
+    key_color_dict,
     color_dict,
     outlet_color_dict,
     article_num_color_scale,
