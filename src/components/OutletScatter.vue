@@ -58,6 +58,8 @@ const zoom = d3.zoom().scaleExtent([1, 3]).on("zoom", handleZoom)
 const filtered_data = computed(() => props.graph?.nodes.filter(node => node.articles > (props.article_num_threshold || 0)))
 const avg_pos_sst = computed(() => (_.mean(props.graph?.nodes.map(node => node.pos_sst))))
 const avg_neg_sst = computed(() => (_.mean(props.graph?.nodes.map(node => node.neg_sst))))
+const segment_controller_width = 12
+const node_circle_radius = 10
 var segment_point = {x: x(avg_pos_sst.value), y: y(avg_neg_sst.value)}
 var segment_controller_start_x:number
 var segment_controller_start_y:number
@@ -82,7 +84,6 @@ onMounted(() => {
             .attr("dominant-baseline", "central")
         svg.call(zoom)
 
-        const segment_controller_width = 12
 
         const drag = d3.drag()
             .on("start", function(e, d) { 
@@ -92,6 +93,7 @@ onMounted(() => {
             })
             .on("drag", function(e, d) { 
                 let current_scale
+                console.log(this.getAttribute("transform"))
                 if (this.getAttribute("transform") === null)
                 {
                     current_scale = 1; 
@@ -104,8 +106,10 @@ onMounted(() => {
                 const end_x = segment_controller_start_x + ((e.x - segment_controller_start_x) / current_scale) 
                 const end_y = segment_controller_start_y + ((e.y - segment_controller_start_y) / current_scale) 
                 d3.select(this)
-                    .attr("x", d.x=(end_x-segment_controller_width/2))
-                    .attr("y", d.y=(end_y-segment_controller_width/2))
+                    // .attr("x", d.x=(end_x-segment_controller_width/2) + (segment_controller_width-segment_controller_width/(current_zoom?.k || 1))/2)
+                    // .attr("y", d.y=(end_y-segment_controller_width/2) + (segment_controller_width-segment_controller_width/(current_zoom?.k || 1))/2)
+                    .attr("x", d.x=(end_x-(segment_controller_width/(current_zoom?.k || 1))/2))
+                    .attr("y", d.y=(end_y-(segment_controller_width/(current_zoom?.k || 1))/2))
                     .raise()
 
                 segment_point = {x: Math.max(origin[0], Math.min(end_x, viewBox_width)), y: Math.max(origin[1], Math.min(end_y, viewBox_height))} 
@@ -203,27 +207,33 @@ function resetZoom() {
         .call(zoom.transform, d3.zoomIdentity)
     svg.selectAll("g.outlet")
         .call(zoom.transform, d3.zoomIdentity)
+    current_zoom = d3.zoomIdentity
 }
 
 function handleZoom(e) {
-    current_zoom = e.transform
     const svg = d3.select(`#${props.id}`).select("svg")
     const outlet_group = svg.selectAll("g.outlet")
         .attr("transform", e.transform)
     
     outlet_group.selectAll("circle")
-        .attr("r", 10/e.transform.k)
-        .attr("stroke-width", )
+        .attr("r", node_circle_radius/e.transform.k)
 
     svg.selectAll("g.axis_x")
-        .attr("transform", `translate(${e.transform.x}, ${viewBox_height}) scale(${e.transform.k})`)
+        .attr("transform", `translate(${e.transform.x},${viewBox_height}) scale(${e.transform.k})`)
 
     svg.selectAll("g.axis_y")
-        .attr("transform", `translate(${origin[0]}, ${e.transform.y}) scale(${e.transform.k})` )
+        .attr("transform", `translate(${origin[0]},${e.transform.y}) scale(${e.transform.k})` )
     svg.selectAll("g.segmentation > rect")
         .attr("transform", e.transform)
-    svg.selectAll("rect.segment-controller")
+    const segment_controller = svg.selectAll("rect.segment-controller")
+    segment_controller
         .attr("transform", e.transform)
+        .attr("width", segment_controller_width/e.transform.k)
+        .attr("height", segment_controller_width/e.transform.k)
+        .attr("x", () => (segment_point.x - (segment_controller_width/e.transform.k)/2))
+        .attr("y", () => (segment_point.y - (segment_controller_width/e.transform.k)/2))
+
+    current_zoom = e.transform
 }
 
 function updateSegmentation() {
@@ -273,7 +283,7 @@ function updateSegmentation() {
     const mixed_rect = segment_group.selectAll("rect.mixed")
     segment_group.enter().select("g.segmentation").append("rect")
                 .attr("class", "mixed")
-                .attr("fill", "#d9a406")
+                .attr("fill", SstColors.mixed_color)
                 .style("filter", `brightness(${SstColors.brightness}%)`)
                 .merge(mixed_rect)
                 .attr("x", (d) => segment_point.x)
@@ -347,8 +357,8 @@ function updateExpandedScatter(graph) {
             d3.select(`#${props.id}`).select("div.tooltip")
             .style("opacity", 0)
         })
-        .on("click", function(e, d) {
-           emit('node_clicked', d) 
+        .on("click", (e, d) =>  {
+            emit('node_clicked', d) 
         })
 
 
@@ -373,7 +383,7 @@ function updateOverviewScatter(graph) {
             group.append("circle")
                 .attr("class", "outlet_circle")
                 // .attr("r", (d) => article_radius_scale(d.articles))
-                .attr("r", 10/(current_zoom?.k || 1))
+                .attr("r", node_circle_radius/(current_zoom?.k || 1))
                 .attr("cx", (d) => x(d.pos_sst))
                 .attr("cy", (d) => y(Math.abs(d.neg_sst)))
                 // .attr("fill", (d) => SstColors.outlet_color_dict[d.text])
@@ -383,7 +393,7 @@ function updateOverviewScatter(graph) {
             group.append("circle")
                 .attr("class", "expand_circle")
                 // .attr("r", (d) => article_radius_scale(d.articles))
-                .attr("r", 10/(current_zoom?.k || 1))
+                .attr("r", node_circle_radius/(current_zoom?.k || 1))
                 .attr("cx", (d) => x(d.pos_sst))
                 .attr("cy", (d) => y(Math.abs(d.neg_sst)))
                 .attr("fill", "white")
@@ -394,7 +404,7 @@ function updateOverviewScatter(graph) {
         update => {
             update.selectAll("circle")
             // .attr("r", (d) => article_radius_scale(d.articles))
-                .attr("r", 10/(current_zoom?.k || 1))
+                .attr("r", node_circle_radius/(current_zoom?.k || 1))
             .attr("cx", (d) => x(d.pos_sst))
             .attr("cy", (d) => y(Math.abs(d.neg_sst)))
 
