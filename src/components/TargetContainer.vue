@@ -9,13 +9,13 @@ import Dropdown from 'primevue/dropdown';
 import InfoButton from "./InfoButton.vue";
 import OutletScatter from "./OutletScatter.vue";
 import * as d3 from "d3"
-import { watch, onMounted, PropType, ref, Ref, toRef, computed } from 'vue'
+import { watch, onMounted, PropType, ref, Ref, toRef, computed, defineEmits } from 'vue'
 import { ScatterOutletNode, ScatterOutletGraph } from "../types";
 
 const props = defineProps({
     articles: Object as () => any[],
     enabled_outlet_set: Object as () => Set<string>,
-    selectedScatters: Object as () => Set<ScatterOutletGraph>,
+    selectedScatters: Object as () => ScatterOutletGraph[],
     selectedTimeRange: Object as () => {start: number, end: number},
     min_articles: Number,
     max_articles: Number,
@@ -25,8 +25,11 @@ const props = defineProps({
 })
 const scatterClicked: Ref<Boolean> = ref(false)
 const active: Ref<number> = ref(0)
-const selectedScatters: Ref<Set<ScatterOutletGraph> | undefined> = toRef(props, 'selectedScatters')
-const selectedScatters_list = computed(() => Array.from(selectedScatters.value || []))
+// const selectedScatters: Ref<Set<ScatterOutletGraph> | undefined> = toRef(props, 'selectedScatters')
+// const selectedScatters_list = computed(() => {
+//     console.log(selectedScatters.value)
+//     return Array.from(selectedScatters.value || [])
+// })
         // data() {
         // return {
         //     entity_graph: {
@@ -54,14 +57,17 @@ const selectedScatters_list = computed(() => Array.from(selectedScatters.value |
     //         return this.entity_mentions.map(entity_mention => entity_mention[0])
     //     },
     // },
-watch(() => selectedScatters, (new_scatters, old_scatters) => {
-    active.value = (selectedScatters.value?.size || 1) - 1 
+watch(() => props.selectedScatters, (new_scatters, old_scatters) => {
+    active.value = (props.selectedScatters?.length || 1) - 1 
 }, {deep:true})
+// watch(() => selectedScatters_list, (new_value) => {
+//     console.log(selectedScatters_list.value)
+// })
 
-const emit = defineEmits(['update:selectedScatters'])
+const emit = defineEmits(['update:selectedScatters', "node-clicked", "entity-clicked"])
 
 function handleNodeClicked(clicked_node) {
-    this.$emit("node-clicked", clicked_node)        
+    emit("node-clicked", clicked_node)        
     this.nodeClicked = true
     const target = this.entities[0]
     const articles = clicked_node.articles
@@ -103,22 +109,28 @@ function handleNodeClicked(clicked_node) {
 
 function handleCloseTab(e, index) {
     e.preventDefault()
-    const closed_scatter = selectedScatters_list.value[index]
-    selectedScatters.value?.delete(closed_scatter)
-    emit("update:selectedScatters", selectedScatters.value)
+    const closed_scatter = props.selectedScatters![index]
+    props.selectedScatters?.splice(index, 1)
+    emit("update:selectedScatters", props.selectedScatters)
+}
+
+function handleEntityClicked(data) {
+    console.log("🚀 ~ file: TargetContainer.vue ~ line 118 ~ handleEntityClicked ~ data", data)
+    emit("entity-clicked", data)
 }
 </script>
 
 <template>
 <TabView class="graph-container" :class="compare_part" v-model:activeIndex="active" :scrollable="true">
     <TabPanel class="graph-panel" :class="compare_part" 
-     v-for="(graph, index) in selectedScatters_list" :key="graph.title" 
+     v-for="(graph, index) in selectedScatters" :key="graph.title" 
       >
         <template #header>
 			<span>{{graph.title}}</span>
             <Button icon="pi pi-times" class="p-button-rounded p-button-danger p-button-text p-button-sm"
             @click="handleCloseTab($event, index)"/>
 		</template>
+        <KeepAlive>
         <OutletScatter
         :graph="graph"
         :graph_index="index"
@@ -129,7 +141,9 @@ function handleCloseTab(e, index) {
         :panel_class="compare_part" 
         :article_num_threshold="article_num_threshold"
         :segment_mode="segment_mode"
+        @node_clicked="handleEntityClicked"
         ></OutletScatter>
+        </KeepAlive>
         <!-- <Graph 
             class="graph"
             :graph="graph_dict[target]"

@@ -56,8 +56,8 @@ const article_dict = ref({})
 const graph_dict = ref({})
 const graph_constructed: Ref<Boolean> = ref(false)
 const entity_list: Ref<string[]> = computed(() => entity_mentions.value.map(entity_mention => entity_mention[0]))
-const selectedScatterGraphs_left: Ref<Set<ScatterOutletGraph>> = ref(new Set())
-const selectedScatterGraphs_right: Ref<Set<ScatterOutletGraph>> = ref(new Set())
+const selectedScatterGraphs_left: Ref<ScatterOutletGraph[]> = ref([])
+const selectedScatterGraphs_right: Ref<ScatterOutletGraph[]> = ref([])
 const scatterClicked: Ref<Boolean> = ref(false)
 const entity_data = computed(() => entity_mentions.value.map(entity_mention => { return {"name": entity_mention[0], "num": entity_mention[1].length || 0}}))
 const graph_constructing: Ref<Boolean> = ref(false)
@@ -136,6 +136,7 @@ function processDataset(dataset) {
   // let {r_graph_dict, r_max_articles, r_min_articles} = preprocess.constructOutletGraph(entity_mentions.value, enabled_outlet_set.value, article_dict.value)
   let {r_graph_dict, r_max_articles, r_min_articles} = preprocess.constructEntityGraph(entity_mentions.value, enabled_outlet_set.value, article_dict.value, dataset_articles)
   graph_dict.value = r_graph_dict
+  console.log("🚀 ~ file: HomeView.vue ~ line 139 ~ processDataset ~ graph_dict", graph_dict.value)
   max_articles.value = r_max_articles
   min_articles.value = r_min_articles
   graph_constructed.value = true
@@ -200,7 +201,7 @@ function updateEnabledOutlet(outlet_set_info) {
 function handleScatterClicked(index) {
     // const clicked_scatter = entity_mentions.value[index][0]
     const clicked_scatter = Array.from(enabled_outlet_set.value)[index]
-    selectedScatterGraphs_left.value.add(graph_dict.value[clicked_scatter])
+    selectedScatterGraphs_left.value.push(graph_dict.value[clicked_scatter])
     scatterClicked.value = true
     const button_next = document.getElementsByClassName("p-tabview-nav-next")[0] || undefined
     if(button_next != undefined) {
@@ -228,17 +229,31 @@ function handleDropScatter(e) {
   e.target.style.background = "white"
   const index = e.dataTransfer.getData('scatterIndex')
   // const clicked_scatter = entity_mentions.value[index][0]
-  console.log(e.target)
   const clicked_scatter = Array.from(enabled_outlet_set.value)[index]
   if(e.target.classList.contains("panel-left") || e.target.parentNode.classList.contains("panel-left"))
-    selectedScatterGraphs_left.value.add(graph_dict.value[clicked_scatter])
+    selectedScatterGraphs_left.value.push(graph_dict.value[clicked_scatter])
   else if(e.target.classList.contains("panel-right") || e.target.parentNode.classList.contains("panel-right"))
-    selectedScatterGraphs_right.value.add(graph_dict.value[clicked_scatter])
+    selectedScatterGraphs_right.value.push(graph_dict.value[clicked_scatter])
   scatterClicked.value = true
   const button_next = document.getElementsByClassName("p-tabview-nav-next")[0] || undefined
   if(button_next != undefined) {
     button_next.click()
   }
+}
+
+function handleEntityClicked(entity) {
+  // construct entity graph
+  var outlet_graph: ScatterOutletGraph= {title: entity.text, type: "entity", nodes: []}
+  enabled_outlet_set.value.forEach(outlet => {
+    const graph = graph_dict.value[outlet]
+    // find entity node in this graph
+    let entity_in_outlet = JSON.parse(JSON.stringify(graph.nodes.find(node => node.text === entity.text))) 
+    || { text: outlet, articles: 0, pos_sst: 0, neg_sst: 0}
+    entity_in_outlet.text = outlet
+    outlet_graph.nodes.push(entity_in_outlet)
+  })
+  // graph_dict.value[entity.text] = outlet_graph
+  selectedScatterGraphs_left.value.push(outlet_graph)
 }
 
 </script>
@@ -266,6 +281,7 @@ function handleDropScatter(e) {
             @dragover="handleDragOver($event)"
             @dragleave="handleDragLeave($event)"
             @dragenter="(e) => (e.preventDefault())"
+            @entity-clicked="handleEntityClicked"
             >
             </TargetContainer>
             <Divider v-if="compare_mode" layout="vertical">

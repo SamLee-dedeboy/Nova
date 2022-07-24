@@ -9,7 +9,7 @@ export function constructEntityGraph(entity_mentions_grouped, article_dict) {
     var r_max_articles = 0
     Object.keys(entity_mentions_grouped).forEach(outlet => {
         const entity_mentions = entity_mentions_grouped[outlet]
-        var graph: ScatterOutletGraph= {title: outlet, nodes: []}
+        var graph: ScatterOutletGraph= {title: outlet, type: "outlet", nodes: []}
         entity_mentions.forEach(entity_mention => {
             const entity = entity_mention.entity
             const mentioned_article_ids = entity_mention.article_ids
@@ -68,7 +68,7 @@ export function constructOutletGraph(entity_mentions, outlet_set, article_dict) 
     var r_max_articles = 0
     entity_mentions.forEach(entity_mention => {
         const entity = entity_mention[0]
-        var graph: ScatterOutletGraph= {title: entity, nodes: []}
+        var graph: ScatterOutletGraph= {title: entity, type: "outlet", nodes: []}
         // get articles mentioneding this entity
         const mentioned_articles = idsToArticles(entity_mention[1], article_dict)
         const outlet_article_dict = constructOutletArticleDict(mentioned_articles)

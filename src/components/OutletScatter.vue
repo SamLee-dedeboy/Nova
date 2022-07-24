@@ -22,7 +22,7 @@ import { applyEntityNodeSelectedStyle,
          articlesToRadius,
        } from './NodeUtils'
 import * as SstColors from "./ColorUtils"
-import { watch, onMounted, PropType, computed, Ref, ref} from 'vue'
+import { watch, onMounted, PropType, computed, Ref, ref, defineEmits} from 'vue'
 
 // initialization
 const props = defineProps({
@@ -66,9 +66,8 @@ onMounted(() => {
     const svg = d3.select(`#${props.id}`)
     .select("svg")
     .attr("viewBox", `0 0 ${viewBox[0]} ${viewBox[1]}`)
-
     d3.select(`#${props.id}`).select("div.tooltip")
-    .style("scale", 0)
+    .style("opacity", 0)
 
     updateOverviewTooltipContent()
     updateSegmentation()
@@ -158,14 +157,14 @@ onMounted(() => {
             svg.style("filter", "brightness(80%)")
             .style("background-color", "rgb(191,189,189)")
             d3.select(`#${props.id}`).select("div.tooltip")
-            .style("scale", 1)
+            .style("opacity", 1)
 
         })
         .on("mouseout", function(e, d) {
             svg.style("filter", "brightness(100%)")
             .style("background-color", "white")
             d3.select(`#${props.id}`).select("div.tooltip")
-            .style("scale", 0)
+            .style("opacity", 0)
         })
     }       
     updateCanvas()
@@ -209,8 +208,13 @@ function resetZoom() {
 function handleZoom(e) {
     current_zoom = e.transform
     const svg = d3.select(`#${props.id}`).select("svg")
-    svg.selectAll("g.outlet")
+    const outlet_group = svg.selectAll("g.outlet")
         .attr("transform", e.transform)
+    
+    outlet_group.selectAll("circle")
+        .attr("r", 10/e.transform.k)
+        .attr("stroke-width", )
+
     svg.selectAll("g.axis_x")
         .attr("transform", `translate(${e.transform.x}, ${viewBox_height}) scale(${e.transform.k})`)
 
@@ -276,7 +280,7 @@ function updateSegmentation() {
                 .attr("y", origin[1])
                 .attr("width", (d) => viewBox_width-segment_point.x)
                 .attr("height", (d) => segment_point.y-origin[1])
-        svg.selectAll("g.segmentation").style("scale", props.segment_mode?1:0)
+    svg.selectAll("g.segmentation").style("opacity", props.segment_mode?1:0)
 
 
 }
@@ -329,10 +333,10 @@ function updateExpandedScatter(graph) {
             container.style("filter", "brightness(90%)")
             container.selectAll("circle.expand_circle")
                 .transition().duration(100)
-                .attr("r", (d) => (parseFloat(container.select("circle.outlet_circle").attr("r")) + 5))
+                .attr("r", (d) => (parseFloat(container.select("circle.outlet_circle").attr("r"))*1.5 ))
             updateExpandedTooltipContent(d)
             d3.select(`#${props.id}`).select("div.tooltip")
-            .style("scale", 1)
+            .style("opacity", 1)
         })
         .on("mouseout", function(e, d) {
             const container = d3.select(this)
@@ -341,7 +345,7 @@ function updateExpandedScatter(graph) {
                 .transition().duration(100)
                 .attr("r", (d) => (parseFloat(container.select("circle.outlet_circle").attr("r"))))
             d3.select(`#${props.id}`).select("div.tooltip")
-            .style("scale", 0)
+            .style("opacity", 0)
         })
         .on("click", function(e, d) {
            emit('node_clicked', d) 
@@ -357,35 +361,40 @@ function updateOverviewScatter(graph) {
     .exponent(1)
     .domain([ props.min_articles, props.max_articles ])
     .range([ outlet_min_radius, outlet_max_radius ]);
+
+    let bind_data;
+    if(props.graph?.type === "outlet") bind_data = filtered_data.value
+    if(props.graph?.type === "entity") bind_data = props.graph.nodes
     svg.selectAll("g.outlet")
-    .data(filtered_data.value, function(d) {return d.text})
+    .data(bind_data, function(d) {return d.text})
     .join(
         enter => {
             const group = enter.append("g").attr("class", "outlet")
             group.append("circle")
                 .attr("class", "outlet_circle")
                 // .attr("r", (d) => article_radius_scale(d.articles))
-                .attr("r", 10)
+                .attr("r", 10/(current_zoom?.k || 1))
                 .attr("cx", (d) => x(d.pos_sst))
                 .attr("cy", (d) => y(Math.abs(d.neg_sst)))
                 // .attr("fill", (d) => SstColors.outlet_color_dict[d.text])
-                .attr("fill", (d) => SstColors.article_num_color_scale(d.articles/props.max_articles!))
+                .attr("fill", (d) => d.articles === 0? "white" :SstColors.article_num_color_scale(d.articles/props.max_articles!))
                 .attr("opacity", 0.8)
                 .raise()
             group.append("circle")
                 .attr("class", "expand_circle")
                 // .attr("r", (d) => article_radius_scale(d.articles))
-                .attr("r", 10)
+                .attr("r", 10/(current_zoom?.k || 1))
                 .attr("cx", (d) => x(d.pos_sst))
                 .attr("cy", (d) => y(Math.abs(d.neg_sst)))
                 .attr("fill", "white")
                 .attr("stroke", "black")
+                .attr("stroke-dasharray", (d) => d.articles === 0? 2.5 : 0)
                 .lower()
         },
         update => {
             update.selectAll("circle")
             // .attr("r", (d) => article_radius_scale(d.articles))
-                .attr("r", 10)
+                .attr("r", 10/(current_zoom?.k || 1))
             .attr("cx", (d) => x(d.pos_sst))
             .attr("cy", (d) => y(Math.abs(d.neg_sst)))
 
