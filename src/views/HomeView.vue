@@ -345,8 +345,8 @@ function handleEntityClicked(entity) {
             <div class="utilities-container">
             <div v-if="graph_constructed" class="slider-container">
               <InputText class="threshold-input" v-model.number="article_num_threshold" />
-              <Button class="increment-button" @click="() => article_num_threshold=Math.min(article_num_threshold+=10, max_articles||100)">+</Button>
-              <Button class="decrease-button" @click="() => article_num_threshold=Math.max(article_num_threshold-10, 10)">-</Button>
+              <Button class="increment-button p-button-secondary" label="+"  @click="() => article_num_threshold=Math.min(article_num_threshold+=10, max_articles||100)"></Button>
+              <Button class="decrease-button p-button-secondary " label="-"  @click="() => article_num_threshold=Math.max(article_num_threshold-10, 10)"></Button>
               <Slider v-model="article_num_threshold" :step="1" :min="10" :max="max_articles||100"></Slider>
               <div class="indicator-container">
                 <div class="min_indicator">10</div>
@@ -415,7 +415,7 @@ function handleEntityClicked(entity) {
   width: 100% !important;
 }
 .compare {
-  width: 48%;
+  max-width: 48%;
 }
 .target-selection {
   display: flex;
@@ -481,4 +481,7 @@ function handleEntityClicked(entity) {
 :deep(.p-slider-handle:hover) {
     background: #007bff !important;
 } 
+:deep(.p-divider.p-divider-vertical::before) {
+  border-left: 1px solid #dee2e6 !important;
+}
  </style>

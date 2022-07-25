@@ -126,7 +126,7 @@ function handleEntityClicked(data) {
      v-for="(graph, index) in selectedScatters" :key="graph.title" 
       >
         <template #header>
-			<span>{{graph.title}}</span>
+			<span style="max-width:100px; overflow:hidden" :title="graph.title">{{graph.title}}</span>
             <Button icon="pi pi-times" class="p-button-rounded p-button-danger p-button-text p-button-sm"
             @click="handleCloseTab($event, index)"/>
 		</template>
