@@ -1,3 +1,14 @@
+export interface ScatterOutletGraph {
+    title: string,
+    type: string,
+    nodes: ScatterOutletNode[]
+}
+export interface ScatterOutletNode {
+    text: string,
+    articles: number,
+    pos_sst: number,
+    neg_sst: number,
+}
 export interface OutletNode {
     x?: number,
     y?: number,

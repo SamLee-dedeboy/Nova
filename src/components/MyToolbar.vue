@@ -14,24 +14,31 @@ export default {
     data() {
         return {
             articles: {},
+            outlet_article_dict: {},
             entity_mentions: {},
             isLoading: true,
         }
     },
     async mounted() {
-        await fetch("candidate_entities.json")
+        // await fetch("candidate_entities.json")
+        // await fetch("entities.json")
+        // await fetch("entities_gt10.json")
+        await fetch("entities_groupby_outlet.json")
             .then(res => res.json())
             .then(json => {
-                this.entity_mentions = json.ranked_entity_list
+                // this.entity_mentions = json.ranked_entity_list
+                this.entity_mentions = json
             },
             response => {
                 console.log("Error loading entity mentions.")
             })
 
-        await fetch("processed_articles_rel_hugFace.json")
+        // await fetch("processed_articles_rel_hugFace.json")
+        await fetch("outlet_article_dict.json")
             .then(res => res.json())
             .then(json => {
-                this.articles = json
+                // this.articles = json
+                this.outlet_article_dict = json
             },
             response => {
                 console.log("Error loading articles.")
@@ -53,59 +60,38 @@ export default {
         }
     },
     methods: {
+        getDataset() {
+            return {
+                // articles: this.articles,
+                // entity_mentions: this.entity_mentions,
+                outlet_article_dict: this.outlet_article_dict,
+                entity_mentions: this.entity_mentions,
+            }
+        },
         getData(target_entity) {
             const article_id_list = this.np_article_dict[target_entity] 
             var self = this
             return article_id_list.reduce(function(article_list, id) { article_list.push(self.article_dict[id]); return article_list; }, [])
         },
+        getMetaData() {
+            return {
+                total_articles: this.articles.length,
+                entities: this.entity_mentions.length,
+                outlets: ["CNN", "FoxNews", "Breitbart", "ABC News", "New York Times", "Washington Post"]
+            }
+        },
         
         testClicked() {
-            // var outlet_set = Object.keys(this.outlet_article_dict)
-            // // original nodes and edges
-            // var graph1 = {
-            //     nodes: [
-            //         {x: 100, y: 110, outlet:outlet_set[0], sentiment: -0.8, pos_sent: 0.1, neg_sent: -0.9, neu_sent:0, articles:this.articles.filter(article => article.journal==outlet_set[0])},
-            //         {x: 600, y: 150, outlet:outlet_set[1], sentiment: 0.9, pos_sent: 0.9, neg_sent: -0.1, neu_sent:0.1, articles:this.articles.filter(article => article.journal==outlet_set[1])},
-            //         {x: 80, y: 300, outlet:outlet_set[2], sentiment: -0.1, pos_sent: 0.1, neg_sent: -0.3, neu_sent:0.1, articles:this.articles.filter(article => article.journal==outlet_set[2])},
-            //         {x: 500, y: 300, outlet:outlet_set[4], sentiment: 0.5, pos_sent: 0.6, neg_sent: -0.1, neu_sent:0, articles:this.articles.filter(article => article.journal==outlet_set[4])},
-            //         {x: 650, y: 400, outlet:outlet_set[5], sentiment: 0.1, pos_sent: 0.1, neg_sent: 0, neu_sent:0, articles:this.articles.filter(article => article.journal==outlet_set[5])},
-            //         {x: 300, y: 300, text:this.np_list[0], pos_sent: 0, neg_sent: 0, neu_sent:0, isCenter:true}
+            this.$emit("dataset_imported", 
+            {outlet_article_dict: this.outlet_article_dict,
+            entity_mentions: this.entity_mentions}
+            // {
+                // articles: this.articles, 
+            // entity_mentions: this.entity_mentions,
+            // metadata: this.getMetaData()}
+            )
 
-            //     ],
-            // }
-
-            // var graph2 = {
-            //     nodes: [
-            //         {x: 100, y: 110, outlet:outlet_set[0], sentiment: -0.8, pos_sent: 0.1, neg_sent: -0.9, neu_sent:0, articles:this.articles.filter(article => article.journal==outlet_set[0])},
-            //         {x: 600, y: 150, outlet:outlet_set[1], sentiment: 0.9, pos_sent: 0.9, neg_sent: -0.1, neu_sent:0.1, articles:this.articles.filter(article => article.journal==outlet_set[1])},
-            //         {x: 80, y: 300, outlet:outlet_set[3], sentiment: -0.1, pos_sent: 0.1, neg_sent: -0.3, neu_sent:0.1, articles:this.articles.filter(article => article.journal==outlet_set[2])},
-            //         {x: 500, y: 300, outlet:outlet_set[4], sentiment: 0.5, pos_sent: 0.6, neg_sent: -0.1, neu_sent:0, articles:this.articles.filter(article => article.journal==outlet_set[4])},
-            //         {x: 650, y: 400, outlet:outlet_set[5], sentiment: 0.1, pos_sent: 0.1, neg_sent: 0, neu_sent:0, articles:this.articles.filter(article => article.journal==outlet_set[5])},
-            //         {x: 300, y: 300, text:this.np_list[1], pos_sent: 0, neg_sent: 0, neu_sent:0, isCenter:true}
-
-            //     ],
-            // }
-            // var graphList = [graph1, graph2]
-            // // add dotted nodes
-
-            // graphList.forEach(graph=> {
-            //     var dotted_nodes = []
-            //     outlet_set.forEach(outlet => {
-            //     if(!graph.nodes.map(a => a.outlet).includes(outlet)) {
-            //         dotted_nodes.push({x:300, y:150, outlet:outlet, sentiment:0, dotted:true})
-            //     } 
-            // })
-            //     graph.nodes.push.apply(graph.nodes, dotted_nodes)
-            // })
-
-            // emit
-            // var dataset = {
-            //     graphList: graphList,
-            //     outlet_set: outlet_set,
-            //     topic_dict: this.topic_dict,
-            //     np_list: this.np_list
-            // }
-            this.$emit("candidate_updated", this.entity_mentions);
+//            this.$emit("candidate_updated", this.entity_mentions);
         }
       }
     }

@@ -1,6 +1,5 @@
 <template>
-    <div ref="tooltip" class="tooltip" v-html="content" 
-    :style="{scale: showTooltip}"></div>  
+    <div ref="tooltip" class="tooltip" v-html="content" ></div>  
 </template>
 
 <script>
@@ -32,5 +31,6 @@ export default {
     padding: 5px;
     pointer-events: none;
     transform-origin: top left;
+    z-index: 1000;
 }
 </style>

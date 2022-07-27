@@ -30,7 +30,7 @@ export default {
 </script>
 <template>
     <div class="month-slider-container">
-        <div class="slider-header">Date Range</div>
+        <div class="slider-header">Time Period</div>
         <Slider v-model="selectedRange" :range="true" :step="1" :min="1" :max="13"
         @change="handleChange"></Slider>
         <svg  viewBox="0 0 200 30" class="slideraxes" overflow="visible" style="position:absolute;left:20px;right:20px"></svg>
