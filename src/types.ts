@@ -1,3 +1,8 @@
+export interface Path {
+    title: string,
+    start: Number,
+    end: Number,
+}
 export interface ScatterOutletGraph {
     title: string,
     type: string,
