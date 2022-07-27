@@ -14,8 +14,7 @@ import { start } from "repl"
 const props = defineProps({
     min_timestamp: String,
     max_timestamp: String, 
-    pos_threshold: Number,
-    neg_threshold: Number,
+    sst_threshold: Object as () => {pos: Number, neg: Number},
     article_bin_dict: Object as () => {[id: string]: {[id: string]:Article[]}},
     highlight_object: String, 
 })
@@ -27,7 +26,7 @@ const test_neg_bins_2 = [0, 0.2, 0.5, 0.6, 0.8, 0.1, 0.2, 0.5, 0.2, 0.9, 0.3, 0.
 const test_entity_bin_dict = {"CNN": {pos_bins: test_pos_bins_1, neg_bins: test_neg_bins_1}, "ABC":{pos_bins:test_pos_bins_2, neg_bins: test_neg_bins_2}}
 
 const viewBox = [500, 300]
-const margin = {top: 30, bottom: 30, right:10, left: 30, middle: 20} 
+const margin = {top: 30, bottom: 30, right:10, left: 30, middle: 10} 
 const viewBox_width = viewBox[0] - margin.left - margin.right
 const viewBox_height = viewBox[1] - margin.top - margin.bottom - margin.middle
 // const months = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec", "Jan"]
@@ -53,14 +52,20 @@ const x_coord = vue.computed(
 const y_pos = d3.scalePow()
     .exponent(1)
     .domain([0, 1])
-    .range([ viewBox_height/2, 0]);
+    .range([ viewBox_height/2 - margin.middle, 0]);
 const y_neg = d3.scalePow()
     .exponent(1)
     .domain([0, 1])
     .range([ viewBox_height, viewBox_height/2 + margin.middle]);
+
 vue.watch(() => props.highlight_object, (new_value, old_value) => {
     updateCoordinates()
 })
+
+vue.watch(() => props.sst_threshold, (new_value, old_value) => {
+    updateSegmentation()
+})
+
 const test_entity_path_dict = vue.computed(() => {
     const entity_path_dict: { [id: string]: {pos_path: Path[], neg_path: Path[]} } = {}
     Object.keys(test_entity_bin_dict).forEach(entity => {
@@ -101,7 +106,7 @@ vue.onMounted(() => {
     
     axis_group.append("g")
         .attr("class", "axis_time_pos")
-        .attr("transform", `translate(0, ${viewBox_height/2})`)
+        .attr("transform", `translate(0, ${viewBox_height/2 - margin.middle})`)
         .call(d3.axisBottom(x).tickSize(0).tickFormat(""))
     axis_group.append("g")
         .attr("class", "axis_time_neg")
@@ -110,6 +115,7 @@ vue.onMounted(() => {
 
     const rangeData = [...Array(month_range).keys()] 
     const pos_coord = axis_group.append("g").attr("class", "pos_coord")
+    const pos_segment_group = pos_coord.append("g").attr("class", "pos_segment_group")
     const path_pos_group  = pos_coord.append("g").attr("class", "path_pos_group")
     const axis_pos_group = pos_coord.append("g").attr("class", "axis_pos_group")
     axis_pos_group.selectAll("g.axis_pos")
@@ -125,6 +131,7 @@ vue.onMounted(() => {
         .raise()
 
     const neg_coord = axis_group.append("g").attr("class", "neg_coord")
+    const neg_segment_group = neg_coord.append("g").attr("class", "neg_segment_group")
     const path_neg_group  = neg_coord.append("g").attr("class", "path_neg_group")
     const axis_neg_group = neg_coord.append("g").attr("class", "axis_neg_group")
     axis_neg_group.selectAll("g.axis_neg")
@@ -138,12 +145,11 @@ vue.onMounted(() => {
             else d3.select(this).call(d3.axisLeft(y_neg).ticks(2).tickSize(0).tickFormat(""))
         })
         .raise()
+    updateSegmentation()
     updateCoordinates()
 })
 
 function updateCoordinates() {
-    console.log("🚀 ~ file: TemporalCoordinates.vue ~ line 147 ~ updateCoordinates ~ object_path_dict", Object.keys(object_path_dict.value))
-    console.log(props.highlight_object)
     const svg = d3.select("div.tCoord-container").select("svg")
 
     // pos
@@ -183,6 +189,54 @@ function updateCoordinates() {
             .attr("y2", (d) => (y_neg(d.end)))
             .attr("stroke", (d) => SstColors.outlet_color_dict[d.title])
             .attr("stroke-width", (d) => (d.title === props.highlight_object)?5:1)
+}
+
+function updateSegmentation() {
+    console.log("🚀 ~ file: TemporalCoordinates.vue ~ line 199 ~ updateSegmentation ~ props", props.sst_threshold)
+    const svg = d3.select("div.tCoord-container").select("svg")
+    const pos_segment_group = svg.select("g.pos_coord").select("g.pos_segment_group")
+    const pos_pos_segment = pos_segment_group.selectAll("rect.pos_pos_segment")
+        .data([props.sst_threshold?.pos || 0.5])
+    pos_pos_segment.enter().append("rect").attr("class", "pos_pos_segment")
+        .attr("x", -margin.left/2)
+        .attr("y", 0)
+        .attr("width", margin.left/2)
+        .attr("fill", SstColors.pos_color)
+        .style("filter", `brightness(${SstColors.brightness}%)`)
+        .merge(pos_pos_segment)
+        .attr("height", (d) => y_pos(d))
+    const pos_neu_segment = pos_segment_group.selectAll("rect.pos_neu_segment")
+        .data([props.sst_threshold?.pos || 0.5])
+    pos_neu_segment.enter().append("rect").attr("class", "pos_neu_segment")
+        .attr("x", -margin.left/2)
+        .attr("width", margin.left/2)
+        .merge(pos_neu_segment)
+        .attr("y", (d) => y_pos(d))
+        .attr("height", (d) => y_pos(1-d))
+        .attr("fill", SstColors.neu_color)
+        .style("filter", `brightness(${SstColors.brightness}%)`)
+    const neg_segment_group = svg.select("g.neg_coord").select("g.neg_segment_group")
+    const neg_neg_segment = neg_segment_group.selectAll("rect.neg_neg_segment")
+        .data([props.sst_threshold?.neg || 0.5])
+    neg_neg_segment.enter().append("rect").attr("class", "neg_neg_segment")
+        .attr("x", -margin.left/2)
+        .attr("width", margin.left/2)
+        .attr("fill", SstColors.neg_color)
+        .style("filter", `brightness(${SstColors.brightness}%)`)
+        .merge(neg_neg_segment)
+        .attr("y", y_neg(1))
+        .attr("height", (d) => y_neg(d)-y_neg(1))
+    const neg_neu_segment = neg_segment_group.selectAll("rect.neg_neu_segment")
+        .data([props.sst_threshold?.neg || 0.5])
+    neg_neu_segment.enter().append("rect").attr("class", "neg_neu_segment")
+        .attr("x", -margin.left/2)
+        .attr("width", margin.left/2)
+        .attr("fill", SstColors.neu_color)
+        .style("filter", `brightness(${SstColors.brightness}%)`)
+        .merge(neg_neu_segment)
+        .attr("y", (d) => y_neg(d))
+        .attr("height", (d) => y_neg(1-d)-y_neg(1))
+
 }
 
 function constructPath(bins, title) {

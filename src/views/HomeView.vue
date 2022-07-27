@@ -73,6 +73,7 @@ const highlight_outlet: Ref<string> = ref("")
 const overview_mode: Ref<boolean> = ref(true)
 const min_timestamp: Ref<string> = ref("")
 const max_timestamp: Ref<string> = ref("")
+const segment_sst = ref({pos: 0.5, neg: 0.5}) 
 
 watch(() => highlight_outlet, (new_value, old_value) => {
   console.log("🚀 ~ file: HomeView.vue ~ line 75 ~ watch ~ new_value", new_value)
@@ -295,6 +296,7 @@ function highlightChanged(new_value) {
             :max_articles="max_articles"
             :article_num_threshold="article_num_threshold"
             :segment_mode="segment_mode"
+            v-model:segmentation="segment_sst"
             @drop="handleDropScatter($event)"
             @dragover="handleDragOver($event)"
             @dragleave="handleDragLeave($event)"
@@ -317,6 +319,7 @@ function highlightChanged(new_value) {
             :max_articles="max_articles"
             :article_num_threshold="article_num_threshold"
             :segment_mode="segment_mode"
+            v-model:segmentation="segment_sst"
             @drop="handleDropScatter($event)"
             @dragover="handleDragOver($event)"
             @dragleave="handleDragLeave($event)"
@@ -351,6 +354,7 @@ function highlightChanged(new_value) {
                 :min_articles="min_articles"
                 :article_num_threshold="article_num_threshold"
                 :segment_mode="segment_mode"
+                v-model:segmentation="segment_sst"
                 style="cursor: pointer"
                 :expanded="false"
                 :draggable="true"
@@ -363,6 +367,7 @@ function highlightChanged(new_value) {
               <TemporalCoordinates class="temporal-coord" 
                 :min_timestamp="min_timestamp"
                 :max_timestamp="max_timestamp"
+                :sst_threshold="segment_sst"
                 :article_bin_dict="outlet_article_bins_dict"
                 :highlight_object="highlight_outlet"
               ></TemporalCoordinates>

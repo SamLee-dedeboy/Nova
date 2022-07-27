@@ -22,6 +22,7 @@ const props = defineProps({
     compare_part: String,
     article_num_threshold: Number,
     segment_mode: Boolean,
+    segmentation: Object as () => {pos: Number, neg: Number},
 })
 const scatterClicked: Ref<Boolean> = ref(false)
 const active: Ref<number> = ref(0)
@@ -64,7 +65,7 @@ watch(() => props.selectedScatters, (new_scatters, old_scatters) => {
 //     console.log(selectedScatters_list.value)
 // })
 
-const emit = defineEmits(['update:selectedScatters', "node-clicked", "entity-clicked"])
+const emit = defineEmits(['update:selectedScatters', "update:segmentation", "node-clicked", "entity-clicked"])
 
 function handleNodeClicked(clicked_node) {
     emit("node-clicked", clicked_node)        
@@ -115,8 +116,11 @@ function handleCloseTab(e, index) {
 }
 
 function handleEntityClicked(data) {
-    console.log("🚀 ~ file: TargetContainer.vue ~ line 118 ~ handleEntityClicked ~ data", data)
     emit("entity-clicked", data)
+}
+
+function updateSegmentation(new_value) {
+    emit("update:segmentation", new_value)
 }
 </script>
 
@@ -141,6 +145,7 @@ function handleEntityClicked(data) {
         :panel_class="compare_part" 
         :article_num_threshold="article_num_threshold"
         :segment_mode="segment_mode"
+        @update:segmentation="updateSegmentation"
         @node_clicked="handleEntityClicked"
         ></OutletScatter>
         </KeepAlive>
