@@ -22,6 +22,7 @@ import Divider from 'primevue/divider';
 import ColorSpectrum from '../components/ColorSpectrum.vue'
 import * as SstColors from "../components/ColorUtils"
 import * as _ from "lodash"
+import TemporalCoordinates from "../components/TemporalCoordinates.vue";
 
   // data() {
   //   return {
@@ -54,20 +55,28 @@ let timeRange: {start: number, end: number}
 const enabled_outlet_set: Ref<Set<string>> = ref(new Set())
 const articles = ref([])
 const article_dict = ref({})
+const outlet_article_bins_dict = ref({})
 const graph_dict = ref({})
-const graph_constructed: Ref<Boolean> = ref(false)
+const graph_constructed: Ref<boolean> = ref(false)
 const entity_list: Ref<string[]> = computed(() => entity_mentions.value.map(entity_mention => entity_mention[0]))
 const selectedScatterGraphs_left: Ref<ScatterOutletGraph[]> = ref([])
 const selectedScatterGraphs_right: Ref<ScatterOutletGraph[]> = ref([])
-const scatterClicked: Ref<Boolean> = ref(false)
+const scatterClicked: Ref<boolean> = ref(false)
 const entity_data = computed(() => entity_mentions.value.map(entity_mention => { return {"name": entity_mention[0], "num": entity_mention[1].length || 0}}))
-const graph_constructing: Ref<Boolean> = ref(false)
+const graph_constructing: Ref<boolean> = ref(false)
 const max_articles: Ref<number> = ref(0)
 const min_articles: Ref<number> = ref(0)
-const compare_mode: Ref<Boolean> = ref(false)
-const segment_mode: Ref<Boolean> = ref(false)
+const compare_mode: Ref<boolean> = ref(false)
+const segment_mode: Ref<boolean> = ref(false)
 const article_num_threshold: Ref<number> = ref(10)
+const highlight_outlet: Ref<string> = ref("")
+const overview_mode: Ref<boolean> = ref(true)
+const min_timestamp: Ref<string> = ref("")
+const max_timestamp: Ref<string> = ref("")
 
+watch(() => highlight_outlet, (new_value, old_value) => {
+  console.log("🚀 ~ file: HomeView.vue ~ line 75 ~ watch ~ new_value", new_value)
+})
 watch(() => timeRange, (new_range, old_range) => {
     if(new_range[0] != old_range[0] || new_range[1] != old_range[1]) {
       // TODO: implement slicing with dataframe
@@ -94,8 +103,11 @@ function datasetImported(dataset) {
     const promise = new Promise((resolve) => { 
       const outlet_article_dict = dataset.outlet_article_dict
       const entity_mentions = dataset.entity_mentions
-      let {outlet_set, r_article_dict} = preprocess.processArticleDict(outlet_article_dict)
+      let {outlet_set, r_article_dict, r_article_bins_dict, r_min_timestamp, r_max_timestamp} = preprocess.processArticleDict(outlet_article_dict)
+      outlet_article_bins_dict.value = r_article_bins_dict
       enabled_outlet_set.value = outlet_set
+      min_timestamp.value = r_min_timestamp
+      max_timestamp.value = r_max_timestamp
       // articles.value = normalized_articles
       article_dict.value = r_article_dict
       let {r_graph_dict, r_max_articles, r_min_articles} = preprocess.constructEntityGraph(entity_mentions, article_dict.value)
@@ -258,6 +270,10 @@ function handleEntityClicked(entity) {
   selectedScatterGraphs_left.value.push(outlet_graph)
 }
 
+function highlightChanged(new_value) {
+  highlight_outlet.value = new_value
+}
+
 </script>
 
 
@@ -314,6 +330,7 @@ function handleEntityClicked(entity) {
             @candidate_updated="updateNpList"
             @dataset_imported="datasetImported"  >
             </MyToolbar>
+            <ToggleButton class='overview-toggler p-button-secondary' v-model="overview_mode" onIcon="pi pi-table" offIcon="pi pi-chart-line"></ToggleButton>
             <i v-if="graph_constructing" class="pi pi-spin pi-spinner" 
             style="
             position:absolute;
@@ -322,7 +339,7 @@ function handleEntityClicked(entity) {
             font-size: 3rem;
             z-index: 1000
             "></i> 
-          <div class="entity-grid-container" v-if="graph_constructed" >
+          <div class="entity-grid-container" v-if="graph_constructed && overview_mode" >
                 <!-- v-for="(entity, index) in entity_list" :key="entity"  -->
             <OutletScatter
                 v-for="(outlet, index) in enabled_outlet_set" :key="outlet" 
@@ -342,9 +359,24 @@ function handleEntityClicked(entity) {
             >
             </OutletScatter>
             </div>
+            <div class="temporal-container" v-if="graph_constructed && !overview_mode">
+              <TemporalCoordinates class="temporal-coord" 
+                :min_timestamp="min_timestamp"
+                :max_timestamp="max_timestamp"
+                :article_bin_dict="outlet_article_bins_dict"
+                :highlight_object="highlight_outlet"
+              ></TemporalCoordinates>
+              <Legend id="outlet_legend"
+                :color_dict="SstColors.outlet_color_dict" 
+                :filter="false" 
+                :interactable="true"
+                v-on:outlet-hovered="highlightChanged"
+                style="position:absolute; left: 72%; top: 95%">
+              </Legend>
+            </div>
             <div class="utilities-container">
-            <div v-if="graph_constructed" class="slider-container">
-              <InputText class="threshold-input" v-model.number="article_num_threshold" />
+              <div v-if="graph_constructed" class="slider-container">
+              <InputText class="threshold-input" v-model:number="article_num_threshold" />
               <Button class="increment-button p-button-secondary" label="+"  @click="() => article_num_threshold=Math.min(article_num_threshold+=10, max_articles||100)"></Button>
               <Button class="decrease-button p-button-secondary " label="-"  @click="() => article_num_threshold=Math.max(article_num_threshold-10, 10)"></Button>
               <Slider v-model="article_num_threshold" :step="1" :min="10" :max="max_articles||100"></Slider>
@@ -360,8 +392,12 @@ function handleEntityClicked(entity) {
             <div v-if="graph_constructed" class="segment-toggler-container">
               <ToggleButton class='segment-toggler p-button-secondary' v-model="segment_mode" onLabel="Segment On" offLabel="Segment off"></ToggleButton>
             </div>
-            <Legend v-if="graph_constructed" :color_dict="SstColors.key_color_dict" :filter="true" style="position:absolute; left: 72%; top: 75%"></Legend>
-
+            <Legend v-if="graph_constructed" 
+            id="segment_legend"
+            :color_dict="SstColors.key_color_dict" 
+            :filter="true" 
+            :interactable="true"
+            style="position:absolute; left: 72%; top: 75%"></Legend>
             <!-- <div class="selection_container" style="display:flex">
               <TargetSelection v-if="np_list.length!=0" :dataset_metadata="dataset_metadata" :targets="entity_data" @target-selected="updateTarget"></TargetSelection>
               <TopicSelection  v-if="topic_list.length!=0"  :topics="topic_list" @topic-selected="updateTopic" style="flex:0.5"></TopicSelection>
@@ -449,6 +485,7 @@ function handleEntityClicked(entity) {
   justify-content: space-between;
 }
 .segment-toggler-container {
+  width: fit-content;
   top: 20px;
   left: 10px;
 }
@@ -483,5 +520,9 @@ function handleEntityClicked(entity) {
 } 
 :deep(.p-divider.p-divider-vertical::before) {
   border-left: 1px solid #dee2e6 !important;
+}
+.temporal-coord {
+  width: 500px;
+  height: 300px;
 }
  </style>
