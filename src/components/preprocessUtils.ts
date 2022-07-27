@@ -1,5 +1,5 @@
 import * as dfd from "danfojs"
-import _ from 'lodash'
+import * as _ from 'lodash'
 import { Series } from "danfojs/dist/danfojs-base"
 import { ScatterOutletNode, ScatterOutletGraph } from "../types"
 
@@ -113,7 +113,7 @@ export function constructOutletArticleDict(articles) {
 
 export function construct_node(articles, label): ScatterOutletNode {
     let node: ScatterOutletNode;  
-    const article_num = articles.length
+    const article_num = articles?.length || 0
     if(article_num == 0) {
         node = {
             text: label,
@@ -162,17 +162,27 @@ const neg_std = 29.437169285743654
 
 export function processArticleDict(outlet_article_dict) {
     let r_article_dict: {[id: string]: any} = {}
+    let r_article_bins_dict: {[id: string]: any}  = {}
+    let min_timestamp = new Date("3000-10-10")
+    let max_timestamp = new Date("1000-10-10")
     Object.keys(outlet_article_dict).forEach(outlet => {
         const articles = outlet_article_dict[outlet]
         articles.forEach(article => {
             const pos = article.sentiment.pos
             const neg = article.sentiment.neg
             Object.assign(article.sentiment, {"normalized_sst": (Math.tanh((pos-pos_mean)/pos_std) + Math.tanh((neg-neg_mean)/neg_std))/2})
+            const timestamp = new Date(article.timestamp.split(" ")[0])
+            if(timestamp < min_timestamp) min_timestamp = timestamp
+            if(timestamp > max_timestamp) max_timestamp = timestamp
             r_article_dict[article.id] = article
         })
+        const articles_binBy_month = binArticlesByMonth(articles)
+        r_article_bins_dict[outlet] = articles_binBy_month
     })
     const outlet_set = new Set(Object.keys(outlet_article_dict))
-    return {outlet_set, r_article_dict}
+    const r_min_timestamp = min_timestamp.toISOString().split('T')[0]
+    const r_max_timestamp = max_timestamp.toISOString().split('T')[0]
+    return {outlet_set, r_article_dict, r_article_bins_dict, r_min_timestamp, r_max_timestamp}
 }
 export function processArticles(articles) {
     let outlet_set = new Set<string>()
@@ -190,6 +200,14 @@ export function processArticles(articles) {
 
     const normalized_articles = articles
     return {outlet_set, normalized_articles, r_article_dict}
+}
+
+export function binArticlesByMonth(articles) {
+    return _.groupBy(articles, (article) => {
+        const month = article.timestamp.split("-")[1]
+        if(month[0] === "0") return month[1]
+        else return month
+    })
 }
 
 export function sliceDatasetByTime(range, articles) {
