@@ -5,7 +5,7 @@ const sst_range = d3.interpolateBrBG
 const neg_color = sst_range(0+offset)
 const pos_color = sst_range(1-offset)
 const neu_color = "grey"
-const mixed_color = "#96245c"
+const mixed_color = "#125f3b"
 const entity_selected_color = "#007bff"
 const key_color_dict = {
                 "positive": pos_color,
