@@ -23,6 +23,7 @@ import { applyEntityNodeSelectedStyle,
        } from './NodeUtils'
 import * as SstColors from "./ColorUtils"
 import { watch, onMounted, PropType, computed, Ref, ref, defineEmits} from 'vue'
+import * as vue from 'vue'
 
 // initialization
 const props = defineProps({
@@ -35,53 +36,58 @@ const props = defineProps({
     panel_class: String,
     article_num_threshold: Number,
     segment_mode: Boolean,
+    segmentation: Object as () => {pos: Number, neg: Number},
 })
-const emit = defineEmits(['node_clicked'])
+const emit = defineEmits(['node_clicked', 'update:segmentation'])
 
 const tooltip_content: Ref<String> = ref("") 
 const viewBox = [1000, 1000]
 const outlet_min_radius = 10
 const outlet_max_radius = 150
-const origin = [80, 80]
-const viewBox_width = 0.9*viewBox[0]
-const viewBox_height = 0.9*viewBox[1]
+const margin = {top: 60, bottom: 60, right:40, left: 80} 
+const viewBox_width = viewBox[0] - margin.left - margin.right
+const viewBox_height = viewBox[1] - margin.top - margin.bottom
 const x = d3.scalePow()
     .exponent(1)
     .domain([0, 1])
-    .range([ origin[0], viewBox_width ]);
+    .range([ margin.left, viewBox_width ]);
 
 const y = d3.scalePow()
     .exponent(1)
     .domain([0, 1])
-    .range([ viewBox_height, origin[1]]);
+    .range([ margin.top + viewBox_height, margin.top]);
 const zoom = d3.zoom().scaleExtent([1, 3]).on("zoom", handleZoom)
 const filtered_data = computed(() => props.graph?.nodes.filter(node => node.articles > (props.article_num_threshold || 0)))
 const avg_pos_sst = computed(() => (_.mean(props.graph?.nodes.map(node => node.pos_sst))))
 const avg_neg_sst = computed(() => (_.mean(props.graph?.nodes.map(node => node.neg_sst))))
 const segment_controller_width = 12
 const node_circle_radius = 10
-var segment_point = {x: x(avg_pos_sst.value), y: y(avg_neg_sst.value)}
+var segment_point = {x: 0, y: 0} 
 var segment_controller_start_x:number
 var segment_controller_start_y:number
 let current_zoom = undefined
+vue.watch(() => props.segmentation, (new_value, old_value) => {
+    segment_point = {x: x(new_value?.pos || 0.5), y: y(new_value?.neg || 0.5)}
+    updateSegmentation()
+}) 
 onMounted(() => {
-    const svg = d3.select(`#${props.id}`)
-    .select("svg")
-    .attr("viewBox", `0 0 ${viewBox[0]} ${viewBox[1]}`)
+    const svg = d3.select(`#${props.id}`) .select("svg")
+        .attr("viewBox", `0 0 ${viewBox[0]} ${viewBox[1]}`)
     d3.select(`#${props.id}`).select("div.tooltip")
-    .style("opacity", 0)
+        .style("opacity", 0)
 
     updateOverviewTooltipContent()
+    segment_point = {x: x(props.segmentation?.pos || 0.5), y: y(props.segmentation?.neg || 0.5)}
     updateSegmentation()
 
     if(props.expanded) {
-        svg.append("text")
-            .text(props.graph?.title)
-            .attr("x", () => viewBox[0]/2)
-            .attr("y", "1em")
-            .attr("text-anchor", "middle")
-            .attr("font-size", () => (props.expanded?"2em":"8em"))
-            .attr("dominant-baseline", "central")
+        // svg.append("text")
+        //     .text(props.graph?.title)
+        //     .attr("x", () => viewBox[0]/2)
+        //     .attr("y", 0)
+        //     .attr("text-anchor", "middle")
+        //     .attr("font-size", () => (props.expanded?"2em":"8em"))
+        //     .attr("dominant-baseline", "hanging")
         svg.call(zoom)
 
 
@@ -112,13 +118,14 @@ onMounted(() => {
                     .attr("y", d.y=(end_y-(segment_controller_width/(current_zoom?.k || 1))/2))
                     .raise()
 
-                segment_point = {x: Math.max(origin[0], Math.min(end_x, viewBox_width)), y: Math.max(origin[1], Math.min(end_y, viewBox_height))} 
+                segment_point = {x: Math.max(margin.left, Math.min(end_x, viewBox_width)), y: Math.max(margin.top, Math.min(end_y, viewBox_height))} 
+                emit("update:segmentation", {pos: x.invert(segment_point.x), neg: y.invert(segment_point.y)})
                 updateSegmentation()
             })
             .on("end", function(e, d) { d3.select(this).attr("stroke", null)})
 
         svg.append("rect")
-            .data([{x: x(avg_pos_sst.value)-segment_controller_width/2, y:y(avg_neg_sst.value)-segment_controller_width/2}])
+            .data([{x: segment_point.x-segment_controller_width/2, y:segment_point.y-segment_controller_width/2}])
             .attr("class", "segment-controller")
             .attr("x", (d) => d.x)
             .attr("y", (d) => d.y)
@@ -147,11 +154,11 @@ onMounted(() => {
             .data(break_text)
             .join("tspan")
             .text(d => d)
-            .attr("x", viewBox[0]/2)
-            .attr("y", viewBox_height + 50)
+            .attr("x", viewBox[0]/2.1)
+            .attr("y", 0)
             .attr("text-anchor", "middle")
-            .attr("font-size", () => (props.expanded?"2em":"5em"))
-            .attr("dominant-baseline", "central")
+            .attr("font-size", "4em")
+            .attr("dominant-baseline", "hanging")
         svg.on("mousemove", function(e, d) {
             d3.select(`#${props.id}`).select("div.tooltip")
             .style("left", e.offsetX + 15 + "px")
@@ -174,12 +181,12 @@ onMounted(() => {
     updateCanvas()
     svg.append("g")
         .attr("class", "axis_x")
-        .attr("transform", `translate(0, ${viewBox_height})`)
+        .attr("transform", `translate(0, ${margin.top+viewBox_height})`)
         .call(d3.axisBottom(x))
 
     svg.append("g")
         .attr("class", "axis_y")
-        .attr("transform", `translate(${origin[0]},0)`)
+        .attr("transform", `translate(${margin.left},0)`)
         .call(d3.axisLeft(y))
         .raise()
 })
@@ -222,7 +229,7 @@ function handleZoom(e) {
         .attr("transform", `translate(${e.transform.x},${viewBox_height}) scale(${e.transform.k})`)
 
     svg.selectAll("g.axis_y")
-        .attr("transform", `translate(${origin[0]},${e.transform.y}) scale(${e.transform.k})` )
+        .attr("transform", `translate(${margin.left},${e.transform.y}) scale(${e.transform.k})` )
     svg.selectAll("g.segmentation > rect")
         .attr("transform", e.transform)
     const segment_controller = svg.selectAll("rect.segment-controller")
@@ -251,10 +258,10 @@ function updateSegmentation() {
                 .attr("fill", SstColors.neg_color)
                 .style("filter", `brightness(${SstColors.brightness}%)`)
                 .merge(neg_rect)
-                .attr("x", origin[0])
-                .attr("y", origin[1])
-                .attr("width", (d) => segment_point.x-origin[0])
-                .attr("height", (d) => segment_point.y-origin[1])
+                .attr("x", margin.left)
+                .attr("y", margin.top)
+                .attr("width", (d) => segment_point.x-margin.left)
+                .attr("height", (d) => segment_point.y-margin.top)
                 .lower()
     // neu
     const neu_rect = segment_group.selectAll("rect.neu")
@@ -263,9 +270,9 @@ function updateSegmentation() {
                 .attr("fill", SstColors.neu_color)
                 .style("filter", `brightness(${SstColors.brightness}%)`)
                 .merge(neu_rect)
-                .attr("x", origin[0])
+                .attr("x", margin.left)
                 .attr("y", (d) =>  segment_point.y)
-                .attr("width", (d) => segment_point.x-origin[0])
+                .attr("width", (d) => segment_point.x-margin.left)
                 .attr("height", (d) => viewBox_height-segment_point.y)
 
     // pos
@@ -287,10 +294,11 @@ function updateSegmentation() {
                 .style("filter", `brightness(${SstColors.brightness}%)`)
                 .merge(mixed_rect)
                 .attr("x", (d) => segment_point.x)
-                .attr("y", origin[1])
+                .attr("y", margin.top)
                 .attr("width", (d) => viewBox_width-segment_point.x)
-                .attr("height", (d) => segment_point.y-origin[1])
+                .attr("height", (d) => segment_point.y-margin.top)
     svg.selectAll("g.segmentation").style("opacity", props.segment_mode?1:0)
+        .style("pointer-events", "none")
 
 
 }
