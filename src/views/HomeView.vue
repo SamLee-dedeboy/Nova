@@ -119,7 +119,7 @@ function datasetImported(dataset) {
       resolve(""); 
     })
     promise.then(() => graph_constructing.value = false)
-  }, 1)
+  }, 10)
 
   // graph_constructing.value = true
   // setTimeout(() => {
@@ -328,12 +328,14 @@ function highlightChanged(new_value) {
             </TargetContainer>
           </SplitterPanel>
           <SplitterPanel id='sidebar' class="sidebar flex align-items-center justify-content-center" :size="45" :min-size="45">
-            <ToggleButton class='compare_toggle p-button-secondary' v-model="compare_mode" onIcon="pi pi-image" offIcon="pi pi-images"></ToggleButton>
-            <MyToolbar ref="toolbar" 
-            @candidate_updated="updateNpList"
-            @dataset_imported="datasetImported"  >
-            </MyToolbar>
-            <ToggleButton class='overview-toggler p-button-secondary' v-model="overview_mode" onIcon="pi pi-table" offIcon="pi pi-chart-line"></ToggleButton>
+            <div class="toolbar-container">
+              <ToggleButton class='compare_toggle p-button-secondary' v-model="compare_mode" onIcon="pi pi-image" offIcon="pi pi-images"></ToggleButton>
+              <MyToolbar ref="toolbar" 
+              @candidate_updated="updateNpList"
+              @dataset_imported="datasetImported"  >
+              </MyToolbar>
+              <ToggleButton class='overview-toggler p-button-secondary' v-model="overview_mode" onIcon="pi pi-chart-line" offIcon="pi pi-table"></ToggleButton>
+            </div>
             <i v-if="graph_constructing" class="pi pi-spin pi-spinner" 
             style="
             position:absolute;
@@ -372,37 +374,37 @@ function highlightChanged(new_value) {
                 :highlight_object="highlight_outlet"
               ></TemporalCoordinates>
               <Legend id="outlet_legend"
+                class="outlet-legend"
                 :color_dict="SstColors.outlet_color_dict" 
                 :filter="false" 
                 :interactable="true"
-                v-on:outlet-hovered="highlightChanged"
-                style="position:absolute; left: 72%; top: 95%">
+                v-on:outlet-hovered="highlightChanged">
               </Legend>
             </div>
             <div class="utilities-container">
               <div v-if="graph_constructed" class="slider-container">
-              <InputText class="threshold-input" v-model:number="article_num_threshold" />
-              <Button class="increment-button p-button-secondary" label="+"  @click="() => article_num_threshold=Math.min(article_num_threshold+=10, max_articles||100)"></Button>
-              <Button class="decrease-button p-button-secondary " label="-"  @click="() => article_num_threshold=Math.max(article_num_threshold-10, 10)"></Button>
-              <Slider v-model="article_num_threshold" :step="1" :min="10" :max="max_articles||100"></Slider>
-              <div class="indicator-container">
-                <div class="min_indicator">10</div>
-                <div class="max_indicator">{{max_articles || 100}}</div>
+                <InputText class="threshold-input" v-model="article_num_threshold" />
+                <Button class="increment-button p-button-secondary" label="+"  @click="() => article_num_threshold=Math.min(article_num_threshold+=10, max_articles||100)"></Button>
+                <Button class="decrease-button p-button-secondary " label="-"  @click="() => article_num_threshold=Math.max(article_num_threshold-10, 10)"></Button>
+                <Slider v-model="article_num_threshold" :step="1" :min="10" :max="max_articles||100"></Slider>
+                <ColorSpectrum class="color-spectrum" v-if="graph_constructed" 
+                :color-scale="SstColors.article_num_color_scale"
+                ></ColorSpectrum>
+                <div class="indicator-container">
+                  <div class="min_indicator">10</div>
+                  <div class="max_indicator">{{max_articles || 100}}</div>
+                </div>
               </div>
-              <ColorSpectrum class="color-spectrum" v-if="graph_constructed" 
-              :color-scale="SstColors.article_num_color_scale"
-              ></ColorSpectrum>
-            </div>
-            </div>
-            <div v-if="graph_constructed" class="segment-toggler-container">
-              <ToggleButton class='segment-toggler p-button-secondary' v-model="segment_mode" onLabel="Segment On" offLabel="Segment off"></ToggleButton>
+              <div v-if="graph_constructed" class="segment-toggler-container">
+                <ToggleButton class='segment-toggler p-button-secondary' v-model="segment_mode" onLabel="Segment On" offLabel="Segment off"></ToggleButton>
+              </div>
             </div>
             <Legend v-if="graph_constructed" 
             id="segment_legend"
+            class="segment-legend"
             :color_dict="SstColors.key_color_dict" 
             :filter="true" 
-            :interactable="true"
-            style="position:absolute; left: 72%; top: 75%"></Legend>
+            :interactable="false"></Legend>
             <!-- <div class="selection_container" style="display:flex">
               <TargetSelection v-if="np_list.length!=0" :dataset_metadata="dataset_metadata" :targets="entity_data" @target-selected="updateTarget"></TargetSelection>
               <TopicSelection  v-if="topic_list.length!=0"  :topics="topic_list" @topic-selected="updateTopic" style="flex:0.5"></TopicSelection>
@@ -422,19 +424,25 @@ function highlightChanged(new_value) {
   </main>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
+* {
+  --margin_left: 10px;
+}
 .splitter-outmost {
   width: 97vw;
   height: 95vh;
 }
 .entity-grid-container {
     display: grid;
-    height: inherit;
-    width: auto;
-    /* grid-template-columns: repeat(7, 1fr);
-    grid-template-rows: repeat(7, 1fr);   */
+    aspect-ratio: 3/2;
+    max-height: 50%;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(2, 1fr);  
+    gap: 0;
+}
+.entity-grid-container > :deep(.scatter-container) {
+  display:flex;
+  aspect-ratio: 1;
 }
 /* :deep(.outlet-scatter:hover .outlet-scatterplot) {
     filter: brightness(80%);
@@ -465,14 +473,6 @@ function highlightChanged(new_value) {
 :deep(.p-tabview-panels:dragover) {
   background: #b8b8b8 !important;
 }
-.compare_toggle {
-  border-radius: 8px;
-    margin: 10px;
-}
-.slider-container {
-  width: 200px;
-  left: 10px;
-}
 .increment-button {
   display:inline-block;
 }
@@ -485,27 +485,25 @@ function highlightChanged(new_value) {
   display:inline-block;
 }
 .indicator-container {
-  top: 15px;
   display: flex;
   justify-content: space-between;
 }
 .segment-toggler-container {
   width: fit-content;
-  top: 20px;
-  left: 10px;
 }
 .color-spectrum {
-  position:absolute;
   width: inherit;
   height: 30px;
-  top: 40px;
 }
 .utilities-container {
+  width: 200px;
   display: inline-block;
+  margin-left: var(--margin_left);
+  overflow: hidden
 }
 :deep(.p-slider) {
   width: 100%;
-  top: 10px;
+  top: 13px;
 }
 :deep(.p-slider-handle) {
     border-radius: 10px !important; 
@@ -530,4 +528,28 @@ function highlightChanged(new_value) {
   width: 500px;
   height: 300px;
 }
+.toolbar-container {
+  display: flex;
+  margin-left: var(--margin_left); 
+}
+.toolbar-container > :deep(.p-button) {
+  border-radius: 8px !important;
+  display: flex !important;
+  margin: 3px !important;
+}
+.temporal-container {
+  display: flex;
+}
+.outlet-legend {
+  position: absolute;
+  top: 50%;
+  right: 0%;
+  transform: translateY(-50%);
+  width:150px;
+}
+.segment-legend {
+  width: 125px;
+  margin-left: var(--margin_left);
+}
  </style>
+

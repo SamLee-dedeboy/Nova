@@ -105,8 +105,4 @@ export default {
 </template> 
 
 <style scoped>
-Button {
-    margin: 10px;
-    border-radius: 8px;
-}
 </style>
