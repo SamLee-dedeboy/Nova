@@ -2,10 +2,6 @@
 import * as d3 from "d3";
 import * as SstColors from "./ColorUtils"
 import * as vue from "vue"
-const r = 7
-const x_offset = 25 
-const vertical_margin = 2*r 
-const horizontal_margin = 2*r
 
 const props = defineProps({
     id: String,
@@ -15,16 +11,17 @@ const props = defineProps({
 })
 const emit = defineEmits(['outlet-hovered'])
 vue.onMounted(()=> {
+    const len = Object.keys(props.color_dict!).length
+    const param = {top: 3, bottom: 0, left: 2, vertical: 2}
+    const r = 175/(param.top+param.bottom+2*len+param.vertical*(len-1))
+    const margin = {top: param.top*r, bottom: param.bottom*r, left: param.left*r, vertical: param.vertical*r}
     var svg = d3.select(`#${props.id}`)
     var index = 0
-    const len = Object.keys(props.color_dict!).length
-    svg.attr("height", len*30 + "px")
-    const y_offset = (200-(len+0.2)*(2*r+vertical_margin))/2
+    svg.attr("height", margin.top + margin.bottom + len*2*r + (len-1)*margin.vertical + "px")
     for(const [title, color] of Object.entries(props.color_dict!)) {
-        console.log("🚀 ~ file: Legend.vue ~ line 23 ~ vue.onMounted ~ outlet", title)
         const circle = svg.append("circle")
-            .attr("cx", x_offset)
-            .attr("cy", y_offset + index*(2*r + vertical_margin))
+            .attr("cx", margin.left)
+            .attr("cy", margin.top + index*(2*r + margin.vertical))
             .attr("r", r)
             // .style("filter", `brightness(${SstColors.brightness}%)`)
             .style("fill", color)
@@ -35,17 +32,17 @@ vue.onMounted(()=> {
         }
 
         svg.append("text")
-            .attr("x", x_offset + 2*r + horizontal_margin)
-            .attr("y", y_offset + index*(2*r + vertical_margin))
+            .attr("x", margin.left + 2*r)
+            .attr("y", margin.top + index*(2*r + margin.vertical))
             .text(title)
-            .attr("font-size", "large")
+            .attr("font-size", "small")
             .attr("dominant-baseline", "middle")
         if(props.interactable) {
             const rect = svg.append("rect")
-                .attr("x", x_offset - r)
-                .attr("y", y_offset - 2*r + index*(2*r + vertical_margin))
+                .attr("x", margin.left - r)
+                .attr("y", margin.top - 2*r + index*(2*r + margin.vertical))
                 .attr("width", 180 )
-                .attr("height", 2*r+vertical_margin)
+                .attr("height", 2*r+margin.vertical)
                 .style("fill", "none")
                 .style("cursor", "pointer")
                 .style("pointer-events", "all")
@@ -64,14 +61,15 @@ vue.onMounted(()=> {
 </script>
 
 <template>
-    <svg  viewBox="0 0 200 175" :id="id">
-    </svg>
+    <div class="legend-container">
+        <svg  viewBox="0 0 200 175" :id="id">
+        </svg>
+    </div>
 </template>
 
 <style scoped>
-svg {
-    width: 25%;
-    /* aspect-ratio: 1; */
+.legend-container {
+    width: fit-content;
     background-color: #eee3cd;
     border: solid;
     border-width: 2px;
