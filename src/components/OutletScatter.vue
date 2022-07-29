@@ -350,13 +350,13 @@ function updateOverviewTooltipContent() {
 function updateCanvas() {
     console.log("update Canvas")
     if(props.expanded)
-        updateExpandedScatter(props.graph)
+        updateExpandedScatter()
     else 
-        updateOverviewScatter(props.graph)
+        updateOverviewScatter()
 } 
 
-function updateExpandedScatter(graph) {
-    updateOverviewScatter(graph)
+function updateExpandedScatter() {
+    updateOverviewScatter()
     const svg = d3.select(`#${props.id}`).select("svg")
     svg.selectAll("g.outlet")
         .style("cursor", "pointer")
