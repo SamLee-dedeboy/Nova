@@ -10,21 +10,21 @@ import InfoButton from "./InfoButton.vue";
 import OutletScatter from "./OutletScatter.vue";
 import * as d3 from "d3"
 import { watch, onMounted, PropType, ref, Ref, toRef, computed, defineEmits } from 'vue'
-import { ScatterOutletNode, ScatterOutletGraph } from "../types";
+import * as vue from 'vue'
+import { ScatterOutletNode, ScatterOutletGraph, ViewType } from "../types";
+import TemporalCoordinates from "./TemporalCoordinates.vue";
 
 const props = defineProps({
     articles: Object as () => any[],
     enabled_outlet_set: Object as () => Set<string>,
     selectedScatters: Object as () => ScatterOutletGraph[],
     selectedTimeRange: Object as () => {start: number, end: number},
-    min_articles: Number,
-    max_articles: Number,
     compare_part: String,
     article_num_threshold: Number,
     segment_mode: Boolean,
     segmentation: Object as () => {pos: Number, neg: Number},
 })
-const scatterClicked: Ref<Boolean> = ref(false)
+const scatterClicked: Ref<boolean> = ref(false)
 const active: Ref<number> = ref(0)
 // const selectedScatters: Ref<Set<ScatterOutletGraph> | undefined> = toRef(props, 'selectedScatters')
 // const selectedScatters_list = computed(() => {
@@ -67,11 +67,11 @@ watch(() => props.selectedScatters, (new_scatters, old_scatters) => {
 
 const emit = defineEmits(['update:selectedScatters', "update:segmentation", "node-clicked", "entity-clicked"])
 
-function handleNodeClicked(clicked_node) {
-    emit("node-clicked", clicked_node)        
+function handleNodeClicked({type, d}) {
+    emit("node-clicked", d)        
     this.nodeClicked = true
     const target = this.entities[0]
-    const articles = clicked_node.articles
+    const articles = d.articles
     const max_node_num = 10
     // generate candidates that cooccur frequently with target
     let entity_mentioned_articles:{[id: string]: Set<string>} = {}
@@ -105,7 +105,7 @@ function handleNodeClicked(clicked_node) {
     })
     this.entity_graph.nodes = nodes
     this.cooccur_matrix = cooccur_matrix
-    this.clicked_outlet = clicked_node.text
+    this.clicked_outlet = d.text
 }
 
 function handleCloseTab(e, index) {
@@ -136,19 +136,24 @@ function updateSegmentation(new_value) {
 		</template>
         <KeepAlive>
         <OutletScatter
-        :graph="graph"
-        :graph_index="index"
-        :id="`${compare_part}-scatter-${index}-expanded`"
-        :expanded="true"
-        :min_articles="min_articles"
-        :max_articles="max_articles"
-        :panel_class="compare_part" 
-        :article_num_threshold="article_num_threshold"
-        :segment_mode="segment_mode"
-        @update:segmentation="updateSegmentation"
-        @node_clicked="handleEntityClicked"
+            v-if="graph.type === ViewType.EntityScatter || graph.type === ViewType.OutletScatter"
+            :graph="graph"
+            :graph_index="index"
+            :id="`${compare_part}-scatter-${index}-expanded`"
+            :expanded="true"
+            :panel_class="compare_part" 
+            :article_num_threshold="article_num_threshold"
+            :segment_mode="segment_mode"
+            @update:segmentation="updateSegmentation"
+            @node_clicked="handleEntityClicked"
         ></OutletScatter>
         </KeepAlive>
+
+        <TemporalCoordinates 
+        v-if="graph.type === ViewType.Temporal"
+            :article_bin_dict="entity_article_bins_dict"
+
+        ></TemporalCoordinates>
         <!-- <Graph 
             class="graph"
             :graph="graph_dict[target]"

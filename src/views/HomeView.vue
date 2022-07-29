@@ -16,13 +16,15 @@ import MonthSlider from "../components/MonthSlider.vue"
 import OutletScatter from "../components/OutletScatter.vue";
 import * as preprocess from "../components/preprocessUtils"
 import { watch, computed, onMounted, PropType, ref, Ref, nextTick, } from 'vue'
-import { ScatterOutletGraph } from "../types";
+import * as vue from 'vue'
+import { ScatterOutletGraph, ViewType, Sentiment2D } from "../types";
 import Legend from "../components/Legend.vue";
 import Divider from 'primevue/divider';
 import ColorSpectrum from '../components/ColorSpectrum.vue'
 import * as SstColors from "../components/ColorUtils"
 import * as _ from "lodash"
 import TemporalCoordinates from "../components/TemporalCoordinates.vue";
+import TemporalPathSelector from "../components/TemporalPathSelector.vue";
 
   // data() {
   //   return {
@@ -66,6 +68,8 @@ const entity_data = computed(() => entity_mentions.value.map(entity_mention => {
 const graph_constructing: Ref<boolean> = ref(false)
 const max_articles: Ref<number> = ref(0)
 const min_articles: Ref<number> = ref(0)
+vue.provide('min_articles', min_articles)
+vue.provide('max_articles', max_articles)
 const compare_mode: Ref<boolean> = ref(false)
 const segment_mode: Ref<boolean> = ref(false)
 const article_num_threshold: Ref<number> = ref(10)
@@ -73,11 +77,11 @@ const highlight_outlet: Ref<string> = ref("")
 const overview_mode: Ref<boolean> = ref(true)
 const min_timestamp: Ref<string> = ref("")
 const max_timestamp: Ref<string> = ref("")
-const segment_sst = ref({pos: 0.5, neg: 0.5}) 
+vue.provide('min_timestamp', min_timestamp)
+vue.provide('max_timestamp', max_timestamp)
+const segment_sst: Ref<Sentiment2D> = ref({pos: 0.5, neg: 0.5}) 
+vue.provide('segment_sst', segment_sst)
 
-watch(() => highlight_outlet, (new_value, old_value) => {
-  console.log("🚀 ~ file: HomeView.vue ~ line 75 ~ watch ~ new_value", new_value)
-})
 watch(() => timeRange, (new_range, old_range) => {
     if(new_range[0] != old_range[0] || new_range[1] != old_range[1]) {
       // TODO: implement slicing with dataframe
@@ -254,21 +258,29 @@ function handleDropScatter(e) {
   }
 }
 
-function handleEntityClicked(entity) {
-  // construct entity graph
-  var outlet_graph: ScatterOutletGraph= {title: entity.text, type: "entity", nodes: []}
-  enabled_outlet_set.value.forEach(outlet => {
-    const graph = graph_dict.value[outlet]
-    // find entity node in this graph
-    let entity_in_outlet = _.cloneDeep(graph.nodes.find(node => node.text === entity.text))
-    || { text: outlet, articles: 0, pos_sst: 0, neg_sst: 0}
-    // let entity_in_outlet = graph.nodes.find(node => node.text === entity.text)
-    // || { text: outlet, articles: 0, pos_sst: 0, neg_sst: 0}
-    entity_in_outlet.text = outlet
-    outlet_graph.nodes.push(entity_in_outlet)
-  })
-  // graph_dict.value[entity.text] = outlet_graph
-  selectedScatterGraphs_left.value.push(outlet_graph)
+function handleEntityClicked({type, d}) {
+  compare_mode.value = true 
+  if(type === ViewType.OutletScatter) {
+    // construct entity graph
+    var outlet_graph: ScatterOutletGraph= {title: d.text, type: ViewType.OutletScatter, nodes: []}
+    enabled_outlet_set.value.forEach(outlet => {
+      const graph = graph_dict.value[outlet]
+      // find entity node in this graph
+      let entity_in_outlet = _.cloneDeep(graph.nodes.find(node => node.text === d.text))
+      || { text: outlet, articles: 0, pos_sst: 0, neg_sst: 0}
+      // let entity_in_outlet = graph.nodes.find(node => node.text === entity.text)
+      // || { text: outlet, articles: 0, pos_sst: 0, neg_sst: 0}
+      entity_in_outlet.text = outlet
+      outlet_graph.nodes.push(entity_in_outlet)
+    })
+    // graph_dict.value[entity.text] = outlet_graph
+    selectedScatterGraphs_right.value.push(outlet_graph)
+    return
+  }
+
+  if(type === ViewType.Temporal) {
+
+  }
 }
 
 function highlightChanged(new_value) {
@@ -373,13 +385,11 @@ function highlightChanged(new_value) {
                 :article_bin_dict="outlet_article_bins_dict"
                 :highlight_object="highlight_outlet"
               ></TemporalCoordinates>
-              <Legend id="outlet_legend"
-                class="outlet-legend"
-                :color_dict="SstColors.outlet_color_dict" 
-                :filter="false" 
-                :interactable="true"
-                v-on:outlet-hovered="highlightChanged">
-              </Legend>
+              <TemporalPathSelector 
+                :targets="Array.from(enabled_outlet_set)"
+                v-model:selectedTarget="highlight_outlet"
+              >
+              </TemporalPathSelector>
             </div>
             <div class="utilities-container">
               <div v-if="graph_constructed" class="slider-container">
@@ -549,6 +559,7 @@ function highlightChanged(new_value) {
 }
 .segment-legend {
   width: 125px;
+  height: 150px;
   margin-left: var(--margin_left);
 }
  </style>

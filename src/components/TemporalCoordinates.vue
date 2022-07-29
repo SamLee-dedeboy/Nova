@@ -9,12 +9,10 @@ import * as d3 from "d3"
 import * as vue from "vue"
 import * as preprocess from "../components/preprocessUtils"
 import * as SstColors from "./ColorUtils"
-import { Path, Article } from "../types"
+import { Path, Article, Sentiment2D } from "../types"
 import { start } from "repl"
+import {Ref, ref} from 'vue'
 const props = defineProps({
-    min_timestamp: String,
-    max_timestamp: String, 
-    sst_threshold: Object as () => {pos: Number, neg: Number},
     article_bin_dict: Object as () => {[id: string]: {[id: string]:Article[]}},
     highlight_object: String, 
 })
@@ -31,8 +29,12 @@ const viewBox_width = viewBox[0] - margin.left - margin.right
 const viewBox_height = viewBox[1] - margin.top - margin.bottom - margin.middle
 // const months = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec", "Jan"]
 
-const start_date = vue.computed(() => new Date(props.min_timestamp!))
-const end_date = vue.computed(() => new Date(props.max_timestamp!))
+const min_timestamp: Ref<string> = vue.inject('min_timestamp') || ref("")
+const max_timestamp: Ref<string> = vue.inject('max_timestamp') || ref("")
+const sst_threshold: Ref<Sentiment2D> = vue.inject('segment_sst') || ref({pos: 0.5, neg: 0.5})
+
+const start_date = vue.computed(() => new Date(min_timestamp.value))
+const end_date = vue.computed(() => new Date(max_timestamp.value))
 const start_month = vue.computed(() => start_date.value.getMonth() + 2)
 const end_month = vue.computed(() => end_date.value.getMonth() + 2)
 console.log(start_date.value.toISOString(), start_date.value.getMonth())
@@ -62,7 +64,7 @@ vue.watch(() => props.highlight_object, (new_value, old_value) => {
     updateCoordinates()
 })
 
-vue.watch(() => props.sst_threshold, (new_value, old_value) => {
+vue.watch(() => sst_threshold, (new_value, old_value) => {
     updateSegmentation()
 })
 
@@ -192,11 +194,11 @@ function updateCoordinates() {
 }
 
 function updateSegmentation() {
-    console.log("🚀 ~ file: TemporalCoordinates.vue ~ line 199 ~ updateSegmentation ~ props", props.sst_threshold)
+    console.log("🚀 ~ file: TemporalCoordinates.vue ~ line 199 ~ updateSegmentation ~ props", sst_threshold)
     const svg = d3.select("div.tCoord-container").select("svg")
     const pos_segment_group = svg.select("g.pos_coord").select("g.pos_segment_group")
     const pos_pos_segment = pos_segment_group.selectAll("rect.pos_pos_segment")
-        .data([props.sst_threshold?.pos || 0.5])
+        .data([sst_threshold.value.pos || 0.5])
     pos_pos_segment.enter().append("rect").attr("class", "pos_pos_segment")
         .attr("x", -margin.left/2)
         .attr("y", 0)
@@ -206,7 +208,7 @@ function updateSegmentation() {
         .merge(pos_pos_segment)
         .attr("height", (d) => y_pos(d))
     const pos_neu_segment = pos_segment_group.selectAll("rect.pos_neu_segment")
-        .data([props.sst_threshold?.pos || 0.5])
+        .data([sst_threshold.value.pos || 0.5])
     pos_neu_segment.enter().append("rect").attr("class", "pos_neu_segment")
         .attr("x", -margin.left/2)
         .attr("width", margin.left/2)
@@ -217,7 +219,7 @@ function updateSegmentation() {
         .style("filter", `brightness(${SstColors.brightness}%)`)
     const neg_segment_group = svg.select("g.neg_coord").select("g.neg_segment_group")
     const neg_neg_segment = neg_segment_group.selectAll("rect.neg_neg_segment")
-        .data([props.sst_threshold?.neg || 0.5])
+        .data([sst_threshold.value.neg || 0.5])
     neg_neg_segment.enter().append("rect").attr("class", "neg_neg_segment")
         .attr("x", -margin.left/2)
         .attr("width", margin.left/2)
@@ -227,7 +229,7 @@ function updateSegmentation() {
         .attr("y", y_neg(1))
         .attr("height", (d) => y_neg(d)-y_neg(1))
     const neg_neu_segment = neg_segment_group.selectAll("rect.neg_neu_segment")
-        .data([props.sst_threshold?.neg || 0.5])
+        .data([sst_threshold.value.neg || 0.5])
     neg_neu_segment.enter().append("rect").attr("class", "neg_neu_segment")
         .attr("x", -margin.left/2)
         .attr("width", margin.left/2)

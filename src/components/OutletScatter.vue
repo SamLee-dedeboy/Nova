@@ -3,6 +3,8 @@
     <svg class="outlet-scatterplot" :class="panel_class"></svg>
     <Button v-if="expanded" class="reset-zoom" @click="resetZoom">reset</Button>
     <TooltipVue class='tooltip' :content="tooltip_content" style="z-index: 1000;"></TooltipVue>
+    <Menu id="overlay_menu" ref="menu" :model="menu_items" :popup="true" 
+    style="position: absolute"></Menu>
 
 </div>
 </template>
@@ -10,8 +12,9 @@
 <script setup lang="ts">
 import _ from 'lodash'
 import TooltipVue from "./Tooltip.vue"
+import Menu from "primevue/menu"
 import * as d3 from "d3"
-import { ScatterOutletNode, ScatterOutletGraph } from '../types'
+import { ScatterOutletNode, ScatterOutletGraph, ViewType, Sentiment2D } from '../types'
 import { edgeRotation,
          applyEntityEdgeSelectedStyle, 
          addEdges,
@@ -22,7 +25,7 @@ import { applyEntityNodeSelectedStyle,
          articlesToRadius,
        } from './NodeUtils'
 import * as SstColors from "./ColorUtils"
-import { watch, onMounted, PropType, computed, Ref, ref, defineEmits} from 'vue'
+import { watch, onMounted, PropType, computed, Ref, ref, defineEmits, nextTick} from 'vue'
 import * as vue from 'vue'
 
 // initialization
@@ -31,15 +34,14 @@ const props = defineProps({
     graph_index: Number,
     id: String,
     expanded: Boolean,
-    min_articles: Number,
-    max_articles: Number,
     panel_class: String,
     article_num_threshold: Number,
     segment_mode: Boolean,
-    segmentation: Object as () => {pos: Number, neg: Number},
+    segmentation: Object as () => Sentiment2D, 
 })
 const emit = defineEmits(['node_clicked', 'update:segmentation'])
-
+const min_articles: Ref<number> = vue.inject('min_articles') || ref(0) 
+const max_articles: Ref<number> = vue.inject('max_articles') || ref(0)
 const tooltip_content: Ref<String> = ref("") 
 const viewBox = [1000, 1000]
 const outlet_min_radius = 10
@@ -62,6 +64,22 @@ const avg_pos_sst = computed(() => (_.mean(props.graph?.nodes.map(node => node.p
 const avg_neg_sst = computed(() => (_.mean(props.graph?.nodes.map(node => node.neg_sst))))
 const segment_controller_width = 12
 const node_circle_radius = 10
+const clicked_node: Ref<ScatterOutletNode> = ref({text: "", articles: 0, pos_sst: 0, neg_sst: 0})
+const menu = ref()
+const menu_items = ref([
+    {
+        label: "Compare with other outlets",
+        command: () => {
+            emit("node_clicked", {type: ViewType.OutletScatter, d: clicked_node.value})
+        }
+    },
+    {
+        label: "Show in TemporalView",
+        command: () => {
+            emit("node_clicked", {type: ViewType.Temporal, d: clicked_node.value})
+        }
+    }
+])
 var segment_point = {x: 0, y: 0} 
 var segment_controller_start_x:number
 var segment_controller_start_y:number
@@ -330,6 +348,7 @@ function updateOverviewTooltipContent() {
 }
 
 function updateCanvas() {
+    console.log("update Canvas")
     if(props.expanded)
         updateExpandedScatter(props.graph)
     else 
@@ -366,23 +385,29 @@ function updateExpandedScatter(graph) {
             .style("opacity", 0)
         })
         .on("click", (e, d) =>  {
-            emit('node_clicked', d) 
+            menu.value.toggle(e)
+            nextTick(() => {
+                const overlay_menu = d3.select("#overlay_menu")
+                    overlay_menu.style("left", e.offsetX + 55 + "px")
+                    .style("top", e.offsetY + 85 + "px")
+                clicked_node.value = d
+            })
         })
 
 
 
 }
 
-function updateOverviewScatter(graph) {
+function updateOverviewScatter() {
     const svg = d3.select(`#${props.id}`).select("svg")
     const article_radius_scale = d3.scalePow()
     .exponent(1)
-    .domain([ props.min_articles, props.max_articles ])
+    .domain([ min_articles, max_articles ])
     .range([ outlet_min_radius, outlet_max_radius ]);
 
     let bind_data;
-    if(props.graph?.type === "outlet") bind_data = filtered_data.value
-    if(props.graph?.type === "entity") bind_data = props.graph.nodes
+    if(props.graph?.type === ViewType.EntityScatter) bind_data = filtered_data.value
+    if(props.graph?.type === ViewType.OutletScatter) bind_data = props.graph.nodes
     svg.selectAll("g.outlet")
     .data(bind_data, function(d) {return d.text})
     .join(
@@ -395,7 +420,7 @@ function updateOverviewScatter(graph) {
                 .attr("cx", (d) => x(d.pos_sst))
                 .attr("cy", (d) => y(Math.abs(d.neg_sst)))
                 // .attr("fill", (d) => SstColors.outlet_color_dict[d.text])
-                .attr("fill", (d) => d.articles === 0? "white" :SstColors.article_num_color_scale(d.articles/props.max_articles!))
+                .attr("fill", (d) => d.articles === 0? "white" :SstColors.article_num_color_scale(d.articles/max_articles.value))
                 .attr("opacity", 0.8)
                 .raise()
             group.append("circle")
@@ -418,7 +443,7 @@ function updateOverviewScatter(graph) {
 
             update.selectAll("circle.outlet_circle")
             // .attr("fill", (d) => SstColors.outlet_color_dict[d.text])
-            .attr("fill", (d) => SstColors.article_num_color_scale(d.articles/props.max_articles!))
+            .attr("fill", (d) => SstColors.article_num_color_scale(d.articles/max_articles.value))
             // .attr("opacity", 0.8)
         }
     ) 
