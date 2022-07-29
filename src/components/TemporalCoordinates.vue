@@ -1,5 +1,5 @@
 <template>
-<div class="tCoord-container">
+<div class="tCoord-container" :id="id">
     <svg class="t-coord" ></svg>
 </div>
     
@@ -13,8 +13,9 @@ import { Path, Article, Sentiment2D } from "../types"
 import { start } from "repl"
 import {Ref, ref} from 'vue'
 const props = defineProps({
+    id: String,
     article_bin_dict: Object as () => {[id: string]: {[id: string]:Article[]}},
-    highlight_object: String, 
+    highlight_object: Object as () => String[], 
 })
 
 const test_pos_bins_1 = [1, 0.5, 0.3, 0.2, 0.7, 0, 0.5, 0.3, 0.3, 0.5, 0.6, 0.8]
@@ -27,6 +28,7 @@ const viewBox = [500, 300]
 const margin = {top: 30, bottom: 30, right:10, left: 30, middle: 10} 
 const viewBox_width = viewBox[0] - margin.left - margin.right
 const viewBox_height = viewBox[1] - margin.top - margin.bottom - margin.middle
+const highlight_stroke_width = 5
 // const months = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec", "Jan"]
 
 const min_timestamp: Ref<string> = vue.inject('min_timestamp') || ref("")
@@ -63,6 +65,10 @@ const y_neg = d3.scalePow()
 vue.watch(() => props.highlight_object, (new_value, old_value) => {
     updateCoordinates()
 })
+vue.watch(() => props.article_bin_dict, (new_value, old_value) => {
+    console.log("article_bin_dict changed")
+    updateCoordinates()
+})
 
 vue.watch(() => sst_threshold, (new_value, old_value) => {
     updateSegmentation()
@@ -79,29 +85,36 @@ const test_entity_path_dict = vue.computed(() => {
     });
     return entity_path_dict;
 })
-const object_path_dict = vue.computed(() => {
-    const object_path_dict: { [id: string]: {pos_path: Path[], neg_path: Path[]} } = {}
+const object_bins_dict = vue.computed(() => {
+    const object_bins_dict: { [id: string]: {title: string, pos_bins: Number[], neg_bins: Number[]} } = {}
     const article_bin_dict = props.article_bin_dict!
     Object.keys(article_bin_dict).forEach(title => {
         const article_bins = article_bin_dict[title]
         const pos_bins :Number[] = []
         const neg_bins :Number[] = []
-        console.log(start_month.value, end_month.value) 
         for(let month = start_month.value; month < end_month.value; month++) {
             const articles = article_bins[month]
             const bins = preprocess.construct_node(articles, `${title}-${month}`) 
             pos_bins.push(bins.pos_sst)
             neg_bins.push(bins.neg_sst)
         }
-        // console.log({title, pos_bins, neg_bins})
+        object_bins_dict[title] = {title, pos_bins, neg_bins}
+    })
+    return object_bins_dict
+})
+const object_path_dict = vue.computed(() => {
+    const object_path_dict: { [id: string]: {pos_path: Path[], neg_path: Path[]} } = {}
+    Object.keys(object_bins_dict.value).forEach(title => {
+        const {pos_bins, neg_bins} = object_bins_dict.value[title]
         const pos_path = constructPath(pos_bins, title)
         const neg_path = constructPath(neg_bins, title)
         object_path_dict[title] = {pos_path, neg_path}
     });
+    console.log("🚀 ~ file: TemporalCoordinates.vue ~ line 115 ~ constobject_path_dict=vue.computed ~ object_path_dict", object_path_dict)
     return object_path_dict;
 })
 vue.onMounted(() => {
-    const svg = d3.select("svg.t-coord")
+    const svg = d3.select(`#${props.id}`).select("svg")
         .attr("viewBox", `0 0 ${viewBox[0]} ${viewBox[1]}`)
     const axis_group = svg.append("g").attr("class", "axis-group")
         .attr("transform", `translate(${margin.left}, ${margin.top})`)
@@ -152,8 +165,8 @@ vue.onMounted(() => {
 })
 
 function updateCoordinates() {
-    const svg = d3.select("div.tCoord-container").select("svg")
-
+    const svg = d3.select(`#${props.id}`).select("svg")
+    const temporal_type = props.id!.split("_")[0]
     // pos
     const path_pos_group = svg.select("g.pos_coord").select("g.path_pos_group")
     const pos_line_group = path_pos_group.selectAll("g.line_group")
@@ -164,14 +177,40 @@ function updateCoordinates() {
     const pos_paths = path_pos_group.selectAll("g.line_group").selectAll("line.pos_path")
         .data((d) => object_path_dict.value[d].pos_path)
     pos_paths.enter()
-            .append("line").attr("class", "pos_path")
-            .merge(pos_paths)
-            .attr("x1", (d,i) => (x_coord(i)))
-            .attr("y1", (d) => (y_pos(d.start)))
-            .attr("x2", (d,i) => (x_coord(i+1)))
-            .attr("y2", (d) => (y_pos(d.end)))
-            .attr("stroke", (d) => SstColors.outlet_color_dict[d.title])
-            .attr("stroke-width", (d) => (d.title === props.highlight_object)?5:1)
+        .append("line").attr("class", "pos_path")
+        .merge(pos_paths)
+        .attr("x1", (d,i) => (x_coord(i)))
+        .attr("y1", (d) => (y_pos(d.start)))
+        .attr("x2", (d,i) => (x_coord(i+1)))
+        .attr("y2", (d) => (y_pos(d.end)))
+
+
+    if(temporal_type == "overview") {
+        path_pos_group.selectAll("g.line_group").selectAll("line.pos_path")
+            .attr("stroke", (d, i) => SstColors.outlet_color_dict[d.title]) 
+            .attr("stroke-width", (d) => (props.highlight_object!.includes(d.title))?highlight_stroke_width:1)
+    } else if(temporal_type == "compare") {
+        path_pos_group.selectAll("g.line_group").selectAll("line.pos_path")
+            .attr("stroke", (d, i) => selectColor(Object.keys(props.article_bin_dict!).indexOf(d.title)))
+            .attr("stroke-width", (d) => (props.highlight_object!.includes(d.title))?highlight_stroke_width:2)
+    }
+    path_pos_group.selectAll("g.line_group").filter((d) => props.highlight_object!.includes(d))
+        .raise()
+
+    const pos_highlight_circles = path_pos_group.selectAll("g.line_group").selectAll("circle.pos_path_circles")
+        .data((d) => object_bins_dict.value[d].pos_bins)
+    pos_highlight_circles.enter()
+        .append("circle").attr("class", "pos_path_circles")
+        .merge(pos_highlight_circles)
+        .attr("cx", (d, i) => (x_coord(i)))
+        .attr("cy", (d) => (y_pos(d)))
+        .attr("r", highlight_stroke_width)
+        .attr("fill", "white")
+        .attr("stroke", "black")
+        .attr("opacity", function() {
+            const title = d3.select(this.parentNode).data()[0]
+            return (props.highlight_object!.includes(title))?1:0
+        })
 
     // neg
     const path_neg_group = svg.select("g.neg_coord").select("g.path_neg_group")
@@ -189,13 +228,37 @@ function updateCoordinates() {
             .attr("y1", (d) => (y_neg(d.start)))
             .attr("x2", (d,i) => (x_coord(i+1)))
             .attr("y2", (d) => (y_neg(d.end)))
-            .attr("stroke", (d) => SstColors.outlet_color_dict[d.title])
-            .attr("stroke-width", (d) => (d.title === props.highlight_object)?5:1)
+
+    if(temporal_type == "overview") {
+        path_neg_group.selectAll("g.line_group").selectAll("line.neg_path")
+            .attr("stroke", (d, i) => SstColors.outlet_color_dict[d.title]) 
+            .attr("stroke-width", (d) => (props.highlight_object!.includes(d.title))?5:1)
+    } else if(temporal_type == "compare") {
+        path_neg_group.selectAll("g.line_group").selectAll("line.neg_path")
+            .attr("stroke", (d, i) => selectColor(Object.keys(props.article_bin_dict!).indexOf(d.title)))
+            .attr("stroke-width", (d) => (props.highlight_object!.includes(d.title))?5:2)
+    } 
+    path_neg_group.selectAll("g.line_group").filter((d) => props.highlight_object!.includes(d))
+        .raise()
+
+    const neg_highlight_circles = path_neg_group.selectAll("g.line_group").selectAll("circle.neg_path_circles")
+        .data((d) => object_bins_dict.value[d].neg_bins)
+    neg_highlight_circles.enter()
+        .append("circle").attr("class", "neg_path_circles")
+        .merge(neg_highlight_circles)
+        .attr("cx", (d, i) => (x_coord(i)))
+        .attr("cy", (d) => (y_neg(d)))
+        .attr("r", highlight_stroke_width)
+        .attr("fill", "white")
+        .attr("stroke", "black")
+        .attr("opacity", function() {
+            const title = d3.select(this.parentNode).data()[0]
+            return (props.highlight_object!.includes(title))?1:0
+        })
 }
 
 function updateSegmentation() {
-    console.log("🚀 ~ file: TemporalCoordinates.vue ~ line 199 ~ updateSegmentation ~ props", sst_threshold)
-    const svg = d3.select("div.tCoord-container").select("svg")
+    const svg = d3.select(`#${props.id}`).select("svg")
     const pos_segment_group = svg.select("g.pos_coord").select("g.pos_segment_group")
     const pos_pos_segment = pos_segment_group.selectAll("rect.pos_pos_segment")
         .data([sst_threshold.value.pos || 0.5])
@@ -247,6 +310,10 @@ function constructPath(bins, title) {
         path_list.push({title: title, start:bins![i], end: bins![i+1]})
     }
     return path_list
+}
+function selectColor(number) {
+  const hue = number * 137.508; // use golden angle approximation
+  return `hsl(${hue},50%,75%)`;
 }
 </script>
 <style scoped lang="scss">

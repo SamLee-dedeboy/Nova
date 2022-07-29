@@ -11,13 +11,14 @@ import OutletScatter from "./OutletScatter.vue";
 import * as d3 from "d3"
 import { watch, onMounted, PropType, ref, Ref, toRef, computed, defineEmits } from 'vue'
 import * as vue from 'vue'
-import { ScatterOutletNode, ScatterOutletGraph, ViewType } from "../types";
+import { ScatterOutletNode, ScatterOutletGraph, ViewType, Article } from "../types";
 import TemporalCoordinates from "./TemporalCoordinates.vue";
 
 const props = defineProps({
     articles: Object as () => any[],
     enabled_outlet_set: Object as () => Set<string>,
     selectedScatters: Object as () => ScatterOutletGraph[],
+    temporalBins: Object as () => {[id: string]: {[id: string]:Article[]}},
     selectedTimeRange: Object as () => {start: number, end: number},
     compare_part: String,
     article_num_threshold: Number,
@@ -64,6 +65,9 @@ watch(() => props.selectedScatters, (new_scatters, old_scatters) => {
 // watch(() => selectedScatters_list, (new_value) => {
 //     console.log(selectedScatters_list.value)
 // })
+watch(() => props.temporalBins, (new_scatters, old_scatters) => {
+    console.log("🚀 ~ file: TargetContainer.vue ~ line 71 ~ watch ~ temporalBins", props.temporalBins)
+})
 
 const emit = defineEmits(['update:selectedScatters', "update:segmentation", "node-clicked", "entity-clicked"])
 
@@ -151,7 +155,8 @@ function updateSegmentation(new_value) {
 
         <TemporalCoordinates 
         v-if="graph.type === ViewType.Temporal"
-            :article_bin_dict="entity_article_bins_dict"
+            :id="`compare_temporal`"
+            :article_bin_dict="temporalBins"
 
         ></TemporalCoordinates>
         <!-- <Graph 
