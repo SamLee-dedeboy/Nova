@@ -17,7 +17,7 @@ vue.onMounted(()=> {
     const margin = {top: param.top*r, bottom: param.bottom*r, left: param.left*r, vertical: param.vertical*r}
     var svg = d3.select(`#${props.id}`)
     var index = 0
-    svg.attr("height", margin.top + margin.bottom + len*2*r + (len-1)*margin.vertical + "px")
+    // svg.attr("height", margin.top + margin.bottom + len*2*r + (len-1)*margin.vertical + "px")
     for(const [title, color] of Object.entries(props.color_dict!)) {
         const circle = svg.append("circle")
             .attr("cx", margin.left)
@@ -62,7 +62,7 @@ vue.onMounted(()=> {
 
 <template>
     <div class="legend-container">
-        <svg  viewBox="0 0 200 175" :id="id">
+        <svg  class="legend-svg" viewBox="0 0 150 175" :id="id">
         </svg>
     </div>
 </template>
@@ -77,5 +77,9 @@ vue.onMounted(()=> {
     padding: 5px;
     /* pointer-events: none; */
     transform-origin: top left;
+}
+.legend-svg {
+    width: 100%;
+    height: 100%;
 }
 </style>
