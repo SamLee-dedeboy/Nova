@@ -17,7 +17,7 @@ import OutletScatter from "../components/OutletScatter.vue";
 import * as preprocess from "../components/preprocessUtils"
 import { watch, computed, onMounted, PropType, ref, Ref, nextTick, } from 'vue'
 import * as vue from 'vue'
-import { ScatterOutletGraph, ViewType, Sentiment2D } from "../types";
+import { ScatterOutletGraph, ViewType, Sentiment2D, Article } from "../types";
 import Legend from "../components/Legend.vue";
 import Divider from 'primevue/divider';
 import ColorSpectrum from '../components/ColorSpectrum.vue'
@@ -73,7 +73,7 @@ vue.provide('max_articles', max_articles)
 const compare_mode: Ref<boolean> = ref(false)
 const segment_mode: Ref<boolean> = ref(false)
 const article_num_threshold: Ref<number> = ref(10)
-const highlight_outlet: Ref<string> = ref("")
+const highlight_outlet: Ref<string[]> = ref([])
 const overview_mode: Ref<boolean> = ref(true)
 const min_timestamp: Ref<string> = ref("")
 const max_timestamp: Ref<string> = ref("")
@@ -81,6 +81,8 @@ vue.provide('min_timestamp', min_timestamp)
 vue.provide('max_timestamp', max_timestamp)
 const segment_sst: Ref<Sentiment2D> = ref({pos: 0.5, neg: 0.5}) 
 vue.provide('segment_sst', segment_sst)
+const temporalBins = ref({})
+const node_article_id_dict = ref({})
 
 watch(() => timeRange, (new_range, old_range) => {
     if(new_range[0] != old_range[0] || new_range[1] != old_range[1]) {
@@ -115,10 +117,11 @@ function datasetImported(dataset) {
       max_timestamp.value = r_max_timestamp
       // articles.value = normalized_articles
       article_dict.value = r_article_dict
-      let {r_graph_dict, r_max_articles, r_min_articles} = preprocess.constructEntityGraph(entity_mentions, article_dict.value)
+      let {r_graph_dict, r_max_articles, r_min_articles, r_node_article_id_dict} = preprocess.constructEntityGraph(entity_mentions, article_dict.value)
       graph_dict.value = r_graph_dict
       max_articles.value = r_max_articles
       min_articles.value = r_min_articles
+      node_article_id_dict.value = r_node_article_id_dict
       graph_constructed.value = true
       resolve(""); 
     })
@@ -261,15 +264,14 @@ function handleDropScatter(e) {
 function handleEntityClicked({type, d}) {
   compare_mode.value = true 
   if(type === ViewType.OutletScatter) {
-    // construct entity graph
-    var outlet_graph: ScatterOutletGraph= {title: d.text, type: ViewType.OutletScatter, nodes: []}
+    // construct outlet graph
+    const entity_name = d.text.split("-")[0]
+    var outlet_graph: ScatterOutletGraph= {title: entity_name, type: ViewType.OutletScatter, nodes: []}
     enabled_outlet_set.value.forEach(outlet => {
       const graph = graph_dict.value[outlet]
       // find entity node in this graph
-      let entity_in_outlet = _.cloneDeep(graph.nodes.find(node => node.text === d.text))
+      let entity_in_outlet = _.cloneDeep(graph.nodes.find(node => node.text.split("-")[0] === entity_name))
       || { text: outlet, articles: 0, pos_sst: 0, neg_sst: 0}
-      // let entity_in_outlet = graph.nodes.find(node => node.text === entity.text)
-      // || { text: outlet, articles: 0, pos_sst: 0, neg_sst: 0}
       entity_in_outlet.text = outlet
       outlet_graph.nodes.push(entity_in_outlet)
     })
@@ -279,7 +281,22 @@ function handleEntityClicked({type, d}) {
   }
 
   if(type === ViewType.Temporal) {
+    // construct outlet-entity pair temporal graph
 
+    // get outlet-entity pair articles
+    const article_ids = node_article_id_dict.value[d.text]
+    const articles = preprocess.idsToArticles(article_ids, article_dict.value)
+
+    // generate bins by month
+    const articles_binBy_month = preprocess.binArticlesByMonth(articles)
+    temporalBins.value[d.text] = articles_binBy_month
+    temporalBins.value = _.cloneDeep(temporalBins.value)
+    if(selectedScatterGraphs_right.value.find(graph => graph.type === ViewType.Temporal) === undefined) {
+      var temporal_graph: ScatterOutletGraph= {title: "Temporal", type: ViewType.Temporal, nodes: []}
+      selectedScatterGraphs_right.value.push(temporal_graph)
+    }
+
+    return
   }
 }
 
@@ -326,9 +343,8 @@ function highlightChanged(new_value) {
             :articles="articles"
             :enabled_outlet_set="enabled_outlet_set"
             v-model:selectedScatters="selectedScatterGraphs_right"
+            :temporalBins="temporalBins"
             :selectedTimeRange="timeRange"
-            :min_articles="min_articles"
-            :max_articles="max_articles"
             :article_num_threshold="article_num_threshold"
             :segment_mode="segment_mode"
             v-model:segmentation="segment_sst"
@@ -341,12 +357,12 @@ function highlightChanged(new_value) {
           </SplitterPanel>
           <SplitterPanel id='sidebar' class="sidebar flex align-items-center justify-content-center" :size="45" :min-size="45">
             <div class="toolbar-container">
-              <ToggleButton class='compare_toggle p-button-secondary' v-model="compare_mode" onIcon="pi pi-image" offIcon="pi pi-images"></ToggleButton>
+              <ToggleButton class='compare_toggle ' v-model="compare_mode" onIcon="pi pi-image" offIcon="pi pi-images"></ToggleButton>
               <MyToolbar ref="toolbar" 
               @candidate_updated="updateNpList"
               @dataset_imported="datasetImported"  >
               </MyToolbar>
-              <ToggleButton class='overview-toggler p-button-secondary' v-model="overview_mode" onIcon="pi pi-chart-line" offIcon="pi pi-table"></ToggleButton>
+              <ToggleButton class='overview-toggler ' v-model="overview_mode" onIcon="pi pi-chart-line" offIcon="pi pi-table"></ToggleButton>
             </div>
             <i v-if="graph_constructing" class="pi pi-spin pi-spinner" 
             style="
@@ -379,9 +395,7 @@ function highlightChanged(new_value) {
             </div>
             <div class="temporal-container" v-if="graph_constructed && !overview_mode">
               <TemporalCoordinates class="temporal-coord" 
-                :min_timestamp="min_timestamp"
-                :max_timestamp="max_timestamp"
-                :sst_threshold="segment_sst"
+                :id="`overview_temporal`"
                 :article_bin_dict="outlet_article_bins_dict"
                 :highlight_object="highlight_outlet"
               ></TemporalCoordinates>
@@ -406,7 +420,7 @@ function highlightChanged(new_value) {
                 </div>
               </div>
               <div v-if="graph_constructed" class="segment-toggler-container">
-                <ToggleButton class='segment-toggler p-button-secondary' v-model="segment_mode" onLabel="Segment On" offLabel="Segment off"></ToggleButton>
+                <ToggleButton class='segment-toggler p-primary' v-model="segment_mode" onLabel="Segment On" offLabel="Segment off"></ToggleButton>
               </div>
             </div>
             <Legend v-if="graph_constructed" 
@@ -561,6 +575,9 @@ function highlightChanged(new_value) {
   width: 125px;
   height: 150px;
   margin-left: var(--margin_left);
+}
+:deep(.p-button:focus) {
+  box-shadow: unset !important;
 }
  </style>
 

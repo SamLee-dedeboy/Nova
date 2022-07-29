@@ -7,6 +7,7 @@ export function constructEntityGraph(entity_mentions_grouped, article_dict) {
     var r_graph_dict = {}
     var r_min_articles = Object.keys(article_dict).length
     var r_max_articles = 0
+    var r_node_article_id_dict = {}
     Object.keys(entity_mentions_grouped).forEach(outlet => {
         const entity_mentions = entity_mentions_grouped[outlet]
         var graph: ScatterOutletGraph= {title: outlet, type: ViewType.EntityScatter, nodes: []}
@@ -17,13 +18,15 @@ export function constructEntityGraph(entity_mentions_grouped, article_dict) {
             const article_num = mentioned_articles.length
             if(article_num > r_max_articles) r_max_articles = article_num
             if(article_num < r_min_articles) r_min_articles = article_num
-            const node = construct_node(mentioned_articles, entity) 
+            const label = `${entity}-${outlet}` 
+            const node = construct_node(mentioned_articles, label) 
+            r_node_article_id_dict[label] = mentioned_article_ids
             graph.nodes.push(node)
 
         })
         r_graph_dict[outlet] = graph
     })
-    return {r_graph_dict, r_max_articles, r_min_articles}
+    return {r_graph_dict, r_max_articles, r_min_articles, r_node_article_id_dict}
 
 }
 
