@@ -1,3 +1,8 @@
+export enum ViewType {
+   EntityScatter,
+   OutletScatter,
+   Temporal, 
+}
 export interface Path {
     title: string,
     start: Number,
@@ -5,7 +10,7 @@ export interface Path {
 }
 export interface ScatterOutletGraph {
     title: string,
-    type: string,
+    type: ViewType,
     nodes: ScatterOutletNode[]
 }
 export interface ScatterOutletNode {
@@ -54,6 +59,10 @@ export interface EntityMention {
     er_confidence: number,
     ed_confidence: number,
     ner_type: number
+}
+export interface Sentiment2D {
+    pos: Number,
+    neg: Number,
 }
 export interface Sentiment {
     pos: number,
