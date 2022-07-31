@@ -1,10 +1,11 @@
 <template>
 <div :id="props.id" class="scatter-container" :class="panel_class">
     <svg class="outlet-scatterplot" :class="panel_class"></svg>
-    <Button v-if="expanded" class="reset-zoom" @click="resetZoom">reset</Button>
+    <Button v-if="expanded" class="reset-zoom p-button-secondary" @click="resetZoom">reset</Button>
+    <Button v-if="expanded" class="show-temporal p-button-secondary" @click="showTemporal">temporal</Button>
     <TooltipVue class='tooltip' :content="tooltip_content" style="z-index: 1000;"></TooltipVue>
     <Menu id="overlay_menu" ref="menu" :model="menu_items" :popup="true" 
-    style="position: absolute"></Menu>
+    style="position: absolute; width: fit-content;"></Menu>
 
 </div>
 </template>
@@ -27,6 +28,7 @@ import { applyEntityNodeSelectedStyle,
 import * as SstColors from "./ColorUtils"
 import { watch, onMounted, PropType, computed, Ref, ref, defineEmits, nextTick} from 'vue'
 import * as vue from 'vue'
+import * as NodeUtils from "./NodeUtils"
 
 // initialization
 const props = defineProps({
@@ -39,7 +41,7 @@ const props = defineProps({
     segment_mode: Boolean,
     segmentation: Object as () => Sentiment2D, 
 })
-const emit = defineEmits(['node_clicked', 'update:segmentation'])
+const emit = defineEmits(['node_clicked', 'update:segmentation', 'show_temporal'])
 const min_articles: Ref<number> = vue.inject('min_articles') || ref(0) 
 const max_articles: Ref<number> = vue.inject('max_articles') || ref(0)
 const tooltip_content: Ref<String> = ref("") 
@@ -93,7 +95,7 @@ onMounted(() => {
         .attr("viewBox", `0 0 ${viewBox[0]} ${viewBox[1]}`)
     d3.select(`#${props.id}`).select("div.tooltip")
         .style("opacity", 0)
-
+    svg.append("g").attr("class", "node_group")
     updateOverviewTooltipContent()
     segment_point = {x: x(props.segmentation?.pos || 0.5), y: y(props.segmentation?.neg || 0.5)}
     updateSegmentation()
@@ -242,7 +244,7 @@ function handleZoom(e) {
         .attr("r", node_circle_radius/e.transform.k)
 
     svg.selectAll("g.axis_x")
-        .attr("transform", `translate(${e.transform.x},${viewBox_height}) scale(${e.transform.k})`)
+        .attr("transform", `translate(${e.transform.x},${margin.top+viewBox_height}) scale(${e.transform.k})`)
 
     svg.selectAll("g.axis_y")
         .attr("transform", `translate(${margin.left},${e.transform.y}) scale(${e.transform.k})` )
@@ -320,8 +322,12 @@ function updateSegmentation() {
 }
 
 function updateExpandedTooltipContent(data: ScatterOutletNode) {
+    let target;
+    if(props.graph?.type === ViewType.EntityScatter) target = "entity"
+    if(props.graph?.type === ViewType.OutletScatter) target = "outlet"
+
     tooltip_content.value = 
-    `entity: ${data.text} <br>` + 
+    `${target}: ${data.text} <br>` + 
     `&nbsp #articles: ${data.articles} <br>` +
     `&nbsp sst: (${data.pos_sst.toFixed(2)}, ${data.neg_sst.toFixed(2)}) <br>` 
     
@@ -356,31 +362,53 @@ function updateCanvas() {
 function updateExpandedScatter() {
     updateOverviewScatter()
     const svg = d3.select(`#${props.id}`).select("svg")
-    svg.selectAll("g.outlet")
+
+    // add events
+    svg.selectAll("circle.outlet_circle")
         .style("cursor", "pointer")
         .on("mousemove", function(e, d) {
+            let align_image_offset = 0
+            if(props.graph?.type === ViewType.OutletScatter) align_image_offset = 50 - 15
             d3.select(`#${props.id}`).select("div.tooltip")
-            .style("left", e.offsetX + 15 + "px")
-            .style("top", e.offsetY - 5 + "px")
+            .style("left", e.offsetX + align_image_offset + 15 + "px")
+            .style("top", e.offsetY - 5 - align_image_offset + "px")
         })
         .on("mouseover", function(e, d) {
-            const container = d3.select(this)
+            const container = d3.select(this.parentNode)
             container.style("filter", "brightness(90%)")
+            // apply hover effect
             container.selectAll("circle.expand_circle")
                 .transition().duration(100)
                 .attr("r", (d) => (parseFloat(container.select("circle.outlet_circle").attr("r"))*1.5 ))
+            const target_node_text = container.data()[0].text
+            const other_nodes_container = d3.select(`#${props.id}`).selectAll("g.outlet").filter((d) => d.text != target_node_text)
+            other_nodes_container.selectAll("image")
+                .attr("opacity", 0)
+            container.selectAll("image")
+                .transition().duration(100)
+                .attr("opacity", 0.8)
+
+            // update tooltip
             updateExpandedTooltipContent(d)
             d3.select(`#${props.id}`).select("div.tooltip")
-            .style("opacity", 1)
+                .style("opacity", 1)
         })
         .on("mouseout", function(e, d) {
-            const container = d3.select(this)
+            const container = d3.select(this.parentNode)
             container.style("filter", "brightness(100%)")
             container.selectAll("circle.expand_circle")
                 .transition().duration(100)
                 .attr("r", (d) => (parseFloat(container.select("circle.outlet_circle").attr("r"))))
+            const target_node_text = container.data()[0].text
+            const other_nodes_container = d3.select(`#${props.id}`).selectAll("g.outlet").filter((d) => d.text != target_node_text)
+            other_nodes_container.selectAll("image")
+                .attr("opacity", 0.3)
+            container.selectAll("image")
+                .transition().duration(100)
+                .attr("opacity", 0.3)
+
             d3.select(`#${props.id}`).select("div.tooltip")
-            .style("opacity", 0)
+                .style("opacity", 0)
         })
         .on("click", (e, d) =>  {
             menu.value.toggle(e)
@@ -392,7 +420,22 @@ function updateExpandedScatter() {
             })
         })
 
-
+    // add images if comparing across outlets
+    if(props.graph?.type === ViewType.OutletScatter) {
+        console.log("add images")
+        const outlets = svg.selectAll("g.outlet")
+        const image_size = 100
+        outlets.selectAll("image.outlet_image")
+            .attr("href", (d) => `src/assets/${NodeUtils.abbr_dict[d.text]}.png`)
+            .attr("height", image_size)
+            .attr("width", image_size)
+            .attr("x", (d) => x(d.pos_sst)-image_size/2)
+            .attr("y", (d) => y(Math.abs(d.neg_sst))-image_size/2)
+            .attr("opacity", 0.3)
+            .attr("pointer-events", "none")
+            .lower()
+            .lower()
+    }
 
 }
 
@@ -406,7 +449,8 @@ function updateOverviewScatter() {
     let bind_data;
     if(props.graph?.type === ViewType.EntityScatter) bind_data = filtered_data.value
     if(props.graph?.type === ViewType.OutletScatter) bind_data = props.graph.nodes
-    svg.selectAll("g.outlet")
+    const node_group = svg.select("g.node_group")
+    node_group.selectAll("g.outlet")
     .data(bind_data, function(d) {return d.text})
     .join(
         enter => {
@@ -431,13 +475,15 @@ function updateOverviewScatter() {
                 .attr("stroke", "black")
                 .attr("stroke-dasharray", (d) => d.articles === 0? 2.5 : 0)
                 .lower()
+            group.append("image")
+                .attr("class", "outlet_image")
         },
         update => {
             update.selectAll("circle")
             // .attr("r", (d) => article_radius_scale(d.articles))
                 .attr("r", node_circle_radius/(current_zoom?.k || 1))
-            .attr("cx", (d) => x(d.pos_sst))
-            .attr("cy", (d) => y(Math.abs(d.neg_sst)))
+                .attr("cx", (d) => x(d.pos_sst))
+                .attr("cy", (d) => y(Math.abs(d.neg_sst)))
 
             update.selectAll("circle.outlet_circle")
             // .attr("fill", (d) => SstColors.outlet_color_dict[d.text])
@@ -451,6 +497,14 @@ function updateOverviewScatter() {
         dots.attr("transform", current_zoom)
     }
     // dots.attr("opacity", (d) => (d.articles < props.article_num_threshold? 0:0.8))
+}
+
+function showTemporal() {
+    let emit_data;
+    if(props.graph?.type === ViewType.EntityScatter) emit_data = filtered_data.value
+    if(props.graph?.type === ViewType.OutletScatter) emit_data = props.graph.nodes
+    console.log("🚀 ~ file: SentimentScatter.vue ~ line 507 ~ showTemporal ~ emit_data", emit_data)
+    emit("show_temporal", emit_data)
 }
 </script>
 
@@ -478,5 +532,20 @@ function updateOverviewScatter() {
 .reset-zoom {
     position: absolute;
     left: 80%;
+    font-size: smaller;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+.show-temporal {
+    position: absolute;
+    left: 80%;
+    top: 5%;
+    font-size: smaller;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    padding-left: 5px;
+    padding-right: 5px;
 }
 </style>
