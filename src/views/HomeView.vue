@@ -13,7 +13,6 @@ import ArticleView from "../components/ArticleView.vue";
 import TopicSelection from "../components/TopicSelection.vue";
 import TargetSelection from "../components/TargetSelection.vue"
 import MonthSlider from "../components/MonthSlider.vue"
-import OutletScatter from "../components/OutletScatter.vue";
 import * as preprocess from "../components/preprocessUtils"
 import { watch, computed, onMounted, PropType, ref, Ref, nextTick, } from 'vue'
 import * as vue from 'vue'
@@ -25,6 +24,7 @@ import * as SstColors from "../components/ColorUtils"
 import * as _ from "lodash"
 import TemporalCoordinates from "../components/TemporalCoordinates.vue";
 import TemporalPathSelector from "../components/TemporalPathSelector.vue";
+import SentimentScatter from "../components/SentimentScatter.vue";
 
   // data() {
   //   return {
@@ -272,7 +272,7 @@ function handleEntityClicked({type, d}) {
       // find entity node in this graph
       let entity_in_outlet = _.cloneDeep(graph.nodes.find(node => node.text.split("-")[0] === entity_name))
       || { text: outlet, articles: 0, pos_sst: 0, neg_sst: 0}
-      entity_in_outlet.text = outlet
+      entity_in_outlet.text = `${entity_name}-${outlet}`
       outlet_graph.nodes.push(entity_in_outlet)
     })
     // graph_dict.value[entity.text] = outlet_graph
@@ -298,6 +298,21 @@ function handleEntityClicked({type, d}) {
 
     return
   }
+}
+
+function handleShowTemporal(nodes) {
+    compare_mode.value = true 
+    nodes.forEach(node => {
+      const article_ids = node_article_id_dict.value[node.text]
+      const articles = preprocess.idsToArticles(article_ids, article_dict.value)
+      const articles_binBy_month = preprocess.binArticlesByMonth(articles)
+      temporalBins.value[node.text] = articles_binBy_month
+      temporalBins.value = _.cloneDeep(temporalBins.value)
+      if(selectedScatterGraphs_right.value.find(graph => graph.type === ViewType.Temporal) === undefined) {
+        var temporal_graph: ScatterOutletGraph= {title: "Temporal", type: ViewType.Temporal, nodes: []}
+        selectedScatterGraphs_right.value.push(temporal_graph)
+      }
+    })
 }
 
 function highlightChanged(new_value) {
@@ -329,6 +344,7 @@ function highlightChanged(new_value) {
             @dragleave="handleDragLeave($event)"
             @dragenter="(e) => (e.preventDefault())"
             @entity-clicked="handleEntityClicked"
+            @show_temporal="handleShowTemporal"
             >
             </TargetContainer>
             <Divider v-if="compare_mode" layout="vertical">
@@ -350,6 +366,8 @@ function highlightChanged(new_value) {
             @dragover="handleDragOver($event)"
             @dragleave="handleDragLeave($event)"
             @dragenter="(e) => (e.preventDefault())"
+            @entity-clicked="handleEntityClicked"
+            @show_temporal="handleShowTemporal"
             >
             </TargetContainer>
           </SplitterPanel>
@@ -372,7 +390,7 @@ function highlightChanged(new_value) {
             "></i> 
           <div class="entity-grid-container" v-if="graph_constructed && overview_mode" >
                 <!-- v-for="(entity, index) in entity_list" :key="entity"  -->
-            <OutletScatter
+            <SentimentScatter
                 v-for="(outlet, index) in enabled_outlet_set" :key="outlet" 
                 class="outlet-scatter"
                 :graph="graph_dict[outlet]"
@@ -389,7 +407,7 @@ function highlightChanged(new_value) {
                 @dragstart="handleDragScatter($event, index)"
                 @click="handleScatterClicked(index)"
             >
-            </OutletScatter>
+            </SentimentScatter>
             </div>
             <div class="temporal-container" v-if="graph_constructed && !overview_mode">
               <TemporalCoordinates class="temporal-coord" 

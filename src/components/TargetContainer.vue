@@ -7,13 +7,13 @@ import TimeAxes from './TimeAxes.vue'
 import * as dfd from "danfojs"
 import Dropdown from 'primevue/dropdown';
 import InfoButton from "./InfoButton.vue";
-import OutletScatter from "./OutletScatter.vue";
 import * as d3 from "d3"
 import { watch, onMounted, PropType, ref, Ref, toRef, computed, defineEmits } from 'vue'
 import * as vue from 'vue'
 import { ScatterOutletNode, ScatterOutletGraph, ViewType, Article } from "../types";
 import TemporalCoordinates from "./TemporalCoordinates.vue";
 import TemporalPathSelector from "./TemporalPathSelector.vue";
+import SentimentScatter from "./SentimentScatter.vue";
 
 const props = defineProps({
     articles: Object as () => any[],
@@ -79,7 +79,7 @@ watch(() => props.selectedScatters, (new_scatters, old_scatters) => {
 //     console.log(selectedScatters_list.value)
 // })
 
-const emit = defineEmits(['update:selectedScatters', "update:segmentation", "node-clicked", "entity-clicked"])
+const emit = defineEmits(['update:selectedScatters', "update:segmentation", "node-clicked", "entity-clicked", "show_temporal"])
 
 function handleNodeClicked({type, d}) {
     emit("node-clicked", d)        
@@ -140,6 +140,9 @@ function selectColor(number) {
   const hue = number * 137.508; // use golden angle approximation
   return `hsl(${hue},50%,75%)`;
 }
+function handleShowTemporal(nodes) {
+    emit("show_temporal", nodes)
+}
 </script>
 
 <template>
@@ -153,7 +156,7 @@ function selectColor(number) {
             @click="handleCloseTab($event, index)"/>
 		</template>
         <KeepAlive>
-        <OutletScatter
+        <SentimentScatter
             v-if="graph.type === ViewType.EntityScatter || graph.type === ViewType.OutletScatter"
             :graph="graph"
             :graph_index="index"
@@ -164,7 +167,8 @@ function selectColor(number) {
             :segment_mode="segment_mode"
             @update:segmentation="updateSegmentation"
             @node_clicked="handleEntityClicked"
-        ></OutletScatter>
+            @show_temporal="handleShowTemporal"
+        ></SentimentScatter>
         </KeepAlive>
         <div class="target-temporal-container">
             <TemporalCoordinates 
