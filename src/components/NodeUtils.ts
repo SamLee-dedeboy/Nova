@@ -38,7 +38,7 @@ export function applyEntityNodeClickedStyle(nodes: any, clicked:Boolean=true) {
     }
 }
 
-const abbr_dict: { [id: string]: string } = {
+export const abbr_dict: { [id: string]: string } = {
     "CNN": "CNN",
     "FoxNews": "FOX",
     "Breitbart": "BRB",
@@ -46,6 +46,7 @@ const abbr_dict: { [id: string]: string } = {
     "New York Times": "NYT",
     "Washington Post": "WP"
 }
+
 const outlet_font = undefined 
 const center_font= "cursive"
 export function applyNodeStyling(
