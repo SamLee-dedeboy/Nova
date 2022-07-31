@@ -13,6 +13,7 @@ import { watch, onMounted, PropType, ref, Ref, toRef, computed, defineEmits } fr
 import * as vue from 'vue'
 import { ScatterOutletNode, ScatterOutletGraph, ViewType, Article } from "../types";
 import TemporalCoordinates from "./TemporalCoordinates.vue";
+import TemporalPathSelector from "./TemporalPathSelector.vue";
 
 const props = defineProps({
     articles: Object as () => any[],
@@ -27,6 +28,18 @@ const props = defineProps({
 })
 const scatterClicked: Ref<boolean> = ref(false)
 const active: Ref<number> = ref(0)
+const highlight_entity: Ref<string[]> = ref([])
+const selectedEntities = vue.computed(() => {
+    return Object.keys(props.temporalBins)
+})
+const temporal_color_dict = vue.computed(() => {
+    let color_dict = {}
+    Object.keys(props.temporalBins).forEach((title, index) => {
+        const color = selectColor(index)
+        color_dict[title] = color
+    })
+    return color_dict
+})
 // const selectedScatters: Ref<Set<ScatterOutletGraph> | undefined> = toRef(props, 'selectedScatters')
 // const selectedScatters_list = computed(() => {
 //     console.log(selectedScatters.value)
@@ -65,9 +78,6 @@ watch(() => props.selectedScatters, (new_scatters, old_scatters) => {
 // watch(() => selectedScatters_list, (new_value) => {
 //     console.log(selectedScatters_list.value)
 // })
-watch(() => props.temporalBins, (new_scatters, old_scatters) => {
-    console.log("🚀 ~ file: TargetContainer.vue ~ line 71 ~ watch ~ temporalBins", props.temporalBins)
-})
 
 const emit = defineEmits(['update:selectedScatters', "update:segmentation", "node-clicked", "entity-clicked"])
 
@@ -126,6 +136,10 @@ function handleEntityClicked(data) {
 function updateSegmentation(new_value) {
     emit("update:segmentation", new_value)
 }
+function selectColor(number) {
+  const hue = number * 137.508; // use golden angle approximation
+  return `hsl(${hue},50%,75%)`;
+}
 </script>
 
 <template>
@@ -152,13 +166,24 @@ function updateSegmentation(new_value) {
             @node_clicked="handleEntityClicked"
         ></OutletScatter>
         </KeepAlive>
-
-        <TemporalCoordinates 
-        v-if="graph.type === ViewType.Temporal"
-            :id="`compare_temporal`"
-            :article_bin_dict="temporalBins"
-
-        ></TemporalCoordinates>
+        <div class="target-temporal-container">
+            <TemporalCoordinates 
+            v-if="graph.type === ViewType.Temporal"
+                class="temporal-coord"
+                :id="`compare_temporal`"
+                :article_bin_dict="temporalBins"
+                :color_dict="temporal_color_dict"
+                :highlight_object="highlight_entity"
+                :sst_threshold="segmentation"
+            ></TemporalCoordinates>
+            <TemporalPathSelector 
+                class="temporal-selector"
+                v-if="graph.type === ViewType.Temporal"
+                :targets="selectedEntities"
+                :color_dict="temporal_color_dict"
+                v-model:selectedTarget="highlight_entity">
+            </TemporalPathSelector>
+        </div>
         <!-- <Graph 
             class="graph"
             :graph="graph_dict[target]"
@@ -232,4 +257,13 @@ function updateSegmentation(new_value) {
     color: #7c7576;
 }
 
+.target-temporal-container {
+    height: 50%;
+}
+.temporal-coord {
+    height: 60%;
+}
+.temporal-selector {
+    height: 37%;
+}
 </style>
