@@ -15,7 +15,9 @@ import {Ref, ref} from 'vue'
 const props = defineProps({
     id: String,
     article_bin_dict: Object as () => {[id: string]: {[id: string]:Article[]}},
+    color_dict: Object as () => {[id: string]: string},
     highlight_object: Object as () => String[], 
+    sst_threshold: Object as () => Sentiment2D, 
 })
 
 const test_pos_bins_1 = [1, 0.5, 0.3, 0.2, 0.7, 0, 0.5, 0.3, 0.3, 0.5, 0.6, 0.8]
@@ -66,11 +68,10 @@ vue.watch(() => props.highlight_object, (new_value, old_value) => {
     updateCoordinates()
 })
 vue.watch(() => props.article_bin_dict, (new_value, old_value) => {
-    console.log("article_bin_dict changed")
     updateCoordinates()
 })
 
-vue.watch(() => sst_threshold, (new_value, old_value) => {
+vue.watch(() => props.sst_threshold, (new_value, old_value) => {
     updateSegmentation()
 })
 
@@ -116,8 +117,10 @@ const object_path_dict = vue.computed(() => {
 vue.onMounted(() => {
     const svg = d3.select(`#${props.id}`).select("svg")
         .attr("viewBox", `0 0 ${viewBox[0]} ${viewBox[1]}`)
-    const axis_group = svg.append("g").attr("class", "axis-group")
+    const coord_group = svg.append("g").attr("class", "temporal_view_group")
         .attr("transform", `translate(${margin.left}, ${margin.top})`)
+    const axis_group = coord_group.append("g").attr("class", "time-axis-group").lower()
+
     
     axis_group.append("g")
         .attr("class", "axis_time_pos")
@@ -129,10 +132,10 @@ vue.onMounted(() => {
         .call(d3.axisBottom(x).ticks(month_range).tickSize(5).tickFormat(x => month_abbrs[x]))
 
     const rangeData = [...Array(month_range).keys()] 
-    const pos_coord = axis_group.append("g").attr("class", "pos_coord")
-    const pos_segment_group = pos_coord.append("g").attr("class", "pos_segment_group")
+    const pos_coord = coord_group.append("g").attr("class", "pos_coord")
+    const pos_segment_group = coord_group.append("g").attr("class", "pos_segment_group").lower()
     const path_pos_group  = pos_coord.append("g").attr("class", "path_pos_group")
-    const axis_pos_group = pos_coord.append("g").attr("class", "axis_pos_group")
+    const axis_pos_group = pos_coord.append("g").attr("class", "axis_pos_group").lower()
     axis_pos_group.selectAll("g.axis_pos")
     .data(rangeData)
     .enter()
@@ -145,10 +148,10 @@ vue.onMounted(() => {
         })
         .raise()
 
-    const neg_coord = axis_group.append("g").attr("class", "neg_coord")
-    const neg_segment_group = neg_coord.append("g").attr("class", "neg_segment_group")
+    const neg_coord = coord_group.append("g").attr("class", "neg_coord")
+    const neg_segment_group = coord_group.append("g").attr("class", "neg_segment_group").lower()
     const path_neg_group  = neg_coord.append("g").attr("class", "path_neg_group")
-    const axis_neg_group = neg_coord.append("g").attr("class", "axis_neg_group")
+    const axis_neg_group = neg_coord.append("g").attr("class", "axis_neg_group").lower()
     axis_neg_group.selectAll("g.axis_neg")
     .data(rangeData)
     .enter()
@@ -183,18 +186,17 @@ function updateCoordinates() {
         .attr("y1", (d) => (y_pos(d.start)))
         .attr("x2", (d,i) => (x_coord(i+1)))
         .attr("y2", (d) => (y_pos(d.end)))
+        .attr("stroke", (d, i) => (props.color_dict[d.title]))
 
 
     if(temporal_type == "overview") {
         path_pos_group.selectAll("g.line_group").selectAll("line.pos_path")
-            .attr("stroke", (d, i) => SstColors.outlet_color_dict[d.title]) 
-            .attr("stroke-width", (d) => (props.highlight_object!.includes(d.title))?highlight_stroke_width:1)
+            .attr("stroke-width", (d) => (props.highlight_object?.includes(d.title))?highlight_stroke_width:1)
     } else if(temporal_type == "compare") {
         path_pos_group.selectAll("g.line_group").selectAll("line.pos_path")
-            .attr("stroke", (d, i) => selectColor(Object.keys(props.article_bin_dict!).indexOf(d.title)))
-            .attr("stroke-width", (d) => (props.highlight_object!.includes(d.title))?highlight_stroke_width:2)
+            .attr("stroke-width", (d) => (props.highlight_object?.includes(d.title))?highlight_stroke_width:2)
     }
-    path_pos_group.selectAll("g.line_group").filter((d) => props.highlight_object!.includes(d))
+    path_pos_group.selectAll("g.line_group").filter((d) => props.highlight_object?.includes(d))
         .raise()
 
     const pos_highlight_circles = path_pos_group.selectAll("g.line_group").selectAll("circle.pos_path_circles")
@@ -209,7 +211,7 @@ function updateCoordinates() {
         .attr("stroke", "black")
         .attr("opacity", function() {
             const title = d3.select(this.parentNode).data()[0]
-            return (props.highlight_object!.includes(title))?1:0
+            return (props.highlight_object?.includes(title))?1:0
         })
 
     // neg
@@ -228,17 +230,16 @@ function updateCoordinates() {
             .attr("y1", (d) => (y_neg(d.start)))
             .attr("x2", (d,i) => (x_coord(i+1)))
             .attr("y2", (d) => (y_neg(d.end)))
+            .attr("stroke", (d, i) => (props.color_dict[d.title]))
 
     if(temporal_type == "overview") {
         path_neg_group.selectAll("g.line_group").selectAll("line.neg_path")
-            .attr("stroke", (d, i) => SstColors.outlet_color_dict[d.title]) 
-            .attr("stroke-width", (d) => (props.highlight_object!.includes(d.title))?5:1)
+            .attr("stroke-width", (d) => (props.highlight_object?.includes(d.title))?5:1)
     } else if(temporal_type == "compare") {
         path_neg_group.selectAll("g.line_group").selectAll("line.neg_path")
-            .attr("stroke", (d, i) => selectColor(Object.keys(props.article_bin_dict!).indexOf(d.title)))
-            .attr("stroke-width", (d) => (props.highlight_object!.includes(d.title))?5:2)
+            .attr("stroke-width", (d) => (props.highlight_object?.includes(d.title))?5:2)
     } 
-    path_neg_group.selectAll("g.line_group").filter((d) => props.highlight_object!.includes(d))
+    path_neg_group.selectAll("g.line_group").filter((d) => props.highlight_object?.includes(d))
         .raise()
 
     const neg_highlight_circles = path_neg_group.selectAll("g.line_group").selectAll("circle.neg_path_circles")
@@ -253,15 +254,15 @@ function updateCoordinates() {
         .attr("stroke", "black")
         .attr("opacity", function() {
             const title = d3.select(this.parentNode).data()[0]
-            return (props.highlight_object!.includes(title))?1:0
+            return (props.highlight_object?.includes(title))?1:0
         })
 }
 
 function updateSegmentation() {
     const svg = d3.select(`#${props.id}`).select("svg")
-    const pos_segment_group = svg.select("g.pos_coord").select("g.pos_segment_group")
+    const pos_segment_group = svg.select("g.pos_segment_group")
     const pos_pos_segment = pos_segment_group.selectAll("rect.pos_pos_segment")
-        .data([sst_threshold.value.pos || 0.5])
+        .data([props.sst_threshold?.pos || 0.5])
     pos_pos_segment.enter().append("rect").attr("class", "pos_pos_segment")
         .attr("x", -margin.left/2)
         .attr("y", 0)
@@ -271,7 +272,7 @@ function updateSegmentation() {
         .merge(pos_pos_segment)
         .attr("height", (d) => y_pos(d))
     const pos_neu_segment = pos_segment_group.selectAll("rect.pos_neu_segment")
-        .data([sst_threshold.value.pos || 0.5])
+        .data([props.sst_threshold?.pos || 0.5])
     pos_neu_segment.enter().append("rect").attr("class", "pos_neu_segment")
         .attr("x", -margin.left/2)
         .attr("width", margin.left/2)
@@ -280,9 +281,9 @@ function updateSegmentation() {
         .attr("height", (d) => y_pos(1-d))
         .attr("fill", SstColors.neu_color)
         .style("filter", `brightness(${SstColors.brightness}%)`)
-    const neg_segment_group = svg.select("g.neg_coord").select("g.neg_segment_group")
+    const neg_segment_group = svg.select("g.neg_segment_group")
     const neg_neg_segment = neg_segment_group.selectAll("rect.neg_neg_segment")
-        .data([sst_threshold.value.neg || 0.5])
+        .data([props.sst_threshold?.neg || 0.5])
     neg_neg_segment.enter().append("rect").attr("class", "neg_neg_segment")
         .attr("x", -margin.left/2)
         .attr("width", margin.left/2)
@@ -292,7 +293,7 @@ function updateSegmentation() {
         .attr("y", y_neg(1))
         .attr("height", (d) => y_neg(d)-y_neg(1))
     const neg_neu_segment = neg_segment_group.selectAll("rect.neg_neu_segment")
-        .data([sst_threshold.value.neg || 0.5])
+        .data([props.sst_threshold?.neg || 0.5])
     neg_neu_segment.enter().append("rect").attr("class", "neg_neu_segment")
         .attr("x", -margin.left/2)
         .attr("width", margin.left/2)
@@ -319,7 +320,7 @@ function selectColor(number) {
 <style scoped lang="scss">
 .t-coord {
     width: inherit;
-    height: inherit;
+    height: 100%;
     overflow: visible;
 }
 </style>
