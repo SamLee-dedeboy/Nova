@@ -117,7 +117,6 @@ onMounted(() => {
             })
             .on("drag", function(e, d) { 
                 let current_scale
-                console.log(this.getAttribute("transform"))
                 if (this.getAttribute("transform") === null)
                 {
                     current_scale = 1; 
@@ -220,7 +219,6 @@ watch(() => props.segment_mode, (new_value) => {
     updateSegmentation()
     const svg = d3.select(`#${props.id}`).select("svg")
     svg.select("rect.segment-controller").style("opacity", new_value?1:0).raise()
-    console.log(d3.select("rect.segment-controller").node())
 })
 
 function resetZoom() {

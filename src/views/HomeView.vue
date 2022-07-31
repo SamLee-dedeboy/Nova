@@ -312,7 +312,7 @@ function highlightChanged(new_value) {
     <Splitter class="splitter-outmost" layout="vertical">
       <SplitterPanel id="overview-section" class="flex align-items-center justify-content-center" :size="100">
         <Splitter>
-          <SplitterPanel class="target-selection flex align-items-center justify-content-center" :size="55" 
+          <SplitterPanel class="expanded-section flex align-items-center justify-content-center" :size="55" 
             >
             <TargetContainer
             :class="{compare: compare_mode}"
@@ -321,8 +321,6 @@ function highlightChanged(new_value) {
             :enabled_outlet_set="enabled_outlet_set"
             v-model:selectedScatters="selectedScatterGraphs_left"
             :selectedTimeRange="timeRange"
-            :min_articles="min_articles"
-            :max_articles="max_articles"
             :article_num_threshold="article_num_threshold"
             :segment_mode="segment_mode"
             v-model:segmentation="segment_sst"
@@ -362,7 +360,7 @@ function highlightChanged(new_value) {
               @candidate_updated="updateNpList"
               @dataset_imported="datasetImported"  >
               </MyToolbar>
-              <ToggleButton class='overview-toggler ' v-model="overview_mode" onIcon="pi pi-chart-line" offIcon="pi pi-table"></ToggleButton>
+              <ToggleButton v-if="graph_constructed" class='overview-toggler ' v-model="overview_mode" onIcon="pi pi-chart-line" offIcon="pi pi-table"></ToggleButton>
             </div>
             <i v-if="graph_constructing" class="pi pi-spin pi-spinner" 
             style="
@@ -398,10 +396,13 @@ function highlightChanged(new_value) {
                 :id="`overview_temporal`"
                 :article_bin_dict="outlet_article_bins_dict"
                 :highlight_object="highlight_outlet"
+                :color_dict="SstColors.outlet_color_dict"
+                :sst_threshold="segment_sst"
               ></TemporalCoordinates>
               <TemporalPathSelector 
                 :targets="Array.from(enabled_outlet_set)"
                 v-model:selectedTarget="highlight_outlet"
+                :color_dict="SstColors.outlet_color_dict"
               >
               </TemporalPathSelector>
             </div>
@@ -490,7 +491,7 @@ function highlightChanged(new_value) {
 .compare {
   max-width: 48%;
 }
-.target-selection {
+.expanded-section {
   display: flex;
   width: 55vw;
 }
@@ -578,6 +579,9 @@ function highlightChanged(new_value) {
 }
 :deep(.p-button:focus) {
   box-shadow: unset !important;
+}
+:deep(.temporal-container > .temporal-selector-container) {
+  margin-top: 28px;
 }
  </style>
 
