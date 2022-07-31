@@ -290,12 +290,10 @@ function handleEntityClicked({type, d}) {
     // generate bins by month
     const articles_binBy_month = preprocess.binArticlesByMonth(articles)
     temporalBins.value[d.text] = articles_binBy_month
-    temporalBins.value = _.cloneDeep(temporalBins.value)
     if(selectedScatterGraphs_right.value.find(graph => graph.type === ViewType.Temporal) === undefined) {
       var temporal_graph: ScatterOutletGraph= {title: "Temporal", type: ViewType.Temporal, nodes: []}
       selectedScatterGraphs_right.value.push(temporal_graph)
     }
-
     return
   }
 }
@@ -307,12 +305,14 @@ function handleShowTemporal(nodes) {
       const articles = preprocess.idsToArticles(article_ids, article_dict.value)
       const articles_binBy_month = preprocess.binArticlesByMonth(articles)
       temporalBins.value[node.text] = articles_binBy_month
-      temporalBins.value = _.cloneDeep(temporalBins.value)
+      // TODO: replace deep clone 
+      // temporalBins.value = _.cloneDeep(temporalBins.value)
       if(selectedScatterGraphs_right.value.find(graph => graph.type === ViewType.Temporal) === undefined) {
         var temporal_graph: ScatterOutletGraph= {title: "Temporal", type: ViewType.Temporal, nodes: []}
         selectedScatterGraphs_right.value.push(temporal_graph)
       }
     })
+    return
 }
 
 function highlightChanged(new_value) {

@@ -15,6 +15,7 @@ import {Ref, ref} from 'vue'
 const props = defineProps({
     id: String,
     article_bin_dict: Object as () => {[id: string]: {[id: string]:Article[]}},
+    path_keys: Object as () => string[],
     color_dict: Object as () => {[id: string]: string},
     highlight_object: Object as () => String[], 
     sst_threshold: Object as () => Sentiment2D, 
@@ -68,6 +69,9 @@ vue.watch(() => props.highlight_object, (new_value, old_value) => {
     updateCoordinates()
 })
 vue.watch(() => props.article_bin_dict, (new_value, old_value) => {
+    updateCoordinates()
+})
+vue.watch(() => props.path_keys, (new_value, old_value) => {
     updateCoordinates()
 })
 

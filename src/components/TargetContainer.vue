@@ -176,6 +176,7 @@ function handleShowTemporal(nodes) {
                 class="temporal-coord"
                 :id="`compare_temporal`"
                 :article_bin_dict="temporalBins"
+                :path_keys="selectedEntities"
                 :color_dict="temporal_color_dict"
                 :highlight_object="highlight_entity"
                 :sst_threshold="segmentation"
