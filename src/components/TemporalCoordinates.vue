@@ -281,6 +281,18 @@ function updateSegmentation() {
         .attr("height", (d) => y_pos(1-d))
         .attr("fill", SstColors.neu_color)
         .style("filter", `brightness(${SstColors.brightness}%)`)
+    const pos_divider = pos_segment_group.selectAll("line.pos_divider")
+        .data([props.sst_threshold?.pos || 0.5])
+    pos_divider.enter().append("line").attr("class", "pos_divider")
+        .attr("x1", 0)
+        .attr("x2", viewBox_width)
+        .attr("stroke", "black")
+        .attr("stroke-width", 1)
+        .attr("stroke-dasharray", 2.5)
+        .merge(pos_divider)
+        .attr("y1", (d) => y_pos(d))
+        .attr("y2", (d) => y_pos(d))
+
     const neg_segment_group = svg.select("g.neg_segment_group")
     const neg_neg_segment = neg_segment_group.selectAll("rect.neg_neg_segment")
         .data([props.sst_threshold?.neg || 0.5])
@@ -302,6 +314,18 @@ function updateSegmentation() {
         .merge(neg_neu_segment)
         .attr("y", (d) => y_neg(d))
         .attr("height", (d) => y_neg(1-d)-y_neg(1))
+    const neg_divider = neg_segment_group.selectAll("line.neg_divider")
+        .data([props.sst_threshold?.neg || 0.5])
+    neg_divider.enter().append("line").attr("class", "neg_divider")
+        .attr("x1", 0)
+        .attr("x2", viewBox_width)
+        .attr("stroke", "black")
+        .attr("stroke-width", 1)
+        .attr("stroke-dasharray", 2.5)
+        .merge(neg_divider)
+        .attr("y1", (d) => y_neg(d))
+        .attr("y2", (d) => y_neg(d))
+
 
 }
 
