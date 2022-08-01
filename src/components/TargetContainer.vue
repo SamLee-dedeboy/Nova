@@ -14,6 +14,7 @@ import { ScatterOutletNode, ScatterOutletGraph, ViewType, Article } from "../typ
 import TemporalCoordinates from "./TemporalCoordinates.vue";
 import TemporalPathSelector from "./TemporalPathSelector.vue";
 import SentimentScatter from "./SentimentScatter.vue";
+import * as _ from "lodash"
 
 const props = defineProps({
     articles: Object as () => any[],
@@ -75,6 +76,7 @@ const temporal_color_dict = vue.computed(() => {
 watch(() => props.selectedScatters, (new_scatters, old_scatters) => {
     active.value = (props.selectedScatters?.length || 1) - 1 
 }, {deep:true})
+
 // watch(() => selectedScatters_list, (new_value) => {
 //     console.log(selectedScatters_list.value)
 // })
@@ -170,9 +172,8 @@ function handleShowTemporal(nodes) {
             @show_temporal="handleShowTemporal"
         ></SentimentScatter>
         </KeepAlive>
-        <div class="target-temporal-container">
+        <div class="target-temporal-container" v-if="graph.type === ViewType.Temporal">
             <TemporalCoordinates 
-            v-if="graph.type === ViewType.Temporal"
                 class="temporal-coord"
                 :id="`compare_temporal`"
                 :article_bin_dict="temporalBins"
@@ -183,10 +184,10 @@ function handleShowTemporal(nodes) {
             ></TemporalCoordinates>
             <TemporalPathSelector 
                 class="temporal-selector"
-                v-if="graph.type === ViewType.Temporal"
-                :targets="selectedEntities"
+                v-model:temporalBins="temporalBins"
                 :color_dict="temporal_color_dict"
-                v-model:selectedTarget="highlight_entity">
+                closable
+                v-model:selectedTargets="highlight_entity">
             </TemporalPathSelector>
         </div>
         <!-- <Graph 

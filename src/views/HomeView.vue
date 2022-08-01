@@ -418,8 +418,8 @@ function highlightChanged(new_value) {
                 :sst_threshold="segment_sst"
               ></TemporalCoordinates>
               <TemporalPathSelector 
-                :targets="Array.from(enabled_outlet_set)"
-                v-model:selectedTarget="highlight_outlet"
+                :temporalBins="outlet_article_bins_dict"
+                v-model:selectedTargets="highlight_outlet"
                 :color_dict="SstColors.outlet_color_dict"
               >
               </TemporalPathSelector>

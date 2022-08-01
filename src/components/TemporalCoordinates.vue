@@ -21,12 +21,6 @@ const props = defineProps({
     sst_threshold: Object as () => Sentiment2D, 
 })
 
-const test_pos_bins_1 = [1, 0.5, 0.3, 0.2, 0.7, 0, 0.5, 0.3, 0.3, 0.5, 0.6, 0.8]
-const test_pos_bins_2 = [0, 0.2, 0.5, 0.6, 0.8, 0.1, 0.2, 0.5, 0.2, 0.9, 0.3, 0.5]
-const test_neg_bins_1 = [1, 0.5, 0.3, 0.2, 0.7, 0, 0.5, 0.3, 0.3, 0.5, 0.6, 0.8]
-const test_neg_bins_2 = [0, 0.2, 0.5, 0.6, 0.8, 0.1, 0.2, 0.5, 0.2, 0.9, 0.3, 0.5]
-const test_entity_bin_dict = {"CNN": {pos_bins: test_pos_bins_1, neg_bins: test_neg_bins_1}, "ABC":{pos_bins:test_pos_bins_2, neg_bins: test_neg_bins_2}}
-
 const viewBox = [500, 300]
 const margin = {top: 30, bottom: 30, right:10, left: 30, middle: 10} 
 const viewBox_width = viewBox[0] - margin.left - margin.right
@@ -79,22 +73,11 @@ vue.watch(() => props.sst_threshold, (new_value, old_value) => {
     updateSegmentation()
 })
 
-const test_entity_path_dict = vue.computed(() => {
-    const entity_path_dict: { [id: string]: {pos_path: Path[], neg_path: Path[]} } = {}
-    Object.keys(test_entity_bin_dict).forEach(entity => {
-        const pos_bins = test_entity_bin_dict[entity].pos_bins
-        const neg_bins = test_entity_bin_dict[entity].neg_bins
-        const pos_path = constructPath(pos_bins, entity)
-        const neg_path = constructPath(neg_bins, entity)
-        entity_path_dict[entity] = {pos_path, neg_path}
-    });
-    return entity_path_dict;
-})
 const object_bins_dict = vue.computed(() => {
+    console.log("computing object_bins_dict")
     const object_bins_dict: { [id: string]: {title: string, pos_bins: Number[], neg_bins: Number[]} } = {}
-    const article_bin_dict = props.article_bin_dict!
-    Object.keys(article_bin_dict).forEach(title => {
-        const article_bins = article_bin_dict[title]
+    Object.keys(props.article_bin_dict!).forEach(title => {
+        const article_bins = props.article_bin_dict![title]
         const pos_bins :Number[] = []
         const neg_bins :Number[] = []
         for(let month = start_month.value; month < end_month.value; month++) {
@@ -108,6 +91,7 @@ const object_bins_dict = vue.computed(() => {
     return object_bins_dict
 })
 const object_path_dict = vue.computed(() => {
+    console.log("computing object_path_dict")
     const object_path_dict: { [id: string]: {pos_path: Path[], neg_path: Path[]} } = {}
     Object.keys(object_bins_dict.value).forEach(title => {
         const {pos_bins, neg_bins} = object_bins_dict.value[title]
@@ -115,10 +99,10 @@ const object_path_dict = vue.computed(() => {
         const neg_path = constructPath(neg_bins, title)
         object_path_dict[title] = {pos_path, neg_path}
     });
-    console.log("🚀 ~ file: TemporalCoordinates.vue ~ line 115 ~ constobject_path_dict=vue.computed ~ object_path_dict", object_path_dict)
     return object_path_dict;
 })
 vue.onMounted(() => {
+    console.log("mounted")
     const svg = d3.select(`#${props.id}`).select("svg")
         .attr("viewBox", `0 0 ${viewBox[0]} ${viewBox[1]}`)
     const coord_group = svg.append("g").attr("class", "temporal_view_group")
@@ -172,17 +156,21 @@ vue.onMounted(() => {
 })
 
 function updateCoordinates() {
+    console.log("update coords")
     const svg = d3.select(`#${props.id}`).select("svg")
     const temporal_type = props.id!.split("_")[0]
     // pos
     const path_pos_group = svg.select("g.pos_coord").select("g.path_pos_group")
     const pos_line_group = path_pos_group.selectAll("g.line_group")
         .data(Object.keys(object_path_dict.value))
-    pos_line_group.enter()
-        .append("g").attr("class", "line_group").attr("id", d => d)
+        .join(
+            enter => enter.append("g").attr("class", "line_group").attr("id", d => d)
+        )
     
     const pos_paths = path_pos_group.selectAll("g.line_group").selectAll("line.pos_path")
-        .data((d) => object_path_dict.value[d].pos_path)
+        .data((d) => {
+            return object_path_dict.value[d].pos_path
+        })
     pos_paths.enter()
         .append("line").attr("class", "pos_path")
         .merge(pos_paths)
@@ -222,8 +210,9 @@ function updateCoordinates() {
     const path_neg_group = svg.select("g.neg_coord").select("g.path_neg_group")
     const neg_line_group = path_neg_group.selectAll("g.line_group")
         .data(Object.keys(object_path_dict.value))
-    neg_line_group.enter()
-        .append("g").attr("class", "line_group").attr("id", d => d)
+        .join(
+            enter => enter.append("g").attr("class", "line_group").attr("id", d => d)
+        )
     
     const neg_paths = path_neg_group.selectAll("g.line_group").selectAll("line.neg_path")
         .data((d) => object_path_dict.value[d].neg_path)
@@ -339,10 +328,6 @@ function constructPath(bins, title) {
         path_list.push({title: title, start:bins![i], end: bins![i+1]})
     }
     return path_list
-}
-function selectColor(number) {
-  const hue = number * 137.508; // use golden angle approximation
-  return `hsl(${hue},50%,75%)`;
 }
 </script>
 <style scoped lang="scss">
