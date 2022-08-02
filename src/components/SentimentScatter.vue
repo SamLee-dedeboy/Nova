@@ -416,8 +416,8 @@ function updateExpandedScatter() {
             menu.value.toggle(e)
             nextTick(() => {
                 const overlay_menu = d3.select("#overlay_menu")
-                    overlay_menu.style("left", e.offsetX + 55 + "px")
-                    .style("top", e.offsetY + 85 + "px")
+                    overlay_menu.style("left", e.clientX + 5 + "px")
+                    .style("top", e.clientY + 5 + "px")
                 clicked_node.value = d
             })
         })
@@ -504,7 +504,6 @@ function showTemporal() {
     let emit_data;
     if(props.graph?.type === ViewType.EntityScatter) emit_data = filtered_data.value
     if(props.graph?.type === ViewType.OutletScatter) emit_data = props.graph.nodes
-    console.log("🚀 ~ file: SentimentScatter.vue ~ line 507 ~ showTemporal ~ emit_data", emit_data)
     emit("show_temporal", emit_data)
 }
 </script>
