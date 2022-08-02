@@ -36,8 +36,6 @@ const start_date = vue.computed(() => new Date(min_timestamp.value))
 const end_date = vue.computed(() => new Date(max_timestamp.value))
 const start_month = vue.computed(() => start_date.value.getMonth() + 2)
 const end_month = vue.computed(() => end_date.value.getMonth() + 2)
-console.log(start_date.value.toISOString(), start_date.value.getMonth())
-console.log(end_date.value.toISOString(), end_date.value.getMonth())
 const month_range = vue.computed(() => end_date.value.getMonth() - start_date.value.getMonth()).value
 const month_abbrs = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 const x = vue.computed(
@@ -53,11 +51,13 @@ const x_coord = vue.computed(
 const y_pos = d3.scalePow()
     .exponent(1)
     .domain([0, 1])
-    .range([ viewBox_height/2 - margin.middle, 0]);
+    .range([ viewBox_height/2 - margin.middle, 0])
+    .clamp(true)
 const y_neg = d3.scalePow()
     .exponent(1)
     .domain([0, 1])
-    .range([ viewBox_height, viewBox_height/2 + margin.middle]);
+    .range([ viewBox_height, viewBox_height/2 + margin.middle])
+    .clamp(true)
 
 vue.watch(() => props.highlight_object, (new_value, old_value) => {
     updateCoordinates()
@@ -74,7 +74,6 @@ vue.watch(() => props.sst_threshold, (new_value, old_value) => {
 })
 
 const object_bins_dict = vue.computed(() => {
-    console.log("computing object_bins_dict")
     const object_bins_dict: { [id: string]: {title: string, pos_bins: Number[], neg_bins: Number[]} } = {}
     Object.keys(props.article_bin_dict!).forEach(title => {
         const article_bins = props.article_bin_dict![title]
@@ -82,16 +81,22 @@ const object_bins_dict = vue.computed(() => {
         const neg_bins :Number[] = []
         for(let month = start_month.value; month < end_month.value; month++) {
             const articles = article_bins[month]
-            const bins = preprocess.construct_node(articles, `${title}-${month}`) 
-            pos_bins.push(bins.pos_sst)
-            neg_bins.push(bins.neg_sst)
+            console.log("🚀 ~ file: TemporalCoordinates.vue ~ line 84 ~ Object.keys ~ articles", title, month, articles)
+            if(articles === undefined || articles.length === 0) {
+                pos_bins.push(-1)
+                neg_bins.push(-1)
+            } else { 
+                const bins = preprocess.construct_node(articles, `${title}-${month}`) 
+                pos_bins.push(bins.pos_sst)
+                neg_bins.push(bins.neg_sst)
+            }
         }
+        console.log("🚀 ~ file: TemporalCoordinates.vue ~ line 95 ~ Object.keys ~ object_bins_dict", object_bins_dict)
         object_bins_dict[title] = {title, pos_bins, neg_bins}
     })
     return object_bins_dict
 })
 const object_path_dict = vue.computed(() => {
-    console.log("computing object_path_dict")
     const object_path_dict: { [id: string]: {pos_path: Path[], neg_path: Path[]} } = {}
     Object.keys(object_bins_dict.value).forEach(title => {
         const {pos_bins, neg_bins} = object_bins_dict.value[title]
@@ -102,7 +107,6 @@ const object_path_dict = vue.computed(() => {
     return object_path_dict;
 })
 vue.onMounted(() => {
-    console.log("mounted")
     const svg = d3.select(`#${props.id}`).select("svg")
         .attr("viewBox", `0 0 ${viewBox[0]} ${viewBox[1]}`)
     const coord_group = svg.append("g").attr("class", "temporal_view_group")
@@ -156,7 +160,6 @@ vue.onMounted(() => {
 })
 
 function updateCoordinates() {
-    console.log("update coords")
     const svg = d3.select(`#${props.id}`).select("svg")
     const temporal_type = props.id!.split("_")[0]
     // pos
@@ -201,6 +204,7 @@ function updateCoordinates() {
         .attr("r", highlight_stroke_width)
         .attr("fill", "white")
         .attr("stroke", "black")
+        .attr("stroke-dasharray", (d) => (d === -1? 1:0))
         .attr("opacity", function() {
             const title = d3.select(this.parentNode).data()[0]
             return (props.highlight_object?.includes(title))?1:0
@@ -245,6 +249,7 @@ function updateCoordinates() {
         .attr("r", highlight_stroke_width)
         .attr("fill", "white")
         .attr("stroke", "black")
+        .attr("stroke-dasharray", (d) => (d === -1? 1:0))
         .attr("opacity", function() {
             const title = d3.select(this.parentNode).data()[0]
             return (props.highlight_object?.includes(title))?1:0
@@ -325,7 +330,7 @@ function updateSegmentation() {
 function constructPath(bins, title) {
     let path_list: Path[] = []
     for(let i = 0; i < (bins?.length || 1) - 1; ++i) {
-        path_list.push({title: title, start:bins![i], end: bins![i+1]})
+        path_list.push({title: title, start: bins![i], end: bins![i+1]})
     }
     return path_list
 }
