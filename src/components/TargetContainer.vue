@@ -153,7 +153,7 @@ function handleShowTemporal(nodes) {
      v-for="(graph, index) in selectedScatters" :key="graph.title" 
       >
         <template #header>
-			<span style="max-width:100px; overflow:hidden" :title="graph.title">{{graph.title}}</span>
+			<span style="max-width:100px; overflow:hidden;display: block ruby;font-size:x-small" :title="graph.title">{{graph.title}}</span>
             <Button icon="pi pi-times" class="p-button-rounded p-button-danger p-button-text p-button-sm"
             @click="handleCloseTab($event, index)"/>
 		</template>
@@ -271,5 +271,13 @@ function handleShowTemporal(nodes) {
 }
 .temporal-selector {
     height: 37%;
+}
+:deep(.p-button.p-button-sm .p-button-icon) {
+    font-size: 0.575rem !important;
+}
+:deep(.p-button.p-button-icon-only.p-button-rounded) {
+    height: 1.757rem !important;
+    margin-left: auto;
+    margin-right: 0;
 }
 </style>

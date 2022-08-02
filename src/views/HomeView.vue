@@ -439,7 +439,7 @@ function highlightChanged(new_value) {
                 </div>
               </div>
               <div v-if="graph_constructed" class="segment-toggler-container">
-                <ToggleButton class='segment-toggler p-primary' v-model="segment_mode" onLabel="Segment On" offLabel="Segment off"></ToggleButton>
+                <ToggleButton class='segment-toggler p-primary' v-model="segment_mode" onLabel="Segment" offLabel="Segment"></ToggleButton>
               </div>
             </div>
             <Legend v-if="graph_constructed" 
