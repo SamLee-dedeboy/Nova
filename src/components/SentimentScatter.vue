@@ -16,15 +16,6 @@ import TooltipVue from "./Tooltip.vue"
 import Menu from "primevue/menu"
 import * as d3 from "d3"
 import { ScatterOutletNode, ScatterOutletGraph, ViewType, Sentiment2D } from '../types'
-import { edgeRotation,
-         applyEntityEdgeSelectedStyle, 
-         addEdges,
-        } from './EdgeUtils'
-import { applyEntityNodeSelectedStyle,
-         applyEntityNodeClickedStyle,
-         applyNodeStyling,
-         articlesToRadius,
-       } from './NodeUtils'
 import * as SstColors from "./ColorUtils"
 import { watch, onMounted, PropType, computed, Ref, ref, defineEmits, nextTick} from 'vue'
 import * as vue from 'vue'
@@ -80,7 +71,17 @@ const menu_items = ref([
         command: () => {
             emit("node_clicked", {type: ViewType.Temporal, d: clicked_node.value})
         }
-    }
+    },
+    {
+        label: "Show co-occurrence",
+        command: () => {
+        }
+    },
+    {
+        label: "Show articles",
+        command: () => {
+        }
+    },
 ])
 var segment_point = {x: 0, y: 0} 
 var segment_controller_start_x:number
@@ -268,6 +269,7 @@ function updateSegmentation() {
 
     segment_group.enter().append("g")
         .attr("class", "segmentation")
+        .lower()
 
     // neg
     const neg_rect = segment_group.selectAll("rect.neg")
@@ -291,7 +293,7 @@ function updateSegmentation() {
                 .attr("x", margin.left)
                 .attr("y", (d) =>  segment_point.y)
                 .attr("width", (d) => segment_point.x-margin.left)
-                .attr("height", (d) => viewBox_height-segment_point.y)
+                .attr("height", (d) => viewBox_height-segment_point.y+margin.top)
 
     // pos
     const pos_rect = segment_group.selectAll("rect.pos")
@@ -303,7 +305,7 @@ function updateSegmentation() {
                 .attr("x", (d) => segment_point.x)
                 .attr("y", (d) => segment_point.y)
                 .attr("width", (d) => viewBox_width-segment_point.x)
-                .attr("height", (d) => viewBox_height-segment_point.y)
+                .attr("height", (d) => viewBox_height-segment_point.y + margin.top)
     // mixed
     const mixed_rect = segment_group.selectAll("rect.mixed")
     segment_group.enter().select("g.segmentation").append("rect")
@@ -422,11 +424,10 @@ function updateExpandedScatter() {
 
     // add images if comparing across outlets
     if(props.graph?.type === ViewType.OutletScatter) {
-        console.log("add images")
         const outlets = svg.selectAll("g.outlet")
         const image_size = 100
         outlets.selectAll("image.outlet_image")
-            .attr("href", (d) => `src/assets/${NodeUtils.abbr_dict[d.text]}.png`)
+            .attr("href", (d) => `src/assets/${NodeUtils.abbr_dict[d.text.split("-")[1]]}.png`)
             .attr("height", image_size)
             .attr("width", image_size)
             .attr("x", (d) => x(d.pos_sst)-image_size/2)
