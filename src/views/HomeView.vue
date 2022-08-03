@@ -80,7 +80,14 @@ const max_timestamp: Ref<string> = ref("")
 vue.provide('min_timestamp', min_timestamp)
 vue.provide('max_timestamp', max_timestamp)
 const segment_sst: Ref<Sentiment2D> = ref({pos: 0.5, neg: 0.5}) 
-vue.provide('segment_sst', segment_sst)
+vue.provide('segment_sst', {segment_sst, updateThreshold})
+function updateThreshold(new_value) {
+  segment_sst.value = new_value
+}
+// watch(() => segment_sst, (new_value, old_value) => {
+//   console.log(segment_sst.value)
+// }, {deep: true})
+
 const temporalBins = ref({})
 const node_article_id_dict = ref({})
 
@@ -221,7 +228,12 @@ function updateEnabledOutlet(outlet_set_info) {
 function handleScatterClicked(index) {
     // const clicked_scatter = entity_mentions.value[index][0]
     const clicked_scatter = Array.from(enabled_outlet_set.value)[index]
+
     selectedScatterGraphs_left.value.push(graph_dict.value[clicked_scatter])
+    const dropped_from = selectedScatterGraphs_right.value.findIndex(element => element.title === clicked_scatter)
+    if(dropped_from > -1) 
+      selectedScatterGraphs_right.value.splice(dropped_from, 1)
+
     scatterClicked.value = true
     const button_next = document.getElementsByClassName("p-tabview-nav-next")[0] || undefined
     if(button_next != undefined) {
@@ -232,28 +244,84 @@ function handleScatterClicked(index) {
 function handleDragScatter(evt, index) {
   evt.dataTransfer.dropEffect = 'move'
   evt.dataTransfer.effectAllowed = 'move'
-  evt.dataTransfer.setData('scatterIndex', index)  
+  const dragged_scatter = Array.from(enabled_outlet_set.value)[index]
+  const scatter = graph_dict.value[dragged_scatter]
+  evt.dataTransfer.setData('scatter', JSON.stringify(scatter))  
 }
 
 function handleDragOver(e) {
   e.preventDefault()
-  e.target.style.background = "#b8b8b8"
+  const tabview_left = document.querySelector(".p-tabview.panel-left") as HTMLElement
+  if(e.target !== tabview_left && tabview_left.contains(e.target)) {
+    const tabview_panels = tabview_left.querySelector(".p-tabview-panels") as HTMLElement
+    const svg_list = tabview_left.querySelectorAll(".outlet-scatterplot")
+    if(svg_list.length) svg_list.forEach(svg => (svg as HTMLElement).style.background = "#b8b8b8")
+    else if(tabview_panels) tabview_panels.style.background = "#b8b8b8"
+  }
+  const tabview_right = document.querySelector(".p-tabview.panel-right") as HTMLElement
+  if(tabview_right !== null) {
+    if(e.target !== tabview_right && tabview_right.contains(e.target)) {
+      const tabview_panels = tabview_right.querySelector(".p-tabview-panels") as HTMLElement
+      const svg_list = tabview_right.querySelectorAll(".outlet-scatterplot")
+      if(svg_list.length) svg_list.forEach(svg => (svg as HTMLElement).style.background = "#b8b8b8")
+      else if(tabview_panels) tabview_panels.style.background = "#b8b8b8"
+    }
+  }
 }
 
 function handleDragLeave(e) {
   e.preventDefault()
-  e.target.style.background = "white"
+  const tabview_left = document.querySelector(".p-tabview.panel-left") as HTMLElement
+  if(e.target !== tabview_left && tabview_left.contains(e.target)) {
+    const tabview_panels = tabview_left.querySelector(".p-tabview-panels") as HTMLElement
+    const svg_list = tabview_left.querySelectorAll(".outlet-scatterplot")
+    if(svg_list.length) svg_list.forEach(svg => (svg as HTMLElement).style.background = "white")
+    else if(tabview_panels) tabview_panels.style.background = "white"
+  }
+  const tabview_right = document.querySelector(".p-tabview.panel-right") as HTMLElement
+  if(tabview_right !== null) {
+    if(e.target !== tabview_right && tabview_right.contains(e.target)) {
+      const tabview_panels = tabview_right.querySelector(".p-tabview-panels") as HTMLElement
+      const svg_list = tabview_right.querySelectorAll(".outlet-scatterplot")
+      if(svg_list.length) svg_list.forEach(svg => (svg as HTMLElement).style.background = "white")
+      else if(tabview_panels) tabview_panels.style.background = "white"
+    }
+  }
 }
 
 function handleDropScatter(e) {
-  e.target.style.background = "white"
-  const index = e.dataTransfer.getData('scatterIndex')
-  // const clicked_scatter = entity_mentions.value[index][0]
-  const clicked_scatter = Array.from(enabled_outlet_set.value)[index]
-  if(e.target.classList.contains("panel-left") || e.target.parentNode.classList.contains("panel-left"))
-    selectedScatterGraphs_left.value.push(graph_dict.value[clicked_scatter])
-  else if(e.target.classList.contains("panel-right") || e.target.parentNode.classList.contains("panel-right"))
-    selectedScatterGraphs_right.value.push(graph_dict.value[clicked_scatter])
+  // style changes
+  const tabview_left = document.querySelector(".p-tabview.panel-left") as HTMLElement
+  if(e.target !== tabview_left && tabview_left.contains(e.target)) {
+    const tabview_panels = tabview_left.querySelector(".p-tabview-panels") as HTMLElement
+    const svg_list = tabview_left.querySelectorAll(".outlet-scatterplot")
+    if(svg_list.length) svg_list.forEach(svg => (svg as HTMLElement).style.background = "white")
+    else if(tabview_panels) tabview_panels.style.background = "white"
+  }
+  const tabview_right = document.querySelector(".p-tabview.panel-right") as HTMLElement
+  if(tabview_right !== null) {
+    if(e.target !== tabview_right && tabview_right.contains(e.target)) {
+      const tabview_panels = tabview_right.querySelector(".p-tabview-panels") as HTMLElement
+      const svg_list = tabview_right.querySelectorAll(".outlet-scatterplot")
+      if(svg_list.length) svg_list.forEach(svg => (svg as HTMLElement).style.background = "white")
+      else if(tabview_panels) tabview_panels.style.background = "white"
+    }
+  }
+
+  // send data
+  const scatter = JSON.parse(e.dataTransfer.getData('scatter'))
+  if(e.target.classList.contains("panel-left") || e.target.parentNode.classList.contains("panel-left")) {
+    selectedScatterGraphs_left.value.push(scatter)
+    const dropped_from = selectedScatterGraphs_right.value.findIndex(element => element.title === scatter.title)
+    if(dropped_from > -1) 
+      selectedScatterGraphs_right.value.splice(dropped_from, 1)
+  }
+  else if(e.target.classList.contains("panel-right") || e.target.parentNode.classList.contains("panel-right")) {
+    selectedScatterGraphs_right.value.push(scatter)
+    const dropped_from = selectedScatterGraphs_left.value.findIndex(element => element.title === scatter.title)
+    if(dropped_from > -1) 
+      selectedScatterGraphs_left.value.splice(dropped_from, 1)
+  }
   scatterClicked.value = true
   const button_next = document.getElementsByClassName("p-tabview-nav-next")[0] || undefined
   if(button_next != undefined) {

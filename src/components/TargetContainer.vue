@@ -8,7 +8,7 @@ import * as dfd from "danfojs"
 import Dropdown from 'primevue/dropdown';
 import InfoButton from "./InfoButton.vue";
 import * as d3 from "d3"
-import { watch, onMounted, PropType, ref, Ref, toRef, computed, defineEmits } from 'vue'
+import { watch, onMounted, PropType, ref, Ref, toRef, computed, defineEmits, nextTick } from 'vue'
 import * as vue from 'vue'
 import { ScatterOutletNode, ScatterOutletGraph, ViewType, Article } from "../types";
 import TemporalCoordinates from "./TemporalCoordinates.vue";
@@ -75,6 +75,18 @@ const temporal_color_dict = vue.computed(() => {
     // },
 watch(() => props.selectedScatters, (new_scatters, old_scatters) => {
     active.value = (props.selectedScatters?.length || 1) - 1 
+    // const tab_navs = document.querySelector(".p-tabview-nav").querySelector('[role="presentation"]')
+    vue.nextTick(() => {
+        const tab_navs = document.querySelectorAll(`.${props.compare_part} .p-tabview-nav > [role=presentation]`)
+        tab_navs.forEach((tab,index) => {
+            tab.setAttribute("draggable", "true")
+            tab.addEventListener("dragstart", function(e: any) {
+                e.dataTransfer.dropEffect = 'move'
+                e.dataTransfer.effectAllowed = 'move'
+                const scatter = props.selectedScatters![index]
+                e.dataTransfer.setData('scatter', JSON.stringify(scatter))  
+            })})
+        })
 }, {deep:true})
 
 // watch(() => selectedScatters_list, (new_value) => {
@@ -83,6 +95,9 @@ watch(() => props.selectedScatters, (new_scatters, old_scatters) => {
 
 const emit = defineEmits(['update:selectedScatters', "update:segmentation", "node-clicked", "entity-clicked", "show_temporal"])
 
+vue.onMounted(() => {
+
+})
 function handleNodeClicked({type, d}) {
     emit("node-clicked", d)        
     this.nodeClicked = true
@@ -145,15 +160,21 @@ function selectColor(number) {
 function handleShowTemporal(nodes) {
     emit("show_temporal", nodes)
 }
+function handleDragScatter(e) {
+    console.log(e.target)
+}
 </script>
 
 <template>
-<TabView class="graph-container" :class="compare_part" v-model:activeIndex="active" :scrollable="true">
+<TabView class="graph-container" :class="compare_part" v-model:activeIndex="active" :scrollable="true"
+    ref="tabview"
+    >
     <TabPanel class="graph-panel" :class="compare_part" 
-     v-for="(graph, index) in selectedScatters" :key="graph.title" 
+     v-for="(graph, index) in selectedScatters" :key="graph.title" ref="tabpanels" 
       >
         <template #header>
-			<span style="max-width:100px; overflow:hidden;display: block ruby;font-size:x-small" :title="graph.title">{{graph.title}}</span>
+			<span style="max-width:100px; overflow:hidden;display: block ruby;font-size:x-small" :title="graph.title"
+            >{{graph.title}}</span>
             <Button icon="pi pi-times" class="p-button-rounded p-button-danger p-button-text p-button-sm"
             @click="handleCloseTab($event, index)"/>
 		</template>
