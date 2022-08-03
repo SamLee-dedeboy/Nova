@@ -140,12 +140,12 @@ export function construct_node(articles, label): ScatterOutletNode {
         const pos_mean = _.mean(pos_artcs)
         const pos_median = median(pos_artcs)
         const pos_std = std(pos_artcs) 
-        const pos_score = sigmoid(3*(pos_mean-pos_median)/pos_std) || 0
+        const pos_score = sigmoid(-3*(pos_mean-pos_median)/pos_std) || 0
 
-        const neg_mean = _.mean(neg_artcs)
-        const neg_median = median(neg_artcs)
+        const neg_mean = Math.abs(_.mean(neg_artcs))
+        const neg_median = Math.abs(median(neg_artcs))
         const neg_std = std(neg_artcs) 
-        const neg_score = sigmoid(3*(neg_mean-neg_median)/neg_std) || 0
+        const neg_score = sigmoid(-3*(neg_mean-neg_median)/neg_std) || 0
 
         node = {
             text: label,
