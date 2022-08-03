@@ -235,7 +235,7 @@ function handleScatterClicked(index) {
       selectedScatterGraphs_right.value.splice(dropped_from, 1)
 
     scatterClicked.value = true
-    const button_next = document.getElementsByClassName("p-tabview-nav-next")[0] || undefined
+    const button_next = document.getElementsByClassName("p-tabview-nav-next")[0] as HTMLElement || undefined
     if(button_next != undefined) {
       button_next.click()
     }
@@ -323,7 +323,7 @@ function handleDropScatter(e) {
       selectedScatterGraphs_left.value.splice(dropped_from, 1)
   }
   scatterClicked.value = true
-  const button_next = document.getElementsByClassName("p-tabview-nav-next")[0] || undefined
+  const button_next = document.getElementsByClassName("p-tabview-nav-next")[0] as HTMLElement || undefined
   if(button_next != undefined) {
     button_next.click()
   }
@@ -494,7 +494,7 @@ function highlightChanged(new_value) {
             </div>
             <div class="utilities-container">
               <div v-if="graph_constructed" class="slider-container">
-                <InputText class="threshold-input" v-model="article_num_threshold" />
+                <InputText class="threshold-input" v-model="article_num_threshold"></InputText>
                 <Button class="increment-button p-button-secondary" label="+"  @click="() => article_num_threshold=Math.min(article_num_threshold+=10, max_articles||100)"></Button>
                 <Button class="decrease-button p-button-secondary " label="-"  @click="() => article_num_threshold=Math.max(article_num_threshold-10, 10)"></Button>
                 <Slider v-model="article_num_threshold" :step="1" :min="10" :max="max_articles||100"></Slider>

@@ -181,7 +181,8 @@ function updateCoordinates() {
         .attr("y1", (d) => (y_pos(d.start)))
         .attr("x2", (d,i) => (x_coord(i+1)))
         .attr("y2", (d) => (y_pos(d.end)))
-        .attr("stroke", (d, i) => (props.color_dict[d.title]))
+        .attr("stroke", (d, i) => (props.color_dict?.[d.title] || "black"))
+
 
 
     if(temporal_type == "overview") {
@@ -227,7 +228,7 @@ function updateCoordinates() {
             .attr("y1", (d) => (y_neg(d.start)))
             .attr("x2", (d,i) => (x_coord(i+1)))
             .attr("y2", (d) => (y_neg(d.end)))
-            .attr("stroke", (d, i) => (props.color_dict[d.title]))
+            .attr("stroke", (d, i) => (props.color_dict?.[d.title] || "black"))
 
     if(temporal_type == "overview") {
         path_neg_group.selectAll("g.line_group").selectAll("line.neg_path")

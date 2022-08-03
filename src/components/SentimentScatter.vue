@@ -17,7 +17,7 @@ import Menu from "primevue/menu"
 import * as d3 from "d3"
 import { ScatterOutletNode, ScatterOutletGraph, ViewType, Sentiment2D } from '../types'
 import * as SstColors from "./ColorUtils"
-import { watch, onMounted, PropType, computed, Ref, ref, defineEmits, nextTick} from 'vue'
+import { onMounted, PropType, computed, Ref, ref, defineEmits, nextTick} from 'vue'
 import * as vue from 'vue'
 import * as NodeUtils from "./NodeUtils"
 
@@ -35,6 +35,7 @@ const props = defineProps({
 const emit = defineEmits(['node_clicked', 'update:segmentation', 'show_temporal'])
 const min_articles: Ref<number> = vue.inject('min_articles') || ref(0) 
 const max_articles: Ref<number> = vue.inject('max_articles') || ref(0)
+const {sst_threshold, updateThreshold} = vue.inject('segment_sst')
 const tooltip_content: Ref<String> = ref("") 
 const viewBox = [1000, 1000]
 const outlet_min_radius = 10
@@ -53,8 +54,6 @@ const y = d3.scalePow()
     .range([ margin.top + viewBox_height, margin.top]);
 const zoom = d3.zoom().scaleExtent([1, 3]).on("zoom", handleZoom)
 const filtered_data = computed(() => props.graph?.nodes.filter(node => node.articles > (props.article_num_threshold || 0)))
-const avg_pos_sst = computed(() => (_.mean(props.graph?.nodes.map(node => node.pos_sst))))
-const avg_neg_sst = computed(() => (_.mean(props.graph?.nodes.map(node => node.neg_sst))))
 const segment_controller_width = 12
 const node_circle_radius = 10
 const clicked_node: Ref<ScatterOutletNode> = ref({text: "", articles: 0, pos_sst: 0, neg_sst: 0})
@@ -91,6 +90,19 @@ vue.watch(() => props.segmentation, (new_value, old_value) => {
     segment_point = {x: x(new_value?.pos || 0.5), y: y(new_value?.neg || 0.5)}
     updateSegmentation()
 }) 
+vue.watch(() => props.graph, (graph, prev_graph) => {
+    updateCanvas() 
+})
+
+vue.watch(() => props.article_num_threshold, () => {
+    updateCanvas()
+    updateOverviewTooltipContent()
+})
+vue.watch(() => props.segment_mode, (new_value) => {
+    updateSegmentation()
+    const svg = d3.select(`#${props.id}`).select("svg")
+    svg.select("rect.segment-controller").style("opacity", new_value?1:0).raise()
+})
 onMounted(() => {
     const svg = d3.select(`#${props.id}`) .select("svg")
         .attr("viewBox", `0 0 ${viewBox[0]} ${viewBox[1]}`)
@@ -211,18 +223,6 @@ onMounted(() => {
         .raise()
 })
 
-watch(() => props.graph, (graph, prev_graph) => {
-    updateCanvas() 
-})
-
-watch(() => props.article_num_threshold, () => {
-    updateCanvas()
-})
-watch(() => props.segment_mode, (new_value) => {
-    updateSegmentation()
-    const svg = d3.select(`#${props.id}`).select("svg")
-    svg.select("rect.segment-controller").style("opacity", new_value?1:0).raise()
-})
 
 function resetZoom() {
     const svg = d3.select(`#${props.id}`).select("svg")
@@ -329,7 +329,7 @@ function updateExpandedTooltipContent(data: ScatterOutletNode) {
     if(props.graph?.type === ViewType.OutletScatter) target = "outlet"
 
     tooltip_content.value = 
-    `${target}: ${data.text} <br>` + 
+    `title: ${data.text} <br>` + 
     `&nbsp #articles: ${data.articles} <br>` +
     `&nbsp sst: (${data.pos_sst.toFixed(2)}, ${data.neg_sst.toFixed(2)}) <br>` 
     
@@ -340,21 +340,23 @@ function updateOverviewTooltipContent() {
     const nodes = filtered_data.value! 
     const title = props.graph?.title
     const entity_num = nodes.length || 0
-    nodes.sort((node_a, node_b) => (node_a.articles - node_b.articles))
+    const avg_pos_sst = _.mean(nodes.map(node => node.pos_sst))
+    const avg_neg_sst = _.mean(nodes.map(node => node.neg_sst))
+    nodes.sort((node_a, node_b) => -(node_a.articles - node_b.articles))
+    console.log("🚀 ~ file: SentimentScatter.vue ~ line 346 ~ updateOverviewTooltipContent ~ nodes", nodes)
     tooltip_content.value = 
     `${title}: <br>` + 
     `&nbsp #entities: ${entity_num} <br>` +
     `&nbsp top entities:<ol>` 
     for(let i = 0; i < Math.min(3, nodes.length); ++i) {
         tooltip_content.value +=
-        `<li>${nodes[i].text}</li>`
+        `<li>${nodes[i].text.split("-")[0]}</li>`
     }
     tooltip_content.value += "</ol>" +
-    `&nbsp avg_sst: (${avg_pos_sst.value.toFixed(2)}, ${avg_neg_sst.value.toFixed(2)}) <br>` 
+    `&nbsp avg_sst: (${avg_pos_sst.toFixed(2)}, ${avg_neg_sst.toFixed(2)}) <br>` 
 }
 
 function updateCanvas() {
-    console.log("update Canvas")
     if(props.expanded)
         updateExpandedScatter()
     else 
