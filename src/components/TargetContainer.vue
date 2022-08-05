@@ -10,10 +10,11 @@ import InfoButton from "./InfoButton.vue";
 import * as d3 from "d3"
 import { watch, onMounted, PropType, ref, Ref, toRef, computed, defineEmits, nextTick } from 'vue'
 import * as vue from 'vue'
-import { ScatterOutletNode, ScatterOutletGraph, ViewType, Article } from "../types";
+import { ScatterOutletNode, ScatterOutletGraph, ViewType, Article, OutletNodeInfo } from "../types";
 import TemporalCoordinates from "./TemporalCoordinates.vue";
 import TemporalPathSelector from "./TemporalPathSelector.vue";
 import SentimentScatter from "./SentimentScatter.vue";
+import NodeInfo from "./NodeInfo.vue"
 import * as _ from "lodash"
 
 const props = defineProps({
@@ -40,6 +41,16 @@ const temporal_color_dict = vue.computed(() => {
         color_dict[title] = color
     })
     return color_dict
+})
+const scatterInfo = vue.computed(() => {
+    let info: OutletNodeInfo
+    props.selectedScatters!.forEach(scatter => {
+        if(scatter.type === ViewType.OutletScatter || scatter.type === ViewType.EntityScatter) {
+            info.text = scatter.title
+            info.pos_articles = scatter
+
+        }
+    })
 })
 // const selectedScatters: Ref<Set<ScatterOutletGraph> | undefined> = toRef(props, 'selectedScatters')
 // const selectedScatters_list = computed(() => {
@@ -188,6 +199,7 @@ function handleDragScatter(e) {
             :panel_class="compare_part" 
             :article_num_threshold="article_num_threshold"
             :segment_mode="segment_mode"
+            :segmentation="segmentation"
             @update:segmentation="updateSegmentation"
             @node_clicked="handleEntityClicked"
             @show_temporal="handleShowTemporal"

@@ -4,6 +4,7 @@
     <Button v-if="expanded" class="reset-zoom p-button-secondary" @click="resetZoom">reset</Button>
     <Button v-if="expanded" class="show-temporal p-button-secondary" @click="showTemporal">temporal</Button>
     <TooltipVue class='tooltip' :content="tooltip_content" style="z-index: 1000;"></TooltipVue>
+    <NodeInfo v-if="expanded" class='nodeinfo' :node="hovered_node_info" :total_articles="total_articles" style="position:absolute; z-index:1000;pointer-events: none;"></NodeInfo>
     <Menu id="overlay_menu" ref="menu" :model="menu_items" :popup="true" 
     style="position: absolute; width: fit-content;"></Menu>
 
@@ -15,11 +16,12 @@ import _ from 'lodash'
 import TooltipVue from "./Tooltip.vue"
 import Menu from "primevue/menu"
 import * as d3 from "d3"
-import { ScatterOutletNode, ScatterOutletGraph, ViewType, Sentiment2D } from '../types'
+import { ScatterOutletNode, ScatterOutletGraph, ViewType, Sentiment2D, OutletNodeInfo } from '../types'
 import * as SstColors from "./ColorUtils"
 import { onMounted, PropType, computed, Ref, ref, defineEmits, nextTick} from 'vue'
 import * as vue from 'vue'
 import * as NodeUtils from "./NodeUtils"
+import NodeInfo from './NodeInfo.vue'
 
 // initialization
 const props = defineProps({
@@ -35,8 +37,20 @@ const props = defineProps({
 const emit = defineEmits(['node_clicked', 'update:segmentation', 'show_temporal'])
 const min_articles: Ref<number> = vue.inject('min_articles') || ref(0) 
 const max_articles: Ref<number> = vue.inject('max_articles') || ref(0)
+const outlet_article_num_dict: Ref<any> = vue.inject("outlet_article_num_dict") || ref({})
+const total_articles = computed(() => {
+    if(props.graph?.type === ViewType.EntityScatter) {
+        const outlet = props.graph.title
+        return outlet_article_num_dict.value[outlet]
+    } else if(props.graph?.type === ViewType.OutletScatter) {
+        return _.sumBy(props.graph?.nodes, (node) => (node.articles))
+    } else {
+        return undefined
+    }
+})
 const {sst_threshold, updateThreshold} = vue.inject('segment_sst')
 const tooltip_content: Ref<String> = ref("") 
+const hovered_node_info: Ref<OutletNodeInfo> = ref({})
 const viewBox = [1000, 1000]
 const outlet_min_radius = 10
 const outlet_max_radius = 150
@@ -107,6 +121,8 @@ onMounted(() => {
     const svg = d3.select(`#${props.id}`) .select("svg")
         .attr("viewBox", `0 0 ${viewBox[0]} ${viewBox[1]}`)
     d3.select(`#${props.id}`).select("div.tooltip")
+        .style("opacity", 0)
+    d3.select(`#${props.id}`).select(".nodeinfo")
         .style("opacity", 0)
     svg.append("g").attr("class", "node_group")
     updateOverviewTooltipContent()
@@ -317,20 +333,23 @@ function updateSegmentation() {
                 .attr("y", margin.top)
                 .attr("width", (d) => viewBox_width-segment_point.x)
                 .attr("height", (d) => segment_point.y-margin.top)
-    svg.selectAll("g.segmentation").style("opacity", props.segment_mode?1:0)
+    svg.selectAll("g.segmentation")
+        .style("opacity", props.segment_mode?1:0)
         .style("pointer-events", "none")
+    svg.selectAll("rect.segment-controller")
+        .data([{x: segment_point.x-segment_controller_width/2, y:segment_point.y-segment_controller_width/2}])
+        .attr("x", (d) => d.x)
+        .attr("y", (d) => d.y)
+        // .attr("x", () => (segment_point.x-segment_controller_width/2))
+        // .attr("y", () => (segment_point.y-segment_controller_width/2))
 
 
 }
 
 function updateExpandedTooltipContent(data: ScatterOutletNode) {
-    let target;
-    if(props.graph?.type === ViewType.EntityScatter) target = "entity"
-    if(props.graph?.type === ViewType.OutletScatter) target = "outlet"
-
     tooltip_content.value = 
     `title: ${data.text} <br>` + 
-    `&nbsp #articles: ${data.articles} <br>` +
+    `&nbsp #articles: ${data.articles}/${total_articles.value} <br>` +
     `&nbsp sst: (${data.pos_sst.toFixed(2)}, ${data.neg_sst.toFixed(2)}) <br>` 
     
 
@@ -343,7 +362,6 @@ function updateOverviewTooltipContent() {
     const avg_pos_sst = _.mean(nodes.map(node => node.pos_sst))
     const avg_neg_sst = _.mean(nodes.map(node => node.neg_sst))
     nodes.sort((node_a, node_b) => -(node_a.articles - node_b.articles))
-    console.log("🚀 ~ file: SentimentScatter.vue ~ line 346 ~ updateOverviewTooltipContent ~ nodes", nodes)
     tooltip_content.value = 
     `${title}: <br>` + 
     `&nbsp #entities: ${entity_num} <br>` +
@@ -354,6 +372,9 @@ function updateOverviewTooltipContent() {
     }
     tooltip_content.value += "</ol>" +
     `&nbsp avg_sst: (${avg_pos_sst.toFixed(2)}, ${avg_neg_sst.toFixed(2)}) <br>` 
+    if(props.graph?.type === ViewType.EntityScatter) {
+        tooltip_content.value += `&nbsp total_articles: ${total_articles.value} <br>`
+    }
 }
 
 function updateCanvas() {
@@ -373,9 +394,9 @@ function updateExpandedScatter() {
         .on("mousemove", function(e, d) {
             let align_image_offset = 0
             if(props.graph?.type === ViewType.OutletScatter) align_image_offset = 50 - 15
-            d3.select(`#${props.id}`).select("div.tooltip")
-            .style("left", e.offsetX + align_image_offset + 15 + "px")
-            .style("top", e.offsetY - 5 - align_image_offset + "px")
+            d3.select(`#${props.id}`).select(".nodeinfo")
+                .style("left", e.offsetX + align_image_offset + 15 + "px")
+                .style("top", e.offsetY - 5 - align_image_offset + "px")
         })
         .on("mouseover", function(e, d) {
             const container = d3.select(this.parentNode)
@@ -393,8 +414,8 @@ function updateExpandedScatter() {
                 .attr("opacity", 0.8)
 
             // update tooltip
-            updateExpandedTooltipContent(d)
-            d3.select(`#${props.id}`).select("div.tooltip")
+            updateNodeInfo(d)
+            d3.select(`#${props.id}`).select(".nodeinfo")
                 .style("opacity", 1)
         })
         .on("mouseout", function(e, d) {
@@ -411,7 +432,7 @@ function updateExpandedScatter() {
                 .transition().duration(100)
                 .attr("opacity", 0.3)
 
-            d3.select(`#${props.id}`).select("div.tooltip")
+            d3.select(`#${props.id}`).select(".nodeinfo")
                 .style("opacity", 0)
         })
         .on("click", (e, d) =>  {
@@ -507,6 +528,18 @@ function showTemporal() {
     if(props.graph?.type === ViewType.EntityScatter) emit_data = filtered_data.value
     if(props.graph?.type === ViewType.OutletScatter) emit_data = props.graph.nodes
     emit("show_temporal", emit_data)
+}
+
+function updateNodeInfo(node_data: ScatterOutletNode) {
+    hovered_node_info.value = {
+        text: node_data.text,
+        pos_articles: node_data.pos_articles,
+        neg_articles: node_data.neg_articles,
+        pos_score: node_data.pos_sst,
+        neg_score: node_data.neg_sst,
+    }
+
+
 }
 </script>
 

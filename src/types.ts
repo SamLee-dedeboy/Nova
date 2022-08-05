@@ -16,8 +16,17 @@ export interface ScatterOutletGraph {
 export interface ScatterOutletNode {
     text: string,
     articles: number,
+    pos_articles: number,
+    neg_articles: number,
     pos_sst: number,
     neg_sst: number,
+}
+export interface OutletNodeInfo {
+    text: string,
+    pos_articles: number,
+    neg_articles: number,
+    pos_score: number,
+    neg_score: number,
 }
 export interface OutletNode {
     x?: number,

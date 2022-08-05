@@ -121,6 +121,8 @@ export function construct_node(articles, label): ScatterOutletNode {
         node = {
             text: label,
             articles: 0,
+            pos_articles: 0,
+            neg_articles: 0,
             pos_sst: 0,
             neg_sst: 0,
         }
@@ -150,6 +152,8 @@ export function construct_node(articles, label): ScatterOutletNode {
         node = {
             text: label,
             articles: article_num,
+            pos_articles: pos_artcs.length,
+            neg_articles: neg_artcs.length,
             pos_sst: pos_score,
             neg_sst: neg_score,
         }
@@ -166,6 +170,7 @@ const neg_std = 29.437169285743654
 export function processArticleDict(outlet_article_dict) {
     let r_article_dict: {[id: string]: any} = {}
     let r_article_bins_dict: {[id: string]: any}  = {}
+    let r_outlet_article_num_dict = {}
     let min_timestamp = new Date("3000-10-10")
     let max_timestamp = new Date("1000-10-10")
     Object.keys(outlet_article_dict).forEach(outlet => {
@@ -181,11 +186,12 @@ export function processArticleDict(outlet_article_dict) {
         })
         const articles_binBy_month = binArticlesByMonth(articles)
         r_article_bins_dict[outlet] = articles_binBy_month
+        r_outlet_article_num_dict[outlet] = articles.length
     })
     const outlet_set = new Set(Object.keys(outlet_article_dict))
     const r_min_timestamp = min_timestamp.toISOString().split('T')[0]
     const r_max_timestamp = max_timestamp.toISOString().split('T')[0]
-    return {outlet_set, r_article_dict, r_article_bins_dict, r_min_timestamp, r_max_timestamp}
+    return {outlet_set, r_article_dict, r_article_bins_dict, r_min_timestamp, r_max_timestamp, r_outlet_article_num_dict}
 }
 export function processArticles(articles) {
     let outlet_set = new Set<string>()

@@ -58,6 +58,9 @@ const enabled_outlet_set: Ref<Set<string>> = ref(new Set())
 const articles = ref([])
 const article_dict = ref({})
 const outlet_article_bins_dict = ref({})
+const outlet_article_dict = ref({})
+const outlet_article_num_dict = ref({})
+vue.provide("outlet_article_num_dict", outlet_article_num_dict)
 const graph_dict = ref({})
 const graph_constructed: Ref<boolean> = ref(false)
 const entity_list: Ref<string[]> = computed(() => entity_mentions.value.map(entity_mention => entity_mention[0]))
@@ -115,9 +118,10 @@ function datasetImported(dataset) {
   graph_constructing.value = true
   setTimeout(() => {
     const promise = new Promise((resolve) => { 
-      const outlet_article_dict = dataset.outlet_article_dict
+      outlet_article_dict.value = dataset.outlet_article_dict
       const entity_mentions = dataset.entity_mentions
-      let {outlet_set, r_article_dict, r_article_bins_dict, r_min_timestamp, r_max_timestamp} = preprocess.processArticleDict(outlet_article_dict)
+      let {outlet_set, r_article_dict, r_article_bins_dict, r_min_timestamp, r_max_timestamp, r_outlet_article_num_dict} = preprocess.processArticleDict(outlet_article_dict.value)
+      outlet_article_num_dict.value = r_outlet_article_num_dict
       outlet_article_bins_dict.value = r_article_bins_dict
       enabled_outlet_set.value = outlet_set
       min_timestamp.value = r_min_timestamp
@@ -468,7 +472,7 @@ function highlightChanged(new_value) {
                 :min_articles="min_articles"
                 :article_num_threshold="article_num_threshold"
                 :segment_mode="segment_mode"
-                v-model:segmentation="segment_sst"
+                :segmentation="segment_sst"
                 style="cursor: pointer"
                 :expanded="false"
                 :draggable="true"

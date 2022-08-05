@@ -4,16 +4,8 @@ import { OutletNode } from '../types'
 import { defineComponent, computed, watch, onMounted, PropType} from 'vue'
 import * as SstColors from './ColorUtils'
 import { enableTracking } from "@vue/reactivity";
+import {OutletNodeInfo} from "../types"
 
-interface OutletNodeInfo {
-    text: string,
-    pos_articles: number,
-    neg_articles: number,
-    neu_articles: number,
-    pos_score: number,
-    neg_score: number,
-    neu_score: number,
-}
 const props = defineProps({
     node: Object as () => OutletNodeInfo,
     total_articles: Number,
@@ -24,31 +16,35 @@ const svgViewBox = [100, 10]
 const svgBox = [100, 10]
 // watch node
 watch(() => props.node, (node, prev_node) => {
-    updateBars(node, prev_node)
+    updateBars(node!, prev_node)
 })
 
-function updateBars(node, prev_node) {
-    const node_articles = (node.pos_articles || 0) + (node.neg_articles || 0) + (node.neu_articles || 0)
+function updateBars(node: OutletNodeInfo, prev_node) {
+    // const node_articles = (node.pos_articles || 0) + (node.neg_articles || 0) + (node.neu_articles || 0)
+    const node_articles = (node.pos_articles || 0) + (node.neg_articles || 0)
     // articles
     updateArticle({text: node.text, articles: node.pos_articles}, "pos", node_articles) 
     updateArticle({text: node.text, articles: node.neg_articles}, "neg", node_articles) 
-    updateArticle({text: node.text, articles: node.neu_articles}, "neu", node_articles) 
-    const max_score = 1+Math.max(node.pos_score, Math.abs(node.neg_score), Math.abs(node.neu_score))
+    // updateArticle({text: node.text, articles: node.neu_articles}, "neu", node_articles) 
+    // const max_score = 1+Math.max(node.pos_score, Math.abs(node.neg_score), Math.abs(node.neu_score))
+    // const max_score = 1+Math.max(node.pos_score, Math.abs(node.neg_score))
+    const max_score = 1
     updateScore(node.pos_score, "pos", max_score)
     updateScore(node.neg_score, "neg", max_score)
-    updateScore(node.neu_score, "neu", max_score)
+    // updateScore(node.neu_score, "neu", max_score)
 
-    updateAvgScore({score: node.pos_score, articles: node.pos_articles}, "pos")
-    updateAvgScore({score: node.neg_score, articles: node.neg_articles}, "neg")
-    updateAvgScore({score: node.neu_score, articles: node.neu_articles}, "neu")
+    // updateAvgScore({score: node.pos_score, articles: node.pos_articles}, "pos")
+    // updateAvgScore({score: node.neg_score, articles: node.neg_articles}, "neg")
+    // updateAvgScore({score: node.neu_score, articles: node.neu_articles}, "neu")
 
-    updateTotalArticles(node.pos_articles, node.neg_articles, node.neu_articles, props.total_articles)
+    // updateTotalArticles(node.pos_articles, node.neg_articles, node.neu_articles, props.total_articles)
+    updateTotalArticles(node.pos_articles, node.neg_articles, props.total_articles)
 }
 
 function updateArticle({text, articles}, sst_class, node_articles) {
     const svg = d3.selectAll(`td.${sst_class}_articles`).selectAll("svg")
-        .attr("viewBox", `0 0 ${svgViewBox[0]} ${svgViewBox[1]}`)
-        .attr("width", `${svgBox[0]}px`)
+        .attr("viewBox", `0 0 ${2*svgViewBox[0]} ${svgViewBox[1]}`)
+        .attr("width", `${2*svgBox[0]}px`)
         .attr("height", `${svgBox[1]}px`)
     svg.selectAll("rect")
     .data([articles]) 
@@ -57,25 +53,25 @@ function updateArticle({text, articles}, sst_class, node_articles) {
             enter.append("rect")
             .attr("height", svgViewBox[1])
             .attr("filter", `brightness(${SstColors.brightness}%)`)
-            .attr("width", (d) => (d/node_articles)*svgViewBox[0])
+            .attr("width", (d) => (d/node_articles)*2*svgViewBox[0])
             .attr("fill", () => SstColors.color_dict[sst_class])
         },
         update => {
-            update.attr("width", (d) => (d/node_articles)*svgViewBox[0])
+            update.attr("width", (d) => (d/node_articles)*2*svgViewBox[0])
         }
     )
     const node_text = svg.selectAll("text")
     .data([`${parseInt(articles)}(${Math.round((articles/node_articles)*100)}%)`])
 
     node_text.enter()
-    .append("text")
-    .merge(node_text)
-    .text(d => d)
-    .attr("x", svgViewBox[0]/2)
-    .attr("y", svgViewBox[1]/2-1)
-    .attr("font-size", "0.7em")
-    .attr("text-anchor", "middle")
-    .attr("dominant-baseline", "central")
+        .append("text")
+        .merge(node_text)
+        .text(d => d)
+        .attr("x", 2*svgViewBox[0]/2)
+        .attr("y", svgViewBox[1]/2-1)
+        .attr("font-size", "0.7em")
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "central")
 }
 
 function updateScore(score,  sst_class, max_score) {
@@ -145,8 +141,10 @@ function updateAvgScore({score, articles},  sst_class) {
     .attr("dominant-baseline", "central")
 }
 
-function updateTotalArticles(pos_articles, neg_articles, neu_articles, total_articles) {
-    const node_total_articles =  pos_articles + neg_articles + neu_articles 
+function updateTotalArticles(pos_articles, neg_articles, total_articles) {
+// function updateTotalArticles(pos_articles, neg_articles, neu_articles, total_articles) {
+    // const node_total_articles =  pos_articles + neg_articles + neu_articles 
+    const node_total_articles =  pos_articles + neg_articles
     const svg = d3.selectAll(`td.total_articles`).selectAll("svg")
         .attr("viewBox", `0 0 ${2*svgViewBox[0]} ${svgViewBox[1]}`)
         .attr("width", `${2*svgBox[0]}px`)
@@ -196,33 +194,33 @@ function updateTotalArticles(pos_articles, neg_articles, neu_articles, total_art
 
 </script>
 <template>
-    <table class="node-info-table">
-  <tr class="header">
-    <th class="articles">#articles</th>
-    <th class="score">score</th>
-    <th class="avg score">score(average)</th>
-
-  </tr>
-  <tr class="pos">
-    <td class="pos_articles"><svg></svg></td>
-    <td class="pos_score"> <svg></svg></td>
-    <td class="pos_avg_score"> <svg></svg></td>
-  </tr>
-  <tr class="neg">
-    <td class="neg_articles"><svg></svg> </td>
-    <td class="neg_score"> <svg></svg></td>
-    <td class="neg_avg_score"> <svg></svg></td>
-  </tr>
-  <tr class="neu">
-    <td class="neu_articles"><svg></svg> </td>
-    <td class="neu_score"> <svg></svg></td>
-    <td class="neu_avg_score"> <svg></svg></td>
-  </tr>
-  <tr class="total">
-    <td class="total_articles_header" colspan="1"> total articles:  </td>
-    <td class="total_articles" colspan="2"> <svg></svg> </td>
-  </tr>
-</table>
+    <table class="node-info-table" width="300px">
+        <tr class="title">
+            <td class="title" colspan="2">{{props.node?.text}}</td>
+        </tr>
+        <tr class="header">
+            <td class="score" >score</td>
+            <td class="articles" >#articles</td>
+        </tr>
+        <tr class="pos">
+            <td class="pos_score"> <svg></svg></td>
+            <td class="pos_articles"><svg></svg></td>
+        </tr>
+        <tr class="neg">
+            <td class="neg_score" > <svg></svg></td>
+            <td class="neg_articles" ><svg></svg> </td>
+            <!-- <td class="neg_avg_score"> <svg></svg></td> -->
+        </tr>
+        <!-- <tr class="neu">
+            <td class="neu_articles"><svg></svg> </td>
+            <td class="neu_score"> <svg></svg></td>
+            <td class="neu_avg_score"> <svg></svg></td>
+        </tr> -->
+        <tr class="total">
+            <td class="total_articles_header" > total articles:  </td>
+            <td class="total_articles" > <svg></svg> </td>
+        </tr>
+    </table>
     
 </template>
 
