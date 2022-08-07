@@ -25,6 +25,8 @@ import * as _ from "lodash"
 import TemporalCoordinates from "../components/TemporalCoordinates.vue";
 import TemporalPathSelector from "../components/TemporalPathSelector.vue";
 import SentimentScatter from "../components/SentimentScatter.vue";
+import Tooltip from "../components/Tooltip.vue";
+import tutorial_intro_json from "../assets/tutorial_intro.json"
 
   // data() {
   //   return {
@@ -83,6 +85,11 @@ const max_timestamp: Ref<string> = ref("")
 vue.provide('min_timestamp', min_timestamp)
 vue.provide('max_timestamp', max_timestamp)
 const segment_sst: Ref<Sentiment2D> = ref({pos: 0.5, neg: 0.5}) 
+const tutorial_mode = ref(true)
+const tutorial_step = ref(0)
+vue.provide('tutorial_mode', tutorial_mode)
+vue.provide('tutorial_step', tutorial_step)
+const tutorial_intro: Ref<string[]> = ref(tutorial_intro_json.map(step => _.sum(step.content)))
 vue.provide('segment_sst', {segment_sst, updateThreshold})
 function updateThreshold(new_value) {
   segment_sst.value = new_value
@@ -104,7 +111,267 @@ watch(() => timeRange, (new_range, old_range) => {
       // this.updateDicts(subset)
     }
 })
+vue.watch(graph_constructed, (new_value, old_value) => {
+    nextTick(() => {
+      if(tutorial_mode.value) {
+        const grid_container = document.querySelector(".entity-grid-container") as HTMLElement
+        grid_container.style["max-height"] = "44%"
+        grid_container.style['grid-template-columns'] = "repeat(1, 0.5fr)"
+        grid_container.style["transition"] = "height 0.5s"
+        const first_scatter = document.querySelector("#scatter-0") as HTMLElement
+        first_scatter.style['cursor'] = "unset"
 
+        const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
+        tutorial_tooltip.style["opacity"] = "1"
+        const overview_toggler = document.querySelector(".overview-toggler") as HTMLElement
+        overview_toggler.style["opacity"] = "0"
+        const segment_toggler = document.querySelector(".segment-toggler-container") as HTMLElement
+        segment_toggler.style["opacity"] = "0"
+        const segment_legend = document.querySelector(".legend-container") as HTMLElement
+        segment_legend.style["opacity"] = "0"
+        const utilities_container = document.querySelector(".utilities-container") as HTMLElement
+        utilities_container.style["opacity"] = "0"
+      }
+    })
+})
+vue.watch(overview_mode, (new_value, old_value) => {
+    if(tutorial_mode.value && tutorial_step.value === 3) {
+      tutorial_intro.value[3] = 
+      "The TemporalView shows monthly sentiment changes on each outlet with two <br>" +
+      "parallel line charts. <br>" +
+      "x-axis encodes month, y-axis encodes " +
+      "<span style='background-color:rgb(29, 127, 119);filter:brightness(140%)'>&nbsppositive </span>" + 
+      ", " + 
+      "<span style='background-color:rgb(165, 106, 29);filter:brightness(140%)'>&nbspnegative </span>" + 
+      " or " +
+      "<span style='background-color:grey;filter:brightness(140%)'>&nbspneutral </span>" + 
+      " sentiment. <br>" +
+      "You can select any outlet to highlight it in the temporal view. <br> " +
+      "<br>" +
+      "<img src='src/assets/tutorial/temporal.png' width='498' height='221'> <br>"
+      nextTick(() => {
+        if(!overview_mode.value) {
+          const tCoord_container = document.querySelector(".tCoord-container") as HTMLElement
+          tCoord_container.style["width"] = "750px"
+          tCoord_container.style["height"] = "450px"
+          const temporal_selector = document.querySelector(".temporal-selector-container") as HTMLElement
+          temporal_selector.style["margin-top"] = "45px"
+          const selector_text = document.querySelector(".selector-option") as HTMLElement
+          selector_text.style["font-size"] = "x-large"
+          const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
+          tutorial_tooltip.style.left = "64%"
+          tutorial_tooltip.style.top = "12%"
+        }
+      })
+    } else {
+        nextTick(() => {
+          if(!overview_mode.value) {
+            const tCoord_container = document.querySelector(".tCoord-container") as HTMLElement
+            tCoord_container.style["width"] = "500px"
+            tCoord_container.style["height"] = "300px"
+            const temporal_selector = document.querySelector(".temporal-selector-container") as HTMLElement
+            temporal_selector.style["margin-top"] = "28px"
+            const selector_text = document.querySelector(".selector-option") as HTMLElement
+            selector_text.style["font-size"] = "x-small"
+          }
+        })
+    }
+})
+vue.watch(compare_mode, (new_value, old_value) => {
+  if(tutorial_mode.value && tutorial_step.value === 6) {
+      tutorial_intro.value[6] = 
+      "Drag & drop any scatter to the right panel. <br>" 
+      nextTick(() => {
+        const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
+        tutorial_tooltip.style.left = "36%"
+        tutorial_tooltip.style.top = "-2%"
+      })
+  }
+})
+vue.watch(tutorial_mode, (new_value, old_value) => {
+      const left_section = document.querySelector(".p-splitter-panel.expanded-section") as HTMLElement
+      const right_section = document.querySelector(".p-splitter-panel.sidebar") as HTMLElement
+      left_section.style.setProperty("flex-basis", "calc(55% - 4px)")
+      right_section.style.setProperty("flex-basis", "calc(45% - 4px)")
+      const grid_container = document.querySelector(".entity-grid-container") as HTMLElement
+      grid_container.style["max-height"] = "50%"
+
+      const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
+      tutorial_tooltip.style["opacity"] = "0"
+      const overview_toggler = document.querySelector(".overview-toggler") as HTMLElement
+      overview_toggler.style["opacity"] = "1"
+      const segment_toggler = document.querySelector(".segment-toggler-container") as HTMLElement
+      segment_toggler.style["opacity"] = "1"
+      const segment_legend = document.querySelector(".legend-container") as HTMLElement
+      segment_legend.style["opacity"] = "1"
+      const utilities_container = document.querySelector(".utilities-container") as HTMLElement
+      utilities_container.style["opacity"] = "1"
+
+
+})
+vue.watch(selectedScatterGraphs_left, (new_value, old_value) => {
+  if(tutorial_mode.value && tutorial_step.value === 4) {
+    tutorial_intro.value[4] = 
+      "You can open multiple scatterplots at the same time and use the tabs to switch among them."
+    nextTick(() => {
+      const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
+      tutorial_tooltip.style.left = "0%"
+      tutorial_tooltip.style.top = "4%"
+
+    })
+  }
+
+  if(tutorial_mode.value && tutorial_step.value < 8) {
+    nextTick(() => {
+      const show_temporal_btns = document.querySelectorAll(".show-temporal") as NodeListOf<HTMLElement>
+      show_temporal_btns.forEach(btn => btn.style["opacity"] = "0")
+    })
+  }
+}, {deep:true})
+vue.watch(selectedScatterGraphs_right, (new_value, old_value) => {
+  if(tutorial_mode.value && tutorial_step.value < 7) {
+    nextTick(() => {
+      const show_temporal_btns = document.querySelectorAll(".show-temporal") as NodeListOf<HTMLElement>
+      show_temporal_btns.forEach(btn => btn.style["opacity"] = "0")
+    })
+  }
+  if(tutorial_mode.value && tutorial_step.value === 7) {
+      if(selectedScatterGraphs_right.value[selectedScatterGraphs_right.value.length-1].type === ViewType.OutletScatter) {
+      tutorial_intro.value[7] = 
+        "Try click on the temporal button."
+        nextTick(() => {
+          const show_temporal_btns = document.querySelectorAll(".show-temporal") as NodeListOf<HTMLElement>
+          show_temporal_btns.forEach(btn => btn.style["opacity"] = "1")
+          const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
+          tutorial_tooltip.style.left = "54%"
+          tutorial_tooltip.style.top = "10%"
+        })
+      }
+  }
+  if(tutorial_mode.value && tutorial_step.value === 6) {
+    tutorial_intro.value[6] = 
+      "You can also drag the tabs directly."
+    nextTick(() => {
+        const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
+        tutorial_tooltip.style.left = "42%"
+        tutorial_tooltip.style.top = "-2%"
+
+    })
+
+  }
+}, {deep:true})
+vue.onMounted(() => {
+  if(tutorial_mode.value) {
+    document.addEventListener("keydown", (event) => {
+      if(tutorial_mode.value) {
+        if(event.keyCode === 39)
+          tutorial_step.value += 1
+        // if(event.keyCode === 37)
+          // tutorial_step.value -= 1
+      }
+    })
+    const left_section = document.querySelector(".p-splitter-panel.expanded-section") as HTMLElement
+    const right_section = document.querySelector(".p-splitter-panel.sidebar") as HTMLElement
+    const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
+    left_section.style["flex-basis"] = "0"
+    right_section.style["flex-basis"] = "100%"
+    tutorial_tooltip.style.position = "absolute"
+    tutorial_tooltip.style.width = "fit-content"
+    tutorial_tooltip.style.left = "50%"
+    tutorial_tooltip.style.top = "18%"
+    tutorial_tooltip.style["transition"] = "opacity 1s, width 1s, height 1s, left 1s, top 1s, right 1s"
+    const compare_toggler = document.querySelector(".compare_toggle") as HTMLElement
+    compare_toggler.style["opacity"] = "0"
+  }
+})
+vue.watch(tutorial_step, (new_value, old_value) => {
+  // introduce scatterplot
+  if(new_value === 0) {
+    const grid_container = document.querySelector(".entity-grid-container") as HTMLElement
+    grid_container.style["max-height"] = "44%"
+  }
+
+  // introduce outlet scatter grid
+  if(new_value === 1) {
+    const grid_container = document.querySelector(".entity-grid-container") as HTMLElement
+    grid_container.style['grid-template-columns'] = "repeat(3, 1fr)"
+    const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
+    tutorial_tooltip.style.right = "0px"
+    tutorial_tooltip.style.left = "auto"
+    tutorial_tooltip.style.top = "20px"
+  }
+  // introduce temporal 
+  if(new_value === 2) {
+    const utilities_container = document.querySelector(".utilities-container") as HTMLElement
+    utilities_container.style["transition"] = "opacity 1s"
+    utilities_container.style["opacity"] = "1"
+    const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
+    tutorial_tooltip.style.right = "auto"
+    tutorial_tooltip.style.left = "20%"
+    tutorial_tooltip.style.top = "80%"
+  }
+  if(new_value === 3) {
+    const overview_toggler = document.querySelector(".overview-toggler") as HTMLElement
+    overview_toggler.style["transition"] = "opacity 1s"
+    overview_toggler.style["opacity"] = "1"
+    const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
+    tutorial_tooltip.style.top = "1%"
+  }
+  if(new_value === 4) {
+    const left_section = document.querySelector(".p-splitter-panel.expanded-section") as HTMLElement
+    const right_section = document.querySelector(".p-splitter-panel.sidebar") as HTMLElement
+    right_section.style["transition"] = "flex-basis 1s"
+    left_section.style.setProperty("flex-basis", "calc(55% - 4px)")
+    right_section.style.setProperty("flex-basis", "calc(45% - 4px)")
+    const grid_container = document.querySelector(".entity-grid-container") as HTMLElement
+    if(grid_container) {
+      grid_container.style["max-height"] = "50%"
+    }
+    const tCoord_container = document.querySelector(".tCoord-container") as HTMLElement
+    if(tCoord_container) {
+      tCoord_container.style["width"] = "500px"
+      tCoord_container.style["height"] = "300px"
+      const temporal_selector = document.querySelector(".temporal-selector-container") as HTMLElement
+      temporal_selector.style["margin-top"] = "28px"
+      const selector_text = document.querySelector(".selector-option") as HTMLElement
+      selector_text.style["font-size"] = "x-small"
+    }
+    const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
+    tutorial_tooltip.style.left = "9%"
+    tutorial_tooltip.style.top = "7%"
+  }
+  if(new_value === 5) {
+    const segment_toggler = document.querySelector(".segment-toggler-container") as HTMLElement
+    segment_toggler.style["transition"] = "opacity 1s"
+    segment_toggler.style["opacity"] = "1"
+    const segment_legend = document.querySelector(".legend-container") as HTMLElement
+    segment_legend.style["transition"] = "opacity 1s"
+    segment_legend.style["opacity"] = "1"
+    const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
+    tutorial_tooltip.style.left = "66%"
+    tutorial_tooltip.style.top = "70%"
+  }
+  if(new_value === 6) {
+    const compare_toggler = document.querySelector(".compare_toggle") as HTMLElement
+    compare_toggler.style["transition"] = "opacity 1s"
+    compare_toggler.style["opacity"] = "1"
+    const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
+    tutorial_tooltip.style.left = "55%"
+    tutorial_tooltip.style.top = "-3%"
+  }
+  if(new_value === 7) {
+    // allow node click
+  }
+  if(new_value === 8) {
+    // allow node click
+  }
+  if(new_value === 9) {
+    // show finish notes
+    const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
+    tutorial_tooltip.style["opacity"] = "0"
+    tutorial_mode.value = false
+  }
+})
 function updateNpList(np_list) {
   // this.dataset = dataset
   // this.outlet_set = dataset.outlet_set
@@ -399,7 +666,7 @@ function highlightChanged(new_value) {
     <Splitter class="splitter-outmost" layout="vertical">
       <SplitterPanel id="overview-section" class="flex align-items-center justify-content-center" :size="100">
         <Splitter>
-          <SplitterPanel class="expanded-section flex align-items-center justify-content-center" :size="55" 
+          <SplitterPanel ref="expanded_section" class="expanded-section flex align-items-center justify-content-center" :size="55" 
             >
             <TargetContainer
             :class="{compare: compare_mode}"
@@ -473,7 +740,6 @@ function highlightChanged(new_value) {
                 :article_num_threshold="article_num_threshold"
                 :segment_mode="segment_mode"
                 :segmentation="segment_sst"
-                style="cursor: pointer"
                 :expanded="false"
                 :draggable="true"
                 @dragstart="handleDragScatter($event, index)"
@@ -528,7 +794,6 @@ function highlightChanged(new_value) {
             @outlet-filtered="updateEnabledOutlet"
             ></Filter>
           <MonthSlider v-if="selected_target.length!=0" v-model:selectedRange="timeRange" ></MonthSlider> -->
-
           </SplitterPanel>
         </Splitter>
       </SplitterPanel>
@@ -536,6 +801,7 @@ function highlightChanged(new_value) {
         <p> detail </p>
       </SplitterPanel> -->
     </Splitter>
+    <Tooltip class="tutorial_tooltip" :content="tutorial_intro[tutorial_step]"></Tooltip>
   </main>
 </template>
 
@@ -563,6 +829,9 @@ function highlightChanged(new_value) {
     filter: brightness(80%);
     background-color: rgb(191, 189, 189);
 } */
+:deep(.outlet-scatter) {
+  cursor: pointer;
+}
 :deep(.p-tabview) {
   height: 95vh !important;
   width: 100% !important;
@@ -649,7 +918,7 @@ function highlightChanged(new_value) {
 }
 .toolbar-container > :deep(.p-button) {
   border-radius: 8px !important;
-  display: flex !important;
+  // display: flex !important;
   margin: 3px !important;
 }
 .temporal-container {
@@ -672,6 +941,9 @@ function highlightChanged(new_value) {
 }
 :deep(.temporal-container > .temporal-selector-container) {
   margin-top: 28px;
+}
+.tutorial_tooltip {
+  opacity: 0;
 }
  </style>
 

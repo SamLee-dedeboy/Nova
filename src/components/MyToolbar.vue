@@ -44,6 +44,7 @@ export default {
                 console.log("Error loading articles.")
             })
         this.isLoading = false
+        this.testClicked()
         return
         for(const article of this.articles) {
             // topic

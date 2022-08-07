@@ -81,7 +81,6 @@ const object_bins_dict = vue.computed(() => {
         const neg_bins :Number[] = []
         for(let month = start_month.value; month < end_month.value; month++) {
             const articles = article_bins[month]
-            console.log("🚀 ~ file: TemporalCoordinates.vue ~ line 84 ~ Object.keys ~ articles", title, month, articles)
             if(articles === undefined || articles.length === 0) {
                 pos_bins.push(-1)
                 neg_bins.push(-1)
@@ -91,7 +90,6 @@ const object_bins_dict = vue.computed(() => {
                 neg_bins.push(bins.neg_sst)
             }
         }
-        console.log("🚀 ~ file: TemporalCoordinates.vue ~ line 95 ~ Object.keys ~ object_bins_dict", object_bins_dict)
         object_bins_dict[title] = {title, pos_bins, neg_bins}
     })
     return object_bins_dict

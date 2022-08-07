@@ -17,10 +17,6 @@ vue.watch(() => props.selectedTargets, (new_value, old_value) => {
     emit("update:selectedTargets", props.selectedTargets)
 })
 
-vue.onMounted(() => {
-    console.log(props.temporalBins)
-    console.log(props.closable)
-})
 function getSelectorColor(label) {
     return props.color_dict?props.color_dict[label] : "black"
 }

@@ -4,7 +4,7 @@
     <Button v-if="expanded" class="reset-zoom p-button-secondary" @click="resetZoom">reset</Button>
     <Button v-if="expanded" class="show-temporal p-button-secondary" @click="showTemporal">temporal</Button>
     <TooltipVue class='tooltip' :content="tooltip_content" style="z-index: 1000;"></TooltipVue>
-    <NodeInfo v-if="expanded" class='nodeinfo' :node="hovered_node_info" :total_articles="total_articles" style="position:absolute; z-index:1000;pointer-events: none;"></NodeInfo>
+    <NodeInfo class='nodeinfo' :node="hovered_node_info" :total_articles="total_articles" style="position:absolute; z-index:1000;pointer-events: none;"></NodeInfo>
     <Menu id="overlay_menu" ref="menu" :model="menu_items" :popup="true" 
     style="position: absolute; width: fit-content;"></Menu>
 
@@ -51,6 +51,15 @@ const total_articles = computed(() => {
 const {sst_threshold, updateThreshold} = vue.inject('segment_sst')
 const tooltip_content: Ref<String> = ref("") 
 const hovered_node_info: Ref<OutletNodeInfo> = ref({})
+const tutorial_mode: Ref<boolean> = vue.inject("tutorial_mode") || ref(false)
+const tutorial_step: Ref<number> = vue.inject("tutorial_step") || ref(0)
+vue.watch(tutorial_step, (new_value, old_value) => {
+    if(new_value === 1) {
+    const svg = d3.select(`#${props.id}`).select("svg")
+    svg.selectAll("circle.outlet_circle")
+        .style("pointer-events", "none")
+    }
+})
 const viewBox = [1000, 1000]
 const outlet_min_radius = 10
 const outlet_max_radius = 150
@@ -213,6 +222,7 @@ onMounted(() => {
             .style("top", e.offsetY - 5 + "px")
         })
         .on("mouseover", function(e, d) {
+            if(tutorial_mode.value && tutorial_step.value === 0) return
             svg.style("filter", "brightness(80%)")
             .style("background-color", "rgb(191,189,189)")
             d3.select(`#${props.id}`).select("div.tooltip")
@@ -227,16 +237,29 @@ onMounted(() => {
         })
     }       
     updateCanvas()
+    if(tutorial_mode.value && tutorial_step.value === 0) updateExpandedScatter()
     svg.append("g")
         .attr("class", "axis_x")
         .attr("transform", `translate(0, ${margin.top+viewBox_height})`)
         .call(d3.axisBottom(x))
+    svg.append("text")
+        .attr("class", "axis_x_label")
+        .attr("transform", `translate(${margin.left+viewBox_width-15}, ${margin.top+viewBox_height+5})`)
+        .attr("text-anchor", "middle")
+        .text("positive score")
+        .attr("fill", SstColors.pos_color)
 
     svg.append("g")
         .attr("class", "axis_y")
         .attr("transform", `translate(${margin.left},0)`)
         .call(d3.axisLeft(y))
         .raise()
+    svg.append("text")
+        .attr("class", "axis_y_label")
+        .attr("transform", `translate(${margin.left}, ${margin.top-10})`)
+        .attr("text-anchor", "middle")
+        .text("negative score")
+        .attr("fill", SstColors.neg_color)
 })
 
 
@@ -436,7 +459,10 @@ function updateExpandedScatter() {
                 .style("opacity", 0)
         })
         .on("click", (e, d) =>  {
+            if(tutorial_mode.value && tutorial_step.value < 7) { return }
             menu.value.toggle(e)
+            d3.select(`#${props.id}`).select(".nodeinfo")
+                .style("opacity", 0)
             nextTick(() => {
                 const overlay_menu = d3.select("#overlay_menu")
                     overlay_menu.style("left", e.clientX + 5 + "px")
