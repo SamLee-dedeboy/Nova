@@ -243,6 +243,13 @@ vue.watch(selectedScatterGraphs_left, (new_value, old_value) => {
   }
 }, {deep:true})
 vue.watch(selectedScatterGraphs_right, (new_value, old_value) => {
+  // closing tabs
+  console.log("right panel changes")
+  if(!new_value.find(scatter => scatter.type === ViewType.Temporal)) {
+    temporalBins.value = {}
+    console.log("empty")
+  }
+
   if(tutorial_mode.value && tutorial_step.value < 7) {
     nextTick(() => {
       const show_temporal_btns = document.querySelectorAll(".show-temporal") as NodeListOf<HTMLElement>
@@ -309,7 +316,6 @@ vue.onMounted(() => {
   }
 })
 vue.watch(tutorial_step, (new_value, old_value) => {
-  console.log("🚀 ~ file: HomeView.vue ~ line 309 ~ vue.watch ~ new_value", new_value)
   // introduce scatterplot
   if(new_value === 0) {
     const grid_container = document.querySelector(".entity-grid-container") as HTMLElement
