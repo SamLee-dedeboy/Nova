@@ -30,19 +30,23 @@ function showSearchResults(e) {
 }
 
 function handleSearchClicked(item) {
-    const list_container = document.querySelector('.list-container') as HTMLElement
-    list_container.style.display = "none"
-    const scroll_container = document.querySelector('.scroll-panel-container') as HTMLElement
-    scroll_container.style.display = "none"
     emit('entity_searched', item)
+    vue.nextTick(() => {
+        const list_container = document.querySelector('.list-container') as HTMLElement
+        list_container.style.display = "none"
+        const scroll_container = document.querySelector('.scroll-panel-container') as HTMLElement
+        scroll_container.style.display = "none"
 
+    })
 }
 
 function handleLoseFocus() {
-    const list_container = document.querySelector('.list-container') as HTMLElement
-    list_container.style.display = "none"
-    const scroll_container = document.querySelector('.scroll-panel-container') as HTMLElement
-    scroll_container.style.display = "none"
+    setTimeout(() => {
+        const list_container = document.querySelector('.list-container') as HTMLElement
+        list_container.style.display = "none"
+        const scroll_container = document.querySelector('.scroll-panel-container') as HTMLElement
+        scroll_container.style.display = "none"
+    }, 100)
 
 }
 </script>
@@ -62,7 +66,7 @@ function handleLoseFocus() {
         </div>
     </div>
 </template>
-<style scoped lang="scss">
+<style scoped>
 .search-result {
     height: 100%;
 }

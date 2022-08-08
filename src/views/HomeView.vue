@@ -92,6 +92,8 @@ vue.provide('tutorial_mode', tutorial_mode)
 vue.provide('tutorial_step', tutorial_step)
 const tutorial_intro: Ref<string[]> = ref(tutorial_intro_json.map(step => _.sum(step.content)))
 vue.provide('segment_sst', {segment_sst, updateThreshold})
+const highlight_node: Ref<string> = ref('')
+
 function updateThreshold(new_value) {
   segment_sst.value = new_value
 }
@@ -723,8 +725,8 @@ function highlightChanged(new_value) {
 }
 
 function handleSearch(item) {
-  console.log("🚀 ~ file: HomeView.vue ~ line 726 ~ handleSearch ~ item", item)
-
+  console.log("🚀 ~ file: HomeView.vue ~ line 728 ~ handleSearch ~ item", item)
+  highlight_node.value = item
 }
 </script>
 
@@ -806,11 +808,10 @@ function handleSearch(item) {
                 :graph="graph_dict[outlet]"
                 :graph_index="index"
                 :id="`scatter-${index}`"
-                :max_articles="max_articles"
-                :min_articles="min_articles"
                 :article_num_threshold="article_num_threshold"
                 :segment_mode="segment_mode"
                 :segmentation="segment_sst"
+                :highlight_node="highlight_node"
                 :expanded="false"
                 :draggable="true"
                 @dragstart="handleDragScatter($event, index)"
