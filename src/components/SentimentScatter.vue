@@ -28,6 +28,7 @@ const props = defineProps({
     graph: Object as () => ScatterOutletGraph,
     graph_index: Number,
     id: String,
+    highlight_node: String,
     expanded: Boolean,
     panel_class: String,
     article_num_threshold: Number,
@@ -60,6 +61,14 @@ vue.watch(tutorial_step, (new_value, old_value) => {
         .style("pointer-events", "none")
     }
 })
+vue.watch(() => props.highlight_node, (new_value, old_value) => {
+    return
+    const svg = d3.select(`#${props.id}`) .select("svg")
+    const highlight_circle = svg.selectAll("circle.outlet_circle").filter(d => { return d.text.split("-")[0] === props.highlight_node})
+    console.log(highlight_circle.node())
+    highlight_circle.attr("fill", "blue")
+})
+
 const viewBox = [1000, 1000]
 const outlet_min_radius = 10
 const outlet_max_radius = 150
