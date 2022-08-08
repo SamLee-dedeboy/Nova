@@ -221,6 +221,8 @@ vue.watch(tutorial_mode, (new_value, old_value) => {
       utilities_container.style["opacity"] = "1"
       const compare_toggler = document.querySelector(".compare_toggle") as HTMLElement
       compare_toggler.style["opacity"] = "1"
+      const search_bar_container = document.querySelector(".search-bar") as HTMLElement
+      search_bar_container.style["opacity"] = "1"
 
 
 })
@@ -312,6 +314,9 @@ vue.onMounted(() => {
     tutorial_tooltip.style.top = "18%"
     tutorial_tooltip.style["transition"] = "opacity 1s, width 1s, height 1s, left 1s, top 1s, right 1s"
     const compare_toggler = document.querySelector(".compare_toggle") as HTMLElement
+    compare_toggler.style["opacity"] = "0"
+    const search_bar_container = document.querySelector(".search-bar") as HTMLElement
+    search_bar_container.style["opacity"] = "0"
     compare_toggler.style["opacity"] = "0"
     const skip_button = document.querySelector(".skip-button") as HTMLElement
     skip_button.style.left = "84%"
