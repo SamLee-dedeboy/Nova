@@ -26,6 +26,7 @@ import TemporalCoordinates from "../components/TemporalCoordinates.vue";
 import TemporalPathSelector from "../components/TemporalPathSelector.vue";
 import SentimentScatter from "../components/SentimentScatter.vue";
 import Tooltip from "../components/Tooltip.vue";
+import SearchBar from "../components/SearchBar.vue";
 import tutorial_intro_json from "../assets/tutorial_intro.json"
 
   // data() {
@@ -65,12 +66,12 @@ const outlet_article_num_dict = ref({})
 vue.provide("outlet_article_num_dict", outlet_article_num_dict)
 const graph_dict = ref({})
 const graph_constructed: Ref<boolean> = ref(false)
-const entity_list: Ref<string[]> = computed(() => entity_mentions.value.map(entity_mention => entity_mention[0]))
+const entity_list: Ref<string[]> = computed(() => entity_mentions.value?.["CNN"].map(entity_mention => entity_mention.entity))
 const selectedScatterGraphs_left: Ref<ScatterOutletGraph[]> = ref([])
 const selectedScatterGraphs_right: Ref<ScatterOutletGraph[]> = ref([])
 const scatterClicked: Ref<boolean> = ref(false)
 const entity_data = computed(() => entity_mentions.value.map(entity_mention => { return {"name": entity_mention[0], "num": entity_mention[1].length || 0}}))
-const graph_constructing: Ref<boolean> = ref(false)
+const graph_constructing: Ref<boolean> = ref(true)
 const max_articles: Ref<number> = ref(0)
 const min_articles: Ref<number> = ref(0)
 vue.provide('min_articles', min_articles)
@@ -209,6 +210,7 @@ vue.watch(tutorial_mode, (new_value, old_value) => {
       tutorial_tooltip.style["opacity"] = "0"
       const overview_toggler = document.querySelector(".overview-toggler") as HTMLElement
       overview_toggler.style["opacity"] = "1"
+      overview_toggler.style.left = "unset"
       const segment_toggler = document.querySelector(".segment-toggler-container") as HTMLElement
       segment_toggler.style["opacity"] = "1"
       const segment_legend = document.querySelector(".legend-container") as HTMLElement
@@ -333,6 +335,7 @@ vue.watch(tutorial_step, (new_value, old_value) => {
     const skip_button = document.querySelector(".skip-button") as HTMLElement
     skip_button.style.left = "98%"
     skip_button.style.top = "59%"
+
   }
   // introduce temporal 
   if(new_value === 2) {
@@ -351,10 +354,12 @@ vue.watch(tutorial_step, (new_value, old_value) => {
     const overview_toggler = document.querySelector(".overview-toggler") as HTMLElement
     overview_toggler.style["transition"] = "opacity 1s"
     overview_toggler.style["opacity"] = "1"
+    overview_toggler.style.left = "-42%"
     const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
+    tutorial_tooltip.style.left = "60%"
     tutorial_tooltip.style.top = "1%"
     const skip_button = document.querySelector(".skip-button") as HTMLElement
-    skip_button.style.left = "49%"
+    skip_button.style.left = "89%"
     skip_button.style.top = "3%"
   }
   if(new_value === 4) {
@@ -376,6 +381,8 @@ vue.watch(tutorial_step, (new_value, old_value) => {
       const selector_text = document.querySelector(".selector-option") as HTMLElement
       selector_text.style["font-size"] = "x-small"
     }
+    const overview_toggler = document.querySelector(".overview-toggler") as HTMLElement
+    overview_toggler.style.left = "unset"
     const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
     tutorial_tooltip.style.left = "9%"
     tutorial_tooltip.style.top = "7%"
@@ -442,7 +449,8 @@ function datasetImported(dataset) {
   setTimeout(() => {
     const promise = new Promise((resolve) => { 
       outlet_article_dict.value = dataset.outlet_article_dict
-      const entity_mentions = dataset.entity_mentions
+      entity_mentions.value = dataset.entity_mentions
+      console.log("🚀 ~ file: HomeView.vue ~ line 453 ~ promise ~ entity_mentions", entity_mentions.value)
       let {outlet_set, r_article_dict, r_article_bins_dict, r_min_timestamp, r_max_timestamp, r_outlet_article_num_dict} = preprocess.processArticleDict(outlet_article_dict.value)
       outlet_article_num_dict.value = r_outlet_article_num_dict
       outlet_article_bins_dict.value = r_article_bins_dict
@@ -451,7 +459,7 @@ function datasetImported(dataset) {
       max_timestamp.value = r_max_timestamp
       // articles.value = normalized_articles
       article_dict.value = r_article_dict
-      let {r_graph_dict, r_max_articles, r_min_articles, r_node_article_id_dict} = preprocess.constructEntityGraph(entity_mentions, article_dict.value)
+      let {r_graph_dict, r_max_articles, r_min_articles, r_node_article_id_dict} = preprocess.constructEntityGraph(entity_mentions.value, article_dict.value)
       graph_dict.value = r_graph_dict
       max_articles.value = r_max_articles
       min_articles.value = r_min_articles
@@ -714,6 +722,10 @@ function highlightChanged(new_value) {
   highlight_outlet.value = new_value
 }
 
+function handleSearch(item) {
+  console.log("🚀 ~ file: HomeView.vue ~ line 726 ~ handleSearch ~ item", item)
+
+}
 </script>
 
 
@@ -769,6 +781,9 @@ function highlightChanged(new_value) {
           <SplitterPanel id='sidebar' class="sidebar flex align-items-center justify-content-center" :size="45" :min-size="45">
             <div class="toolbar-container">
               <ToggleButton class='compare_toggle ' v-model="compare_mode" onIcon="pi pi-image" offIcon="pi pi-images"></ToggleButton>
+              <div class="search-bar">
+                <SearchBar v-if="graph_constructed" :search_terms="entity_list" @entity_searched="handleSearch"></SearchBar>
+              </div>
               <MyToolbar ref="toolbar" 
               @candidate_updated="updateNpList"
               @dataset_imported="datasetImported"  >
@@ -972,8 +987,8 @@ function highlightChanged(new_value) {
   height: 300px;
 }
 .toolbar-container {
-  display: flex;
   margin-left: var(--margin_left); 
+  height: 50px;
 }
 .toolbar-container > :deep(.p-button) {
   border-radius: 8px !important;
@@ -1008,6 +1023,15 @@ function highlightChanged(new_value) {
   position: absolute;
   opacity: 0;
   cursor: pointer;
+}
+.overview-toggler {
+  float:right;
+}
+.search-bar {
+  z-index:1000;
+  display:inline-block;
+  // transform: translateY(-50%);
+  height: 50px;
 }
  </style>
 

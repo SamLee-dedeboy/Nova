@@ -101,8 +101,8 @@ export default {
 
 <template>
 
-    <Button label="Import" class="p-button-secondary"></Button>
-    <Button label="Test" @click="testClicked" class="p-button-secondary" :loading="isLoading"></Button>
+    <Button label="Import" class="p-button-secondary" style="display: none"></Button>
+    <!-- <Button label="Test" @click="testClicked" class="p-button-secondary" :loading="isLoading"></Button> -->
 </template> 
 
 <style scoped>
