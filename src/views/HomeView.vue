@@ -77,8 +77,9 @@ const min_articles: Ref<number> = ref(0)
 vue.provide('min_articles', min_articles)
 vue.provide('max_articles', max_articles)
 const compare_mode: Ref<boolean> = ref(false)
+vue.provide('compare_mode', compare_mode)
 const segment_mode: Ref<boolean> = ref(false)
-const article_num_threshold: Ref<number> = ref(10)
+const article_num_threshold: Ref<number> = ref(20)
 const highlight_outlet: Ref<string[]> = ref([])
 const overview_mode: Ref<boolean> = ref(true)
 const min_timestamp: Ref<string> = ref("")
@@ -86,7 +87,7 @@ const max_timestamp: Ref<string> = ref("")
 vue.provide('min_timestamp', min_timestamp)
 vue.provide('max_timestamp', max_timestamp)
 const segment_sst: Ref<Sentiment2D> = ref({pos: 0.5, neg: 0.5}) 
-const tutorial_mode = ref(true)
+const tutorial_mode = ref(false)
 const tutorial_step = ref(0)
 vue.provide('tutorial_mode', tutorial_mode)
 vue.provide('tutorial_step', tutorial_step)
@@ -250,10 +251,8 @@ vue.watch(selectedScatterGraphs_left, (new_value, old_value) => {
 }, {deep:true})
 vue.watch(selectedScatterGraphs_right, (new_value, old_value) => {
   // closing tabs
-  console.log("right panel changes")
   if(!new_value.find(scatter => scatter.type === ViewType.Temporal)) {
     temporalBins.value = {}
-    console.log("empty")
   }
 
   if(tutorial_mode.value && tutorial_step.value < 7) {
@@ -457,7 +456,6 @@ function datasetImported(dataset) {
     const promise = new Promise((resolve) => { 
       outlet_article_dict.value = dataset.outlet_article_dict
       entity_mentions.value = dataset.entity_mentions
-      console.log("🚀 ~ file: HomeView.vue ~ line 453 ~ promise ~ entity_mentions", entity_mentions.value)
       let {outlet_set, r_article_dict, r_article_bins_dict, r_min_timestamp, r_max_timestamp, r_outlet_article_num_dict} = preprocess.processArticleDict(outlet_article_dict.value)
       outlet_article_num_dict.value = r_outlet_article_num_dict
       outlet_article_bins_dict.value = r_article_bins_dict
@@ -753,6 +751,7 @@ function handleSearch(item) {
             :article_num_threshold="article_num_threshold"
             :segment_mode="segment_mode"
             v-model:segmentation="segment_sst"
+            :highlight_node="highlight_node"
             @drop="handleDropScatter($event)"
             @dragover="handleDragOver($event)"
             @dragleave="handleDragLeave($event)"
@@ -776,6 +775,7 @@ function handleSearch(item) {
             :article_num_threshold="article_num_threshold"
             :segment_mode="segment_mode"
             v-model:segmentation="segment_sst"
+            :highlight_node="highlight_node"
             @drop="handleDropScatter($event)"
             @dragover="handleDragOver($event)"
             @dragleave="handleDragLeave($event)"
@@ -843,13 +843,13 @@ function handleSearch(item) {
               <div v-if="graph_constructed" class="slider-container">
                 <InputText class="threshold-input" v-model="article_num_threshold"></InputText>
                 <Button class="increment-button p-button-secondary" label="+"  @click="() => article_num_threshold=Math.min(article_num_threshold+=10, max_articles||100)"></Button>
-                <Button class="decrease-button p-button-secondary " label="-"  @click="() => article_num_threshold=Math.max(article_num_threshold-10, 10)"></Button>
-                <Slider v-model="article_num_threshold" :step="1" :min="10" :max="max_articles||100"></Slider>
+                <Button class="decrease-button p-button-secondary " label="-"  @click="() => article_num_threshold=Math.max(article_num_threshold-10, 0)"></Button>
+                <Slider v-model="article_num_threshold" :step="10" :min="0" :max="max_articles||100"></Slider>
                 <ColorSpectrum class="color-spectrum" v-if="graph_constructed" 
                 :color-scale="SstColors.article_num_color_scale"
                 ></ColorSpectrum>
                 <div class="indicator-container">
-                  <div class="min_indicator">10</div>
+                  <div class="min_indicator">0</div>
                   <div class="max_indicator">{{max_articles || 100}}</div>
                 </div>
               </div>

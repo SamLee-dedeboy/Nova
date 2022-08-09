@@ -154,8 +154,8 @@ export function construct_node(articles, label): ScatterOutletNode {
             articles: article_num,
             pos_articles: pos_artcs.length,
             neg_articles: neg_artcs.length,
-            pos_sst: pos_score,
-            neg_sst: neg_score,
+            pos_sst: parseFloat(pos_score.toFixed(2)),
+            neg_sst: parseFloat(neg_score.toFixed(2)),
         }
     }
     return node

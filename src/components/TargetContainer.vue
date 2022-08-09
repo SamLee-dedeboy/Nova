@@ -15,6 +15,8 @@ import TemporalCoordinates from "./TemporalCoordinates.vue";
 import TemporalPathSelector from "./TemporalPathSelector.vue";
 import SentimentScatter from "./SentimentScatter.vue";
 import NodeInfo from "./NodeInfo.vue"
+import DataTable from "primevue/datatable";
+import Column from 'primevue/column'
 import * as _ from "lodash"
 
 const props = defineProps({
@@ -27,10 +29,12 @@ const props = defineProps({
     article_num_threshold: Number,
     segment_mode: Boolean,
     segmentation: Object as () => {pos: Number, neg: Number},
+    highlight_node: String, 
 })
 const scatterClicked: Ref<boolean> = ref(false)
 const active: Ref<number> = ref(0)
 const highlight_entity: Ref<string[]> = ref([])
+const compare_mode = vue.inject("compare_mode") || ref(false)
 const selectedEntities = vue.computed(() => {
     return Object.keys(props.temporalBins)
 })
@@ -97,7 +101,7 @@ watch(() => props.selectedScatters, (new_scatters, old_scatters) => {
                 const scatter = props.selectedScatters![index]
                 e.dataTransfer.setData('scatter', JSON.stringify(scatter))  
             })})
-        })
+    })
 }, {deep:true})
 
 // watch(() => selectedScatters_list, (new_value) => {
@@ -174,13 +178,28 @@ function handleShowTemporal(nodes) {
 function handleDragScatter(e) {
     console.log(e.target)
 }
+function colHeader(graph_type: ViewType): string {
+    if(graph_type === ViewType.OutletScatter) return "outlet"
+    if(graph_type === ViewType.EntityScatter) return "entity"
+    return "title"
+}
+
+function rowHeader(data: string, graph_type: ViewType): string {
+    if(graph_type === ViewType.OutletScatter) return data.split("-")[1] 
+    if(graph_type === ViewType.EntityScatter) return data.split("-")[0]
+    return data 
+}
+
+function breakText(data: string): string[] {
+    return data.split("_")
+}
 </script>
 
 <template>
 <TabView class="graph-container" :class="compare_part" v-model:activeIndex="active" :scrollable="true"
     ref="tabview"
     >
-    <TabPanel class="graph-panel" :class="compare_part" 
+    <TabPanel class="graph-panel" :class="compare_part"
      v-for="(graph, index) in selectedScatters" :key="graph.title" ref="tabpanels" 
       >
         <template #header>
@@ -189,22 +208,45 @@ function handleDragScatter(e) {
             <Button icon="pi pi-times" class="p-button-rounded p-button-danger p-button-text p-button-sm"
             @click="handleCloseTab($event, index)"/>
 		</template>
-        <KeepAlive>
-        <SentimentScatter
-            v-if="graph.type === ViewType.EntityScatter || graph.type === ViewType.OutletScatter"
-            :graph="graph"
-            :graph_index="index"
-            :id="`${compare_part}-scatter-${index}-expanded`"
-            :expanded="true"
-            :panel_class="compare_part" 
-            :article_num_threshold="article_num_threshold"
-            :segment_mode="segment_mode"
-            :segmentation="segmentation"
-            @update:segmentation="updateSegmentation"
-            @node_clicked="handleEntityClicked"
-            @show_temporal="handleShowTemporal"
-        ></SentimentScatter>
-        </KeepAlive>
+        <div class="scatter-panel-container"
+            v-if="graph.type === ViewType.EntityScatter || graph.type === ViewType.OutletScatter">
+            <SentimentScatter
+                :graph="graph"
+                :graph_index="index"
+                :id="`${compare_part}-scatter-${index}-expanded`"
+                :class="{compare: compare_mode}"
+                :expanded="true"
+                :panel_class="compare_part" 
+                :article_num_threshold="article_num_threshold"
+                :segment_mode="segment_mode"
+                :segmentation="segmentation"
+                :highlight_node="highlight_node"
+                @update:segmentation="updateSegmentation"
+                @node_clicked="handleEntityClicked"
+                @show_temporal="handleShowTemporal"
+            ></SentimentScatter>
+            <div class="scatter-info-container">
+                <DataTable :value="graph.nodes.sort((a, b) => -(a.articles-b.articles))"
+                scrollable 
+                scrollHeight="150px"
+                :virtualScrollerOptions="{itemSize: 30}"
+                style="font-size: x-small" >
+                    <Column field="text" :header="colHeader(graph.type)">
+                        <template #body="{data}">
+                            <div class="col-outlet" :title="rowHeader(data.text, graph.type)">
+                                <div v-for="word in breakText(rowHeader(data.text, graph.type))" :key="word">{{word}}</div>
+                            </div>
+                        </template>
+                    </Column>
+                    <Column field="articles" header="articles"></Column>
+                    <Column field="pos_articles" header="pos articles"></Column>
+                    <Column field="neg_articles" header="neg articles"></Column>
+                    <Column field="pos_sst" header="pos score"></Column>
+                    <Column field="neg_sst" header="neg score"></Column>
+                </DataTable>
+
+            </div>
+        </div>
         <div class="target-temporal-container" v-if="graph.type === ViewType.Temporal">
             <TemporalCoordinates 
                 class="temporal-coord"
@@ -253,9 +295,12 @@ function handleDragScatter(e) {
 </template>
 
 <style scoped lang="scss">
-.graph-container .graph-panel {
+.graph-container .graph-panel,.scatter-panel-container  {
     width: inherit;
     height: inherit;
+}
+.compare {
+    height: 50%;
 }
 .dropdown-container {
     position: absolute;
@@ -312,5 +357,24 @@ function handleDragScatter(e) {
     height: 1.757rem !important;
     margin-left: auto;
     margin-right: 0;
+}
+:deep(.p-datatable .p-datatable-thead > tr > th) {
+    padding: unset !important;
+}
+:deep(.p-datatable .p-datatable-tbody > tr > td) {
+    padding: unset !important;
+}
+:deep(.p-datatable .p-column-header-content) {
+    justify-content: center;
+}
+:deep(.p-datatable .p-datatable-thead > tr > th) {
+    text-align: center;
+}
+:deep(.p-datatable .p-datatable-tbody > tr > td) {
+    text-align: center;
+}
+.col-outlet {
+    text-align: left;
+    padding-right: 10px;
 }
 </style>

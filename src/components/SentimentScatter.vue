@@ -1,8 +1,10 @@
 <template>
 <div :id="props.id" class="scatter-container" :class="panel_class">
     <svg class="outlet-scatterplot" :class="panel_class"></svg>
-    <Button v-if="expanded" class="reset-zoom p-button-secondary" @click="resetZoom">reset</Button>
-    <Button v-if="expanded" class="show-temporal p-button-secondary" @click="showTemporal">temporal</Button>
+    <div class="button-set">
+        <Button v-if="expanded" class="reset-zoom p-button-secondary" @click="resetZoom">reset</Button>
+        <Button v-if="expanded" class="show-temporal p-button-secondary" @click="showTemporal">temporal</Button>
+    </div>
     <TooltipVue class='tooltip' :content="tooltip_content" style="z-index: 1000;"></TooltipVue>
     <NodeInfo class='nodeinfo' :node="hovered_node_info" :total_articles="total_articles" style="position:absolute; z-index:1000;pointer-events: none;"></NodeInfo>
     <Menu id="overlay_menu" ref="menu" :model="menu_items" :popup="true" 
@@ -62,11 +64,11 @@ vue.watch(tutorial_step, (new_value, old_value) => {
     }
 })
 vue.watch(() => props.highlight_node, (new_value, old_value) => {
-    return
-    const svg = d3.select(`#${props.id}`) .select("svg")
-    const highlight_circle = svg.selectAll("circle.outlet_circle").filter(d => { return d.text.split("-")[0] === props.highlight_node})
-    console.log(highlight_circle.node())
-    highlight_circle.attr("fill", "blue")
+    updateCanvas()
+    // const svg = d3.select(`#${props.id}`) .select("svg")
+    // const highlight_circle = svg.selectAll("circle.outlet_circle").filter(d => { return d.text.split("-")[0] === props.highlight_node})
+    // console.log(highlight_circle.node())
+    // highlight_circle.attr("fill", "blue")
 })
 
 const viewBox = [1000, 1000]
@@ -555,6 +557,11 @@ function updateOverviewScatter() {
     if(current_zoom) {
         dots.attr("transform", current_zoom)
     }
+    if(props.graph?.type === ViewType.EntityScatter) {
+        const highlight_circle = svg.selectAll("circle.outlet_circle").filter(d => { return d.text.split("-")[0] === props.highlight_node})
+        highlight_circle.attr("fill", "blue")
+    }
+    
     // dots.attr("opacity", (d) => (d.articles < props.article_num_threshold? 0:0.8))
 }
 
@@ -599,9 +606,13 @@ function updateNodeInfo(node_data: ScatterOutletNode) {
     transform-origin: top left;
     min-width: 200px;
 }
-.reset-zoom {
+.button-set {
     position: absolute;
-    left: 80%;
+    left: 70%;
+    top:-4%;
+    display:inline-flex;
+}
+.reset-zoom {
     font-size: smaller;
     padding-top: 3px;
     padding-bottom: 3px;
@@ -609,13 +620,11 @@ function updateNodeInfo(node_data: ScatterOutletNode) {
     padding-right: 5px;
 }
 .show-temporal {
-    position: absolute;
-    left: 80%;
-    top: 5%;
     font-size: smaller;
     padding-top: 3px;
     padding-bottom: 3px;
     padding-left: 5px;
     padding-right: 5px;
+    margin-left:5px;
 }
 </style>
