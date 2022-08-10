@@ -15,6 +15,7 @@ import TemporalCoordinates from "./TemporalCoordinates.vue";
 import TemporalPathSelector from "./TemporalPathSelector.vue";
 import SentimentScatter from "./SentimentScatter.vue";
 import NodeInfo from "./NodeInfo.vue"
+import ArticleInfo from "./ArticleInfo.vue";
 import DataTable from "primevue/datatable";
 import Column from 'primevue/column'
 import * as _ from "lodash"
@@ -29,12 +30,17 @@ const props = defineProps({
     article_num_threshold: Number,
     segment_mode: Boolean,
     segmentation: Object as () => {pos: Number, neg: Number},
-    highlight_node: String, 
+    highlight_nodes: Object as () => string[], 
 })
 const scatterClicked: Ref<boolean> = ref(false)
 const active: Ref<number> = ref(0)
 const highlight_entity: Ref<string[]> = ref([])
 const compare_mode = vue.inject("compare_mode") || ref(false)
+const selectedNodes: Ref<any[]> = ref([])
+const lastSelectedNode = vue.computed(() => {
+    return selectedNodes.value.length > 0? selectedNodes.value[selectedNodes.value.length-1] : undefined
+})
+const highlightNodes: Ref<string[]> = ref([])
 const selectedEntities = vue.computed(() => {
     return Object.keys(props.temporalBins)
 })
@@ -46,15 +52,12 @@ const temporal_color_dict = vue.computed(() => {
     })
     return color_dict
 })
-const scatterInfo = vue.computed(() => {
-    let info: OutletNodeInfo
-    props.selectedScatters!.forEach(scatter => {
-        if(scatter.type === ViewType.OutletScatter || scatter.type === ViewType.EntityScatter) {
-            info.text = scatter.title
-            info.pos_articles = scatter
-
-        }
-    })
+vue.watch(() => props.highlight_nodes, (new_value, old_value) => {
+    highlightNodes.value = props.highlight_nodes || []
+}, {deep:true})
+vue.watch(selectedNodes, (new_value, old_value) => {
+    highlightNodes.value = selectedNodes.value?.map(node => node.text.split("-")[0])
+    
 })
 // const selectedScatters: Ref<Set<ScatterOutletGraph> | undefined> = toRef(props, 'selectedScatters')
 // const selectedScatters_list = computed(() => {
@@ -111,6 +114,7 @@ watch(() => props.selectedScatters, (new_scatters, old_scatters) => {
 const emit = defineEmits(['update:selectedScatters', "update:segmentation", "node-clicked", "entity-clicked", "show_temporal"])
 
 vue.onMounted(() => {
+    highlightNodes.value = props.highlight_nodes || []
 
 })
 function handleNodeClicked({type, d}) {
@@ -220,13 +224,14 @@ function breakText(data: string): string[] {
                 :article_num_threshold="article_num_threshold"
                 :segment_mode="segment_mode"
                 :segmentation="segmentation"
-                :highlight_node="highlight_node"
+                :highlight_nodes="highlightNodes"
                 @update:segmentation="updateSegmentation"
                 @node_clicked="handleEntityClicked"
                 @show_temporal="handleShowTemporal"
             ></SentimentScatter>
             <div class="scatter-info-container">
                 <DataTable :value="graph.nodes.sort((a, b) => -(a.articles-b.articles))"
+                v-model:selection="selectedNodes" selectionMode="multiple" dataKey="text" :metaKeySelection="false"
                 scrollable 
                 scrollHeight="150px"
                 :virtualScrollerOptions="{itemSize: 30}"
@@ -241,10 +246,22 @@ function breakText(data: string): string[] {
                     <Column field="articles" header="articles"></Column>
                     <Column field="pos_articles" header="pos articles"></Column>
                     <Column field="neg_articles" header="neg articles"></Column>
-                    <Column field="pos_sst" header="pos score"></Column>
-                    <Column field="neg_sst" header="neg score"></Column>
+                    <Column field="pos_sst" header="pos score">
+                        <template #body="{data}">
+                            <span :title="data.pos_sst"> {{data.pos_sst.toFixed(2)}}
+                            </span>
+                        </template>
+                    </Column>
+                    <Column field="neg_sst" header="neg score">
+                        <template #body="{data}">
+                            <span :title="data.neg_sst"> {{data.neg_sst.toFixed(2)}}
+                            </span>
+                        </template>
+                    </Column>
                 </DataTable>
-
+                <ArticleInfo v-if="lastSelectedNode" 
+                :id="`${compare_part}-article-info-${index}`"
+                :topicBins="lastSelectedNode.topicBins"></ArticleInfo>
             </div>
         </div>
         <div class="target-temporal-container" v-if="graph.type === ViewType.Temporal">
@@ -371,10 +388,15 @@ function breakText(data: string): string[] {
     text-align: center;
 }
 :deep(.p-datatable .p-datatable-tbody > tr > td) {
+    display: block;
     text-align: center;
+    cursor: pointer;
+}
+:deep(.p-datatable .p-datatable-tbody > tr:hover) {
+    background-color: #E3F2FD;
 }
 .col-outlet {
     text-align: left;
-    padding-right: 10px;
 }
+
 </style>

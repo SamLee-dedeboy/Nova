@@ -20,6 +20,7 @@ export interface ScatterOutletNode {
     neg_articles: number,
     pos_sst: number,
     neg_sst: number,
+    topicBins: {[id: string]: {topic: string, freq: number}}
 }
 export interface OutletNodeInfo {
     text: string,

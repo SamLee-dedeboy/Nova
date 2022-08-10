@@ -125,8 +125,20 @@ export function construct_node(articles, label): ScatterOutletNode {
             neg_articles: 0,
             pos_sst: 0,
             neg_sst: 0,
+            topicBins: {}
         }
     } else {
+        let topicBins = {}
+        articles.forEach(article => {
+            if(!topicBins[article.top_level_topic]) {
+                topicBins[article.top_level_topic] = {pos: 0, neg: 0}
+            }
+            if(article.sentiment.normalized_sst >= 0)
+                topicBins[article.top_level_topic].pos += 1
+            else
+                topicBins[article.top_level_topic].neg += 1
+            
+        })
         const pos_artcs = articles.map(article => article.sentiment.normalized_sst).filter(sst => sst >= 0)
         const neg_artcs = articles.map(article => article.sentiment.normalized_sst).filter(sst => sst < 0)
 
@@ -154,8 +166,9 @@ export function construct_node(articles, label): ScatterOutletNode {
             articles: article_num,
             pos_articles: pos_artcs.length,
             neg_articles: neg_artcs.length,
-            pos_sst: parseFloat(pos_score.toFixed(2)),
-            neg_sst: parseFloat(neg_score.toFixed(2)),
+            pos_sst: pos_score,
+            neg_sst: neg_score,
+            topicBins: topicBins,
         }
     }
     return node
