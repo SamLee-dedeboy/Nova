@@ -36,9 +36,23 @@ const scatterClicked: Ref<boolean> = ref(false)
 const active: Ref<number> = ref(0)
 const highlight_entity: Ref<string[]> = ref([])
 const compare_mode = vue.inject("compare_mode") || ref(false)
-const selectedNodes: Ref<any[]> = ref([])
-const lastSelectedNode = vue.computed(() => {
-    return selectedNodes.value.length > 0? selectedNodes.value[selectedNodes.value.length-1] : undefined
+const selectedNodes: Ref<ScatterOutletNode[]> = ref([])
+const topicBins = vue.computed(() => {
+    if(selectedNodes.value.length === 0) return undefined
+    let bins = {}
+    const topic_set: Set<string> = new Set()
+    selectedNodes.value.forEach(node => {
+        Object.keys(node.topicBins).forEach(topic => topic_set.add(topic))
+    })
+    selectedNodes.value.forEach(node => {
+        topic_set.forEach(topic => {
+            if(bins[topic] === undefined) {
+                bins[topic] = []
+            } 
+            bins[topic].push({title: node.text, pos: node.topicBins[topic]?.pos || 0, neg: node.topicBins[topic]?.neg || 0 })
+        })
+    })
+    return bins
 })
 const highlightNodes: Ref<string[]> = ref([])
 const selectedEntities = vue.computed(() => {
@@ -259,9 +273,9 @@ function breakText(data: string): string[] {
                         </template>
                     </Column>
                 </DataTable>
-                <ArticleInfo v-if="lastSelectedNode" 
+                <ArticleInfo v-if="selectedNodes.length !== 0" 
                 :id="`${compare_part}-article-info-${index}`"
-                :topicBins="lastSelectedNode.topicBins"></ArticleInfo>
+                :topicBins="topicBins"></ArticleInfo>
             </div>
         </div>
         <div class="target-temporal-container" v-if="graph.type === ViewType.Temporal">
