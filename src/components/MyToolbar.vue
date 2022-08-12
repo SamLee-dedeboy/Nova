@@ -16,6 +16,7 @@ export default {
             articles: {},
             outlet_article_dict: {},
             entity_mentions: {},
+            entity_cooccurrences_outlet_dict: {},
             isLoading: true,
         }
     },
@@ -42,6 +43,11 @@ export default {
             },
             response => {
                 console.log("Error loading articles.")
+            })
+        await fetch("entity_cooccurrences_groupby_outlet.json")
+            .then(res => res.json())
+            .then(json => {
+                this.entity_cooccurrences_outlet_dict = json
             })
         this.isLoading = false
         this.testClicked()
@@ -84,8 +90,11 @@ export default {
         
         testClicked() {
             this.$emit("dataset_imported", 
-            {outlet_article_dict: this.outlet_article_dict,
-            entity_mentions: this.entity_mentions}
+            {
+                outlet_article_dict: this.outlet_article_dict,
+                entity_mentions: this.entity_mentions,
+                entity_cooccurrences_outlet_dict: this.entity_cooccurrences_outlet_dict,
+            }
             // {
                 // articles: this.articles, 
             // entity_mentions: this.entity_mentions,

@@ -8,6 +8,7 @@ import re
 import json
 # pp = pprint.PrettyPrinter(indent=4)
 import numpy as np
+from collections import defaultdict
 
 def getRawDataset():
     file = open("data/articles.json")
@@ -65,18 +66,30 @@ def gen_candidate_entities(filepath="data/rel_entities_ner.json", min_mentions=5
     # dict_to_json(candidates, filepath="data/candidate_entities.json")
     dict_to_json(dict({"ranked_entity_list": sorted_entity_list}), filepath="data/entities.json")
 
-def gen_entity_cooccurrence(filepath="data/candidate_entities.json"):
+def gen_entity_cooccurrence(filepath="data/entities_gt10.json"):
     file = open(filepath)
     entity_list = json.load(file)["ranked_entity_list"]
-
+    article_list = json.load(open("data/processed_articles_rel_hugFace.json"))
+    article_dict = {}
+    count = 0
+    for article in article_list:
+        article_dict[article["id"]] = article
     cooccurrence_mat = defaultdict(lambda: defaultdict(list)) 
+    coocccurrence_groupby_dict = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
     for [entity1, mentioned_articles1] in entity_list:
         for [entity2, mentioned_articles2] in entity_list: 
-            cooccurred_articles = list(set(mentioned_articles1) & set(mentioned_articles2))
-            cooccurrence_mat[entity1][entity2] = cooccurred_articles
-    dict_to_json(cooccurrence_mat, filepath="data/candidate_cooccurrences.json")
-
+            cooccurred_article_ids = list(set(mentioned_articles1) & set(mentioned_articles2))
+            
+            cooccurrence_mat[entity1][entity2] = cooccurred_article_ids
+            for article_id in cooccurred_article_ids:
+                article = article_dict[article_id]
+                journal_cooccurr_dict = coocccurrence_groupby_dict[article["journal"]]
+                journal_cooccurr_dict[entity1][entity2].append(article["id"])
+                count+=1
+    # dict_to_json(cooccurrence_mat, filepath="data/entity_cooccurrences.json")
+    dict_to_json(coocccurrence_groupby_dict, filepath="data/entity_cooccurrences_groupby_outlet.json")
     return
+
 def articles_groupby_outlet(filepath="data/processed_articles_rel_hugFace.json"):
     article_list = pd.read_json(filepath)
     outlet_article_dict = dict(tuple(article_list.groupby(['journal'])))
@@ -110,7 +123,4 @@ article_filepath="data/outlet_article_dict.json"):
         res[outlet] = candidate_entities
     dict_to_json(res, filepath="data/entities_groupby_outlet.json")
 
-
-entities_groupy_outlet()
-# articles_groupby_outlet()
-# gen_candidate_entities()
+gen_entity_cooccurrence()

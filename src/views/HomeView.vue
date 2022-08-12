@@ -64,6 +64,7 @@ const outlet_article_bins_dict = ref({})
 const outlet_article_dict = ref({})
 const outlet_article_num_dict = ref({})
 vue.provide("outlet_article_num_dict", outlet_article_num_dict)
+const entity_cooccurrences_groupby_outlet = ref({})
 const graph_dict = ref({})
 const graph_constructed: Ref<boolean> = ref(false)
 const entity_list: Ref<string[]> = computed(() => entity_mentions.value?.["CNN"].map(entity_mention => entity_mention.entity))
@@ -456,6 +457,8 @@ function datasetImported(dataset) {
     const promise = new Promise((resolve) => { 
       outlet_article_dict.value = dataset.outlet_article_dict
       entity_mentions.value = dataset.entity_mentions
+      entity_cooccurrences_groupby_outlet.value = dataset.entity_cooccurrences_outlet_dict
+
       let {outlet_set, r_article_dict, r_article_bins_dict, r_min_timestamp, r_max_timestamp, r_outlet_article_num_dict} = preprocess.processArticleDict(outlet_article_dict.value)
       outlet_article_num_dict.value = r_outlet_article_num_dict
       outlet_article_bins_dict.value = r_article_bins_dict
@@ -702,6 +705,21 @@ function handleEntityClicked({type, d}) {
       var temporal_graph: ScatterOutletGraph= {title: "Temporal", type: ViewType.Temporal, nodes: []}
       selectedScatterGraphs_right.value.push(temporal_graph)
     }
+    return
+  }
+  if(type === ViewType.CooccurrScatter) {
+    const entity = d.text.split("-")[0]
+    const outlet = d.text.split("-")[1]
+    const cooccurrences = entity_cooccurrences_groupby_outlet.value[outlet][entity]
+    const title = `co-${entity}-${outlet}` 
+    var cooccurr_graph: ScatterOutletGraph= {title: title, type: ViewType.CooccurrScatter, nodes: []}
+    Object.keys(cooccurrences).forEach(entity2 => {
+      const cooccurr_article_ids = cooccurrences[entity2]
+      const articles = preprocess.idsToArticles(cooccurr_article_ids, article_dict.value)
+      const node = preprocess.construct_node(articles, `${entity2}-${entity}`)
+      cooccurr_graph.nodes.push(node)
+    });
+    selectedScatterGraphs_right.value.push(cooccurr_graph)
     return
   }
 }

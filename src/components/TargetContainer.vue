@@ -227,7 +227,7 @@ function breakText(data: string): string[] {
             @click="handleCloseTab($event, index)"/>
 		</template>
         <div class="scatter-panel-container"
-            v-if="graph.type === ViewType.EntityScatter || graph.type === ViewType.OutletScatter">
+            v-if="graph.type === ViewType.EntityScatter || graph.type === ViewType.OutletScatter || graph.type === ViewType.CooccurrScatter">
             <SentimentScatter
                 :graph="graph"
                 :graph_index="index"

@@ -52,6 +52,9 @@ const total_articles = computed(() => {
         return outlet_article_num_dict.value[outlet]
     } else if(props.graph?.type === ViewType.OutletScatter) {
         return _.sumBy(props.graph?.nodes, (node) => (node.articles))
+    } else if(props.graph?.type === ViewType.CooccurrScatter) {
+        const outlet = props.graph.title.split("-")[0]
+        return outlet_article_num_dict.value[outlet]
     } else {
         return undefined
     }
@@ -114,7 +117,7 @@ const menu_items = ref([
     {
         label: "Show co-occurrence",
         command: () => {
-            emit("node_clicked", {type: ViewType.Cooccurr, d: clicked_node.value})
+            emit("node_clicked", {type: ViewType.CooccurrScatter, d: clicked_node.value})
         }
     },
     {
@@ -519,6 +522,8 @@ function updateOverviewScatter() {
     let bind_data;
     if(props.graph?.type === ViewType.EntityScatter) bind_data = filtered_data.value
     if(props.graph?.type === ViewType.OutletScatter) bind_data = props.graph.nodes
+    if(props.graph?.type === ViewType.CooccurrScatter) bind_data = props.graph.nodes
+    console.log("🚀 ~ file: SentimentScatter.vue ~ line 520 ~ updateOverviewScatter ~ bind_data", bind_data)
     const node_group = svg.select("g.node_group")
     node_group.selectAll("g.outlet")
     .data(bind_data, function(d) {return d.text})

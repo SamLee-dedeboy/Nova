@@ -1,6 +1,7 @@
 export enum ViewType {
    EntityScatter,
    OutletScatter,
+   CooccurrScatter,
    Temporal, 
 }
 export interface Path {
@@ -20,7 +21,7 @@ export interface ScatterOutletNode {
     neg_articles: number,
     pos_sst: number,
     neg_sst: number,
-    topicBins: {[id: string]: {topic: string, freq: number}}
+    topicBins: {[id: string]: {pos: number, neg: number}}
 }
 export interface OutletNodeInfo {
     text: string,
