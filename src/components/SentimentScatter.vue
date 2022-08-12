@@ -1,11 +1,16 @@
 <template>
-<div :id="props.id" class="scatter-container" :class="panel_class">
+<div :id="id" class="scatter-container" :class="panel_class">
     <svg class="outlet-scatterplot" :class="panel_class"></svg>
     <div class="button-set">
         <Button v-if="expanded" class="reset-zoom p-button-secondary" @click="resetZoom">reset</Button>
         <Button v-if="expanded" class="show-temporal p-button-secondary" @click="showTemporal">temporal</Button>
     </div>
-    <TooltipVue class='tooltip' :content="tooltip_content" style="z-index: 1000;"></TooltipVue>
+    <TooltipVue class='tooltip' 
+    :id="`${id}-tooltip`" 
+    :content="tooltip_content" 
+    :hasWordCloud="!expanded" 
+    :words_freq="nodes_freq"
+    style="z-index: 1000;"></TooltipVue>
     <NodeInfo class='nodeinfo' :node="hovered_node_info" :total_articles="total_articles" style="position:absolute; z-index:1000;pointer-events: none;"></NodeInfo>
     <Menu id="overlay_menu" ref="menu" :model="menu_items" :popup="true" 
     style="position: absolute; width: fit-content;"></Menu>
@@ -30,7 +35,7 @@ const props = defineProps({
     graph: Object as () => ScatterOutletGraph,
     graph_index: Number,
     id: String,
-    highlight_node: String,
+    highlight_nodes: Object as () => String[],
     expanded: Boolean,
     panel_class: String,
     article_num_threshold: Number,
@@ -52,7 +57,7 @@ const total_articles = computed(() => {
     }
 })
 const {sst_threshold, updateThreshold} = vue.inject('segment_sst')
-const tooltip_content: Ref<String> = ref("") 
+const tooltip_content: Ref<string> = ref("") 
 const hovered_node_info: Ref<OutletNodeInfo> = ref({})
 const tutorial_mode: Ref<boolean> = vue.inject("tutorial_mode") || ref(false)
 const tutorial_step: Ref<number> = vue.inject("tutorial_step") || ref(0)
@@ -63,13 +68,13 @@ vue.watch(tutorial_step, (new_value, old_value) => {
         .style("pointer-events", "none")
     }
 })
-vue.watch(() => props.highlight_node, (new_value, old_value) => {
+vue.watch(() => props.highlight_nodes, (new_value, old_value) => {
     updateCanvas()
     // const svg = d3.select(`#${props.id}`) .select("svg")
     // const highlight_circle = svg.selectAll("circle.outlet_circle").filter(d => { return d.text.split("-")[0] === props.highlight_node})
     // console.log(highlight_circle.node())
     // highlight_circle.attr("fill", "blue")
-})
+}, {deep: true})
 
 const viewBox = [1000, 1000]
 const outlet_min_radius = 10
@@ -88,6 +93,7 @@ const y = d3.scalePow()
     .range([ margin.top + viewBox_height, margin.top]);
 const zoom = d3.zoom().scaleExtent([1, 3]).on("zoom", handleZoom)
 const filtered_data = computed(() => props.graph?.nodes.filter(node => node.articles > (props.article_num_threshold || 0)))
+const nodes_freq = computed(() => filtered_data.value?.map(node => {return {title: node.text, freq: node.articles}}))
 const segment_controller_width = 12
 const node_circle_radius = 10
 const clicked_node: Ref<ScatterOutletNode> = ref({text: "", articles: 0, pos_sst: 0, neg_sst: 0})
@@ -108,6 +114,7 @@ const menu_items = ref([
     {
         label: "Show co-occurrence",
         command: () => {
+            emit("node_clicked", {type: ViewType.Cooccurr, d: clicked_node.value})
         }
     },
     {
@@ -409,6 +416,8 @@ function updateOverviewTooltipContent() {
     if(props.graph?.type === ViewType.EntityScatter) {
         tooltip_content.value += `&nbsp total_articles: ${total_articles.value} <br>`
     }
+    tooltip_content.value += `<svg id='${props.id}-wordcloud' class='tooltip_canvas' width='250px' height='100px'></svg>`
+    
 }
 
 function updateCanvas() {
@@ -558,7 +567,7 @@ function updateOverviewScatter() {
         dots.attr("transform", current_zoom)
     }
     if(props.graph?.type === ViewType.EntityScatter) {
-        const highlight_circle = svg.selectAll("circle.outlet_circle").filter(d => { return d.text.split("-")[0] === props.highlight_node})
+        const highlight_circle = svg.selectAll("circle.outlet_circle").filter(d => (props.highlight_nodes?.includes(d.text.split("-")[0])))
         highlight_circle.attr("fill", "blue")
     }
     
@@ -609,7 +618,7 @@ function updateNodeInfo(node_data: ScatterOutletNode) {
 .button-set {
     position: absolute;
     left: 70%;
-    top:-4%;
+    top:-2%;
     display:inline-flex;
 }
 .reset-zoom {

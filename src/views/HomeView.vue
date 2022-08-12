@@ -93,7 +93,7 @@ vue.provide('tutorial_mode', tutorial_mode)
 vue.provide('tutorial_step', tutorial_step)
 const tutorial_intro: Ref<string[]> = ref(tutorial_intro_json.map(step => _.sum(step.content)))
 vue.provide('segment_sst', {segment_sst, updateThreshold})
-const highlight_node: Ref<string> = ref('')
+const highlight_nodes: Ref<string[]> = ref([])
 
 function updateThreshold(new_value) {
   segment_sst.value = new_value
@@ -659,8 +659,8 @@ function handleDropScatter(e) {
   else if(e.target.classList.contains("panel-right") || e.target.parentNode.classList.contains("panel-right")) {
     selectedScatterGraphs_right.value.push(scatter)
     const dropped_from = selectedScatterGraphs_left.value.findIndex(element => element.title === scatter.title)
-    if(dropped_from > -1) 
-      selectedScatterGraphs_left.value.splice(dropped_from, 1)
+    // if(dropped_from > -1) 
+      // selectedScatterGraphs_left.value.splice(dropped_from, 1)
   }
   scatterClicked.value = true
   const button_next = document.getElementsByClassName("p-tabview-nav-next")[0] as HTMLElement || undefined
@@ -728,8 +728,7 @@ function highlightChanged(new_value) {
 }
 
 function handleSearch(item) {
-  console.log("🚀 ~ file: HomeView.vue ~ line 728 ~ handleSearch ~ item", item)
-  highlight_node.value = item
+  highlight_nodes.value.push(item)
 }
 </script>
 
@@ -751,7 +750,7 @@ function handleSearch(item) {
             :article_num_threshold="article_num_threshold"
             :segment_mode="segment_mode"
             v-model:segmentation="segment_sst"
-            :highlight_node="highlight_node"
+            :highlight_nodes="highlight_nodes"
             @drop="handleDropScatter($event)"
             @dragover="handleDragOver($event)"
             @dragleave="handleDragLeave($event)"
@@ -775,7 +774,7 @@ function handleSearch(item) {
             :article_num_threshold="article_num_threshold"
             :segment_mode="segment_mode"
             v-model:segmentation="segment_sst"
-            :highlight_node="highlight_node"
+            :highlight_nodes="highlight_nodes"
             @drop="handleDropScatter($event)"
             @dragover="handleDragOver($event)"
             @dragleave="handleDragLeave($event)"
@@ -816,7 +815,7 @@ function handleSearch(item) {
                 :article_num_threshold="article_num_threshold"
                 :segment_mode="segment_mode"
                 :segmentation="segment_sst"
-                :highlight_node="highlight_node"
+                :highlight_nodes="highlight_nodes"
                 :expanded="false"
                 :draggable="true"
                 @dragstart="handleDragScatter($event, index)"
