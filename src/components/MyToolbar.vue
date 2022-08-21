@@ -44,11 +44,11 @@ export default {
             response => {
                 console.log("Error loading articles.")
             })
-        await fetch("entity_cooccurrences_groupby_outlet.json")
-            .then(res => res.json())
-            .then(json => {
-                this.entity_cooccurrences_outlet_dict = json
-            })
+        // await fetch("entity_cooccurrences_groupby_outlet.json")
+        //     .then(res => res.json())
+        //     .then(json => {
+        //         this.entity_cooccurrences_outlet_dict = json
+        //     })
         this.isLoading = false
         this.testClicked()
         return

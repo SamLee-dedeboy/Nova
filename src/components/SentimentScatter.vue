@@ -8,7 +8,7 @@
     <TooltipVue class='tooltip' 
     :id="`${id}-tooltip`" 
     :content="tooltip_content" 
-    :hasWordCloud="!expanded" 
+    :hasWordCloud="false" 
     :words_freq="nodes_freq"
     style="z-index: 1000;"></TooltipVue>
     <NodeInfo class='nodeinfo' :node="hovered_node_info" :total_articles="total_articles" style="position:absolute; z-index:1000;pointer-events: none;"></NodeInfo>
@@ -66,9 +66,9 @@ const tutorial_mode: Ref<boolean> = vue.inject("tutorial_mode") || ref(false)
 const tutorial_step: Ref<number> = vue.inject("tutorial_step") || ref(0)
 vue.watch(tutorial_step, (new_value, old_value) => {
     if(new_value === 1) {
-    const svg = d3.select(`#${props.id}`).select("svg")
-    svg.selectAll("circle.outlet_circle")
-        .style("pointer-events", "none")
+        const svg = d3.select(`#${props.id}`).select("svg")
+        svg.selectAll("circle.outlet_circle")
+            .style("pointer-events", "none")
     }
 })
 vue.watch(() => props.highlight_nodes, (new_value, old_value) => {
@@ -117,7 +117,7 @@ const menu_items = ref([
     {
         label: "Show co-occurrence",
         command: () => {
-            emit("node_clicked", {type: ViewType.CooccurrScatter, d: clicked_node.value})
+            // emit("node_clicked", {type: ViewType.CooccurrScatter, d: clicked_node.value})
         }
     },
     {
@@ -258,7 +258,10 @@ onMounted(() => {
         })
     }       
     updateCanvas()
-    if(tutorial_mode.value && tutorial_step.value === 0) updateExpandedScatter()
+    if(tutorial_mode.value && tutorial_step.value === 0) {
+        // svg.call(zoom)
+        updateExpandedScatter()
+    }
     svg.append("g")
         .attr("class", "axis_x")
         .attr("transform", `translate(0, ${margin.top+viewBox_height})`)
@@ -419,7 +422,7 @@ function updateOverviewTooltipContent() {
     if(props.graph?.type === ViewType.EntityScatter) {
         tooltip_content.value += `&nbsp total_articles: ${total_articles.value} <br>`
     }
-    tooltip_content.value += `<svg id='${props.id}-wordcloud' class='tooltip_canvas' width='250px' height='100px'></svg>`
+    // tooltip_content.value += `<svg id='${props.id}-wordcloud' class='tooltip_canvas' width='250px' height='100px'></svg>`
     
 }
 

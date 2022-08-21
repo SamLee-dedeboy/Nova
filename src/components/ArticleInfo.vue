@@ -11,7 +11,7 @@ const props = defineProps({
     id: String,
     topicBins: Object as () => {[id: string]: {title: string, pos: number, neg: number}[]},
 })
-const viewBox = [500, 300]
+const viewBox = [550, 300]
 const margin = {top: 30, bottom: 10, right:10, left: 30, middle: 10} 
 const viewBox_width = viewBox[0] - margin.left - margin.right
 const viewBox_height = viewBox[1] - margin.top - margin.bottom - margin.middle

@@ -88,7 +88,7 @@ const max_timestamp: Ref<string> = ref("")
 vue.provide('min_timestamp', min_timestamp)
 vue.provide('max_timestamp', max_timestamp)
 const segment_sst: Ref<Sentiment2D> = ref({pos: 0.5, neg: 0.5}) 
-const tutorial_mode = ref(false)
+const tutorial_mode = ref(true)
 const tutorial_step = ref(0)
 vue.provide('tutorial_mode', tutorial_mode)
 vue.provide('tutorial_step', tutorial_step)
@@ -158,7 +158,7 @@ vue.watch(overview_mode, (new_value, old_value) => {
       "<img src='src/assets/tutorial/temporal.png' width='498' height='221'> <br>"
       nextTick(() => {
         if(!overview_mode.value) {
-          const tCoord_container = document.querySelector(".tCoord-container") as HTMLElement
+          const tCoord_container = document.querySelector(".overview-temporal-coord") as HTMLElement
           tCoord_container.style["width"] = "750px"
           tCoord_container.style["height"] = "450px"
           const temporal_selector = document.querySelector(".temporal-selector-container") as HTMLElement
@@ -176,7 +176,7 @@ vue.watch(overview_mode, (new_value, old_value) => {
     } else {
         nextTick(() => {
           if(!overview_mode.value) {
-            const tCoord_container = document.querySelector(".tCoord-container") as HTMLElement
+            const tCoord_container = document.querySelector(".overview-temporal-coord") as HTMLElement
             tCoord_container.style["width"] = "500px"
             tCoord_container.style["height"] = "300px"
             const temporal_selector = document.querySelector(".temporal-selector-container") as HTMLElement
@@ -379,7 +379,7 @@ vue.watch(tutorial_step, (new_value, old_value) => {
     if(grid_container) {
       grid_container.style["max-height"] = "50%"
     }
-    const tCoord_container = document.querySelector(".tCoord-container") as HTMLElement
+    const tCoord_container = document.querySelector(".overview-temporal-coord") as HTMLElement
     if(tCoord_container) {
       tCoord_container.style["width"] = "500px"
       tCoord_container.style["height"] = "300px"
@@ -842,7 +842,7 @@ function handleSearch(item) {
             </SentimentScatter>
             </div>
             <div class="temporal-container" v-if="graph_constructed && !overview_mode">
-              <TemporalCoordinates class="temporal-coord" 
+              <TemporalCoordinates class="overview-temporal-coord" 
                 :id="`overview_temporal`"
                 :article_bin_dict="outlet_article_bins_dict"
                 :highlight_object="highlight_outlet"
@@ -1005,7 +1005,7 @@ function handleSearch(item) {
 :deep(.p-divider.p-divider-vertical::before) {
   border-left: 1px solid #dee2e6 !important;
 }
-.temporal-coord {
+.overview-temporal-coord {
   width: 500px;
   height: 300px;
 }
