@@ -28,6 +28,7 @@ import SentimentScatter from "../components/SentimentScatter.vue";
 import Tooltip from "../components/Tooltip.vue";
 import SearchBar from "../components/SearchBar.vue";
 import tutorial_intro_json from "../assets/tutorial_intro.json"
+import * as tutorial from "../components/TutorialUtils"
 
 
 //
@@ -183,11 +184,11 @@ vue.provide('segment_sst', {segment_sst, updateThreshold})
 /**
  * flag for tutorial mode.
  */
-const tutorial_mode = ref(false)
+const tutorial_mode: Ref<boolean> = ref(true)
 /**
  * tutorial step: start from 0.
  */
-const tutorial_step = ref(0)
+const tutorial_step: Ref<number> = ref(0)
 vue.provide('tutorial_mode', tutorial_mode)
 vue.provide('tutorial_step', tutorial_step)
 
@@ -237,154 +238,26 @@ watch(() => timeRange, (new_range, old_range) => {
 })
 
 vue.watch(overview_constructed, (new_value, old_value) => {
-  // tutorial setups
-  nextTick(() => {
-    if(tutorial_mode.value) {
-      const grid_container = document.querySelector(".overview-grid-container") as HTMLElement
-      grid_container.style["max-height"] = "44%"
-      grid_container.style['grid-template-columns'] = "repeat(1, 0.5fr)"
-      grid_container.style["transition"] = "height 0.5s"
-      const first_scatter = document.querySelector("#scatter-0") as HTMLElement
-      first_scatter.style['cursor'] = "unset"
-
-      const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
-      tutorial_tooltip.style["opacity"] = "1"
-      const skip_button = document.querySelector(".skip-button") as HTMLElement
-      skip_button.style["opacity"] = "1"
-      const overview_toggler = document.querySelector(".overview-toggler") as HTMLElement
-      overview_toggler.style["opacity"] = "0"
-      const segment_toggler = document.querySelector(".segment-toggler-container") as HTMLElement
-      segment_toggler.style["opacity"] = "0"
-      const segment_legend = document.querySelector(".legend-container") as HTMLElement
-      segment_legend.style["opacity"] = "0"
-      const utilities_container = document.querySelector(".utilities-container") as HTMLElement
-      utilities_container.style["opacity"] = "0"
-    }
-  })
+  if(tutorial_mode.value) {
+    tutorial.updateOverviewGrid()
+  }
 })
 
 vue.watch(overview_grid_mode, (new_value, old_value) => {
-  //
-  // tutorial setups
-  //
-  if(tutorial_mode.value && tutorial_step.value === 3) {
-    tutorial_intro.value[3] = 
-    "The TemporalView shows monthly sentiment changes on each outlet with two <br>" +
-    "parallel line charts. <br>" +
-    "x-axis encodes month, y-axis encodes " +
-    "<span style='background-color:rgb(29, 127, 119);filter:brightness(140%)'>&nbsppositive </span>" + 
-    ", " + 
-    "<span style='background-color:rgb(165, 106, 29);filter:brightness(140%)'>&nbspnegative </span>" + 
-    " or " +
-    "<span style='background-color:grey;filter:brightness(140%)'>&nbspneutral </span>" + 
-    " sentiment. <br>" +
-    "You can select any outlet to highlight it in the temporal view. <br> " +
-    "<br>" +
-    "<img src='src/assets/tutorial/temporal.png' width='498' height='221'> <br>"
-    nextTick(() => {
-      if(!overview_grid_mode.value) {
-        const tCoord_container = document.querySelector(".overview-temporal-coord") as HTMLElement
-        tCoord_container.style["width"] = "750px"
-        tCoord_container.style["height"] = "450px"
-        const temporal_selector = document.querySelector(".temporal-selector-container") as HTMLElement
-        temporal_selector.style["margin-top"] = "45px"
-        const selector_text = document.querySelector(".selector-option") as HTMLElement
-        selector_text.style["font-size"] = "x-large"
-        const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
-        tutorial_tooltip.style.left = "64%"
-        tutorial_tooltip.style.top = "12%"
-        const skip_button = document.querySelector(".skip-button") as HTMLElement
-        skip_button.style.left = "98%"
-        skip_button.style.top = "61%"
-      }
-    })
-  } else {
-      nextTick(() => {
-        if(!overview_grid_mode.value) {
-          const tCoord_container = document.querySelector(".overview-temporal-coord") as HTMLElement
-          tCoord_container.style["width"] = "500px"
-          tCoord_container.style["height"] = "300px"
-          const temporal_selector = document.querySelector(".temporal-selector-container") as HTMLElement
-          temporal_selector.style["margin-top"] = "28px"
-          const selector_text = document.querySelector(".selector-option") as HTMLElement
-          selector_text.style["font-size"] = "x-small"
-        }
-      })
-  }
+  tutorial.handleToggleTemporal(tutorial_intro, overview_grid_mode, {tutorial_mode, tutorial_step})
 })
 
 vue.watch(compare_mode, (new_value, old_value) => {
-  //
-  // tutorial setups
-  //
-  if(tutorial_mode.value && tutorial_step.value === 6) {
-      tutorial_intro.value[6] = 
-      "Drag & drop any scatter to the right panel. <br>" 
-      nextTick(() => {
-        const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
-        tutorial_tooltip.style.left = "36%"
-        tutorial_tooltip.style.top = "-2%"
-        const skip_button = document.querySelector(".skip-button") as HTMLElement
-        skip_button.style.left = "54%"
-        skip_button.style.top = "2.5%"
-      })
-  }
+  tutorial.handleToggleCompareMode(tutorial_intro, {tutorial_mode, tutorial_step})
 })
 
 vue.watch(tutorial_mode, (new_value, old_value) => {
-  //
-  // tutorial setups
-  //
-  const left_section = document.querySelector(".p-splitter-panel.expanded-section") as HTMLElement
-  const right_section = document.querySelector(".p-splitter-panel.sidebar") as HTMLElement
-  left_section.style.setProperty("flex-basis", "calc(55% - 4px)")
-  right_section.style.setProperty("flex-basis", "calc(45% - 4px)")
-  const grid_container = document.querySelector(".overview-grid-container") as HTMLElement
-  grid_container.style["max-height"] = "50%"
-  grid_container.style['grid-template-columns'] = "repeat(3, 1fr)"
-
-  const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
-  tutorial_tooltip.style["opacity"] = "0"
-  const overview_toggler = document.querySelector(".overview-toggler") as HTMLElement
-  overview_toggler.style["opacity"] = "1"
-  overview_toggler.style.left = "unset"
-  const segment_toggler = document.querySelector(".segment-toggler-container") as HTMLElement
-  segment_toggler.style["opacity"] = "1"
-  const segment_legend = document.querySelector(".legend-container") as HTMLElement
-  segment_legend.style["opacity"] = "1"
-  const utilities_container = document.querySelector(".utilities-container") as HTMLElement
-  utilities_container.style["opacity"] = "1"
-  const compare_toggler = document.querySelector(".compare_toggle") as HTMLElement
-  compare_toggler.style["opacity"] = "1"
-  const search_bar_container = document.querySelector(".search-bar") as HTMLElement
-  search_bar_container.style["opacity"] = "1"
-
-
+  if(old_value === true && new_value === false) {
+    tutorial.handleSkipTutorial()
+  }
 })
 vue.watch(selectedScatterGraphs_left, (new_value, old_value) => {
-  //
-  // tutorial setups
-  //
-  if(tutorial_mode.value && tutorial_step.value === 4) {
-    tutorial_intro.value[4] = 
-      "You can open multiple scatterplots at the same time and use the tabs to switch among them."
-    nextTick(() => {
-      const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
-      tutorial_tooltip.style.left = "0%"
-      tutorial_tooltip.style.top = "4%"
-      const skip_button = document.querySelector(".skip-button") as HTMLElement
-      skip_button.style.left = "40.5%"
-      skip_button.style.top = "8.5%"
-
-    })
-  }
-
-  if(tutorial_mode.value && tutorial_step.value < 8) {
-    nextTick(() => {
-      const show_temporal_btns = document.querySelectorAll(".show-temporal") as NodeListOf<HTMLElement>
-      show_temporal_btns.forEach(btn => btn.style["opacity"] = "0")
-    })
-  }
+  tutorial.handleAddToLeftPanel(tutorial_intro, {tutorial_mode, tutorial_step})
 }, {deep:true})
 
 
@@ -401,195 +274,32 @@ vue.watch(selectedScatterGraphs_right, (new_value, old_value) => {
   //
   // tutorial setups
   //
-  if(tutorial_mode.value && tutorial_step.value < 7) {
-    nextTick(() => {
-      const show_temporal_btns = document.querySelectorAll(".show-temporal") as NodeListOf<HTMLElement>
-      show_temporal_btns.forEach(btn => btn.style["opacity"] = "0")
-    })
+  if(tutorial_mode.value && tutorial_step.value === 6) {
+    tutorial.introduceDraggingTabs(tutorial_intro)
   }
+  
+  if(tutorial_mode.value && tutorial_step.value < 7) {
+    tutorial.hideTemporalButton()
+  }
+
   if(tutorial_mode.value && tutorial_step.value === 7) {
       if(selectedScatterGraphs_right.value[selectedScatterGraphs_right.value.length-1].type === ViewType.OutletScatter) {
-      tutorial_intro.value[7] = 
-        "Try clicking on the temporal button."
-        nextTick(() => {
-          const show_temporal_btns = document.querySelectorAll(".show-temporal") as NodeListOf<HTMLElement>
-          show_temporal_btns.forEach(btn => btn.style["opacity"] = "1")
-          const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
-          tutorial_tooltip.style.left = "54%"
-          tutorial_tooltip.style.top = "10%"
-          const skip_button = document.querySelector(".skip-button") as HTMLElement
-          skip_button.style.left = "71%"
-          skip_button.style.top = "12%"
-        })
+        tutorial.introduceTemporalButton(tutorial_intro)
       }
   }
-  if(tutorial_mode.value && tutorial_step.value === 6) {
-    tutorial_intro.value[6] = 
-      "You can also drag the tabs directly."
-    nextTick(() => {
-        const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
-        tutorial_tooltip.style.left = "42%"
-        tutorial_tooltip.style.top = "-2%"
-        const skip_button = document.querySelector(".skip-button") as HTMLElement
-        skip_button.style.left = "59%"
-        skip_button.style.top = "-2.5%"
 
-    })
 
-  }
+
 }, {deep:true})
 
 // prepare for tutorial
 vue.onMounted(() => {
-  if(tutorial_mode.value) {
-    document.addEventListener("keydown", (event) => {
-      if(tutorial_mode.value) {
-        if(event.keyCode === 39)
-          tutorial_step.value += 1
-        // if(event.keyCode === 37)
-          // tutorial_step.value -= 1
-      }
-    })
-    const left_section = document.querySelector(".p-splitter-panel.expanded-section") as HTMLElement
-    const right_section = document.querySelector(".p-splitter-panel.sidebar") as HTMLElement
-    const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
-    left_section.style["flex-basis"] = "0"
-    right_section.style["flex-basis"] = "100%"
-    tutorial_tooltip.style.position = "absolute"
-    tutorial_tooltip.style.width = "fit-content"
-    tutorial_tooltip.style.left = "50%"
-    tutorial_tooltip.style.top = "18%"
-    tutorial_tooltip.style["transition"] = "opacity 1s, width 1s, height 1s, left 1s, top 1s, right 1s"
-    const compare_toggler = document.querySelector(".compare_toggle") as HTMLElement
-    compare_toggler.style["opacity"] = "0"
-    const search_bar_container = document.querySelector(".search-bar") as HTMLElement
-    search_bar_container.style["opacity"] = "0"
-    compare_toggler.style["opacity"] = "0"
-    const skip_button = document.querySelector(".skip-button") as HTMLElement
-    skip_button.style.left = "84%"
-    skip_button.style.top = "77%"
-    skip_button.style["transition"] = "opacity 1s, width 1s, height 1s, left 1s, top 1s, right 1s"
-  }
+  tutorial.prepareComponentsForTutorial({tutorial_mode, tutorial_step})
 })
 
 // tutorial setups
 vue.watch(tutorial_step, (new_value, old_value) => {
-  // introduce scatterplot
-  if(new_value === 0) {
-    const grid_container = document.querySelector(".overview-grid-container") as HTMLElement
-    grid_container.style["max-height"] = "44%"
-  }
-
-  // introduce outlet scatter grid
-  if(new_value === 1) {
-    const grid_container = document.querySelector(".overview-grid-container") as HTMLElement
-    grid_container.style['grid-template-columns'] = "repeat(3, 1fr)"
-    const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
-    tutorial_tooltip.style.right = "0px"
-    tutorial_tooltip.style.left = "auto"
-    tutorial_tooltip.style.top = "20px"
-    const skip_button = document.querySelector(".skip-button") as HTMLElement
-    skip_button.style.left = "98%"
-    skip_button.style.top = "59%"
-
-  }
-  // introduce temporal 
-  if(new_value === 2) {
-    const utilities_container = document.querySelector(".utilities-container") as HTMLElement
-    utilities_container.style["transition"] = "opacity 1s"
-    utilities_container.style["opacity"] = "1"
-    const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
-    tutorial_tooltip.style.right = "auto"
-    tutorial_tooltip.style.left = "20%"
-    tutorial_tooltip.style.top = "80%"
-    const skip_button = document.querySelector(".skip-button") as HTMLElement
-    skip_button.style.left = "56.5%"
-    skip_button.style.top = "93%"
-  }
-  if(new_value === 3) {
-    const overview_toggler = document.querySelector(".overview-toggler") as HTMLElement
-    overview_toggler.style["transition"] = "opacity 1s"
-    overview_toggler.style["opacity"] = "1"
-    overview_toggler.style.left = "-42%"
-    const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
-    tutorial_tooltip.style.left = "60%"
-    tutorial_tooltip.style.top = "1%"
-    const skip_button = document.querySelector(".skip-button") as HTMLElement
-    skip_button.style.left = "89%"
-    skip_button.style.top = "3%"
-  }
-  if(new_value === 4) {
-    const left_section = document.querySelector(".p-splitter-panel.expanded-section") as HTMLElement
-    const right_section = document.querySelector(".p-splitter-panel.sidebar") as HTMLElement
-    right_section.style["transition"] = "flex-basis 1s"
-    left_section.style.setProperty("flex-basis", "calc(55% - 4px)")
-    right_section.style.setProperty("flex-basis", "calc(45% - 4px)")
-    const grid_container = document.querySelector(".overview-grid-container") as HTMLElement
-    if(grid_container) {
-      grid_container.style["max-height"] = "50%"
-    }
-    const tCoord_container = document.querySelector(".overview-temporal-coord") as HTMLElement
-    if(tCoord_container) {
-      tCoord_container.style["width"] = "500px"
-      tCoord_container.style["height"] = "300px"
-      const temporal_selector = document.querySelector(".temporal-selector-container") as HTMLElement
-      temporal_selector.style["margin-top"] = "28px"
-      const selector_text = document.querySelector(".selector-option") as HTMLElement
-      selector_text.style["font-size"] = "x-small"
-    }
-    const overview_toggler = document.querySelector(".overview-toggler") as HTMLElement
-    overview_toggler.style.left = "unset"
-    const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
-    tutorial_tooltip.style.left = "9%"
-    tutorial_tooltip.style.top = "7%"
-    const skip_button = document.querySelector(".skip-button") as HTMLElement
-    skip_button.style.left = "48.5%"
-    skip_button.style.top = "18%"
-  }
-  if(new_value === 5) {
-    const segment_toggler = document.querySelector(".segment-toggler-container") as HTMLElement
-    segment_toggler.style["transition"] = "opacity 1s"
-    segment_toggler.style["opacity"] = "1"
-    const segment_legend = document.querySelector(".legend-container") as HTMLElement
-    segment_legend.style["transition"] = "opacity 1s"
-    segment_legend.style["opacity"] = "1"
-    const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
-    tutorial_tooltip.style.left = "66%"
-    tutorial_tooltip.style.top = "70%"
-    const skip_button = document.querySelector(".skip-button") as HTMLElement
-    skip_button.style.left = "98%"
-    skip_button.style.top = "93%"
-  }
-  if(new_value === 6) {
-    const compare_toggler = document.querySelector(".compare_toggle") as HTMLElement
-    compare_toggler.style["transition"] = "opacity 1s"
-    compare_toggler.style["opacity"] = "1"
-    const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
-    tutorial_tooltip.style.left = "55%"
-    tutorial_tooltip.style.top = "-3%"
-    const skip_button = document.querySelector(".skip-button") as HTMLElement
-    skip_button.style.left = "79.5%"
-    skip_button.style.top = "-1%"
-  }
-  if(new_value === 7) {
-    // allow node click
-    const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
-    tutorial_tooltip.style.left = "55%"
-    tutorial_tooltip.style.top = "-3%"
-    const skip_button = document.querySelector(".skip-button") as HTMLElement
-    skip_button.style.left = "90.5%"
-    skip_button.style.top = "2%"
-  }
-  if(new_value === 8) {
-    const skip_button = document.querySelector(".skip-button") as HTMLElement
-    skip_button.style.opacity = "0"
-  }
-  if(new_value === 9) {
-    // show finish notes
-    const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
-    tutorial_tooltip.style["opacity"] = "0"
-    tutorial_mode.value = false
-  }
+  tutorial.handleNextStep({tutorial_mode, tutorial_step}) 
 })
 
 
