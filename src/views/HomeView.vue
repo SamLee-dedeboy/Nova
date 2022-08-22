@@ -44,7 +44,7 @@ const articles = ref([])
 
 /**
  * @deprecated
- * start & end month of dataset
+ * start & end month of dataset.
  */
 let timeRange: {start: number, end: number} 
 
@@ -55,39 +55,39 @@ const article_dict = ref({})
 
 // outlet related data
 /**
- * set of outlet names extracted from dataset
+ * set of outlet names extracted from dataset.
  */
 const enabled_outlet_set: Ref<Set<string>> = ref(new Set())
 
 /**
- * nested dictionary: { [outlet]: { [month]: Article[] } }
+ * nested dictionary: { [outlet]: { [month]: Article[ ] } }
  */
 const outlet_article_bins_dict = ref({})
 
 /**
- * dictionary: { [outlet]: Article[] }
+ * dictionary: { [outlet]: Article[ ] }
  */
 const outlet_article_dict = ref({})
 
 /**
- * dictionary: { [outlet]: Article[].length }
+ * dictionary: { [outlet]: Article[ ].length }
  */
 const outlet_article_num_dict = ref({})
 vue.provide("outlet_article_num_dict", outlet_article_num_dict)
 
 /**
- * nested dictionary: { [outlet]: { [entity_1]: { [entity_2]: Article_id[] } } }
+ * nested dictionary: { [outlet]: { [entity_1]: { [entity_2]: Article_id[ ] } } }
  */
 const entity_cooccurrences_groupby_outlet = ref({})
 
 /**
- * dictionary: { [graph_title]: ScatterOutletGraph }
- * graph_dict stores all the graphs that are created to easily move graphs between views
+ * dictionary: { [graph_title]: ScatterOutletGraph }. \
+ * graph_dict stores all the graphs that are created to easily move graphs between views.
  */
 const graph_dict = ref({})
 
 /**
- * flag for constructing overview grid graphs on mounted
+ * flag for constructing overview grid graphs on mounted.
  */
 
 const overview_constructed: Ref<boolean> = ref(false)
@@ -97,13 +97,13 @@ const overview_constructed: Ref<boolean> = ref(false)
 const entity_list: Ref<string[]> = computed(() => entity_mentions.value?.["CNN"].map(entity_mention => entity_mention.entity))
 
 /**
- * Array: ScatterOutletGraph[]
- * Stores the graphs in left panel
+ * Array: ScatterOutletGraph[]. \
+ * Stores the graphs in left panel.
  */
 const selectedScatterGraphs_left: Ref<ScatterOutletGraph[]> = ref([])
 /**
- * Array: ScatterOutletGraph[]
- * Stores the graphs in left panel
+ * Array: ScatterOutletGraph[]. \
+ * Stores the graphs in left panel.
  */
 const selectedScatterGraphs_right: Ref<ScatterOutletGraph[]> = ref([])
 
@@ -113,7 +113,7 @@ const selectedScatterGraphs_right: Ref<ScatterOutletGraph[]> = ref([])
 const entity_data = computed(() => entity_mentions.value.map(entity_mention => { return {"name": entity_mention[0], "num": entity_mention[1].length || 0}}))
 
 /**
- * flag for displaying load icon on mounted
+ * flag for displaying load icon on mounted.
  */
 const overview_constructing: Ref<boolean> = ref(true)
 
@@ -122,86 +122,86 @@ const overview_constructing: Ref<boolean> = ref(true)
 //
 
 /**
- * max articles of all nodes in overview grid
- * used when scaling node color
+ * max articles of all nodes in overview grid. \
+ * Used when scaling node color.
  */
 const max_articles: Ref<number> = ref(0)
 /**
- * min articles of all nodes in overview grid
- * used when scaling node color
+ * min articles of all nodes in overview grid. \
+ * Used when scaling node color.
  */
 const min_articles: Ref<number> = ref(0)
 vue.provide('min_articles', min_articles)
 vue.provide('max_articles', max_articles)
 
 /**
- * flag for compare mode
- * Two panels are opened when compare mode is on
+ * Flag for compare mode. \
+ * Two panels are opened when compare mode is on.
  */
 const compare_mode: Ref<boolean> = ref(false)
 vue.provide('compare_mode', compare_mode)
 
 /**
- * flag for segment mode
- * display segmentation on all scatters when segment mode is on
+ * Flag for segment mode. \
+ * Display segmentation on all scatters when segment mode is on.
  */
 const segment_mode: Ref<boolean> = ref(false)
 
 /**
- * threshold for filtering on count(articles)
+ * threshold for filtering on count(articles).
  */
 const article_num_threshold: Ref<number> = ref(20)
 
 /**
- * Array of highlighted outlet names
- * referenced in Temporal View of outlets
+ * Array of highlighted outlet names.
+ * referenced in Temporal View of outlets.
  */
 const highlight_outlet: Ref<string[]> = ref([])
 /**
- * flag for switching between overview grid and overview temporal
+ * flag for switching between overview grid and overview temporal.
  */
 const overview_grid_mode: Ref<boolean> = ref(true)
 
 /**
- * min timestamp extracted from dataset
- * used in temporal view
+ * min timestamp extracted from dataset. \
+ * Used in temporal view.
  */
 const min_timestamp: Ref<string> = ref("")
 vue.provide('min_timestamp', min_timestamp)
 /**
- * min timestamp extracted from dataset
- * used in temporal view
+ * min timestamp extracted from dataset. \
+ * Used in temporal view.
  */
 const max_timestamp: Ref<string> = ref("")
 vue.provide('max_timestamp', max_timestamp)
 
 /**
- * segmentation threshold of sentiment value
+ * segmentation threshold of sentiment value.
  */
 const segment_sst: Ref<Sentiment2D> = ref({pos: 0.5, neg: 0.5}) 
 vue.provide('segment_sst', {segment_sst, updateThreshold})
 /**
- * flag for tutorial mode
+ * flag for tutorial mode.
  */
 const tutorial_mode = ref(false)
 /**
- * tutorial step: start from 0
+ * tutorial step: start from 0.
  */
 const tutorial_step = ref(0)
 vue.provide('tutorial_mode', tutorial_mode)
 vue.provide('tutorial_step', tutorial_step)
 
 /**
- * array of displaying text in each step
- * referenced by tutorial_step
- * each item can be embedded html
- * raw data stored in src/assets/tutorial_intro.json
+ * Array of displaying text in each step. \
+ * Referenced by tutorial_step. \
+ * Each item can be embedded html. \
+ * Raw data stored in src/assets/tutorial_intro.json. 
  */
 const tutorial_intro: Ref<string[]> = ref(tutorial_intro_json.map(step => _.sum(step.content)))
 
 /**
- * Array of highlighted node titles
- * used in search feature
+ * Array of highlighted node titles. \
+ * Used in search feature.
  */
 const highlight_nodes: Ref<string[]> = ref([])
 
@@ -210,15 +210,15 @@ function updateThreshold(new_value) {
 }
 
 /**
- * nested dictionary: { [title]: { [month]: Article[] }}
- * used in TargetContainer to store all temporal view data
+ * nested dictionary: { [title]: { [month]: Article[ ] }}. \
+ * Used in TargetContainer to store all temporal view data.
  */
 const temporalBins = ref({})
 
 /**
- * dictionary: { [node_title]: Article_ids[] } 
- * stores the subset of articles represented by each node
- * referenced by node title
+ * dictionary: { [node_title]: Article_ids[ ] }. \
+ * Stores the subset of articles represented by each node. \
+ * Referenced by node title. 
  */
 const node_article_id_dict = ref({})
 
