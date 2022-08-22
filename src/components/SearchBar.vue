@@ -12,6 +12,7 @@ function autocompleteMatch(input) {
   if (input == '') {
     return [];
   }
+  input = input.toLowerCase()
   var reg = new RegExp(input)
   return props.search_terms!.filter(function(term) {
 	  if (term.toLowerCase().match(reg)) {
