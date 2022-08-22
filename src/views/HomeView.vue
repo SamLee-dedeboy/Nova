@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import Filter from "../components/Filter.vue";
+import Filter from "../components/deprecated/Filter.vue";
 import Slider from "primevue/slider"
 import InputText from "primevue/inputtext"
 //import Target from "../components/Target.vue";
@@ -10,9 +10,9 @@ import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import ToggleButton from 'primevue/togglebutton';
 import ArticleView from "../components/ArticleView.vue";
-import TopicSelection from "../components/TopicSelection.vue";
-import TargetSelection from "../components/TargetSelection.vue"
-import MonthSlider from "../components/MonthSlider.vue"
+import TopicSelection from "../components/deprecated/TopicSelection.vue";
+import TargetSelection from "../components/deprecated/TargetSelection.vue"
+import MonthSlider from "../components/deprecated/MonthSlider.vue"
 import * as preprocess from "../components/preprocessUtils"
 import { watch, computed, onMounted, PropType, ref, Ref, nextTick, } from 'vue'
 import * as vue from 'vue'
@@ -29,165 +29,294 @@ import Tooltip from "../components/Tooltip.vue";
 import SearchBar from "../components/SearchBar.vue";
 import tutorial_intro_json from "../assets/tutorial_intro.json"
 
-  // data() {
-  //   return {
-  //     original_dataset: {
-  //       graphList:[],
-  //       outlet_set:[],
-  //       np_list:[]
-  //     },
-  //     dataset: {
-  //       graphList:[],
-  //       outlet_set:[],
-  //       np_list:[]
-  //     },
-  //     outlet_set: [],
-  //     enabled_outlet_set:[],
-  //     selected_articles: [],
-  //     np_list:[],
-  //     selected_target:[],
-  //     timeRange:[1,13],
-  //     dataset_matadata: {},
-  //     graph_constructed: false,
-  //     graph_dict: {},
-  //     scatterClicked: false,
-  //     selectedScatterGraphs: [],
-  //   }
+
+//
+// raw data
+//
 const entity_mentions: Ref<any[]> = ref([])
 let dataset_metadata = {}
 let original_dataset = []
-let timeRange: {start: number, end: number} 
-const enabled_outlet_set: Ref<Set<string>> = ref(new Set())
 const articles = ref([])
+
+//
+// processed data 
+//
+
+/**
+ * @deprecated
+ * start & end month of dataset
+ */
+let timeRange: {start: number, end: number} 
+
+/**
+ * dictionary: { [article_id]: Article }
+ */
 const article_dict = ref({})
+
+// outlet related data
+/**
+ * set of outlet names extracted from dataset
+ */
+const enabled_outlet_set: Ref<Set<string>> = ref(new Set())
+
+/**
+ * nested dictionary: { [outlet]: { [month]: Article[] } }
+ */
 const outlet_article_bins_dict = ref({})
+
+/**
+ * dictionary: { [outlet]: Article[] }
+ */
 const outlet_article_dict = ref({})
+
+/**
+ * dictionary: { [outlet]: Article[].length }
+ */
 const outlet_article_num_dict = ref({})
 vue.provide("outlet_article_num_dict", outlet_article_num_dict)
+
+/**
+ * nested dictionary: { [outlet]: { [entity_1]: { [entity_2]: Article_id[] } } }
+ */
 const entity_cooccurrences_groupby_outlet = ref({})
+
+/**
+ * dictionary: { [graph_title]: ScatterOutletGraph }
+ * graph_dict stores all the graphs that are created to easily move graphs between views
+ */
 const graph_dict = ref({})
-const graph_constructed: Ref<boolean> = ref(false)
+
+/**
+ * flag for constructing overview grid graphs on mounted
+ */
+
+const overview_constructed: Ref<boolean> = ref(false)
+/**
+ * @deprecated
+ */
 const entity_list: Ref<string[]> = computed(() => entity_mentions.value?.["CNN"].map(entity_mention => entity_mention.entity))
+
+/**
+ * Array: ScatterOutletGraph[]
+ * Stores the graphs in left panel
+ */
 const selectedScatterGraphs_left: Ref<ScatterOutletGraph[]> = ref([])
+/**
+ * Array: ScatterOutletGraph[]
+ * Stores the graphs in left panel
+ */
 const selectedScatterGraphs_right: Ref<ScatterOutletGraph[]> = ref([])
-const scatterClicked: Ref<boolean> = ref(false)
+
+/**
+ * @deprecated
+ */
 const entity_data = computed(() => entity_mentions.value.map(entity_mention => { return {"name": entity_mention[0], "num": entity_mention[1].length || 0}}))
-const graph_constructing: Ref<boolean> = ref(true)
+
+/**
+ * flag for displaying load icon on mounted
+ */
+const overview_constructing: Ref<boolean> = ref(true)
+
+//
+// preprocessed global data used across components
+//
+
+/**
+ * max articles of all nodes in overview grid
+ * used when scaling node color
+ */
 const max_articles: Ref<number> = ref(0)
+/**
+ * min articles of all nodes in overview grid
+ * used when scaling node color
+ */
 const min_articles: Ref<number> = ref(0)
 vue.provide('min_articles', min_articles)
 vue.provide('max_articles', max_articles)
+
+/**
+ * flag for compare mode
+ * Two panels are opened when compare mode is on
+ */
 const compare_mode: Ref<boolean> = ref(false)
 vue.provide('compare_mode', compare_mode)
+
+/**
+ * flag for segment mode
+ * display segmentation on all scatters when segment mode is on
+ */
 const segment_mode: Ref<boolean> = ref(false)
+
+/**
+ * threshold for filtering on count(articles)
+ */
 const article_num_threshold: Ref<number> = ref(20)
+
+/**
+ * Array of highlighted outlet names
+ * referenced in Temporal View of outlets
+ */
 const highlight_outlet: Ref<string[]> = ref([])
-const overview_mode: Ref<boolean> = ref(true)
+/**
+ * flag for switching between overview grid and overview temporal
+ */
+const overview_grid_mode: Ref<boolean> = ref(true)
+
+/**
+ * min timestamp extracted from dataset
+ * used in temporal view
+ */
 const min_timestamp: Ref<string> = ref("")
-const max_timestamp: Ref<string> = ref("")
 vue.provide('min_timestamp', min_timestamp)
+/**
+ * min timestamp extracted from dataset
+ * used in temporal view
+ */
+const max_timestamp: Ref<string> = ref("")
 vue.provide('max_timestamp', max_timestamp)
+
+/**
+ * segmentation threshold of sentiment value
+ */
 const segment_sst: Ref<Sentiment2D> = ref({pos: 0.5, neg: 0.5}) 
-const tutorial_mode = ref(true)
+vue.provide('segment_sst', {segment_sst, updateThreshold})
+/**
+ * flag for tutorial mode
+ */
+const tutorial_mode = ref(false)
+/**
+ * tutorial step: start from 0
+ */
 const tutorial_step = ref(0)
 vue.provide('tutorial_mode', tutorial_mode)
 vue.provide('tutorial_step', tutorial_step)
+
+/**
+ * array of displaying text in each step
+ * referenced by tutorial_step
+ * each item can be embedded html
+ * raw data stored in src/assets/tutorial_intro.json
+ */
 const tutorial_intro: Ref<string[]> = ref(tutorial_intro_json.map(step => _.sum(step.content)))
-vue.provide('segment_sst', {segment_sst, updateThreshold})
+
+/**
+ * Array of highlighted node titles
+ * used in search feature
+ */
 const highlight_nodes: Ref<string[]> = ref([])
 
 function updateThreshold(new_value) {
   segment_sst.value = new_value
 }
-// watch(() => segment_sst, (new_value, old_value) => {
-//   console.log(segment_sst.value)
-// }, {deep: true})
 
+/**
+ * nested dictionary: { [title]: { [month]: Article[] }}
+ * used in TargetContainer to store all temporal view data
+ */
 const temporalBins = ref({})
+
+/**
+ * dictionary: { [node_title]: Article_ids[] } 
+ * stores the subset of articles represented by each node
+ * referenced by node title
+ */
 const node_article_id_dict = ref({})
 
+/**
+ * @deprecated
+ */
 watch(() => timeRange, (new_range, old_range) => {
-    if(new_range[0] != old_range[0] || new_range[1] != old_range[1]) {
-      // TODO: implement slicing with dataframe
-      const subset = preprocess.sliceDatasetByTime(new_range, original_dataset)
-      // const startIndex = this.original_dataset.findIndex(article => parseInt(article.timestamp.split('-')[1]) >= new_range[0])
-      // const endIndex = this.original_dataset.findIndex(article => parseInt(article.timestamp.split('-')[1]) > new_range[1])
-      // const subset = this.original_dataset.slice(startIndex, (endIndex == -1? this.original_dataset.length : endIndex))
-      // this.updateDicts(subset)
-    }
+  if(new_range[0] != old_range[0] || new_range[1] != old_range[1]) {
+    // TODO: implement slicing with dataframe
+    const subset = preprocess.sliceDatasetByTime(new_range, original_dataset)
+    // const startIndex = this.original_dataset.findIndex(article => parseInt(article.timestamp.split('-')[1]) >= new_range[0])
+    // const endIndex = this.original_dataset.findIndex(article => parseInt(article.timestamp.split('-')[1]) > new_range[1])
+    // const subset = this.original_dataset.slice(startIndex, (endIndex == -1? this.original_dataset.length : endIndex))
+    // this.updateDicts(subset)
+  }
 })
-vue.watch(graph_constructed, (new_value, old_value) => {
-    nextTick(() => {
-      if(tutorial_mode.value) {
-        const grid_container = document.querySelector(".entity-grid-container") as HTMLElement
-        grid_container.style["max-height"] = "44%"
-        grid_container.style['grid-template-columns'] = "repeat(1, 0.5fr)"
-        grid_container.style["transition"] = "height 0.5s"
-        const first_scatter = document.querySelector("#scatter-0") as HTMLElement
-        first_scatter.style['cursor'] = "unset"
 
+vue.watch(overview_constructed, (new_value, old_value) => {
+  // tutorial setups
+  nextTick(() => {
+    if(tutorial_mode.value) {
+      const grid_container = document.querySelector(".overview-grid-container") as HTMLElement
+      grid_container.style["max-height"] = "44%"
+      grid_container.style['grid-template-columns'] = "repeat(1, 0.5fr)"
+      grid_container.style["transition"] = "height 0.5s"
+      const first_scatter = document.querySelector("#scatter-0") as HTMLElement
+      first_scatter.style['cursor'] = "unset"
+
+      const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
+      tutorial_tooltip.style["opacity"] = "1"
+      const skip_button = document.querySelector(".skip-button") as HTMLElement
+      skip_button.style["opacity"] = "1"
+      const overview_toggler = document.querySelector(".overview-toggler") as HTMLElement
+      overview_toggler.style["opacity"] = "0"
+      const segment_toggler = document.querySelector(".segment-toggler-container") as HTMLElement
+      segment_toggler.style["opacity"] = "0"
+      const segment_legend = document.querySelector(".legend-container") as HTMLElement
+      segment_legend.style["opacity"] = "0"
+      const utilities_container = document.querySelector(".utilities-container") as HTMLElement
+      utilities_container.style["opacity"] = "0"
+    }
+  })
+})
+
+vue.watch(overview_grid_mode, (new_value, old_value) => {
+  //
+  // tutorial setups
+  //
+  if(tutorial_mode.value && tutorial_step.value === 3) {
+    tutorial_intro.value[3] = 
+    "The TemporalView shows monthly sentiment changes on each outlet with two <br>" +
+    "parallel line charts. <br>" +
+    "x-axis encodes month, y-axis encodes " +
+    "<span style='background-color:rgb(29, 127, 119);filter:brightness(140%)'>&nbsppositive </span>" + 
+    ", " + 
+    "<span style='background-color:rgb(165, 106, 29);filter:brightness(140%)'>&nbspnegative </span>" + 
+    " or " +
+    "<span style='background-color:grey;filter:brightness(140%)'>&nbspneutral </span>" + 
+    " sentiment. <br>" +
+    "You can select any outlet to highlight it in the temporal view. <br> " +
+    "<br>" +
+    "<img src='src/assets/tutorial/temporal.png' width='498' height='221'> <br>"
+    nextTick(() => {
+      if(!overview_grid_mode.value) {
+        const tCoord_container = document.querySelector(".overview-temporal-coord") as HTMLElement
+        tCoord_container.style["width"] = "750px"
+        tCoord_container.style["height"] = "450px"
+        const temporal_selector = document.querySelector(".temporal-selector-container") as HTMLElement
+        temporal_selector.style["margin-top"] = "45px"
+        const selector_text = document.querySelector(".selector-option") as HTMLElement
+        selector_text.style["font-size"] = "x-large"
         const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
-        tutorial_tooltip.style["opacity"] = "1"
+        tutorial_tooltip.style.left = "64%"
+        tutorial_tooltip.style.top = "12%"
         const skip_button = document.querySelector(".skip-button") as HTMLElement
-        skip_button.style["opacity"] = "1"
-        const overview_toggler = document.querySelector(".overview-toggler") as HTMLElement
-        overview_toggler.style["opacity"] = "0"
-        const segment_toggler = document.querySelector(".segment-toggler-container") as HTMLElement
-        segment_toggler.style["opacity"] = "0"
-        const segment_legend = document.querySelector(".legend-container") as HTMLElement
-        segment_legend.style["opacity"] = "0"
-        const utilities_container = document.querySelector(".utilities-container") as HTMLElement
-        utilities_container.style["opacity"] = "0"
+        skip_button.style.left = "98%"
+        skip_button.style.top = "61%"
       }
     })
-})
-vue.watch(overview_mode, (new_value, old_value) => {
-    if(tutorial_mode.value && tutorial_step.value === 3) {
-      tutorial_intro.value[3] = 
-      "The TemporalView shows monthly sentiment changes on each outlet with two <br>" +
-      "parallel line charts. <br>" +
-      "x-axis encodes month, y-axis encodes " +
-      "<span style='background-color:rgb(29, 127, 119);filter:brightness(140%)'>&nbsppositive </span>" + 
-      ", " + 
-      "<span style='background-color:rgb(165, 106, 29);filter:brightness(140%)'>&nbspnegative </span>" + 
-      " or " +
-      "<span style='background-color:grey;filter:brightness(140%)'>&nbspneutral </span>" + 
-      " sentiment. <br>" +
-      "You can select any outlet to highlight it in the temporal view. <br> " +
-      "<br>" +
-      "<img src='src/assets/tutorial/temporal.png' width='498' height='221'> <br>"
+  } else {
       nextTick(() => {
-        if(!overview_mode.value) {
+        if(!overview_grid_mode.value) {
           const tCoord_container = document.querySelector(".overview-temporal-coord") as HTMLElement
-          tCoord_container.style["width"] = "750px"
-          tCoord_container.style["height"] = "450px"
+          tCoord_container.style["width"] = "500px"
+          tCoord_container.style["height"] = "300px"
           const temporal_selector = document.querySelector(".temporal-selector-container") as HTMLElement
-          temporal_selector.style["margin-top"] = "45px"
+          temporal_selector.style["margin-top"] = "28px"
           const selector_text = document.querySelector(".selector-option") as HTMLElement
-          selector_text.style["font-size"] = "x-large"
-          const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
-          tutorial_tooltip.style.left = "64%"
-          tutorial_tooltip.style.top = "12%"
-          const skip_button = document.querySelector(".skip-button") as HTMLElement
-          skip_button.style.left = "98%"
-          skip_button.style.top = "61%"
+          selector_text.style["font-size"] = "x-small"
         }
       })
-    } else {
-        nextTick(() => {
-          if(!overview_mode.value) {
-            const tCoord_container = document.querySelector(".overview-temporal-coord") as HTMLElement
-            tCoord_container.style["width"] = "500px"
-            tCoord_container.style["height"] = "300px"
-            const temporal_selector = document.querySelector(".temporal-selector-container") as HTMLElement
-            temporal_selector.style["margin-top"] = "28px"
-            const selector_text = document.querySelector(".selector-option") as HTMLElement
-            selector_text.style["font-size"] = "x-small"
-          }
-        })
-    }
+  }
 })
+
 vue.watch(compare_mode, (new_value, old_value) => {
+  //
+  // tutorial setups
+  //
   if(tutorial_mode.value && tutorial_step.value === 6) {
       tutorial_intro.value[6] = 
       "Drag & drop any scatter to the right panel. <br>" 
@@ -201,34 +330,41 @@ vue.watch(compare_mode, (new_value, old_value) => {
       })
   }
 })
-vue.watch(tutorial_mode, (new_value, old_value) => {
-      const left_section = document.querySelector(".p-splitter-panel.expanded-section") as HTMLElement
-      const right_section = document.querySelector(".p-splitter-panel.sidebar") as HTMLElement
-      left_section.style.setProperty("flex-basis", "calc(55% - 4px)")
-      right_section.style.setProperty("flex-basis", "calc(45% - 4px)")
-      const grid_container = document.querySelector(".entity-grid-container") as HTMLElement
-      grid_container.style["max-height"] = "50%"
-      grid_container.style['grid-template-columns'] = "repeat(3, 1fr)"
 
-      const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
-      tutorial_tooltip.style["opacity"] = "0"
-      const overview_toggler = document.querySelector(".overview-toggler") as HTMLElement
-      overview_toggler.style["opacity"] = "1"
-      overview_toggler.style.left = "unset"
-      const segment_toggler = document.querySelector(".segment-toggler-container") as HTMLElement
-      segment_toggler.style["opacity"] = "1"
-      const segment_legend = document.querySelector(".legend-container") as HTMLElement
-      segment_legend.style["opacity"] = "1"
-      const utilities_container = document.querySelector(".utilities-container") as HTMLElement
-      utilities_container.style["opacity"] = "1"
-      const compare_toggler = document.querySelector(".compare_toggle") as HTMLElement
-      compare_toggler.style["opacity"] = "1"
-      const search_bar_container = document.querySelector(".search-bar") as HTMLElement
-      search_bar_container.style["opacity"] = "1"
+vue.watch(tutorial_mode, (new_value, old_value) => {
+  //
+  // tutorial setups
+  //
+  const left_section = document.querySelector(".p-splitter-panel.expanded-section") as HTMLElement
+  const right_section = document.querySelector(".p-splitter-panel.sidebar") as HTMLElement
+  left_section.style.setProperty("flex-basis", "calc(55% - 4px)")
+  right_section.style.setProperty("flex-basis", "calc(45% - 4px)")
+  const grid_container = document.querySelector(".overview-grid-container") as HTMLElement
+  grid_container.style["max-height"] = "50%"
+  grid_container.style['grid-template-columns'] = "repeat(3, 1fr)"
+
+  const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
+  tutorial_tooltip.style["opacity"] = "0"
+  const overview_toggler = document.querySelector(".overview-toggler") as HTMLElement
+  overview_toggler.style["opacity"] = "1"
+  overview_toggler.style.left = "unset"
+  const segment_toggler = document.querySelector(".segment-toggler-container") as HTMLElement
+  segment_toggler.style["opacity"] = "1"
+  const segment_legend = document.querySelector(".legend-container") as HTMLElement
+  segment_legend.style["opacity"] = "1"
+  const utilities_container = document.querySelector(".utilities-container") as HTMLElement
+  utilities_container.style["opacity"] = "1"
+  const compare_toggler = document.querySelector(".compare_toggle") as HTMLElement
+  compare_toggler.style["opacity"] = "1"
+  const search_bar_container = document.querySelector(".search-bar") as HTMLElement
+  search_bar_container.style["opacity"] = "1"
 
 
 })
 vue.watch(selectedScatterGraphs_left, (new_value, old_value) => {
+  //
+  // tutorial setups
+  //
   if(tutorial_mode.value && tutorial_step.value === 4) {
     tutorial_intro.value[4] = 
       "You can open multiple scatterplots at the same time and use the tabs to switch among them."
@@ -250,12 +386,21 @@ vue.watch(selectedScatterGraphs_left, (new_value, old_value) => {
     })
   }
 }, {deep:true})
+
+
 vue.watch(selectedScatterGraphs_right, (new_value, old_value) => {
+  // 
   // closing tabs
+  //
+
+  // if closing a temporal view, clear temporalBins
   if(!new_value.find(scatter => scatter.type === ViewType.Temporal)) {
     temporalBins.value = {}
   }
 
+  //
+  // tutorial setups
+  //
   if(tutorial_mode.value && tutorial_step.value < 7) {
     nextTick(() => {
       const show_temporal_btns = document.querySelectorAll(".show-temporal") as NodeListOf<HTMLElement>
@@ -293,6 +438,8 @@ vue.watch(selectedScatterGraphs_right, (new_value, old_value) => {
 
   }
 }, {deep:true})
+
+// prepare for tutorial
 vue.onMounted(() => {
   if(tutorial_mode.value) {
     document.addEventListener("keydown", (event) => {
@@ -324,16 +471,18 @@ vue.onMounted(() => {
     skip_button.style["transition"] = "opacity 1s, width 1s, height 1s, left 1s, top 1s, right 1s"
   }
 })
+
+// tutorial setups
 vue.watch(tutorial_step, (new_value, old_value) => {
   // introduce scatterplot
   if(new_value === 0) {
-    const grid_container = document.querySelector(".entity-grid-container") as HTMLElement
+    const grid_container = document.querySelector(".overview-grid-container") as HTMLElement
     grid_container.style["max-height"] = "44%"
   }
 
   // introduce outlet scatter grid
   if(new_value === 1) {
-    const grid_container = document.querySelector(".entity-grid-container") as HTMLElement
+    const grid_container = document.querySelector(".overview-grid-container") as HTMLElement
     grid_container.style['grid-template-columns'] = "repeat(3, 1fr)"
     const tutorial_tooltip = document.querySelector(".tutorial_tooltip") as HTMLElement
     tutorial_tooltip.style.right = "0px"
@@ -375,7 +524,7 @@ vue.watch(tutorial_step, (new_value, old_value) => {
     right_section.style["transition"] = "flex-basis 1s"
     left_section.style.setProperty("flex-basis", "calc(55% - 4px)")
     right_section.style.setProperty("flex-basis", "calc(45% - 4px)")
-    const grid_container = document.querySelector(".entity-grid-container") as HTMLElement
+    const grid_container = document.querySelector(".overview-grid-container") as HTMLElement
     if(grid_container) {
       grid_container.style["max-height"] = "50%"
     }
@@ -442,6 +591,11 @@ vue.watch(tutorial_step, (new_value, old_value) => {
     tutorial_mode.value = false
   }
 })
+
+
+/**
+ * @deprecated
+ */
 function updateNpList(np_list) {
   // this.dataset = dataset
   // this.outlet_set = dataset.outlet_set
@@ -452,7 +606,7 @@ function updateNpList(np_list) {
 } 
 
 function datasetImported(dataset) {
-  graph_constructing.value = true
+  overview_constructing.value = true
   setTimeout(() => {
     const promise = new Promise((resolve) => { 
       outlet_article_dict.value = dataset.outlet_article_dict
@@ -472,19 +626,18 @@ function datasetImported(dataset) {
       max_articles.value = r_max_articles
       min_articles.value = r_min_articles
       node_article_id_dict.value = r_node_article_id_dict
-      graph_constructed.value = true
+      overview_constructed.value = true
       resolve(""); 
     })
-    promise.then(() => graph_constructing.value = false)
+    promise.then(() => overview_constructing.value = false)
   }, 10)
 
-  // graph_constructing.value = true
-  // setTimeout(() => {
-  //   const promise = new Promise((resolve) => { processDataset(dataset); resolve(""); })
-  //   promise.then(() => graph_constructing.value = false)
-  // }, 1)
 }
 
+/**
+ * 
+ * @deprecated this function is replaced by datasetImported() 
+ */
 function processDataset(dataset) {
   entity_mentions.value = dataset.entity_mentions
   dataset_metadata = dataset.metadata
@@ -509,67 +662,15 @@ function processDataset(dataset) {
   graph_dict.value = r_graph_dict
   max_articles.value = r_max_articles
   min_articles.value = r_min_articles
-  graph_constructed.value = true
+  overview_constructed.value = true
 }
 
 function updateEnabledOutlet(outlet_set_info) {
   enabled_outlet_set.value = outlet_set_info.filter(outlet => outlet.enabled).map(outlet => outlet.outlet)
 }
 
-// function queryDataset(article_list) {
-//   console.log(article_list.toString())
-//   const url = "http://ec2-35-160-171-6.us-west-2.compute.amazonaws.com:8081/v1/graphql"
-
-//   const query = `
-//     query MyQuery {
-//       Article(where: {id: {_in: [${article_list}]}}) {
-//         id
-//         headline
-//         journal
-//         timestamp
-//         Analysis_mentioned_entities {
-//           mentions
-//         }
-//         Analysis_sentiments {
-//           sentiment
-//         }
-//         content
-//       }
-//     }
-//   ` 
-//   this.axios({
-//       url: url,
-//       method: 'post',
-//       data: {
-//         query: query,
-//       }
-//   })   
-//   .then(response => {
-//     console.log("done")
-//     console.log(response)
-//   })
-// }
-
-// function updateTarget(target) {
-//   const index = entity_list.indexOf(target) 
-
-//   this.selected_target = [target]
-//   const article_list = this.np_list[index][1]
-//   // TODO: query data from graphql
-//   // const dataset = this.queryDataset(article_list)
-//   const target_articles = this.$refs.toolbar.getData(target)
-
-//   this.original_dataset = target_articles
-//   // sort by date and update time range
-//   target_articles.sort((a1, a2) => Date.parse(a1.timestamp) > Date.parse(a2.timestamp))
-//   const startMonth = parseInt(target_articles[0].timestamp.split('-')[1])
-//   const endMonth = parseInt(target_articles[target_articles.length-1].timestamp.split('-')[1])
-//   this.timeRange = [startMonth, endMonth+1]
-//   this.updateDicts(target_articles)
-// }
-
+// handlers
 function handleScatterClicked(index) {
-    // const clicked_scatter = entity_mentions.value[index][0]
     const clicked_scatter = Array.from(enabled_outlet_set.value)[index]
 
     selectedScatterGraphs_left.value.push(graph_dict.value[clicked_scatter])
@@ -577,7 +678,6 @@ function handleScatterClicked(index) {
     if(dropped_from > -1) 
       selectedScatterGraphs_right.value.splice(dropped_from, 1)
 
-    scatterClicked.value = true
     const button_next = document.getElementsByClassName("p-tabview-nav-next")[0] as HTMLElement || undefined
     if(button_next != undefined) {
       button_next.click()
@@ -665,7 +765,6 @@ function handleDropScatter(e) {
     // if(dropped_from > -1) 
       // selectedScatterGraphs_left.value.splice(dropped_from, 1)
   }
-  scatterClicked.value = true
   const button_next = document.getElementsByClassName("p-tabview-nav-next")[0] as HTMLElement || undefined
   if(button_next != undefined) {
     button_next.click()
@@ -686,7 +785,6 @@ function handleEntityClicked({type, d}) {
       entity_in_outlet.text = `${entity_name}-${outlet}`
       outlet_graph.nodes.push(entity_in_outlet)
     })
-    // graph_dict.value[entity.text] = outlet_graph
     selectedScatterGraphs_right.value.push(outlet_graph)
     return
   }
@@ -754,17 +852,17 @@ function handleSearch(item) {
 <template>
   <main>
     <Splitter class="splitter-outmost" layout="vertical">
-      <SplitterPanel id="overview-section" class="flex align-items-center justify-content-center" :size="100">
+      <SplitterPanel id="homeview-container" class="flex align-items-center justify-content-center" :size="100">
         <Splitter>
-          <SplitterPanel ref="expanded_section" class="expanded-section flex align-items-center justify-content-center" :size="55" 
+          <SplitterPanel id="expanded_section" class="expanded-section flex align-items-center justify-content-center" :size="55" 
             >
             <TargetContainer
+            id="panel_left"
             :class="{compare: compare_mode}"
             compare_part="panel-left"
             :articles="articles"
             :enabled_outlet_set="enabled_outlet_set"
             v-model:selectedScatters="selectedScatterGraphs_left"
-            :selectedTimeRange="timeRange"
             :article_num_threshold="article_num_threshold"
             :segment_mode="segment_mode"
             v-model:segmentation="segment_sst"
@@ -782,13 +880,13 @@ function handleSearch(item) {
 
             <TargetContainer
             v-if="compare_mode"
+            id="panel_right"
             :class="{compare: compare_mode}"
             compare_part="panel-right"
             :articles="articles"
             :enabled_outlet_set="enabled_outlet_set"
             v-model:selectedScatters="selectedScatterGraphs_right"
             :temporalBins="temporalBins"
-            :selectedTimeRange="timeRange"
             :article_num_threshold="article_num_threshold"
             :segment_mode="segment_mode"
             v-model:segmentation="segment_sst"
@@ -806,15 +904,15 @@ function handleSearch(item) {
             <div class="toolbar-container">
               <ToggleButton class='compare_toggle ' v-model="compare_mode" onIcon="pi pi-image" offIcon="pi pi-images"></ToggleButton>
               <div class="search-bar">
-                <SearchBar v-if="graph_constructed" :search_terms="entity_list" @entity_searched="handleSearch"></SearchBar>
+                <SearchBar v-if="overview_constructed" :search_terms="entity_list" @entity_searched="handleSearch"></SearchBar>
               </div>
               <MyToolbar ref="toolbar" 
               @candidate_updated="updateNpList"
               @dataset_imported="datasetImported"  >
               </MyToolbar>
-              <ToggleButton v-if="graph_constructed" class='overview-toggler ' v-model="overview_mode" onIcon="pi pi-chart-line" offIcon="pi pi-table"></ToggleButton>
+              <ToggleButton v-if="overview_constructed" class='overview-toggler ' v-model="overview_grid_mode" onIcon="pi pi-chart-line" offIcon="pi pi-table"></ToggleButton>
             </div>
-            <i v-if="graph_constructing" class="pi pi-spin pi-spinner" 
+            <i v-if="overview_constructing" class="pi pi-spin pi-spinner" 
             style="
             position:absolute;
             left: 45%;
@@ -822,8 +920,7 @@ function handleSearch(item) {
             font-size: 3rem;
             z-index: 1000
             "></i> 
-          <div class="entity-grid-container" v-if="graph_constructed && overview_mode" >
-                <!-- v-for="(entity, index) in entity_list" :key="entity"  -->
+          <div class="overview-grid-container" v-if="overview_constructed && overview_grid_mode" >
             <SentimentScatter
                 v-for="(outlet, index) in enabled_outlet_set" :key="outlet" 
                 class="outlet-scatter"
@@ -841,7 +938,7 @@ function handleSearch(item) {
             >
             </SentimentScatter>
             </div>
-            <div class="temporal-container" v-if="graph_constructed && !overview_mode">
+            <div class="overview-temporal-container" v-if="overview_constructed && !overview_grid_mode">
               <TemporalCoordinates class="overview-temporal-coord" 
                 :id="`overview_temporal`"
                 :article_bin_dict="outlet_article_bins_dict"
@@ -857,12 +954,12 @@ function handleSearch(item) {
               </TemporalPathSelector>
             </div>
             <div class="utilities-container">
-              <div v-if="graph_constructed" class="slider-container">
+              <div v-if="overview_constructed" class="slider-container">
                 <InputText class="threshold-input" v-model="article_num_threshold"></InputText>
                 <Button class="increment-button p-button-secondary" label="+"  @click="() => article_num_threshold=Math.min(article_num_threshold+=10, max_articles||100)"></Button>
                 <Button class="decrease-button p-button-secondary " label="-"  @click="() => article_num_threshold=Math.max(article_num_threshold-10, 0)"></Button>
                 <Slider v-model="article_num_threshold" :step="10" :min="0" :max="max_articles||100"></Slider>
-                <ColorSpectrum class="color-spectrum" v-if="graph_constructed" 
+                <ColorSpectrum class="color-spectrum" v-if="overview_constructed" 
                 :color-scale="SstColors.article_num_color_scale"
                 ></ColorSpectrum>
                 <div class="indicator-container">
@@ -870,30 +967,19 @@ function handleSearch(item) {
                   <div class="max_indicator">{{max_articles || 100}}</div>
                 </div>
               </div>
-              <div v-if="graph_constructed" class="segment-toggler-container">
+              <div v-if="overview_constructed" class="segment-toggler-container">
                 <ToggleButton class='segment-toggler p-primary' v-model="segment_mode" onLabel="Segment" offLabel="Segment"></ToggleButton>
               </div>
             </div>
-            <Legend v-if="graph_constructed" 
-            id="segment_legend"
-            class="segment-legend"
-            :color_dict="SstColors.key_color_dict" 
-            :filter="true" 
-            :interactable="false"></Legend>
-            <!-- <div class="selection_container" style="display:flex">
-              <TargetSelection v-if="np_list.length!=0" :dataset_metadata="dataset_metadata" :targets="entity_data" @target-selected="updateTarget"></TargetSelection>
-              <TopicSelection  v-if="topic_list.length!=0"  :topics="topic_list" @topic-selected="updateTopic" style="flex:0.5"></TopicSelection>
-            </div> -->
-            <!-- <Filter v-if="selected_target.length!=0" :outlet_set="outlet_set"
-            @outlet-filtered="updateEnabledOutlet"
-            ></Filter>
-          <MonthSlider v-if="selected_target.length!=0" v-model:selectedRange="timeRange" ></MonthSlider> -->
+            <Legend v-if="overview_constructed" 
+              id="segment_legend"
+              class="segment-legend"
+              :color_dict="SstColors.key_color_dict" 
+              :filter="true" 
+              :interactable="false"></Legend>
           </SplitterPanel>
         </Splitter>
       </SplitterPanel>
-      <!-- <SplitterPanel id='detail-section' class="flex align-items-center justify-content-center" :size="22">
-        <p> detail </p>
-      </SplitterPanel> -->
     </Splitter>
     <Tooltip v-if="tutorial_mode" class="tutorial_tooltip" :content="tutorial_intro[tutorial_step]"></Tooltip>
     "<span v-if="tutorial_mode" class="skip-button" 
@@ -910,7 +996,7 @@ function handleSearch(item) {
   width: 97vw;
   height: 95vh;
 }
-.entity-grid-container {
+.overview-grid-container {
     display: grid;
     aspect-ratio: 3/2;
     max-height: 50%;
@@ -918,7 +1004,7 @@ function handleSearch(item) {
     grid-template-rows: repeat(2, 1fr);  
     gap: 0;
 }
-.entity-grid-container > :deep(.scatter-container) {
+.overview-grid-container > :deep(.scatter-container) {
   display:flex;
   aspect-ratio: 1;
 }
@@ -1018,7 +1104,7 @@ function handleSearch(item) {
   // display: flex !important;
   margin: 3px !important;
 }
-.temporal-container {
+.overview-temporal-container {
   display: flex;
 }
 .outlet-legend {
@@ -1036,7 +1122,7 @@ function handleSearch(item) {
 :deep(.p-button:focus) {
   box-shadow: unset !important;
 }
-:deep(.temporal-container > .temporal-selector-container) {
+:deep(.overview-temporal-container > .temporal-selector-container) {
   margin-top: 28px;
 }
 .tutorial_tooltip {
