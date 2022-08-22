@@ -209,7 +209,7 @@ onMounted(() => {
             .attr("y", (d) => d.y)
             .attr("width", segment_controller_width)
             .attr("height", segment_controller_width)
-            .attr("fill", "red")
+            .attr("fill", "white")
             .style("cursor", "pointer")
             .style("opacity", props.segment_mode?1:0)
             .call(drag)
@@ -389,10 +389,46 @@ function updateSegmentation() {
         .attr("y", (d) => d.y)
         // .attr("x", () => (segment_point.x-segment_controller_width/2))
         // .attr("y", () => (segment_point.y-segment_controller_width/2))
-
+    if(props.expanded)
+        updateCategorization()
 
 }
 
+function updateCategorization() {
+    let bind_data;
+    if(props.graph?.type === ViewType.EntityScatter) bind_data = filtered_data.value
+    if(props.graph?.type === ViewType.OutletScatter) bind_data = props.graph.nodes
+    // if(props.graph?.type === ViewType.CooccurrScatter) bind_data = props.graph.nodes
+
+    const ctg_nodes = _.groupBy(bind_data, categorizeNode)
+    const svg = d3.select(`#${props.id}`).select("svg")
+
+    const ctg_info = svg.selectAll("text.ctg_info")
+        .data([0])
+    ctg_info.enter().append("text").attr("class", "ctg_info")
+        .attr("x", viewBox_width)
+        .attr("y", 50)
+    const ctgs = svg.selectAll("text.ctg_info").selectAll("tspan.ctg")
+        .data(Object.keys(ctg_nodes))
+    ctgs.enter().append("tspan").attr("class", "ctg")
+        .merge(ctgs)
+        .attr("x", 1.03*viewBox_width)
+        .attr("dy", 15)
+        .text(d => `${d}: ${ctg_nodes[d].length}`)
+
+
+    
+}
+
+function categorizeNode(node) {
+    const pos_threshold = x.invert(segment_point.x)
+    const neg_threshold = y.invert(segment_point.y)
+    if(node.pos_sst < pos_threshold && node.neg_sst < neg_threshold) return "neu"
+    if(node.pos_sst < pos_threshold && node.neg_sst > neg_threshold) return "neg"
+    if(node.pos_sst > pos_threshold && node.neg_sst < neg_threshold) return "pos"
+    if(node.pos_sst > pos_threshold && node.neg_sst > neg_threshold) return "mix"
+    return "unknown" 
+}
 function updateExpandedTooltipContent(data: ScatterOutletNode) {
     tooltip_content.value = 
     `title: ${data.text} <br>` + 
@@ -526,7 +562,6 @@ function updateOverviewScatter() {
     if(props.graph?.type === ViewType.EntityScatter) bind_data = filtered_data.value
     if(props.graph?.type === ViewType.OutletScatter) bind_data = props.graph.nodes
     if(props.graph?.type === ViewType.CooccurrScatter) bind_data = props.graph.nodes
-    console.log("🚀 ~ file: SentimentScatter.vue ~ line 520 ~ updateOverviewScatter ~ bind_data", bind_data)
     const node_group = svg.select("g.node_group")
     node_group.selectAll("g.outlet")
     .data(bind_data, function(d) {return d.text})
