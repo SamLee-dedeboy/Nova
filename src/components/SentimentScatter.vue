@@ -61,7 +61,7 @@ const total_articles = computed(() => {
 })
 const {sst_threshold, updateThreshold} = vue.inject('segment_sst')
 const tooltip_content: Ref<string> = ref("") 
-const hovered_node_info: Ref<OutletNodeInfo> = ref({})
+const hovered_node_info: Ref<OutletNodeInfo> = ref(new OutletNodeInfo())
 const tutorial_mode: Ref<boolean> = vue.inject("tutorial_mode") || ref(false)
 const tutorial_step: Ref<number> = vue.inject("tutorial_step") || ref(0)
 vue.watch(tutorial_step, (new_value, old_value) => {
@@ -94,12 +94,12 @@ const y = d3.scalePow()
     .exponent(1)
     .domain([0, 1])
     .range([ margin.top + viewBox_height, margin.top]);
-const zoom = d3.zoom().scaleExtent([1, 3]).on("zoom", handleZoom)
+const zoom: any = d3.zoom().scaleExtent([1, 3]).on("zoom", handleZoom)
 const filtered_data = computed(() => props.graph?.nodes.filter(node => node.articles > (props.article_num_threshold || 0)))
 const nodes_freq = computed(() => filtered_data.value?.map(node => {return {title: node.text, freq: node.articles}}))
 const segment_controller_width = 12
 const node_circle_radius = 10
-const clicked_node: Ref<ScatterOutletNode> = ref({text: "", articles: 0, pos_sst: 0, neg_sst: 0})
+const clicked_node: Ref<ScatterOutletNode> = ref(new ScatterOutletNode())
 const menu = ref()
 const menu_items = ref([
     {
@@ -129,7 +129,7 @@ const menu_items = ref([
 var segment_point = {x: 0, y: 0} 
 var segment_controller_start_x:number
 var segment_controller_start_y:number
-let current_zoom = undefined
+let current_zoom: any = undefined
 vue.watch(() => props.segmentation, (new_value, old_value) => {
     segment_point = {x: x(new_value?.pos || 0.5), y: y(new_value?.neg || 0.5)}
     updateSegmentation()
@@ -184,7 +184,7 @@ onMounted(() => {
                 } 
                 //case where we have transformed the circle 
                 else {
-                    const current_scale_string = this.getAttribute("transform").split(' ')[1];
+                    const current_scale_string = this.getAttribute("transform")?.split(' ')[1] || "";
                     current_scale = +current_scale_string.substring(6,current_scale_string.length-1);
                 }
                 const end_x = segment_controller_start_x + ((e.x - segment_controller_start_x) / current_scale) 
@@ -212,7 +212,7 @@ onMounted(() => {
             .attr("fill", "white")
             .style("cursor", "pointer")
             .style("opacity", props.segment_mode?1:0)
-            .call(drag)
+            .call(drag as any)
             .on("mouseover", function(e, d) {
                 d3.select(this).attr("stroke", "black")
             })
@@ -335,7 +335,7 @@ function updateSegmentation() {
         .lower()
 
     // neg
-    const neg_rect = segment_group.selectAll("rect.neg")
+    const neg_rect: any = segment_group.selectAll("rect.neg")
     segment_group.enter().select("g.segmentation").append("rect")
                 .attr("class", "neg")
                 .attr("fill", SstColors.neg_color)
@@ -347,7 +347,7 @@ function updateSegmentation() {
                 .attr("height", (d) => segment_point.y-margin.top)
                 .lower()
     // neu
-    const neu_rect = segment_group.selectAll("rect.neu")
+    const neu_rect: any = segment_group.selectAll("rect.neu")
     segment_group.enter().select("g.segmentation").append("rect")
                 .attr("class", "neu")
                 .attr("fill", SstColors.neu_color)
@@ -359,7 +359,7 @@ function updateSegmentation() {
                 .attr("height", (d) => viewBox_height-segment_point.y+margin.top)
 
     // pos
-    const pos_rect = segment_group.selectAll("rect.pos")
+    const pos_rect: any = segment_group.selectAll("rect.pos")
     segment_group.enter().select("g.segmentation").append("rect")
                 .attr("class", "pos")
                 .attr("fill", SstColors.pos_color)
@@ -370,7 +370,7 @@ function updateSegmentation() {
                 .attr("width", (d) => viewBox_width-segment_point.x)
                 .attr("height", (d) => viewBox_height-segment_point.y + margin.top)
     // mixed
-    const mixed_rect = segment_group.selectAll("rect.mixed")
+    const mixed_rect: any = segment_group.selectAll("rect.mixed")
     segment_group.enter().select("g.segmentation").append("rect")
                 .attr("class", "mixed")
                 .attr("fill", SstColors.mixed_color)
@@ -408,7 +408,7 @@ function updateCategorization() {
     ctg_info.enter().append("text").attr("class", "ctg_info")
         .attr("x", viewBox_width)
         .attr("y", 50)
-    const ctgs = svg.selectAll("text.ctg_info").selectAll("tspan.ctg")
+    const ctgs: any = svg.selectAll("text.ctg_info").selectAll("tspan.ctg")
         .data(Object.keys(ctg_nodes))
     ctgs.enter().append("tspan").attr("class", "ctg")
         .merge(ctgs)
@@ -484,7 +484,7 @@ function updateExpandedScatter() {
                 .style("top", e.offsetY - 5 - align_image_offset + "px")
         })
         .on("mouseover", function(e, d) {
-            const container = d3.select(this.parentNode)
+            const container: any = d3.select(this.parentNode)
             container.style("filter", "brightness(90%)")
             // apply hover effect
             container.selectAll("circle.expand_circle")
@@ -504,7 +504,7 @@ function updateExpandedScatter() {
                 .style("opacity", 1)
         })
         .on("mouseout", function(e, d) {
-            const container = d3.select(this.parentNode)
+            const container: any = d3.select(this.parentNode)
             container.style("filter", "brightness(100%)")
             container.selectAll("circle.expand_circle")
                 .transition().duration(100)
@@ -529,7 +529,7 @@ function updateExpandedScatter() {
                 const overlay_menu = d3.select("#overlay_menu")
                     overlay_menu.style("left", e.clientX + 5 + "px")
                     .style("top", e.clientY + 5 + "px")
-                clicked_node.value = d
+                clicked_node.value = d as ScatterOutletNode
             })
         })
 
@@ -555,7 +555,7 @@ function updateOverviewScatter() {
     const svg = d3.select(`#${props.id}`).select("svg")
     const article_radius_scale = d3.scalePow()
     .exponent(1)
-    .domain([ min_articles, max_articles ])
+    .domain([ min_articles.value, max_articles.value ])
     .range([ outlet_min_radius, outlet_max_radius ]);
 
     let bind_data;

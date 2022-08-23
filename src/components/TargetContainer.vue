@@ -55,9 +55,11 @@ const topicBins = vue.computed(() => {
 })
 const highlightNodes: Ref<string[]> = ref([])
 const selectedEntities = vue.computed(() => {
+    if(!props.temporalBins) return undefined
     return Object.keys(props.temporalBins)
 })
 const temporal_color_dict = vue.computed(() => {
+    if(!props.temporalBins) return undefined
     let color_dict = {}
     Object.keys(props.temporalBins).forEach((title, index) => {
         const color = selectColor(index)
