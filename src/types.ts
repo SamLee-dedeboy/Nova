@@ -3,6 +3,7 @@ export enum ViewType {
    OutletScatter,
    CooccurrScatter,
    Temporal,
+   Article,
 }
 export class Path {
     title: string
@@ -80,4 +81,5 @@ export class Sentiment {
     neg: number
     pos_sentences: number
     neg_sentences: number
+    normalized_sst?: number
 }

@@ -123,6 +123,7 @@ const menu_items = ref([
     {
         label: "Show articles",
         command: () => {
+            emit("node_clicked", {type: ViewType.Article, d: clicked_node.value})
         }
     },
 ])

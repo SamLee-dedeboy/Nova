@@ -9,7 +9,6 @@ import MyToolbar from "../components/MyToolbar.vue"
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import ToggleButton from 'primevue/togglebutton';
-import ArticleView from "../components/ArticleView.vue";
 import TopicSelection from "../components/deprecated/TopicSelection.vue";
 import TargetSelection from "../components/deprecated/TargetSelection.vue"
 import MonthSlider from "../components/deprecated/MonthSlider.vue"
@@ -27,6 +26,7 @@ import TemporalPathSelector from "../components/TemporalPathSelector.vue";
 import SentimentScatter from "../components/SentimentScatter.vue";
 import Tooltip from "../components/Tooltip.vue";
 import SearchBar from "../components/SearchBar.vue";
+import ArticleView from "../components/ArticleView.vue"
 import tutorial_intro_json from "../assets/tutorial/tutorial_intro.json"
 import * as tutorial from "../components/TutorialUtils"
 
@@ -143,6 +143,10 @@ const compare_mode: Ref<boolean> = ref(false)
 vue.provide('compare_mode', compare_mode)
 
 /**
+ * Flag for displaying article view. 
+ */
+const display_article_view: Ref<boolean> = ref(false)
+/**
  * Flag for segment mode. \
  * Display segmentation on all scatters when segment mode is on.
  */
@@ -184,7 +188,7 @@ vue.provide('segment_sst', {segment_sst, updateThreshold})
 /**
  * flag for tutorial mode.
  */
-const tutorial_mode: Ref<boolean> = ref(true)
+const tutorial_mode: Ref<boolean> = ref(false)
 /**
  * tutorial step: start from 0.
  */
@@ -222,6 +226,12 @@ const temporalBins = ref({})
  * Referenced by node title. 
  */
 const node_article_id_dict = ref({})
+
+/**
+ * Array of selected articles. \
+ * Used in ArticleView.
+ */
+const selected_articles: Ref<Article[]> = ref([])
 
 /**
  * @deprecated
@@ -530,6 +540,12 @@ function handleEntityClicked({type, d}) {
     selectedScatterGraphs_right.value.push(cooccurr_graph)
     return
   }
+  if(type === ViewType.Article) {
+    const article_ids = node_article_id_dict.value[d.text]
+    selected_articles.value = preprocess.idsToArticles(article_ids, article_dict.value)
+    display_article_view.value = true
+
+  }
 }
 
 function handleShowTemporal(nodes) {
@@ -611,83 +627,91 @@ function handleSearch(item) {
             </TargetContainer>
           </SplitterPanel>
           <SplitterPanel id='sidebar' class="sidebar flex align-items-center justify-content-center" :size="45" :min-size="45">
-            <div class="toolbar-container">
-              <ToggleButton class='compare_toggle ' v-model="compare_mode" onIcon="pi pi-image" offIcon="pi pi-images"></ToggleButton>
-              <div class="search-bar">
-                <SearchBar v-if="overview_constructed" :search_terms="entity_list" @entity_searched="handleSearch"></SearchBar>
+            <div v-if="!display_article_view" class="overview-container">
+              <div class="toolbar-container">
+                <ToggleButton class='compare_toggle ' v-model="compare_mode" onIcon="pi pi-image" offIcon="pi pi-images"></ToggleButton>
+                <div class="search-bar">
+                  <SearchBar v-if="overview_constructed" :search_terms="entity_list" @entity_searched="handleSearch"></SearchBar>
+                </div>
+                <MyToolbar ref="toolbar" 
+                @candidate_updated="updateNpList"
+                @dataset_imported="datasetImported"  >
+                </MyToolbar>
+                <ToggleButton v-if="overview_constructed" class='overview-toggler ' v-model="overview_grid_mode" onIcon="pi pi-chart-line" offIcon="pi pi-table"></ToggleButton>
               </div>
-              <MyToolbar ref="toolbar" 
-              @candidate_updated="updateNpList"
-              @dataset_imported="datasetImported"  >
-              </MyToolbar>
-              <ToggleButton v-if="overview_constructed" class='overview-toggler ' v-model="overview_grid_mode" onIcon="pi pi-chart-line" offIcon="pi pi-table"></ToggleButton>
-            </div>
-            <i v-if="overview_constructing" class="pi pi-spin pi-spinner" 
-            style="
-            position:absolute;
-            left: 45%;
-            top: 30%;
-            font-size: 3rem;
-            z-index: 1000
-            "></i> 
-          <div class="overview-grid-container" v-if="overview_constructed && overview_grid_mode" >
-            <SentimentScatter
-                v-for="(outlet, index) in enabled_outlet_set" :key="outlet" 
-                class="outlet-scatter"
-                :graph="graph_dict[outlet]"
-                :graph_index="index"
-                :id="`scatter-${index}`"
-                :article_num_threshold="article_num_threshold"
-                :segment_mode="segment_mode"
-                :segmentation="segment_sst"
-                :highlight_nodes="highlight_nodes"
-                :expanded="false"
-                :draggable="true"
-                @dragstart="handleDragScatter($event, index)"
-                @click="handleScatterClicked(index)"
-            >
-            </SentimentScatter>
-            </div>
-            <div class="overview-temporal-container" v-if="overview_constructed && !overview_grid_mode">
-              <TemporalCoordinates class="overview-temporal-coord" 
-                :id="`overview_temporal`"
-                :article_bin_dict="outlet_article_bins_dict"
-                :highlight_object="highlight_outlet"
-                :color_dict="SstColors.outlet_color_dict"
-                :sst_threshold="segment_sst"
-              ></TemporalCoordinates>
-              <TemporalPathSelector 
-                :temporalBins="outlet_article_bins_dict"
-                v-model:selectedTargets="highlight_outlet"
-                :color_dict="SstColors.outlet_color_dict"
+              <i v-if="overview_constructing" class="pi pi-spin pi-spinner" 
+              style="
+              position:absolute;
+              left: 45%;
+              top: 30%;
+              font-size: 3rem;
+              z-index: 1000
+              "></i> 
+            <div class="overview-grid-container" v-if="overview_constructed && overview_grid_mode" >
+              <SentimentScatter
+                  v-for="(outlet, index) in enabled_outlet_set" :key="outlet" 
+                  class="outlet-scatter"
+                  :graph="graph_dict[outlet]"
+                  :graph_index="index"
+                  :id="`scatter-${index}`"
+                  :article_num_threshold="article_num_threshold"
+                  :segment_mode="segment_mode"
+                  :segmentation="segment_sst"
+                  :highlight_nodes="highlight_nodes"
+                  :expanded="false"
+                  :draggable="true"
+                  @dragstart="handleDragScatter($event, index)"
+                  @click="handleScatterClicked(index)"
               >
-              </TemporalPathSelector>
-            </div>
-            <div class="utilities-container">
-              <div v-if="overview_constructed" class="slider-container">
-                <InputText class="threshold-input" v-model="article_num_threshold"></InputText>
-                <Button class="increment-button p-button-secondary" label="+"  @click="() => article_num_threshold=Math.min(article_num_threshold+=10, max_articles||100)"></Button>
-                <Button class="decrease-button p-button-secondary " label="-"  @click="() => article_num_threshold=Math.max(article_num_threshold-10, 0)"></Button>
-                <Slider v-model="article_num_threshold" :step="10" :min="0" :max="max_articles||100"></Slider>
-                <ColorSpectrum class="color-spectrum" v-if="overview_constructed" 
-                :color-scale="SstColors.article_num_color_scale"
-                ></ColorSpectrum>
-                <div class="indicator-container">
-                  <div class="min_indicator">0</div>
-                  <div class="max_indicator">{{max_articles || 100}}</div>
+              </SentimentScatter>
+              </div>
+              <div class="overview-temporal-container" v-if="overview_constructed && !overview_grid_mode">
+                <TemporalCoordinates class="overview-temporal-coord" 
+                  :id="`overview_temporal`"
+                  :article_bin_dict="outlet_article_bins_dict"
+                  :highlight_object="highlight_outlet"
+                  :color_dict="SstColors.outlet_color_dict"
+                  :sst_threshold="segment_sst"
+                ></TemporalCoordinates>
+                <TemporalPathSelector 
+                  :temporalBins="outlet_article_bins_dict"
+                  v-model:selectedTargets="highlight_outlet"
+                  :color_dict="SstColors.outlet_color_dict"
+                >
+                </TemporalPathSelector>
+              </div>
+              <div class="utilities-container">
+                <div v-if="overview_constructed" class="slider-container">
+                  <InputText class="threshold-input" v-model="article_num_threshold"></InputText>
+                  <Button class="increment-button p-button-secondary" label="+"  @click="() => article_num_threshold=Math.min(article_num_threshold+=10, max_articles||100)"></Button>
+                  <Button class="decrease-button p-button-secondary " label="-"  @click="() => article_num_threshold=Math.max(article_num_threshold-10, 0)"></Button>
+                  <Slider v-model="article_num_threshold" :step="10" :min="0" :max="max_articles||100"></Slider>
+                  <ColorSpectrum class="color-spectrum" v-if="overview_constructed" 
+                  :color-scale="SstColors.article_num_color_scale"
+                  ></ColorSpectrum>
+                  <div class="indicator-container">
+                    <div class="min_indicator">0</div>
+                    <div class="max_indicator">{{max_articles || 100}}</div>
+                  </div>
+                </div>
+                <div v-if="overview_constructed" class="segment-toggler-container">
+                  <ToggleButton class='segment-toggler p-primary' v-model="segment_mode" onLabel="Segment" offLabel="Segment"></ToggleButton>
                 </div>
               </div>
-              <div v-if="overview_constructed" class="segment-toggler-container">
-                <ToggleButton class='segment-toggler p-primary' v-model="segment_mode" onLabel="Segment" offLabel="Segment"></ToggleButton>
+              <Legend v-if="overview_constructed" 
+                id="segment_legend"
+                class="segment-legend"
+                :color_dict="SstColors.key_color_dict" 
+                :filter="true" 
+                :interactable="false"></Legend>
               </div>
-            </div>
-            <Legend v-if="overview_constructed" 
-              id="segment_legend"
-              class="segment-legend"
-              :color_dict="SstColors.key_color_dict" 
-              :filter="true" 
-              :interactable="false"></Legend>
-          </SplitterPanel>
+              <div v-if="display_article_view" class="article-view-container">
+                <ArticleView
+                :articles="selected_articles">
+
+                </ArticleView>
+              </div>
+            </SplitterPanel>
         </Splitter>
       </SplitterPanel>
     </Splitter>
