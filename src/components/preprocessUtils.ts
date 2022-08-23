@@ -29,7 +29,9 @@ export function constructEntityGraph(entity_mentions_grouped, article_dict) {
     return {r_graph_dict, r_max_articles, r_min_articles, r_node_article_id_dict}
 
 }
-
+/**
+ * @deprecated 
+ */
 export function constructEntityGraph2(entity_mentions, outlet_set, article_dict, articles) {
     var r_graph_dict = {}
     var r_min_articles = articles.length

@@ -27,7 +27,7 @@ import TemporalPathSelector from "../components/TemporalPathSelector.vue";
 import SentimentScatter from "../components/SentimentScatter.vue";
 import Tooltip from "../components/Tooltip.vue";
 import SearchBar from "../components/SearchBar.vue";
-import tutorial_intro_json from "../assets/tutorial_intro.json"
+import tutorial_intro_json from "../assets/tutorial/tutorial_intro.json"
 import * as tutorial from "../components/TutorialUtils"
 
 

@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import Graph from "./Graph.vue";
-import Cloud from "./Cloud.vue"
+import Graph from "./deprecated/Graph.vue";
+import Cloud from "./deprecated/Cloud.vue"
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
-import TimeAxes from './TimeAxes.vue'
+import TimeAxes from './deprecated/TimeAxes.vue'
 import * as dfd from "danfojs"
 import Dropdown from 'primevue/dropdown';
-import InfoButton from "./InfoButton.vue";
+import InfoButton from "./deprecated/InfoButton.vue";
 import * as d3 from "d3"
 import { watch, onMounted, PropType, ref, Ref, toRef, computed, defineEmits, nextTick } from 'vue'
 import * as vue from 'vue'
@@ -25,7 +25,6 @@ const props = defineProps({
     enabled_outlet_set: Object as () => Set<string>,
     selectedScatters: Object as () => ScatterOutletGraph[],
     temporalBins: Object as () => {[id: string]: {[id: string]:Article[]}},
-    selectedTimeRange: Object as () => {start: number, end: number},
     compare_part: String,
     article_num_threshold: Number,
     segment_mode: Boolean,
