@@ -102,6 +102,7 @@ def articles_groupby_outlet(filepath="data/processed_articles_rel_hugFace.json")
         res[outlet] = article_list
     dict_to_json(res, filepath="data/outlet_article_dict.json")
         # articles.to_json("data/{}_articles.json".format(outlet))
+
 def entities_groupy_outlet(
 entity_filepath="data/entities_gt10.json",
 article_filepath="data/outlet_article_dict.json"):
@@ -123,4 +124,17 @@ article_filepath="data/outlet_article_dict.json"):
         res[outlet] = candidate_entities
     dict_to_json(res, filepath="data/entities_groupby_outlet.json")
 
-gen_entity_cooccurrence()
+def filter_article_summary(
+test_article_filepath='data/processed_articles_rel_hugFace.json',
+article_summary_filepath='data/article_summary.json'):
+    article_list = json.load(open((test_article_filepath)))
+    article_summary_list = pd.read_json((article_summary_filepath)).values.tolist()
+    for article_summary_object in article_summary_list:
+        article_id = article_summary_object[0]
+        article_summary = article_summary_object[1]['summary'][0]
+        for article in article_list:
+            if article["id"] == article_id:
+                article['summary'] = article_summary
+                continue
+    dict_to_json(article_list, filepath='data/test_articles_with_summary.json')
+

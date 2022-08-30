@@ -12,13 +12,15 @@ def add_sentiment(src_dataset_path, dst_dataset_path, subset=None):
     # process sentiment 
     for (ite, article) in enumerate(articles):
         print("ite: {}, id: {}".format(ite, article["id"]))
-        sentences = preprocess.article_to_sentences(article["content"])
+        # sentences = preprocess.article_to_sentences(article["content"])
+        summary = article["summary"]
         # google
         # google_sentiment = google_sa.analyze_sentiment(sentences)
         # article["sentiment"] = {"score": google_sentiment.document_sentiment.score, "magnitude": google_sentiment.document_sentiment.magnitude}
 
         # hug face
-        hugFace_sentiment = hugging_face_analyzer.analyze_sentiment(sentences)
+        # hugFace_sentiment = hugging_face_analyzer.analyze_sentiment(sentences)
+        hugFace_sentiment = hugging_face_analyzer.analyze_doc_sentiment(summary)
         article["sentiment"] = hugFace_sentiment 
         # textblob
         # blob_sentiment = textblob_sa.analyze_sentiment(sentences)
@@ -30,3 +32,10 @@ def add_sentiment(src_dataset_path, dst_dataset_path, subset=None):
     print("Sentiemnt Processing Done! Saving....")
     print("-------------------------------")
     preprocess.dict_to_json(articles, filepath=dst_dataset_path)
+
+
+add_sentiment(
+    src_dataset_path="data/test_articles_with_summary.json",
+    dst_dataset_path="data/processed_articles_with_summary.json",
+    subset=None
+)

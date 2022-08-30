@@ -4,6 +4,14 @@ class hugFace:
     def __init__(self):
         self.classifier = pipeline("sentiment-analysis")
 
+    def analyze_doc_sentiment(self, doc):
+        classifier = self.classifier
+        try:
+            sst = classifier(doc)[0] 
+            return sst
+        except:
+            print("sentence token length too long! Considered noise.")
+
     def analyze_sentiment(self, sentences):
         classifier = self.classifier
         sst_pos = 0
