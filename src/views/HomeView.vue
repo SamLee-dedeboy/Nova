@@ -578,7 +578,7 @@ function handleSearch(item) {
 <template>
   <main>
     <Splitter class="splitter-outmost" layout="vertical">
-      <SplitterPanel id="homeview-container" class="flex align-items-center justify-content-center" :size="100">
+      <SplitterPanel class="homeview-container flex align-items-center justify-content-center" :size="100">
         <Splitter>
           <SplitterPanel id="expanded_section" class="expanded-section flex align-items-center justify-content-center" :size="55" 
             >
@@ -706,7 +706,9 @@ function handleSearch(item) {
                 :interactable="false"></Legend>
               </div>
               <div v-if="display_article_view" class="article-view-container">
+                <ToggleButton class='segment-toggler p-primary' v-model="display_article_view" onLabel="Back" offLabel="Article"></ToggleButton>
                 <ArticleView
+                v-model:sst_threshold="segment_sst"
                 :articles="selected_articles">
 
                 </ArticleView>
@@ -729,6 +731,9 @@ function handleSearch(item) {
 .splitter-outmost {
   width: 97vw;
   height: 95vh;
+}
+.homeview-container {
+  height: 100%;
 }
 .overview-grid-container {
     display: grid;
@@ -875,6 +880,9 @@ function handleSearch(item) {
   display:inline-block;
   // transform: translateY(-50%);
   height: 50px;
+}
+.article-view-container {
+  height: 100%;
 }
  </style>
 

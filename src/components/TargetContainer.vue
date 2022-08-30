@@ -10,7 +10,7 @@ import InfoButton from "./deprecated/InfoButton.vue";
 import * as d3 from "d3"
 import { watch, onMounted, PropType, ref, Ref, toRef, computed, defineEmits, nextTick } from 'vue'
 import * as vue from 'vue'
-import { ScatterOutletNode, ScatterOutletGraph, ViewType, Article, OutletNodeInfo } from "../types";
+import { ScatterOutletNode, ScatterOutletGraph, ViewType, Article, OutletNodeInfo, Sentiment2D } from "../types";
 import TemporalCoordinates from "./TemporalCoordinates.vue";
 import TemporalPathSelector from "./TemporalPathSelector.vue";
 import SentimentScatter from "./SentimentScatter.vue";
@@ -28,7 +28,7 @@ const props = defineProps({
     compare_part: String,
     article_num_threshold: Number,
     segment_mode: Boolean,
-    segmentation: Object as () => {pos: Number, neg: Number},
+    segmentation: Sentiment2D,
     highlight_nodes: Object as () => string[], 
 })
 const scatterClicked: Ref<boolean> = ref(false)
@@ -72,40 +72,13 @@ vue.watch(() => props.highlight_nodes, (new_value, old_value) => {
 }, {deep:true})
 vue.watch(selectedNodes, (new_value, old_value) => {
     highlightNodes.value = selectedNodes.value?.map(node => node.text.split("-")[0])
-    
 })
-// const selectedScatters: Ref<Set<ScatterOutletGraph> | undefined> = toRef(props, 'selectedScatters')
-// const selectedScatters_list = computed(() => {
-//     console.log(selectedScatters.value)
-//     return Array.from(selectedScatters.value || [])
-// })
-        // data() {
-        // return {
-        //     entity_graph: {
-        //         nodes:[]
-        //     },
-        //     cooccur_matrix: {},
-        //     clicked_outlet: undefined,
-        //     opacityThreshold: 0,
-        //     modes: [
-        //         {label: "avg_score", value: "avg_score"},
-        //         {label: "score", value: "score"},
-        //         {label: "#articles", value: "#articles"}],
-        //     selected_mode: "score",
-        //     graph_constructed: false,
-        //     scatterClicked: false,
-        //     clickedScatter: {graph: {}, index: undefined},
-        //     active: 0
-        // }
-    // },
-    // computed: {
-    //     article_dict: function() {
-    //         return this.articles.reduce((dict, article) => (dict[article.id]=article, dict), {})
-    //     },
-    //     entity_list: function() {
-    //         return this.entity_mentions.map(entity_mention => entity_mention[0])
-    //     },
-    // },
+vue.watch(props.segmentation!, (new_value, old_value) => {
+    console.log("🚀 ~ file: TargetContainer.vue ~ line 77 ~ vue.watch ~ segmentation")
+    console.log({new_value, old_value})
+
+})
+
 watch(() => props.selectedScatters, (new_scatters, old_scatters) => {
     active.value = (props.selectedScatters?.length || 1) - 1 
     // const tab_navs = document.querySelector(".p-tabview-nav").querySelector('[role="presentation"]')
@@ -121,10 +94,6 @@ watch(() => props.selectedScatters, (new_scatters, old_scatters) => {
             })})
     })
 }, {deep:true})
-
-// watch(() => selectedScatters_list, (new_value) => {
-//     console.log(selectedScatters_list.value)
-// })
 
 const emit = defineEmits(['update:selectedScatters', "update:segmentation", "node-clicked", "entity-clicked", "show_temporal"])
 

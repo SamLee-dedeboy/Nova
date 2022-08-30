@@ -40,7 +40,7 @@ const props = defineProps({
     panel_class: String,
     article_num_threshold: Number,
     segment_mode: Boolean,
-    segmentation: Object as () => Sentiment2D, 
+    segmentation: Sentiment2D, 
 })
 const emit = defineEmits(['node_clicked', 'update:segmentation', 'show_temporal'])
 const min_articles: Ref<number> = vue.inject('min_articles') || ref(0) 
@@ -59,7 +59,6 @@ const total_articles = computed(() => {
         return undefined
     }
 })
-const {sst_threshold, updateThreshold} = vue.inject('segment_sst')
 const tooltip_content: Ref<string> = ref("") 
 const hovered_node_info: Ref<OutletNodeInfo> = ref(new OutletNodeInfo())
 const tutorial_mode: Ref<boolean> = vue.inject("tutorial_mode") || ref(false)
@@ -134,7 +133,7 @@ let current_zoom: any = undefined
 vue.watch(() => props.segmentation, (new_value, old_value) => {
     segment_point = {x: x(new_value?.pos || 0.5), y: y(new_value?.neg || 0.5)}
     updateSegmentation()
-}) 
+}, {deep: true}) 
 vue.watch(() => props.graph, (graph, prev_graph) => {
     updateCanvas() 
 })

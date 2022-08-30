@@ -73,8 +73,8 @@ export class EntityMention {
     ner_type: number
 }
 export class Sentiment2D {
-    pos: Number
-    neg: Number
+    pos: number
+    neg: number
 }
 export class Sentiment {
     pos: number
