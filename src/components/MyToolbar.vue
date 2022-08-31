@@ -24,7 +24,7 @@ export default {
         // await fetch("candidate_entities.json")
         // await fetch("entities.json")
         // await fetch("entities_gt10.json")
-        await fetch("entities_groupby_outlet.json")
+        await fetch("candidate_entities_groupby_outlet.json")
             .then(res => res.json())
             .then(json => {
                 // this.entity_mentions = json.ranked_entity_list
