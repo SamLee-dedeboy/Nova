@@ -11,6 +11,22 @@ export function constructEntityGraph(entity_mentions_grouped, article_dict) {
     Object.keys(entity_mentions_grouped).forEach(outlet => {
         const entity_mentions = entity_mentions_grouped[outlet]
         var graph: ScatterOutletGraph= {title: outlet, type: ViewType.EntityScatter, nodes: []}
+        let pos_max_articles = 0
+        let pos_min_articles = 10000
+        let neg_max_articles = 0
+        let neg_min_articles = 10000
+        entity_mentions.forEach(entity_mention => {
+            const entity = entity_mention.entity
+            const mentioned_article_ids = entity_mention.article_ids
+            const mentioned_articles = idsToArticles(mentioned_article_ids, article_dict)
+            const pos_articles = mentioned_articles.filter(article => article.sentiment.label === "POSITIVE")
+            const neg_articles = mentioned_articles.filter(article => article.sentiment.label === "NEGATIVE")
+            if(pos_articles.length > pos_max_articles) pos_max_articles = pos_articles.length
+            if(pos_articles.length < pos_min_articles) pos_min_articles = pos_articles.length
+            if(neg_articles.length > neg_max_articles) neg_max_articles = neg_articles.length
+            if(neg_articles.length < neg_min_articles) neg_min_articles = neg_articles.length
+        })
+
         entity_mentions.forEach(entity_mention => {
             const entity = entity_mention.entity
             const mentioned_article_ids = entity_mention.article_ids
@@ -19,7 +35,7 @@ export function constructEntityGraph(entity_mentions_grouped, article_dict) {
             if(article_num > r_max_articles) r_max_articles = article_num
             if(article_num < r_min_articles) r_min_articles = article_num
             const label = `${entity}-${outlet}` 
-            const node = construct_node(mentioned_articles, label) 
+            const node = construct_node(mentioned_articles, label, pos_max_articles, pos_min_articles, neg_max_articles, neg_min_articles) 
             r_node_article_id_dict[label] = mentioned_article_ids
             graph.nodes.push(node)
 
@@ -116,7 +132,13 @@ export function constructOutletArticleDict(articles) {
     return outlet_article_dict
 }
 
-export function construct_node(articles, label): ScatterOutletNode {
+const pos_mean = 0.824299592297731 
+const pos_std = 0.255743833288008
+const pos_median = 0.9539622269802468
+const neg_mean = 0.9315541011156876
+const neg_std = 0.1554181764759948 
+const neg_median = 0.9864524463801179
+export function construct_node(articles, label, pos_max_articles, pos_min_articles, neg_max_articles, neg_min_articles): ScatterOutletNode {
     let node: ScatterOutletNode;  
     const article_num = articles?.length || 0
     if(article_num == 0) {
@@ -135,14 +157,14 @@ export function construct_node(articles, label): ScatterOutletNode {
             if(!topicBins[article.top_level_topic]) {
                 topicBins[article.top_level_topic] = {pos: 0, neg: 0}
             }
-            if(article.sentiment.normalized_sst >= 0)
+            if(article.sentiment.label === "POSITIVE")
                 topicBins[article.top_level_topic].pos += 1
             else
                 topicBins[article.top_level_topic].neg += 1
             
         })
-        const pos_artcs = articles.map(article => article.sentiment.normalized_sst).filter(sst => sst >= 0)
-        const neg_artcs = articles.map(article => article.sentiment.normalized_sst).filter(sst => sst < 0)
+        const pos_artcs = articles.filter(article => article.sentiment.label === "POSITIVE").map(article => article.sentiment.score)
+        const neg_artcs = articles.filter(article => article.sentiment.label === "NEGATIVE").map(article => article.sentiment.score)
 
         const median = (x) => {
             x = x.sort();
@@ -153,23 +175,25 @@ export function construct_node(articles, label): ScatterOutletNode {
             var avg = _.sum(x) / x.length;
             return Math.sqrt(_.sum(_.map(x, (i) => Math.pow((i - avg), 2))) / x.length);
         }
-        const pos_mean = _.mean(pos_artcs)
-        const pos_median = median(pos_artcs)
-        const pos_std = std(pos_artcs) 
-        const pos_score = sigmoid(-3*(pos_mean-pos_median)/pos_std) || 0
 
-        const neg_mean = Math.abs(_.mean(neg_artcs))
-        const neg_median = Math.abs(median(neg_artcs))
-        const neg_std = std(neg_artcs) 
-        const neg_score = sigmoid(-3*(neg_mean-neg_median)/neg_std) || 0
+        const subset_pos_mean = _.mean(pos_artcs)
+        const subset_pos_median = median(pos_artcs)
+        const subset_pos_std = std(pos_artcs)
+        // const subset_pos_skew = sigmoid(-3*(subset_pos_mean-subse_pos_median)/subset_pos_std) || 0
+        const subset_pos_skew = sigmoid(3*(subset_pos_mean-pos_mean)/pos_std) || 0
 
+        const subset_neg_mean = Math.abs(_.mean(neg_artcs))
+        const subset_neg_median = Math.abs(median(neg_artcs))
+        const subset_neg_std = std(neg_artcs)
+        const subset_neg_skew = sigmoid(3*(subset_neg_mean-neg_mean)/neg_std) || 0
+        
         node = {
             text: label,
             articles: article_num,
             pos_articles: pos_artcs.length,
             neg_articles: neg_artcs.length,
-            pos_sst: pos_score,
-            neg_sst: neg_score,
+            pos_sst: Math.pow((pos_artcs.length-pos_min_articles)/(pos_max_articles-pos_min_articles), 0.4),
+            neg_sst: Math.pow((neg_artcs.length-neg_min_articles)/(neg_max_articles-neg_min_articles), 0.3),
             topicBins: topicBins,
         }
     }
@@ -177,10 +201,6 @@ export function construct_node(articles, label): ScatterOutletNode {
 }
 
 
-const pos_mean = 12.506365768116687
-const pos_std = 18.00385412093575
-const neg_mean = -25.86358780825294
-const neg_std = 29.437169285743654 
 
 export function processArticleDict(outlet_article_dict) {
     let r_article_dict: {[id: string]: any} = {}
@@ -191,9 +211,11 @@ export function processArticleDict(outlet_article_dict) {
     Object.keys(outlet_article_dict).forEach(outlet => {
         const articles = outlet_article_dict[outlet]
         articles.forEach(article => {
-            const pos = article.sentiment.pos
-            const neg = article.sentiment.neg
-            Object.assign(article.sentiment, {"normalized_sst": (Math.tanh((pos-pos_mean)/pos_std) + Math.tanh((neg-neg_mean)/neg_std))/2})
+            if(article.sentiment.label === "NEGATIVE")
+                article.sentiment.score *= -1
+            // const pos = article.sentiment.pos
+            // const neg = article.sentiment.neg
+            // Object.assign(article.sentiment, {"normalized_sst": (Math.tanh((pos-pos_mean)/pos_std) + Math.tanh((neg-neg_mean)/neg_std))/2})
             const timestamp = new Date(article.timestamp.split(" ")[0])
             if(timestamp < min_timestamp) min_timestamp = timestamp
             if(timestamp > max_timestamp) max_timestamp = timestamp
@@ -208,6 +230,10 @@ export function processArticleDict(outlet_article_dict) {
     const r_max_timestamp = max_timestamp.toISOString().split('T')[0]
     return {outlet_set, r_article_dict, r_article_bins_dict, r_min_timestamp, r_max_timestamp, r_outlet_article_num_dict}
 }
+
+/**
+ * @deprecated 
+ */
 export function processArticles(articles) {
     let outlet_set = new Set<string>()
     let r_article_dict: {[id: string]: any} = {}

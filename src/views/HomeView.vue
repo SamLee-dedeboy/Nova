@@ -183,7 +183,7 @@ vue.provide('max_timestamp', max_timestamp)
 /**
  * segmentation threshold of sentiment value.
  */
-const segment_sst: Ref<Sentiment2D> = ref({pos: 0.5, neg: 0.5}) 
+const segment_sst: Ref<Sentiment2D> = ref({pos: 0.9, neg: 0.9}) 
 vue.provide('segment_sst', {segment_sst, updateThreshold})
 /**
  * flag for tutorial mode.

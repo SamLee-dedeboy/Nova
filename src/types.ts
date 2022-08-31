@@ -58,6 +58,7 @@ export class Article {
     journal: string
     timestamp: string
     content: string
+    summary: string
     top_level_topic: string
     second_level_topic: string
     entities: EntityMention[]
@@ -76,10 +77,15 @@ export class Sentiment2D {
     pos: number
     neg: number
 }
+
 export class Sentiment {
-    pos: number
-    neg: number
-    pos_sentences: number
-    neg_sentences: number
-    normalized_sst?: number
+    label: string
+    score: number
 }
+// export class Sentiment {
+//     pos: number
+//     neg: number
+//     pos_sentences: number
+//     neg_sentences: number
+//     normalized_sst?: number
+// }

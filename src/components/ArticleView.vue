@@ -9,7 +9,7 @@ import * as d3 from "d3";
 import * as vue from "vue"
 import * as SstColors from "./ColorUtils"
 import { Ref, ref } from "vue"
-import { Article, Sentiment2D } from "../types"
+import { Article, Sentiment2D, Sentiment } from "../types"
 import { articlesToRadius } from './NodeUtils'
 
 
@@ -22,20 +22,12 @@ const emit = defineEmits(["update:sst_threshold"])
 
 const sorted_articles = vue.computed(() => {
     return props.articles?.sort((a1, a2) => {
-        const s1 = a1.sentiment.normalized_sst || 0
-        const s2 = a2.sentiment.normalized_sst || 0
+        const s1 = a1.sentiment.score || 0
+        const s2 = a2.sentiment.score || 0
         return s1 - s2
     })
-    // const pos_articles = props.articles?.filter(article => isPositive(article.sentiment.normalized_sst!))
-    // const neg_articles = props.articles?.filter(article => isNegative(article.sentiment.normalized_sst!))
-    // const neu_articles = props.articles?.filter(article => isNeutral(article.sentiment.normalized_sst!))
-
-    // const sorted_pos_articles = pos_articles?.sort((a1, a2) => a1.sentiment.normalized_sst! - a2.sentiment.normalized_sst!) || []
-    // const sorted_neg_articles = neg_articles?.sort((a1, a2) => a2.sentiment.normalized_sst! - a1.sentiment.normalized_sst!) || []
-    // const sorted_neu_articles = neu_articles?.sort((a1, a2) => a1.sentiment.normalized_sst! - a2.sentiment.normalized_sst!) || []
-    // return sorted_pos_articles?.concat(sorted_neg_articles, sorted_neu_articles)
 })
-function sstToColor(sst) {
+function sstToColor(sst: number) {
     if(isNeutral(sst)) return SstColors.neu_color
     if(sst >= 0) return SstColors.pos_color
     else return SstColors.neg_color
@@ -54,7 +46,7 @@ function isNeutral(sst_score: number) {
 }
 
 function adjustThreshold(article) {
-    const sst = article.sentiment.normalized_sst!
+    const sst = article.sentiment
     if(sst >= 0) props.sst_threshold!.pos = sst
     else if(sst < 0) props.sst_threshold!.neg = Math.abs(sst)
     emit('update:sst_threshold', props.sst_threshold)
@@ -69,7 +61,7 @@ function adjustThreshold(article) {
     :toggleable=true
     :collapsed=true 
     :style="{
-        'background-color': sstToColor(article.sentiment.normalized_sst), 
+        'background-color': sstToColor(article.sentiment.score), 
         'filter': `brightness(${SstColors.brightness}%)`,
         }">
     <template #header>
@@ -77,19 +69,19 @@ function adjustThreshold(article) {
             {{index+1 + '. ' + article.headline}}
         </span>
         <!-- <Chip :style="{'background-color': this.color_neg(article.sentiment)}">  -->
-        <ToggleButton class="flip-button" 
+        <!-- <ToggleButton class="flip-button" 
         onLabel="flip"
         offLabel="flip"
-        :value="isNeutral(article.sentiment.normalized_sst!)"
+        :value="isNeutral(article.sentiment.score)"
         @change="adjustThreshold(article)"
-        ></ToggleButton>
+        ></ToggleButton> -->
         <Chip >
-            {{article.sentiment.normalized_sst?.toFixed(2)}}
+            {{article.sentiment.score.toFixed(2)}}
         </Chip>
         
     </template>
     <ScrollPanel style="width: 100%; height: 200px">
-        {{article.content}}
+        {{article.summary}}
     </ScrollPanel>
     </Panel>
 </ScrollPanel>

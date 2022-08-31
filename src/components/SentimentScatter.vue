@@ -148,6 +148,7 @@ vue.watch(() => props.segment_mode, (new_value) => {
     svg.select("rect.segment-controller").style("opacity", new_value?1:0).raise()
 })
 onMounted(() => {
+    // console.log(props.graph)
     const svg = d3.select(`#${props.id}`) .select("svg")
         .attr("viewBox", `0 0 ${viewBox[0]} ${viewBox[1]}`)
     d3.select(`#${props.id}`).select("div.tooltip")
