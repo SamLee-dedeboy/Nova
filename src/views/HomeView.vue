@@ -15,7 +15,7 @@ import MonthSlider from "../components/deprecated/MonthSlider.vue"
 import * as preprocess from "../components/preprocessUtils"
 import { watch, computed, onMounted, PropType, ref, Ref, nextTick, } from 'vue'
 import * as vue from 'vue'
-import { ScatterOutletGraph, ViewType, Sentiment2D, Article } from "../types";
+import * as typeUtils from "../types"
 import Legend from "../components/Legend.vue";
 import Divider from 'primevue/divider';
 import ColorSpectrum from '../components/ColorSpectrum.vue'
@@ -82,10 +82,10 @@ vue.provide("outlet_article_num_dict", outlet_article_num_dict)
 const entity_cooccurrences_groupby_outlet = ref({})
 
 /**
- * dictionary: { [graph_title]: ScatterOutletGraph }. \
- * graph_dict stores all the graphs that are created to easily move graphs between views.
+ * dictionary: { [outlet]: OutletScatterView[] }. \
+ * scatter_dict stores all the scatter_view data that are created to easily move scatterplot between views.
  */
-const graph_dict = ref({})
+const scatter_dict = ref({})
 
 /**
  * flag for constructing overview grid graphs on mounted.
@@ -101,12 +101,12 @@ const entity_list: Ref<string[]> = computed(() => entity_mentions.value?.["CNN"]
  * Array: ScatterOutletGraph[]. \
  * Stores the graphs in left panel.
  */
-const selectedScatterGraphs_left: Ref<ScatterOutletGraph[]> = ref([])
+const selectedScatterViews_left: Ref<typeUtils.PanelView[]> = ref([])
 /**
  * Array: ScatterOutletGraph[]. \
  * Stores the graphs in left panel.
  */
-const selectedScatterGraphs_right: Ref<ScatterOutletGraph[]> = ref([])
+const selectedScatterViews_right: Ref<typeUtils.PanelView[]> = ref([])
 
 /**
  * @deprecated
@@ -183,7 +183,7 @@ vue.provide('max_timestamp', max_timestamp)
 /**
  * segmentation threshold of sentiment value.
  */
-const segment_sst: Ref<Sentiment2D> = ref({pos: 0.9, neg: 0.9}) 
+const segment_sst: Ref<typeUtils.Sentiment2D> = ref({pos: 0.9, neg: 0.9}) 
 vue.provide('segment_sst', {segment_sst, updateThreshold})
 /**
  * flag for tutorial mode.
@@ -218,7 +218,7 @@ function updateThreshold(new_value) {
  * nested dictionary: { [title]: { [month]: Article[ ] }}. \
  * Used in TargetContainer to store all temporal view data.
  */
-const temporalBins = ref({})
+// const temporalBins = ref({})
 
 /**
  * dictionary: { [node_title]: Article_ids[ ] }. \
@@ -231,7 +231,7 @@ const node_article_id_dict = ref({})
  * Array of selected articles. \
  * Used in ArticleView.
  */
-const selected_articles: Ref<Article[]> = ref([])
+const selected_articles: Ref<typeUtils.Article[]> = ref([])
 
 /**
  * @deprecated
@@ -266,20 +266,16 @@ vue.watch(tutorial_mode, (new_value, old_value) => {
     tutorial.handleSkipTutorial()
   }
 })
-vue.watch(selectedScatterGraphs_left, (new_value, old_value) => {
+vue.watch(selectedScatterViews_left, (new_value, old_value) => {
   tutorial.handleAddToLeftPanel(tutorial_intro, {tutorial_mode, tutorial_step})
 }, {deep:true})
 
 
-vue.watch(selectedScatterGraphs_right, (new_value, old_value) => {
+vue.watch(selectedScatterViews_right, (new_value, old_value) => {
   // 
   // closing tabs
   //
 
-  // if closing a temporal view, clear temporalBins
-  if(!new_value.find(scatter => scatter.type === ViewType.Temporal)) {
-    temporalBins.value = {}
-  }
 
   //
   // tutorial setups
@@ -293,7 +289,7 @@ vue.watch(selectedScatterGraphs_right, (new_value, old_value) => {
   }
 
   if(tutorial_mode.value && tutorial_step.value === 7) {
-      if(selectedScatterGraphs_right.value[selectedScatterGraphs_right.value.length-1].type === ViewType.OutletScatter) {
+      if(selectedScatterViews_right.value[selectedScatterViews_right.value.length-1].type === typeUtils.ViewType.OutletScatter) {
         tutorial.introduceTemporalButton(tutorial_intro)
       }
   }
@@ -329,11 +325,13 @@ function datasetImported(dataset) {
   overview_constructing.value = true
   setTimeout(() => {
     const promise = new Promise((resolve) => { 
+      console.log("dataset imported")
       outlet_article_dict.value = dataset.outlet_article_dict
       entity_mentions.value = dataset.entity_mentions
       entity_cooccurrences_groupby_outlet.value = dataset.entity_cooccurrences_outlet_dict
 
       let {outlet_set, r_article_dict, r_article_bins_dict, r_min_timestamp, r_max_timestamp, r_outlet_article_num_dict} = preprocess.processArticleDict(outlet_article_dict.value)
+      console.log("preprocess 1 done")
       outlet_article_num_dict.value = r_outlet_article_num_dict
       outlet_article_bins_dict.value = r_article_bins_dict
       enabled_outlet_set.value = outlet_set
@@ -342,7 +340,8 @@ function datasetImported(dataset) {
       // articles.value = normalized_articles
       article_dict.value = r_article_dict
       let {r_graph_dict, r_max_articles, r_min_articles, r_node_article_id_dict} = preprocess.constructEntityGraph(entity_mentions.value, article_dict.value)
-      graph_dict.value = r_graph_dict
+      console.log("preprocess 2 done")
+      scatter_dict.value = r_graph_dict
       max_articles.value = r_max_articles
       min_articles.value = r_min_articles
       node_article_id_dict.value = r_node_article_id_dict
@@ -393,10 +392,10 @@ function updateEnabledOutlet(outlet_set_info) {
 function handleScatterClicked(index) {
     const clicked_scatter = Array.from(enabled_outlet_set.value)[index]
 
-    selectedScatterGraphs_left.value.push(graph_dict.value[clicked_scatter])
-    const dropped_from = selectedScatterGraphs_right.value.findIndex(element => element.title === clicked_scatter)
+    selectedScatterViews_left.value.push(scatter_dict.value[clicked_scatter])
+    const dropped_from = selectedScatterViews_right.value.findIndex(element => element.title === clicked_scatter)
     if(dropped_from > -1) 
-      selectedScatterGraphs_right.value.splice(dropped_from, 1)
+      selectedScatterViews_right.value.splice(dropped_from, 1)
 
     const button_next = document.getElementsByClassName("p-tabview-nav-next")[0] as HTMLElement || undefined
     if(button_next != undefined) {
@@ -408,7 +407,7 @@ function handleDragScatter(evt, index) {
   evt.dataTransfer.dropEffect = 'move'
   evt.dataTransfer.effectAllowed = 'move'
   const dragged_scatter = Array.from(enabled_outlet_set.value)[index]
-  const scatter = graph_dict.value[dragged_scatter]
+  const scatter = scatter_dict.value[dragged_scatter]
   evt.dataTransfer.setData('scatter', JSON.stringify(scatter))  
 }
 
@@ -474,16 +473,14 @@ function handleDropScatter(e) {
   // send data
   const scatter = JSON.parse(e.dataTransfer.getData('scatter'))
   if(e.target.classList.contains("panel-left") || e.target.parentNode.classList.contains("panel-left")) {
-    selectedScatterGraphs_left.value.push(scatter)
-    const dropped_from = selectedScatterGraphs_right.value.findIndex(element => element.title === scatter.title)
+    selectedScatterViews_left.value.push(scatter)
+    const dropped_from = selectedScatterViews_right.value.findIndex(element => element.title === scatter.title)
     if(dropped_from > -1) 
-      selectedScatterGraphs_right.value.splice(dropped_from, 1)
+      selectedScatterViews_right.value.splice(dropped_from, 1)
   }
   else if(e.target.classList.contains("panel-right") || e.target.parentNode.classList.contains("panel-right")) {
-    selectedScatterGraphs_right.value.push(scatter)
-    const dropped_from = selectedScatterGraphs_left.value.findIndex(element => element.title === scatter.title)
-    // if(dropped_from > -1) 
-      // selectedScatterGraphs_left.value.splice(dropped_from, 1)
+    selectedScatterViews_right.value.push(scatter)
+    const dropped_from = selectedScatterViews_left.value.findIndex(element => element.title === scatter.title)
   }
   const button_next = document.getElementsByClassName("p-tabview-nav-next")[0] as HTMLElement || undefined
   if(button_next != undefined) {
@@ -493,23 +490,23 @@ function handleDropScatter(e) {
 
 function handleEntityClicked({type, d}) {
   compare_mode.value = true 
-  if(type === ViewType.OutletScatter) {
+  if(type === typeUtils.ViewType.OutletScatter) {
     // construct outlet graph
     const entity_name = d.text.split("-")[0]
-    var outlet_graph: ScatterOutletGraph= {title: entity_name, type: ViewType.OutletScatter, nodes: []}
+    let outlet_scatter_view: typeUtils.OutletScatterView = {title: entity_name, type: typeUtils.ViewType.OutletScatter, data: []}
     enabled_outlet_set.value.forEach(outlet => {
-      const graph = graph_dict.value[outlet]
+      const scatter = scatter_dict.value[outlet]
       // find entity node in this graph
-      let entity_in_outlet = _.cloneDeep(graph.nodes.find(node => node.text.split("-")[0] === entity_name))
+      let entity_in_outlet: typeUtils.ScatterNode = _.cloneDeep(scatter.data.find(node => node.text.split("-")[0] === entity_name))
       || { text: outlet, articles: 0, pos_sst: 0, neg_sst: 0}
       entity_in_outlet.text = `${entity_name}-${outlet}`
-      outlet_graph.nodes.push(entity_in_outlet)
+      outlet_scatter_view.data.push(entity_in_outlet)
     })
-    selectedScatterGraphs_right.value.push(outlet_graph)
+    selectedScatterViews_right.value.push(outlet_scatter_view)
     return
   }
 
-  if(type === ViewType.Temporal) {
+  if(type === typeUtils.ViewType.Temporal) {
     // construct outlet-entity pair temporal graph
 
     // get outlet-entity pair articles
@@ -518,50 +515,84 @@ function handleEntityClicked({type, d}) {
 
     // generate bins by month
     const articles_binBy_month = preprocess.binArticlesByMonth(articles)
-    temporalBins.value[d.text] = articles_binBy_month
-    if(selectedScatterGraphs_right.value.find(graph => graph.type === ViewType.Temporal) === undefined) {
-      var temporal_graph: ScatterOutletGraph= {title: "Temporal", type: ViewType.Temporal, nodes: []}
-      selectedScatterGraphs_right.value.push(temporal_graph)
-    }
+    const temporalBins = new typeUtils.TemporalBins()
+    temporalBins[d.text] = articles_binBy_month
+    let temporal_view: typeUtils.TemporalView= {title: `t-${d.text}`, type: typeUtils.ViewType.Temporal, data: temporalBins}
+    selectedScatterViews_right.value.push(temporal_view)
     return
   }
-  if(type === ViewType.CooccurrScatter) {
-    const entity = d.text.split("-")[0]
-    const outlet = d.text.split("-")[1]
-    const cooccurrences = entity_cooccurrences_groupby_outlet.value[outlet][entity]
-    const title = `co-${entity}-${outlet}` 
-    var cooccurr_graph: ScatterOutletGraph= {title: title, type: ViewType.CooccurrScatter, nodes: []}
-    Object.keys(cooccurrences).forEach(entity2 => {
-      const cooccurr_article_ids = cooccurrences[entity2]
-      const articles = preprocess.idsToArticles(cooccurr_article_ids, article_dict.value)
-      const node = preprocess.construct_node(articles, `${entity2}-${entity}`)
-      cooccurr_graph.nodes.push(node)
-    });
-    selectedScatterGraphs_right.value.push(cooccurr_graph)
-    return
+  
+  if(type === typeUtils.ViewType.CooccurrScatter) {
+    //
+    // TBD
+    //
+
+    // const entity = d.text.split("-")[0]
+    // const outlet = d.text.split("-")[1]
+    // const cooccurrences = entity_cooccurrences_groupby_outlet.value[outlet][entity]
+    // const title = `co-${entity}-${outlet}` 
+    // var cooccurr_view: ScatterOutletGraph= {title: title, type: ViewType.CooccurrScatter, nodes: []}
+    // Object.keys(cooccurrences).forEach(entity2 => {
+    //   const cooccurr_article_ids = cooccurrences[entity2]
+    //   const articles = preprocess.idsToArticles(cooccurr_article_ids, article_dict.value)
+    //   const node = preprocess.construct_node(articles, `${entity2}-${entity}`)
+    //   cooccurr_graph.nodes.push(node)
+    // });
+    // selectedScatterGraphs_right.value.push(cooccurr_graph)
+    // return
   }
-  if(type === ViewType.Article) {
+  if(type === typeUtils.ViewType.Article) {
+    // get article data
     const article_ids = node_article_id_dict.value[d.text]
-    selected_articles.value = preprocess.idsToArticles(article_ids, article_dict.value)
+    const articles = preprocess.idsToArticles(article_ids, article_dict.value)
+    selected_articles.value = articles
     display_article_view.value = true
+    
+    // get outlet data and show outlet view
+    const entity_name = d.text.split("-")[0]
+    let outlet_scatter_view_data: typeUtils.ScatterNode[] = []
+    enabled_outlet_set.value.forEach(outlet => {
+      const scatter = scatter_dict.value[outlet]
+      // find entity node in this graph
+      let entity_in_outlet: typeUtils.ScatterNode = _.cloneDeep(scatter.data.find(node => node.text.split("-")[0] === entity_name))
+      || { text: outlet, articles: 0, pos_sst: 0, neg_sst: 0}
+      entity_in_outlet.text = `${entity_name}-${outlet}`
+      outlet_scatter_view_data.push(entity_in_outlet)
+    })
+    
+    // get temporal data and show temporal view
+    // generate bins by month
+    const articles_binBy_month = preprocess.binArticlesByMonth(articles)
+    const temporal_bins = new typeUtils.TemporalBins()
+    temporal_bins[d.text] = articles_binBy_month
+    
+    let entity_detail_view: typeUtils.DetailView = {
+      title: `Detail-${d.text}`, 
+      type: typeUtils.ViewType.Detail, 
+      data: {
+        outlet_scatter_data: outlet_scatter_view_data, 
+        temporal_data: temporal_bins
+      }}
+
+    selectedScatterViews_right.value.push(entity_detail_view)
+
 
   }
 }
 
-function handleShowTemporal(nodes) {
+function handleShowTemporal(nodes, title) {
     compare_mode.value = true 
+    const temporal_bins = new typeUtils.TemporalBins()
     nodes.forEach(node => {
       const article_ids = node_article_id_dict.value[node.text]
       const articles = preprocess.idsToArticles(article_ids, article_dict.value)
       const articles_binBy_month = preprocess.binArticlesByMonth(articles)
-      temporalBins.value[node.text] = articles_binBy_month
+      temporal_bins[node.text] = articles_binBy_month
       // TODO: replace deep clone 
       // temporalBins.value = _.cloneDeep(temporalBins.value)
-      if(selectedScatterGraphs_right.value.find(graph => graph.type === ViewType.Temporal) === undefined) {
-        var temporal_graph: ScatterOutletGraph= {title: "Temporal", type: ViewType.Temporal, nodes: []}
-        selectedScatterGraphs_right.value.push(temporal_graph)
-      }
     })
+    let temporal_view: typeUtils.TemporalView= {title: `t-${title}`, type: typeUtils.ViewType.Temporal, data: temporal_bins}
+    selectedScatterViews_right.value.push(temporal_view)
     return
 }
 
@@ -588,7 +619,7 @@ function handleSearch(item) {
             compare_part="panel-left"
             :articles="articles"
             :enabled_outlet_set="enabled_outlet_set"
-            v-model:selectedScatters="selectedScatterGraphs_left"
+            v-model:selectedScatters="selectedScatterViews_left"
             :article_num_threshold="article_num_threshold"
             :segment_mode="segment_mode"
             v-model:segmentation="segment_sst"
@@ -611,8 +642,7 @@ function handleSearch(item) {
             compare_part="panel-right"
             :articles="articles"
             :enabled_outlet_set="enabled_outlet_set"
-            v-model:selectedScatters="selectedScatterGraphs_right"
-            :temporalBins="temporalBins"
+            v-model:selectedScatters="selectedScatterViews_right"
             :article_num_threshold="article_num_threshold"
             :segment_mode="segment_mode"
             v-model:segmentation="segment_sst"
@@ -651,8 +681,8 @@ function handleSearch(item) {
               <SentimentScatter
                   v-for="(outlet, index) in enabled_outlet_set" :key="outlet" 
                   class="outlet-scatter"
-                  :graph="graph_dict[outlet]"
-                  :graph_index="index"
+                  :view="scatter_dict[outlet]"
+                  :view_index="index"
                   :id="`scatter-${index}`"
                   :article_num_threshold="article_num_threshold"
                   :segment_mode="segment_mode"

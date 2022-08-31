@@ -23,7 +23,7 @@ import _ from 'lodash'
 import TooltipVue from "./Tooltip.vue"
 import Menu from "primevue/menu"
 import * as d3 from "d3"
-import { ScatterOutletNode, ScatterOutletGraph, ViewType, Sentiment2D, OutletNodeInfo } from '../types'
+import { ScatterNode, PanelView, ViewType, Sentiment2D, OutletNodeInfo } from '../types'
 import * as SstColors from "./ColorUtils"
 import { onMounted, PropType, computed, Ref, ref, defineEmits, nextTick} from 'vue'
 import * as vue from 'vue'
@@ -32,8 +32,8 @@ import NodeInfo from './NodeInfo.vue'
 
 // initialization
 const props = defineProps({
-    graph: Object as () => ScatterOutletGraph,
-    graph_index: Number,
+    view: Object as () => PanelView,
+    view_index: Number,
     id: String,
     highlight_nodes: Object as () => String[],
     expanded: Boolean,
@@ -47,13 +47,13 @@ const min_articles: Ref<number> = vue.inject('min_articles') || ref(0)
 const max_articles: Ref<number> = vue.inject('max_articles') || ref(0)
 const outlet_article_num_dict: Ref<any> = vue.inject("outlet_article_num_dict") || ref({})
 const total_articles = computed(() => {
-    if(props.graph?.type === ViewType.EntityScatter) {
-        const outlet = props.graph.title
+    if(props.view?.type === ViewType.EntityScatter) {
+        const outlet = props.view.title
         return outlet_article_num_dict.value[outlet]
-    } else if(props.graph?.type === ViewType.OutletScatter) {
-        return _.sumBy(props.graph?.nodes, (node) => (node.articles))
-    } else if(props.graph?.type === ViewType.CooccurrScatter) {
-        const outlet = props.graph.title.split("-")[0]
+    } else if(props.view?.type === ViewType.OutletScatter) {
+        return _.sumBy(props.view?.data, (node) => (node.articles))
+    } else if(props.view?.type === ViewType.CooccurrScatter) {
+        const outlet = props.view.title.split("-")[0]
         return outlet_article_num_dict.value[outlet]
     } else {
         return undefined
@@ -94,11 +94,11 @@ const y = d3.scalePow()
     .domain([0, 1])
     .range([ margin.top + viewBox_height, margin.top]);
 const zoom: any = d3.zoom().scaleExtent([1, 3]).on("zoom", handleZoom)
-const filtered_data = computed(() => props.graph?.nodes.filter(node => node.articles > (props.article_num_threshold || 0)))
+const filtered_data = computed(() => props.view?.data.filter(node => node.articles > (props.article_num_threshold || 0)))
 const nodes_freq = computed(() => filtered_data.value?.map(node => {return {title: node.text, freq: node.articles}}))
 const segment_controller_width = 12
 const node_circle_radius = 10
-const clicked_node: Ref<ScatterOutletNode> = ref(new ScatterOutletNode())
+const clicked_node: Ref<ScatterNode> = ref(new ScatterNode())
 const menu = ref()
 const menu_items = ref([
     {
@@ -134,7 +134,7 @@ vue.watch(() => props.segmentation, (new_value, old_value) => {
     segment_point = {x: x(new_value?.pos || 0.5), y: y(new_value?.neg || 0.5)}
     updateSegmentation()
 }, {deep: true}) 
-vue.watch(() => props.graph, (graph, prev_graph) => {
+vue.watch(() => props.view, (new_view, old_view) => {
     updateCanvas() 
 })
 
@@ -148,7 +148,6 @@ vue.watch(() => props.segment_mode, (new_value) => {
     svg.select("rect.segment-controller").style("opacity", new_value?1:0).raise()
 })
 onMounted(() => {
-    // console.log(props.graph)
     const svg = d3.select(`#${props.id}`) .select("svg")
         .attr("viewBox", `0 0 ${viewBox[0]} ${viewBox[1]}`)
     d3.select(`#${props.id}`).select("div.tooltip")
@@ -222,7 +221,7 @@ onMounted(() => {
             })
 
     } else {
-        let break_text = props.graph?.title.split('_') || "known"
+        let break_text = props.view?.title.split('_') || "known"
         var break_num = break_text.length
         if(break_num >= 4) {
             break_text = [break_text[0], break_text[1], break_text[2], '...']
@@ -397,8 +396,8 @@ function updateSegmentation() {
 
 function updateCategorization() {
     let bind_data;
-    if(props.graph?.type === ViewType.EntityScatter) bind_data = filtered_data.value
-    if(props.graph?.type === ViewType.OutletScatter) bind_data = props.graph.nodes
+    if(props.view?.type === ViewType.EntityScatter) bind_data = filtered_data.value
+    if(props.view?.type === ViewType.OutletScatter) bind_data = props.view.data
     // if(props.graph?.type === ViewType.CooccurrScatter) bind_data = props.graph.nodes
 
     const ctg_nodes = _.groupBy(bind_data, categorizeNode)
@@ -430,7 +429,7 @@ function categorizeNode(node) {
     if(node.pos_sst > pos_threshold && node.neg_sst > neg_threshold) return "mix"
     return "unknown" 
 }
-function updateExpandedTooltipContent(data: ScatterOutletNode) {
+function updateExpandedTooltipContent(data: ScatterNode) {
     tooltip_content.value = 
     `title: ${data.text} <br>` + 
     `&nbsp #articles: ${data.articles}/${total_articles.value} <br>` +
@@ -441,7 +440,7 @@ function updateExpandedTooltipContent(data: ScatterOutletNode) {
 
 function updateOverviewTooltipContent() {
     const nodes = filtered_data.value! 
-    const title = props.graph?.title
+    const title = props.view?.title
     const entity_num = nodes.length || 0
     const avg_pos_sst = _.mean(nodes.map(node => node.pos_sst))
     const avg_neg_sst = _.mean(nodes.map(node => node.neg_sst))
@@ -456,7 +455,7 @@ function updateOverviewTooltipContent() {
     }
     tooltip_content.value += "</ol>" +
     `&nbsp avg_sst: (${avg_pos_sst.toFixed(2)}, ${avg_neg_sst.toFixed(2)}) <br>` 
-    if(props.graph?.type === ViewType.EntityScatter) {
+    if(props.view?.type === ViewType.EntityScatter) {
         tooltip_content.value += `&nbsp total_articles: ${total_articles.value} <br>`
     }
     // tooltip_content.value += `<svg id='${props.id}-wordcloud' class='tooltip_canvas' width='250px' height='100px'></svg>`
@@ -479,7 +478,7 @@ function updateExpandedScatter() {
         .style("cursor", "pointer")
         .on("mousemove", function(e, d) {
             let align_image_offset = 0
-            if(props.graph?.type === ViewType.OutletScatter) align_image_offset = 50 - 15
+            if(props.view?.type === ViewType.OutletScatter) align_image_offset = 50 - 15
             d3.select(`#${props.id}`).select(".nodeinfo")
                 .style("left", e.offsetX + align_image_offset + 15 + "px")
                 .style("top", e.offsetY - 5 - align_image_offset + "px")
@@ -530,12 +529,12 @@ function updateExpandedScatter() {
                 const overlay_menu = d3.select("#overlay_menu")
                     overlay_menu.style("left", e.clientX + 5 + "px")
                     .style("top", e.clientY + 5 + "px")
-                clicked_node.value = d as ScatterOutletNode
+                clicked_node.value = d as ScatterNode
             })
         })
 
     // add images if comparing across outlets
-    if(props.graph?.type === ViewType.OutletScatter) {
+    if(props.view?.type === ViewType.OutletScatter) {
         const outlets = svg.selectAll("g.outlet")
         const image_size = 100
         outlets.selectAll("image.outlet_image")
@@ -560,9 +559,9 @@ function updateOverviewScatter() {
     .range([ outlet_min_radius, outlet_max_radius ]);
 
     let bind_data;
-    if(props.graph?.type === ViewType.EntityScatter) bind_data = filtered_data.value
-    if(props.graph?.type === ViewType.OutletScatter) bind_data = props.graph.nodes
-    if(props.graph?.type === ViewType.CooccurrScatter) bind_data = props.graph.nodes
+    if(props.view?.type === ViewType.EntityScatter) bind_data = filtered_data.value
+    if(props.view?.type === ViewType.OutletScatter) bind_data = props.view.data
+    if(props.view?.type === ViewType.CooccurrScatter) bind_data = props.view.data
     const node_group = svg.select("g.node_group")
     node_group.selectAll("g.outlet")
     .data(bind_data, function(d) {return d.text})
@@ -610,7 +609,7 @@ function updateOverviewScatter() {
     if(current_zoom) {
         dots.attr("transform", current_zoom)
     }
-    if(props.graph?.type === ViewType.EntityScatter) {
+    if(props.view?.type === ViewType.EntityScatter) {
         const highlight_circle = svg.selectAll("circle.outlet_circle").filter(d => (props.highlight_nodes?.includes(d.text.split("-")[0])))
         highlight_circle.attr("fill", "blue")
     }
@@ -620,12 +619,12 @@ function updateOverviewScatter() {
 
 function showTemporal() {
     let emit_data;
-    if(props.graph?.type === ViewType.EntityScatter) emit_data = filtered_data.value
-    if(props.graph?.type === ViewType.OutletScatter) emit_data = props.graph.nodes
+    if(props.view?.type === ViewType.EntityScatter) emit_data = filtered_data.value
+    if(props.view?.type === ViewType.OutletScatter) emit_data = props.view.data
     emit("show_temporal", emit_data)
 }
 
-function updateNodeInfo(node_data: ScatterOutletNode) {
+function updateNodeInfo(node_data: ScatterNode) {
     hovered_node_info.value = {
         text: node_data.text,
         pos_articles: node_data.pos_articles,

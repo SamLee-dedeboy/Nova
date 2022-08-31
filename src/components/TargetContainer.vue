@@ -10,7 +10,7 @@ import InfoButton from "./deprecated/InfoButton.vue";
 import * as d3 from "d3"
 import { watch, onMounted, PropType, ref, Ref, toRef, computed, defineEmits, nextTick } from 'vue'
 import * as vue from 'vue'
-import { ScatterOutletNode, ScatterOutletGraph, ViewType, Article, OutletNodeInfo, Sentiment2D } from "../types";
+import { ScatterNode, PanelView, TemporalBins, ViewType, Article, OutletNodeInfo, Sentiment2D } from "../types";
 import TemporalCoordinates from "./TemporalCoordinates.vue";
 import TemporalPathSelector from "./TemporalPathSelector.vue";
 import SentimentScatter from "./SentimentScatter.vue";
@@ -23,8 +23,7 @@ import * as _ from "lodash"
 const props = defineProps({
     articles: Object as () => any[],
     enabled_outlet_set: Object as () => Set<string>,
-    selectedScatters: Object as () => ScatterOutletGraph[],
-    temporalBins: Object as () => {[id: string]: {[id: string]:Article[]}},
+    selectedScatters: Object as () => PanelView[],
     compare_part: String,
     article_num_threshold: Number,
     segment_mode: Boolean,
@@ -35,7 +34,7 @@ const scatterClicked: Ref<boolean> = ref(false)
 const active: Ref<number> = ref(0)
 const highlight_entity: Ref<string[]> = ref([])
 const compare_mode = vue.inject("compare_mode") || ref(false)
-const selectedNodes: Ref<ScatterOutletNode[]> = ref([])
+const selectedNodes: Ref<ScatterNode[]> = ref([])
 const topicBins = vue.computed(() => {
     if(selectedNodes.value.length === 0) return undefined
     let bins = {}
@@ -54,19 +53,6 @@ const topicBins = vue.computed(() => {
     return bins
 })
 const highlightNodes: Ref<string[]> = ref([])
-const selectedEntities = vue.computed(() => {
-    if(!props.temporalBins) return undefined
-    return Object.keys(props.temporalBins)
-})
-const temporal_color_dict = vue.computed(() => {
-    if(!props.temporalBins) return undefined
-    let color_dict = {}
-    Object.keys(props.temporalBins).forEach((title, index) => {
-        const color = selectColor(index)
-        color_dict[title] = color
-    })
-    return color_dict
-})
 vue.watch(() => props.highlight_nodes, (new_value, old_value) => {
     highlightNodes.value = props.highlight_nodes || []
 }, {deep:true})
@@ -74,7 +60,6 @@ vue.watch(selectedNodes, (new_value, old_value) => {
     highlightNodes.value = selectedNodes.value?.map(node => node.text.split("-")[0])
 })
 vue.watch(props.segmentation!, (new_value, old_value) => {
-    console.log("🚀 ~ file: TargetContainer.vue ~ line 77 ~ vue.watch ~ segmentation")
     console.log({new_value, old_value})
 
 })
@@ -101,6 +86,16 @@ vue.onMounted(() => {
     highlightNodes.value = props.highlight_nodes || []
 
 })
+
+function gen_color_dict(temporal_bins: TemporalBins) {
+    if(!temporal_bins) return undefined
+    let color_dict = {}
+    Object.keys(temporal_bins).forEach((title, index) => {
+        const color = selectColor(index)
+        color_dict[title] = color
+    })
+    return color_dict
+}
 function handleNodeClicked({type, d}) {
     emit("node-clicked", d)        
     this.nodeClicked = true
@@ -121,7 +116,7 @@ function handleNodeClicked({type, d}) {
     var freq_list = Array.from(Object.entries(entity_mentioned_articles)).map(item => ({entity: item[0], freq: item[1].size})).sort((a,b) => (b.freq - a.freq)).slice(0, max_node_num).map(item => item.entity) 
     var cooccur_matrix = {}
 
-    var nodes: ScatterOutletNode[] = []
+    var nodes: ScatterNode[] = []
     freq_list.forEach(entity_id => {
         // generate candidate cooccur matrix
         cooccur_matrix[entity_id] = {}
@@ -188,19 +183,19 @@ function breakText(data: string): string[] {
     ref="tabview"
     >
     <TabPanel class="graph-panel" :class="compare_part"
-     v-for="(graph, index) in selectedScatters" :key="graph.title" ref="tabpanels" 
+     v-for="(view, index) in selectedScatters" :key="view.title" ref="tabpanels" 
       >
         <template #header>
-			<span style="max-width:100px; overflow:hidden;display: block ruby;font-size:x-small" :title="graph.title"
-            >{{graph.title}}</span>
+			<span style="max-width:100px; overflow:hidden;display: block ruby;font-size:x-small" :title="view.title"
+            >{{view.title}}</span>
             <Button icon="pi pi-times" class="p-button-rounded p-button-danger p-button-text p-button-sm"
             @click="handleCloseTab($event, index)"/>
 		</template>
         <div class="scatter-panel-container"
-            v-if="graph.type === ViewType.EntityScatter || graph.type === ViewType.OutletScatter || graph.type === ViewType.CooccurrScatter">
+            v-if="view.type === ViewType.EntityScatter || view.type === ViewType.OutletScatter || view.type === ViewType.CooccurrScatter">
             <SentimentScatter
-                :graph="graph"
-                :graph_index="index"
+                :view="view"
+                :view_index="index"
                 :id="`${compare_part}-scatter-${index}-expanded`"
                 :class="{compare: compare_mode}"
                 :expanded="true"
@@ -214,16 +209,16 @@ function breakText(data: string): string[] {
                 @show_temporal="handleShowTemporal"
             ></SentimentScatter>
             <div class="scatter-info-container">
-                <DataTable :value="graph.nodes.sort((a, b) => -(a.articles-b.articles))"
+                <DataTable :value="view.data.sort((a, b) => -(a.articles-b.articles))"
                 v-model:selection="selectedNodes" selectionMode="multiple" dataKey="text" :metaKeySelection="false"
                 scrollable 
                 scrollHeight="150px"
                 :virtualScrollerOptions="{itemSize: 30}"
                 style="font-size: x-small" >
-                    <Column field="text" :header="colHeader(graph.type)">
+                    <Column field="text" :header="colHeader(view.type)">
                         <template #body="{data}">
-                            <div class="col-outlet" :title="rowHeader(data.text, graph.type)">
-                                <div v-for="word in breakText(rowHeader(data.text, graph.type))" :key="word">{{word}}</div>
+                            <div class="col-outlet" :title="rowHeader(data.text, view.type)">
+                                <div v-for="word in breakText(rowHeader(data.text, view.type))" :key="word">{{word}}</div>
                             </div>
                         </template>
                     </Column>
@@ -248,49 +243,24 @@ function breakText(data: string): string[] {
                 :topicBins="topicBins"></ArticleInfo>
             </div>
         </div>
-        <div class="target-temporal-container" v-if="graph.type === ViewType.Temporal">
+        <div class="target-temporal-container" v-if="view.type === ViewType.Temporal">
             <TemporalCoordinates 
                 class="temporal-coord"
                 :id="`compare_temporal`"
-                :article_bin_dict="temporalBins"
-                :path_keys="selectedEntities"
-                :color_dict="temporal_color_dict"
+                :article_bin_dict="view.data"
+                :path_keys="Object.keys(view.data) || undefined"
+                :color_dict="gen_color_dict(view.data)"
                 :highlight_object="highlight_entity"
                 :sst_threshold="segmentation"
             ></TemporalCoordinates>
             <TemporalPathSelector 
                 class="temporal-selector"
-                v-model:temporalBins="temporalBins"
-                :color_dict="temporal_color_dict"
+                v-model:temporalBins="view.data"
+                :color_dict="gen_color_dict(view.data)"
                 closable
                 v-model:selectedTargets="highlight_entity">
             </TemporalPathSelector>
         </div>
-        <!-- <Graph 
-            class="graph"
-            :graph="graph_dict[target]"
-            :graph_index="index"
-            :id="`graph-${index}`"
-            :entity_graph="entity_graph.nodes"
-            :cooccur_matrix="cooccur_matrix"
-            :opacityThreshold="opacityThreshold"
-            @node-clicked="handleNodeClicked"
-            >
-        </Graph > -->
-            <!-- <TimeAxes class='time-axes' v-if="targets.length!=0" :selectedTimeRange="selectedTimeRange"></TimeAxes> -->
-            <!-- <div class="dropdown-container">
-                <div class="dropdown-header-container">
-                    <div class="dropdown-header"> Classifier </div>
-                    <InfoButton class='clf-info' info_content="Choose a mode to classify nodes as 'pos'/'neg'/'neu'"></InfoButton>
-                </div>
-                <Dropdown class="clf-dropdown" 
-                v-model="selected_mode" 
-                :options="modes" 
-                optionLabel="label" 
-                optionValue="value"
-                placeholder="Select a clfer" />
-            </div> -->
-        <!-- </div> -->
     </TabPanel>
 </TabView>
 </template>

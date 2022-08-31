@@ -4,18 +4,47 @@ export enum ViewType {
    CooccurrScatter,
    Temporal,
    Article,
+   Detail,
 }
 export class Path {
     title: string
     start: Number
     end: Number
 }
-export class ScatterOutletGraph {
-    title: string
-    type: ViewType
-    nodes: ScatterOutletNode[]
+export interface PanelView {
+    title: string,
+    type: ViewType,
+    data: any,
 }
-export class ScatterOutletNode {
+export class EntityScatterView implements PanelView {
+    title: string
+    type: ViewType.EntityScatter
+    data: ScatterNode[]
+}
+export class OutletScatterView implements PanelView {
+    title: string
+    type: ViewType.OutletScatter
+    data: ScatterNode[]
+}
+export class TemporalView implements PanelView {
+    title: string
+    type: ViewType.Temporal
+    data: TemporalBins
+}
+export class ArticleView implements PanelView {
+    title: string
+    type: ViewType.Article
+    data: Article[]
+}
+export class DetailView implements PanelView {
+    title: string
+    type: ViewType.Detail
+    data: {outlet_scatter_data: ScatterNode[], temporal_data: TemporalBins}
+}
+export class TemporalBins {
+    [id: string] : {[id: string]: Article[]}
+}
+export class ScatterNode {
     text: string
     articles: number
     pos_articles: number

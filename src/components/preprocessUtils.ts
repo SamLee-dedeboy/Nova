@@ -1,8 +1,12 @@
 import * as dfd from "danfojs"
 import * as _ from 'lodash'
 import { Series } from "danfojs/dist/danfojs-base"
-import { ScatterOutletNode, ScatterOutletGraph, ViewType } from "../types"
+import { EntityScatterView, OutletScatterView, ScatterNode, ViewType } from "../types"
 
+let pos_max_articles = 0
+let pos_min_articles = 10000
+let neg_max_articles = 0
+let neg_min_articles = 10000
 export function constructEntityGraph(entity_mentions_grouped, article_dict) {
     var r_graph_dict = {}
     var r_min_articles = Object.keys(article_dict).length
@@ -10,11 +14,7 @@ export function constructEntityGraph(entity_mentions_grouped, article_dict) {
     var r_node_article_id_dict = {}
     Object.keys(entity_mentions_grouped).forEach(outlet => {
         const entity_mentions = entity_mentions_grouped[outlet]
-        var graph: ScatterOutletGraph= {title: outlet, type: ViewType.EntityScatter, nodes: []}
-        let pos_max_articles = 0
-        let pos_min_articles = 10000
-        let neg_max_articles = 0
-        let neg_min_articles = 10000
+        var entity_scatter_view: EntityScatterView= {title: outlet, type: ViewType.EntityScatter, data: []}
         entity_mentions.forEach(entity_mention => {
             const entity = entity_mention.entity
             const mentioned_article_ids = entity_mention.article_ids
@@ -35,12 +35,12 @@ export function constructEntityGraph(entity_mentions_grouped, article_dict) {
             if(article_num > r_max_articles) r_max_articles = article_num
             if(article_num < r_min_articles) r_min_articles = article_num
             const label = `${entity}-${outlet}` 
-            const node = construct_node(mentioned_articles, label, pos_max_articles, pos_min_articles, neg_max_articles, neg_min_articles) 
+            const node = construct_node(mentioned_articles, label)
             r_node_article_id_dict[label] = mentioned_article_ids
-            graph.nodes.push(node)
+            entity_scatter_view.data.push(node)
 
         })
-        r_graph_dict[outlet] = graph
+        r_graph_dict[outlet] = entity_scatter_view
     })
     return {r_graph_dict, r_max_articles, r_min_articles, r_node_article_id_dict}
 
@@ -89,7 +89,7 @@ export function constructOutletGraph(entity_mentions, outlet_set, article_dict) 
     var r_max_articles = 0
     entity_mentions.forEach(entity_mention => {
         const entity = entity_mention[0]
-        var graph: ScatterOutletGraph= {title: entity, type: ViewType.OutletScatter, nodes: []}
+        var outlet_scatter_view: OutletScatterView= {title: entity, type: ViewType.OutletScatter, data: []}
         // get articles mentioneding this entity
         const mentioned_articles = idsToArticles(entity_mention[1], article_dict)
         const outlet_article_dict = constructOutletArticleDict(mentioned_articles)
@@ -103,13 +103,13 @@ export function constructOutletGraph(entity_mentions, outlet_set, article_dict) 
             if(article_num < r_min_articles) r_min_articles = article_num
 
             const node = construct_node(articles, outlet) 
-            graph.nodes.push(node)
+            outlet_scatter_view.data.push(node)
         }) 
         // center node
         // var center_node = self.construct_node(self.articles, target)
         // center_node["isCenter"] = true
         // graph.nodes.push(center_node)
-        r_graph_dict[entity] = graph
+        r_graph_dict[entity] = outlet_scatter_view
     })
     return {r_graph_dict, r_max_articles, r_min_articles}
 }
@@ -138,8 +138,8 @@ const pos_median = 0.9539622269802468
 const neg_mean = 0.9315541011156876
 const neg_std = 0.1554181764759948 
 const neg_median = 0.9864524463801179
-export function construct_node(articles, label, pos_max_articles, pos_min_articles, neg_max_articles, neg_min_articles): ScatterOutletNode {
-    let node: ScatterOutletNode;  
+export function construct_node(articles, label) {
+    let node: ScatterNode;  
     const article_num = articles?.length || 0
     if(article_num == 0) {
         node = {
