@@ -197,7 +197,7 @@ function breakText(data: string): string[] {
                 :view="view"
                 :view_index="index"
                 :id="`${compare_part}-scatter-${index}-expanded`"
-                :class="{compare: compare_mode}"
+                :class="{compare: compare_mode, not_compare: !compare_mode}"
                 :expanded="true"
                 :panel_class="compare_part" 
                 :article_num_threshold="article_num_threshold"
@@ -305,11 +305,11 @@ function breakText(data: string): string[] {
 
 <style scoped lang="scss">
 .graph-container .graph-panel,.scatter-panel-container  {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
     width: inherit;
     height: inherit;
-}
-.compare {
-    height: 50%;
 }
 .dropdown-container {
     position: absolute;
@@ -391,4 +391,30 @@ function breakText(data: string): string[] {
     text-align: left;
 }
 
+.detail-temporal-container {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.detail-view-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.detail-temporal-selector {
+    overflow: hidden;
+}
+.scatter-info-container {
+    margin: 10px;
+}
+.compare {
+    height: unset;
+}
+.not_compare {
+    height: 100%;
+}
 </style>

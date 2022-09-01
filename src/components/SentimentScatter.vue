@@ -639,8 +639,6 @@ function updateNodeInfo(node_data: ScatterNode) {
 
 <style scoped lang="scss">
 .scatter-container {
-    height: inherit;
-    width: inherit;
     background-color: white;
 }
 .outlet-scatterplot {

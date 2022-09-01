@@ -165,7 +165,7 @@ const highlight_outlet: Ref<string[]> = ref([])
 /**
  * flag for switching between overview grid and overview temporal.
  */
-const overview_grid_mode: Ref<boolean> = ref(true)
+const temporal_mode: Ref<boolean> = ref(false)
 
 /**
  * min timestamp extracted from dataset. \
@@ -253,8 +253,8 @@ vue.watch(overview_constructed, (new_value, old_value) => {
   }
 })
 
-vue.watch(overview_grid_mode, (new_value, old_value) => {
-  tutorial.handleToggleTemporal(tutorial_intro, overview_grid_mode, {tutorial_mode, tutorial_step})
+vue.watch(temporal_mode , (new_value, old_value) => {
+  tutorial.handleToggleTemporal(tutorial_intro, temporal_mode, {tutorial_mode, tutorial_step})
 })
 
 vue.watch(compare_mode, (new_value, old_value) => {
@@ -658,16 +658,19 @@ function handleSearch(item) {
           </SplitterPanel>
           <SplitterPanel id='sidebar' class="sidebar flex align-items-center justify-content-center" :size="45" :min-size="45">
             <div v-if="!display_article_view" class="overview-container">
-              <div class="toolbar-container">
-                <ToggleButton class='compare_toggle ' v-model="compare_mode" onIcon="pi pi-image" offIcon="pi pi-images"></ToggleButton>
-                <div class="search-bar">
-                  <SearchBar v-if="overview_constructed" :search_terms="entity_list" @entity_searched="handleSearch"></SearchBar>
+              <div  class="toolbar-container">
+                <ToggleButton v-if="overview_constructed" class='compare_toggle ' v-model="compare_mode" onIcon="pi pi-images" offIcon="pi pi-images"></ToggleButton>
+                <div v-if="overview_constructed" class="segment-toggler-container">
+                  <ToggleButton class='segment-toggler p-primary' v-model="segment_mode" onLabel="Segment" offLabel="Segment"></ToggleButton>
+                </div>
+                <div v-if="overview_constructed" class="search-bar">
+                  <SearchBar :search_terms="entity_list" @entity_searched="handleSearch"></SearchBar>
                 </div>
                 <MyToolbar ref="toolbar" 
                 @candidate_updated="updateNpList"
                 @dataset_imported="datasetImported"  >
                 </MyToolbar>
-                <ToggleButton v-if="overview_constructed" class='overview-toggler ' v-model="overview_grid_mode" onIcon="pi pi-chart-line" offIcon="pi pi-table"></ToggleButton>
+                <ToggleButton v-if="overview_constructed" class='temporal-toggler ' v-model="temporal_mode" onIcon="pi pi-chart-line" offIcon="pi pi-chart-line"></ToggleButton>
               </div>
               <i v-if="overview_constructing" class="pi pi-spin pi-spinner" 
               style="
@@ -677,7 +680,7 @@ function handleSearch(item) {
               font-size: 3rem;
               z-index: 1000
               "></i> 
-            <div class="overview-grid-container" v-if="overview_constructed && overview_grid_mode" >
+            <div class="overview-grid-container" v-if="overview_constructed && !temporal_mode" >
               <SentimentScatter
                   v-for="(outlet, index) in enabled_outlet_set" :key="outlet" 
                   class="outlet-scatter"
@@ -695,7 +698,7 @@ function handleSearch(item) {
               >
               </SentimentScatter>
               </div>
-              <div class="overview-temporal-container" v-if="overview_constructed && !overview_grid_mode">
+              <div class="overview-temporal-container" v-if="overview_constructed && temporal_mode">
                 <TemporalCoordinates class="overview-temporal-coord" 
                   :id="`overview_temporal`"
                   :article_bin_dict="outlet_article_bins_dict"
@@ -724,9 +727,6 @@ function handleSearch(item) {
                     <div class="max_indicator">{{max_articles || 100}}</div>
                   </div>
                 </div>
-                <div v-if="overview_constructed" class="segment-toggler-container">
-                  <ToggleButton class='segment-toggler p-primary' v-model="segment_mode" onLabel="Segment" offLabel="Segment"></ToggleButton>
-                </div>
               </div>
               <Legend v-if="overview_constructed" 
                 id="segment_legend"
@@ -736,7 +736,8 @@ function handleSearch(item) {
                 :interactable="false"></Legend>
               </div>
               <div v-if="display_article_view" class="article-view-container">
-                <ToggleButton class='segment-toggler p-primary' v-model="display_article_view" onLabel="Back" offLabel="Article"></ToggleButton>
+                <ToggleButton class='back-toggler p-primary' v-model="display_article_view" onLabel="Back" offLabel="Article"></ToggleButton>
+                <ToggleButton class='segment-toggler p-primary' v-model="segment_mode" onLabel="Segment" offLabel="Segment"></ToggleButton>
                 <ArticleView
                 v-model:sst_threshold="segment_sst"
                 :articles="selected_articles">
@@ -789,8 +790,9 @@ function handleSearch(item) {
   width: 100% !important;
 }
 :deep(.p-tabview-panels) {
-  height: 100% !important;
+  height: 91vh !important;
   width: 100% !important;
+  padding: 0 !important;
 }
 :deep(.p-tabview-panel) {
   height: 100% !important;
@@ -825,7 +827,10 @@ function handleSearch(item) {
   justify-content: space-between;
 }
 .segment-toggler-container {
+  display: inline-flex;
   width: fit-content;
+  margin-left: 10px;
+  margin: 3px;
 }
 .color-spectrum {
   width: inherit;
@@ -867,11 +872,12 @@ function handleSearch(item) {
 .toolbar-container {
   margin-left: var(--margin_left); 
   height: 50px;
+  display: flex;
 }
 .toolbar-container > :deep(.p-button) {
   border-radius: 8px !important;
   // display: flex !important;
-  margin: 3px !important;
+  margin: 3px;
 }
 .overview-temporal-container {
   display: flex;
@@ -902,17 +908,19 @@ function handleSearch(item) {
   opacity: 0;
   cursor: pointer;
 }
-.overview-toggler {
-  float:right;
+.temporal-toggler {
+  margin-left: auto !important;
 }
 .search-bar {
   z-index:1000;
   display:inline-block;
   // transform: translateY(-50%);
   height: 50px;
+  margin-left: 3px;
 }
 .article-view-container {
   height: 100%;
 }
+
  </style>
 
