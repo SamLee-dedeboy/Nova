@@ -261,6 +261,44 @@ function breakText(data: string): string[] {
                 v-model:selectedTargets="highlight_entity">
             </TemporalPathSelector>
         </div>
+        <div class="detail-view-container" v-if="view.type === ViewType.Detail">
+            <div class="detail-outlet-scatter-container">
+                <SentimentScatter
+                    :view="{title: view.title, type:ViewType.OutletScatter, data: view.data.outlet_scatter_data}"
+                    :view_index="index"
+                    :id="`${compare_part}-detail-scatter-${index}-expanded`"
+                    :class="{compare: compare_mode}"
+                    :expanded="true"
+                    :panel_class="compare_part" 
+                    :article_num_threshold="article_num_threshold"
+                    :segment_mode="segment_mode"
+                    :segmentation="segmentation"
+                    :highlight_nodes="highlightNodes"
+                    @update:segmentation="updateSegmentation"
+                    @node_clicked="handleEntityClicked"
+                    @show_temporal="handleShowTemporal"
+                ></SentimentScatter>
+            </div>
+            <div class="detail-temporal-container">
+                <TemporalCoordinates 
+                    class="detail-temporal-coord"
+                    :id="`detail-compare_temporal`"
+                    :article_bin_dict="view.data.temporal_data"
+                    :path_keys="Object.keys(view.data.temporal_data) || undefined"
+                    :color_dict="gen_color_dict(view.data.temporal_data)"
+                    :highlight_object="highlight_entity"
+                    :sst_threshold="segmentation"
+                ></TemporalCoordinates>
+                <TemporalPathSelector 
+                    class="detail-temporal-selector"
+                    v-model:temporalBins="view.data.temporal_data"
+                    :color_dict="gen_color_dict(view.data.temporal_data)"
+                    closable
+                    v-model:selectedTargets="highlight_entity">
+                </TemporalPathSelector>
+            </div>
+
+        </div>
     </TabPanel>
 </TabView>
 </template>

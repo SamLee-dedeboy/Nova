@@ -551,29 +551,29 @@ function handleEntityClicked({type, d}) {
     // get outlet data and show outlet view
     const entity_name = d.text.split("-")[0]
     let outlet_scatter_view_data: typeUtils.ScatterNode[] = []
+    let temporal_bins = new typeUtils.TemporalBins()
     enabled_outlet_set.value.forEach(outlet => {
       const scatter = scatter_dict.value[outlet]
       // find entity node in this graph
-      let entity_in_outlet: typeUtils.ScatterNode = _.cloneDeep(scatter.data.find(node => node.text.split("-")[0] === entity_name))
+      let entity_data_in_outlet: typeUtils.ScatterNode = _.cloneDeep(scatter.data.find(node => node.text.split("-")[0] === entity_name))
       || { text: outlet, articles: 0, pos_sst: 0, neg_sst: 0}
-      entity_in_outlet.text = `${entity_name}-${outlet}`
-      outlet_scatter_view_data.push(entity_in_outlet)
+      outlet_scatter_view_data.push(entity_data_in_outlet)
+
+      // get temporal data and show temporal view
+      // & generate bins by month
+      const other_outlet_article_ids = node_article_id_dict.value[entity_data_in_outlet.text]
+      const other_outlet_articles = preprocess.idsToArticles(other_outlet_article_ids, article_dict.value)
+      const other_outlet_articles_binBy_month = preprocess.binArticlesByMonth(other_outlet_articles)
+      temporal_bins[entity_data_in_outlet.text] = other_outlet_articles_binBy_month
     })
     
-    // get temporal data and show temporal view
-    // generate bins by month
-    const articles_binBy_month = preprocess.binArticlesByMonth(articles)
-    const temporal_bins = new typeUtils.TemporalBins()
-    temporal_bins[d.text] = articles_binBy_month
-    
     let entity_detail_view: typeUtils.DetailView = {
-      title: `Detail-${d.text}`, 
+      title: `Detail-${entity_name}`, 
       type: typeUtils.ViewType.Detail, 
       data: {
         outlet_scatter_data: outlet_scatter_view_data, 
         temporal_data: temporal_bins
       }}
-
     selectedScatterViews_right.value.push(entity_detail_view)
 
 
