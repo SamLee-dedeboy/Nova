@@ -282,7 +282,7 @@ function breakText(data: string): string[] {
             <div class="detail-temporal-container">
                 <TemporalCoordinates 
                     class="detail-temporal-coord"
-                    :id="`detail-compare_temporal`"
+                    :id="`detail-compare-temporal`"
                     :article_bin_dict="view.data.temporal_data"
                     :path_keys="Object.keys(view.data.temporal_data) || undefined"
                     :color_dict="gen_color_dict(view.data.temporal_data)"
@@ -416,5 +416,9 @@ function breakText(data: string): string[] {
 }
 .not_compare {
     height: 100%;
+}
+.detail-temporal-coord {
+    margin-right: 10px !important;
+
 }
 </style>

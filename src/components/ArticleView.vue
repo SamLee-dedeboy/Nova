@@ -27,6 +27,13 @@ const sorted_articles = vue.computed(() => {
         return s1 - s2
     })
 })
+const pos_articles = vue.computed(() => {
+    return props.articles?.filter(article => article.sentiment.label === "POSITIVE")
+})
+const neg_articles = vue.computed(() => {
+    return props.articles?.filter(article => article.sentiment.label === "NEGATIVE")
+})
+
 function sstToColor(sst: number) {
     if(isNeutral(sst)) return SstColors.neu_color
     if(sst >= 0) return SstColors.pos_color
@@ -54,31 +61,41 @@ function adjustThreshold(article) {
 </script>
 
 <template>
-<ScrollPanel class="article-list-container">
-    <Panel v-for="(article, index) in sorted_articles"
+<ScrollPanel class="pos-article-list">
+    <Panel v-for="(article, index) in pos_articles"
     :header="index+1 + '. ' + article.headline"
     :key="article.id"
     :toggleable=true
     :collapsed=true 
-    :style="{
-        'background-color': sstToColor(article.sentiment.score), 
-        'filter': `brightness(${SstColors.brightness}%)`,
-        }">
+    :style="{ 'background-color': SstColors.pos_color, 'filter': `brightness(${SstColors.brightness}%)`, }">
     <template #header>
         <span>
             {{index+1 + '. ' + article.headline}}
         </span>
-        <!-- <Chip :style="{'background-color': this.color_neg(article.sentiment)}">  -->
-        <!-- <ToggleButton class="flip-button" 
-        onLabel="flip"
-        offLabel="flip"
-        :value="isNeutral(article.sentiment.score)"
-        @change="adjustThreshold(article)"
-        ></ToggleButton> -->
-        <Chip >
+        <!-- <Chip >
             {{article.sentiment.score.toFixed(2)}}
-        </Chip>
-        
+        </Chip> -->
+    </template>
+    <ScrollPanel style="width: 100%; height: 200px">
+        {{article.summary}}
+    </ScrollPanel>
+    </Panel>
+</ScrollPanel>
+
+<ScrollPanel class="neg-article-list">
+    <Panel v-for="(article, index) in neg_articles"
+    :header="index+1 + '. ' + article.headline"
+    :key="article.id"
+    :toggleable=true
+    :collapsed=true 
+    :style="{ 'background-color': SstColors.neg_color, 'filter': `brightness(${SstColors.brightness}%)`, }">
+    <template #header>
+        <span>
+            {{index+1 + '. ' + article.headline}}
+        </span>
+        <!-- <Chip >
+            {{article.sentiment.score.toFixed(2)}}
+        </Chip> -->
     </template>
     <ScrollPanel style="width: 100%; height: 200px">
         {{article.summary}}
@@ -96,8 +113,8 @@ function adjustThreshold(article) {
   color: #25272a !important;
 } 
 
-.article-list-container {
-  height: 95%;
+.pos-article-list, .neg-article-list {
+    height: 50%;
 }
 
 </style>

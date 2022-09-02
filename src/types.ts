@@ -60,6 +60,12 @@ export class OutletNodeInfo {
     pos_score: number
     neg_score: number
 }
+export class EntityInfo {
+    name: string
+    outlet: string
+    sst_ratio: {pos: number, neg: number}
+    articles: Article[]
+}
 export class OutletNode {
     x?: number
     y?: number

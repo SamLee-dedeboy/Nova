@@ -27,6 +27,7 @@ import SentimentScatter from "../components/SentimentScatter.vue";
 import Tooltip from "../components/Tooltip.vue";
 import SearchBar from "../components/SearchBar.vue";
 import ArticleView from "../components/ArticleView.vue"
+import EntityInfoView from "../components/EntityInfoView.vue"
 import tutorial_intro_json from "../assets/tutorial/tutorial_intro.json"
 import * as tutorial from "../components/TutorialUtils"
 
@@ -231,7 +232,8 @@ const node_article_id_dict = ref({})
  * Array of selected articles. \
  * Used in ArticleView.
  */
-const selected_articles: Ref<typeUtils.Article[]> = ref([])
+// const selected_articles: Ref<typeUtils.Article[]> = ref([])
+const selected_entity: Ref<typeUtils.EntityInfo> = ref(new typeUtils.EntityInfo())
 
 /**
  * @deprecated
@@ -545,7 +547,16 @@ function handleEntityClicked({type, d}) {
     // get article data
     const article_ids = node_article_id_dict.value[d.text]
     const articles = preprocess.idsToArticles(article_ids, article_dict.value)
-    selected_articles.value = articles
+    console.log(d.text)
+    selected_entity.value = {
+      name: d.text.split("-")[0],
+      outlet: d.text.split("-")[1],
+      sst_ratio: {
+        pos: articles.filter(article => article.sentiment.label === "POSITIVE").length,
+        neg: articles.filter(article => article.sentiment.label === "NEGATIVE").length,
+      },
+      articles: articles
+    }
     display_article_view.value = true
     
     // get outlet data and show outlet view
@@ -736,13 +747,27 @@ function handleSearch(item) {
                 :interactable="false"></Legend>
               </div>
               <div v-if="display_article_view" class="article-view-container">
-                <ToggleButton class='back-toggler p-primary' v-model="display_article_view" onLabel="Back" offLabel="Article"></ToggleButton>
-                <ToggleButton class='segment-toggler p-primary' v-model="segment_mode" onLabel="Segment" offLabel="Segment"></ToggleButton>
-                <ArticleView
-                v-model:sst_threshold="segment_sst"
-                :articles="selected_articles">
+                <div class="toggler-container">
+                  <ToggleButton class='back-toggler p-primary' v-model="display_article_view" onLabel="Back" offLabel="Article"></ToggleButton>
+                  <ToggleButton class='segment-toggler p-primary' v-model="segment_mode" onLabel="Segment" offLabel="Segment"></ToggleButton>
+                </div>
+                <div class="entity-info-container">
+                  <EntityInfoView
+                  :entity_info="{ 
+                    name: selected_entity.name, 
+                    outlet: selected_entity.outlet, 
+                    sst_ratio: selected_entity.sst_ratio 
+                  }"
+                  >
+                  </EntityInfoView>
 
-                </ArticleView>
+                </div>
+                <div class="article-view">
+                  <ArticleView
+                  v-model:sst_threshold="segment_sst"
+                  :articles="selected_entity.articles">
+                  </ArticleView>
+                </div>
               </div>
             </SplitterPanel>
         </Splitter>
@@ -920,7 +945,13 @@ function handleSearch(item) {
 }
 .article-view-container {
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
 }
 
+.article-view {
+  overflow: hidden;
+}
  </style>
 
