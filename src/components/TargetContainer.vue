@@ -52,6 +52,25 @@ const topicBins = vue.computed(() => {
     })
     return bins
 })
+// test
+const selectedTopicBins = vue.computed(() => {
+    const view: PanelView | undefined = props.selectedScatters?.[0] || undefined
+    const nodes = [view?.data[0]]
+    let bins = {}
+    const topic_set: Set<string> = new Set()
+    nodes.forEach(node => {
+        Object.keys(node.topicBins).forEach(topic => topic_set.add(topic))
+    })
+    nodes.forEach(node => {
+        topic_set.forEach(topic => {
+            if(bins[topic] === undefined) {
+                bins[topic] = []
+            } 
+            bins[topic].push({title: node.text, pos: node.topicBins[topic]?.pos || 0, neg: node.topicBins[topic]?.neg || 0 })
+        })
+    })
+    return bins
+})
 const highlightNodes: Ref<string[]> = ref([])
 vue.watch(() => props.highlight_nodes, (new_value, old_value) => {
     highlightNodes.value = props.highlight_nodes || []
@@ -208,6 +227,10 @@ function breakText(data: string): string[] {
                 @node_clicked="handleEntityClicked"
                 @show_temporal="handleShowTemporal"
             ></SentimentScatter>
+            <!-- <ArticleInfo
+                id="article-info-test"
+                :topicBins="selectedTopicBins" >
+            </ArticleInfo> -->
             <div class="scatter-info-container">
                 <DataTable :value="view.data.sort((a, b) => -(a.articles-b.articles))"
                 v-model:selection="selectedNodes" selectionMode="multiple" dataKey="text" :metaKeySelection="false"

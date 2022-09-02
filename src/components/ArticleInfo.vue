@@ -53,6 +53,7 @@ vue.watch(() => props.topicBins, (new_value, old_value) => {
     updateBars()
 })
 vue.onMounted(() => {
+    console.log(props.topicBins)
     const svg = d3.select(`#${props.id}`).select("svg")
         .attr("viewBox", `0 0 ${viewBox[0]} ${viewBox[1]}`)
     svg.append("g")

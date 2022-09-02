@@ -34,7 +34,7 @@ export class TemporalView implements PanelView {
 export class ArticleView implements PanelView {
     title: string
     type: ViewType.Article
-    data: Article[]
+    data: any[]
 }
 export class DetailView implements PanelView {
     title: string
