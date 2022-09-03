@@ -524,24 +524,21 @@ function handleEntityClicked({type, d}) {
     return
   }
   
-  if(type === typeUtils.ViewType.CooccurrScatter) {
-    //
-    // TBD
-    //
-
-    // const entity = d.text.split("-")[0]
-    // const outlet = d.text.split("-")[1]
-    // const cooccurrences = entity_cooccurrences_groupby_outlet.value[outlet][entity]
-    // const title = `co-${entity}-${outlet}` 
-    // var cooccurr_view: ScatterOutletGraph= {title: title, type: ViewType.CooccurrScatter, nodes: []}
-    // Object.keys(cooccurrences).forEach(entity2 => {
-    //   const cooccurr_article_ids = cooccurrences[entity2]
-    //   const articles = preprocess.idsToArticles(cooccurr_article_ids, article_dict.value)
-    //   const node = preprocess.construct_node(articles, `${entity2}-${entity}`)
-    //   cooccurr_graph.nodes.push(node)
-    // });
-    // selectedScatterGraphs_right.value.push(cooccurr_graph)
-    // return
+  if(type === typeUtils.ViewType.CooccurrHex) {
+    const entity = d.text.split("-")[0]
+    const outlet = d.text.split("-")[1]
+    const cooccurrences = entity_cooccurrences_groupby_outlet.value[outlet][entity]
+    const title = `co-${entity}-${outlet}` 
+    let entity_cooccurrences = new typeUtils.EntityCooccurrences()
+    entity_cooccurrences.entity = entity
+    let cooccurr_view: typeUtils.CooccurrHexView= {title: title, type: typeUtils.ViewType.CooccurrHex, data: entity_cooccurrences }
+    Object.keys(cooccurrences).forEach(entity2 => {
+      const cooccurr_article_ids = cooccurrences[entity2]
+      const article_num = cooccurr_article_ids.length
+      entity_cooccurrences[entity2] = article_num
+    });
+    selectedScatterViews_left.value.push(cooccurr_view)
+    return
   }
   if(type === typeUtils.ViewType.Article) {
     // get article data
@@ -586,9 +583,8 @@ function handleEntityClicked({type, d}) {
         temporal_data: temporal_bins
       }}
     selectedScatterViews_right.value.push(entity_detail_view)
-
-
   }
+
 }
 
 function handleShowTemporal(nodes, title) {

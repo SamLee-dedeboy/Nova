@@ -116,7 +116,7 @@ const menu_items = ref([
     {
         label: "Show co-occurrence",
         command: () => {
-            // emit("node_clicked", {type: ViewType.CooccurrScatter, d: clicked_node.value})
+            emit("node_clicked", {type: ViewType.CooccurrHex, d: clicked_node.value})
         }
     },
     {

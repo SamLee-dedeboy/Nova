@@ -67,10 +67,10 @@ def gen_candidate_entities(filepath="data/rel_entities_ner.json", min_mentions=5
     # dict_to_json(candidates, filepath="data/candidate_entities.json")
     dict_to_json(dict({"ranked_entity_list": sorted_entity_list}), filepath="data/entities.json")
 
-def gen_entity_cooccurrence(filepath="data/entities_gt10.json"):
+def gen_entity_cooccurrence(filepath="data/candidate_entities.json"):
     file = open(filepath)
     entity_list = json.load(file)["ranked_entity_list"]
-    article_list = json.load(open("data/processed_articles_rel_hugFace.json"))
+    article_list = json.load(open("data/processed_articles_summary_normalized_entity_candidates.json"))
     article_dict = {}
     count = 0
     for article in article_list:
@@ -245,4 +245,4 @@ def extract_candidate_entities(filepath='data/processed_articles_with_summary.js
 
 
     
-entities_groupy_outlet()
+gen_entity_cooccurrence()

@@ -19,6 +19,7 @@ import ArticleInfo from "./ArticleInfo.vue";
 import DataTable from "primevue/datatable";
 import Column from 'primevue/column'
 import * as _ from "lodash"
+import HexCooccurrence from "./HexCooccurrence.vue";
 
 const props = defineProps({
     articles: Object as () => any[],
@@ -320,7 +321,12 @@ function breakText(data: string): string[] {
                     v-model:selectedTargets="highlight_entity">
                 </TemporalPathSelector>
             </div>
-
+        </div>
+        <div class="hex-view-container" v-if="view.type === ViewType.CooccurrHex">
+            <HexCooccurrence
+                :id="`hex-${view.title}`"
+                :entity_cooccurrences="view.data" >
+            </HexCooccurrence>
         </div>
     </TabPanel>
 </TabView>

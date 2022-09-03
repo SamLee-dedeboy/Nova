@@ -1,11 +1,17 @@
 export enum ViewType {
    EntityScatter,
    OutletScatter,
-   CooccurrScatter,
+   CooccurrHex,
    Temporal,
    Article,
    Detail,
 }
+
+export class EntityCooccurrences {
+    entity: string
+    cooccurrences: {[id: string]: number}
+}
+
 export class Path {
     title: string
     start: Number
@@ -15,6 +21,11 @@ export interface PanelView {
     title: string,
     type: ViewType,
     data: any,
+}
+export class CooccurrHexView implements PanelView {
+    title: string
+    type: ViewType.CooccurrHex
+    data: EntityCooccurrences
 }
 export class EntityScatterView implements PanelView {
     title: string
