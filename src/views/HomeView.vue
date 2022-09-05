@@ -35,7 +35,8 @@ import * as tutorial from "../components/TutorialUtils"
 //
 // raw data
 //
-const entity_mentions: Ref<any[]> = ref([])
+const entity_mentions_grouped: Ref<any[]> = ref([])
+const overall_entity_mentions: Ref<any[]> = ref([])
 let dataset_metadata = {}
 let original_dataset = []
 const articles = ref([])
@@ -96,7 +97,7 @@ const overview_constructed: Ref<boolean> = ref(false)
 /**
  * @deprecated
  */
-const entity_list: Ref<string[]> = computed(() => entity_mentions.value?.["CNN"].map(entity_mention => entity_mention.entity))
+const entity_list: Ref<string[]> = computed(() => entity_mentions_grouped.value?.["CNN"].map(entity_mention => entity_mention.entity))
 
 /**
  * Array: ScatterOutletGraph[]. \
@@ -112,7 +113,7 @@ const selectedScatterViews_right: Ref<typeUtils.PanelView[]> = ref([])
 /**
  * @deprecated
  */
-const entity_data = computed(() => entity_mentions.value.map(entity_mention => { return {"name": entity_mention[0], "num": entity_mention[1].length || 0}}))
+const entity_data = computed(() => entity_mentions_grouped.value.map(entity_mention => { return {"name": entity_mention[0], "num": entity_mention[1].length || 0}}))
 
 /**
  * flag for displaying load icon on mounted.
@@ -127,14 +128,18 @@ const overview_constructing: Ref<boolean> = ref(true)
  * max articles of all nodes in overview grid. \
  * Used when scaling node color.
  */
-const max_articles: Ref<number> = ref(0)
+const grouped_max_articles: Ref<number> = ref(0)
+const grouped_pos_max_articles: Ref<number> = ref(0)
+const grouped_neg_max_articles: Ref<number> = ref(0)
+const overall_max_articles: Ref<number> = ref(0)
 /**
  * min articles of all nodes in overview grid. \
  * Used when scaling node color.
  */
-const min_articles: Ref<number> = ref(0)
-vue.provide('min_articles', min_articles)
-vue.provide('max_articles', max_articles)
+const grouped_min_articles: Ref<number> = ref(0)
+const grouped_pos_min_articles: Ref<number> = ref(0)
+const grouped_neg_min_articles: Ref<number> = ref(0)
+const overall_min_articles: Ref<number> = ref(0)
 
 /**
  * Flag for compare mode. \
@@ -329,10 +334,17 @@ function datasetImported(dataset) {
     const promise = new Promise((resolve) => { 
       console.log("dataset imported")
       outlet_article_dict.value = dataset.outlet_article_dict
-      entity_mentions.value = dataset.entity_mentions
+      entity_mentions_grouped.value = dataset.entity_mentions
+      overall_entity_mentions.value = dataset.overall_entity_mentions
       entity_cooccurrences_groupby_outlet.value = dataset.entity_cooccurrences_outlet_dict
 
-      let {outlet_set, r_article_dict, r_article_bins_dict, r_min_timestamp, r_max_timestamp, r_outlet_article_num_dict} = preprocess.processArticleDict(outlet_article_dict.value)
+      let {
+        outlet_set, 
+        r_article_dict, 
+        r_article_bins_dict, 
+        r_min_timestamp, r_max_timestamp, 
+        r_outlet_article_num_dict
+      } = preprocess.processArticleDict(outlet_article_dict.value)
       console.log("preprocess 1 done")
       outlet_article_num_dict.value = r_outlet_article_num_dict
       outlet_article_bins_dict.value = r_article_bins_dict
@@ -341,12 +353,31 @@ function datasetImported(dataset) {
       max_timestamp.value = r_max_timestamp
       // articles.value = normalized_articles
       article_dict.value = r_article_dict
-      let {r_graph_dict, r_max_articles, r_min_articles, r_node_article_id_dict} = preprocess.constructEntityGraph(entity_mentions.value, article_dict.value)
+      let {
+        r_graph_dict, 
+        r_max_articles, r_min_articles, 
+        r_pos_max_articles, r_pos_min_articles,
+        r_neg_max_articles, r_neg_min_articles,
+        r_node_article_id_dict
+      } = preprocess.constructEntityGraph(entity_mentions_grouped.value, article_dict.value)
+
+      const overall_entity_scatter = 
+        preprocess.constructOverallEntityGraph( overall_entity_mentions.value, article_dict.value)
+
+      selectedScatterViews_left.value.push(overall_entity_scatter)
       console.log("preprocess 2 done")
       scatter_dict.value = r_graph_dict
-      max_articles.value = r_max_articles
-      min_articles.value = r_min_articles
+
+      grouped_max_articles.value = r_max_articles
+      grouped_min_articles.value = r_min_articles
+
+      grouped_pos_max_articles.value = r_pos_max_articles
+      grouped_pos_min_articles.value = r_pos_min_articles
+      grouped_neg_max_articles.value = r_neg_max_articles
+      grouped_neg_min_articles.value = r_neg_min_articles
+
       node_article_id_dict.value = r_node_article_id_dict
+
       overview_constructed.value = true
       resolve(""); 
     })
@@ -537,7 +568,11 @@ function handleEntityClicked({type, d}) {
       if(entity2 === entity) return
       const cooccurr_article_ids = cooccurrences[entity2]
       const cooccurr_articles = preprocess.idsToArticles(cooccurr_article_ids, article_dict.value)
-      const sst = preprocess.generate_sst_score(cooccurr_articles)
+      const sst = preprocess.generate_sst_score(
+        cooccurr_articles, 
+        grouped_pos_max_articles.value, grouped_pos_min_articles.value,
+        grouped_neg_max_articles.value, grouped_neg_min_articles.value
+      )
       // const sst = preprocess.categorizeNode(cooccurr_article_ids, segment_sst.value, article_dict.value)
       // const article_num = cooccurr_article_ids.length
       entity_cooccurrences.cooccurrences[entity2] = {article_ids: cooccurr_article_ids, sst: sst}
@@ -728,15 +763,15 @@ function handleSearch(item) {
               <div class="utilities-container">
                 <div v-if="overview_constructed" class="slider-container">
                   <InputText class="threshold-input" v-model="article_num_threshold"></InputText>
-                  <Button class="increment-button p-button-secondary" label="+"  @click="() => article_num_threshold=Math.min(article_num_threshold+=10, max_articles||100)"></Button>
+                  <Button class="increment-button p-button-secondary" label="+"  @click="() => article_num_threshold=Math.min(article_num_threshold+=10, grouped_max_articles||100)"></Button>
                   <Button class="decrease-button p-button-secondary " label="-"  @click="() => article_num_threshold=Math.max(article_num_threshold-10, 0)"></Button>
-                  <Slider v-model="article_num_threshold" :step="10" :min="0" :max="max_articles||100"></Slider>
+                  <Slider v-model="article_num_threshold" :step="10" :min="0" :max="grouped_max_articles||100"></Slider>
                   <ColorSpectrum class="color-spectrum" v-if="overview_constructed" 
                   :color-scale="SstColors.article_num_color_scale"
                   ></ColorSpectrum>
                   <div class="indicator-container">
                     <div class="min_indicator">0</div>
-                    <div class="max_indicator">{{max_articles || 100}}</div>
+                    <div class="max_indicator">{{grouped_max_articles || 100}}</div>
                   </div>
                 </div>
               </div>

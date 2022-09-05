@@ -9,7 +9,7 @@ export enum ViewType {
 
 export class EntityCooccurrences {
     entity: string
-    cooccurrences: {[id: string]: {article_ids: string[], sst: Sentiment2D }}
+    cooccurrences: {[id: string]: {article_ids: number[], sst: Sentiment2D }}
 }
 
 export class Path {
@@ -30,12 +30,12 @@ export class CooccurrHexView implements PanelView {
 export class EntityScatterView implements PanelView {
     title: string
     type: ViewType.EntityScatter
-    data: ScatterNode[]
+    data: {nodes: ScatterNode[], max_articles: number, min_articles: number}
 }
 export class OutletScatterView implements PanelView {
     title: string
     type: ViewType.OutletScatter
-    data: ScatterNode[]
+    data: {nodes: ScatterNode[], max_articles: number, min_articles: number}
 }
 export class TemporalView implements PanelView {
     title: string
@@ -57,7 +57,7 @@ export class TemporalBins {
 }
 export class ScatterNode {
     text: string
-    articles: number
+    articles: number[]
     pos_articles: number
     neg_articles: number
     pos_sst: number

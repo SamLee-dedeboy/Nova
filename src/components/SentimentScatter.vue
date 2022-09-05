@@ -43,15 +43,22 @@ const props = defineProps({
     segmentation: Sentiment2D, 
 })
 const emit = defineEmits(['node_clicked', 'update:segmentation', 'show_temporal'])
-const min_articles: Ref<number> = vue.inject('min_articles') || ref(0) 
-const max_articles: Ref<number> = vue.inject('max_articles') || ref(0)
+const max_articles = vue.computed(() => props.view?.data.max_articles)
+const min_articles = vue.computed(() => props.view?.data.min_articles)
 const outlet_article_num_dict: Ref<any> = vue.inject("outlet_article_num_dict") || ref({})
 const total_articles = computed(() => {
     if(props.view?.type === ViewType.EntityScatter) {
-        const outlet = props.view.title
-        return outlet_article_num_dict.value[outlet]
+        if(props.view.title === "Overall") {
+            return _.sumBy( 
+                Object.keys(outlet_article_num_dict.value), 
+                (outlet) => (outlet_article_num_dict.value[outlet])
+            )
+        } else {
+            const outlet = props.view.title
+            return outlet_article_num_dict.value[outlet]
+        }
     } else if(props.view?.type === ViewType.OutletScatter) {
-        return _.sumBy(props.view?.data, (node) => (node.articles))
+        return _.sumBy(props.view?.data.nodes, (node) => (node.articles.length))
     } else if(props.view?.type === ViewType.CooccurrHex) {
         const outlet = props.view.title.split("-")[0]
         return outlet_article_num_dict.value[outlet]
@@ -94,8 +101,8 @@ const y = d3.scalePow()
     .domain([0, 1])
     .range([ margin.top + viewBox_height, margin.top]);
 const zoom: any = d3.zoom().scaleExtent([1, 3]).on("zoom", handleZoom)
-const filtered_data = computed(() => props.view?.data.filter(node => node.articles > (props.article_num_threshold || 0)))
-const nodes_freq = computed(() => filtered_data.value?.map(node => {return {title: node.text, freq: node.articles}}))
+const filtered_data: Ref<ScatterNode[]> = computed(() => props.view?.data.nodes.filter((node: ScatterNode) => node.articles.length > (props.article_num_threshold || 0)))
+const nodes_freq = computed(() => filtered_data.value?.map(node => {return {title: node.text, freq: node.articles.length}}))
 const segment_controller_width = 12
 const node_circle_radius = 10
 const clicked_node: Ref<ScatterNode> = ref(new ScatterNode())
@@ -395,9 +402,9 @@ function updateSegmentation() {
 }
 
 function updateCategorization() {
-    let bind_data;
+    let bind_data: ScatterNode[] = [];
     if(props.view?.type === ViewType.EntityScatter) bind_data = filtered_data.value
-    if(props.view?.type === ViewType.OutletScatter) bind_data = props.view.data
+    if(props.view?.type === ViewType.OutletScatter) bind_data = props.view.data.nodes
     // if(props.graph?.type === ViewType.CooccurrScatter) bind_data = props.graph.nodes
 
     const ctg_nodes = _.groupBy(bind_data, categorizeNode)
@@ -444,7 +451,7 @@ function updateOverviewTooltipContent() {
     const entity_num = nodes.length || 0
     const avg_pos_sst = _.mean(nodes.map(node => node.pos_sst))
     const avg_neg_sst = _.mean(nodes.map(node => node.neg_sst))
-    nodes.sort((node_a, node_b) => -(node_a.articles - node_b.articles))
+    nodes.sort((node_a, node_b) => -(node_a.articles.length - node_b.articles.length))
     tooltip_content.value = 
     `${title}: <br>` + 
     `&nbsp #entities: ${entity_num} <br>` +
@@ -484,14 +491,15 @@ function updateExpandedScatter() {
                 .style("top", e.offsetY - 5 - align_image_offset + "px")
         })
         .on("mouseover", function(e, d) {
-            const container: any = d3.select(this.parentNode)
+            const parentNode: any = (this as HTMLElement).parentNode
+            const container: any = d3.select(parentNode)
             container.style("filter", "brightness(90%)")
             // apply hover effect
             container.selectAll("circle.expand_circle")
                 .transition().duration(100)
                 .attr("r", (d) => (parseFloat(container.select("circle.outlet_circle").attr("r"))*1.5 ))
             const target_node_text = container.data()[0].text
-            const other_nodes_container = d3.select(`#${props.id}`).selectAll("g.outlet").filter((d) => d.text != target_node_text)
+            const other_nodes_container = d3.select(`#${props.id}`).selectAll("g.outlet").filter((d: any) => d.text != target_node_text)
             other_nodes_container.selectAll("image")
                 .attr("opacity", 0)
             container.selectAll("image")
@@ -499,18 +507,19 @@ function updateExpandedScatter() {
                 .attr("opacity", 0.8)
 
             // update tooltip
-            updateNodeInfo(d)
+            updateNodeInfo(d as ScatterNode)
             d3.select(`#${props.id}`).select(".nodeinfo")
                 .style("opacity", 1)
         })
         .on("mouseout", function(e, d) {
-            const container: any = d3.select(this.parentNode)
+            const parentNode: any = (this as HTMLElement).parentNode
+            const container: any = d3.select(parentNode)
             container.style("filter", "brightness(100%)")
             container.selectAll("circle.expand_circle")
                 .transition().duration(100)
                 .attr("r", (d) => (parseFloat(container.select("circle.outlet_circle").attr("r"))))
             const target_node_text = container.data()[0].text
-            const other_nodes_container = d3.select(`#${props.id}`).selectAll("g.outlet").filter((d) => d.text != target_node_text)
+            const other_nodes_container = d3.select(`#${props.id}`).selectAll("g.outlet").filter((d: any) => d.text != target_node_text)
             other_nodes_container.selectAll("image")
                 .attr("opacity", 0.3)
             container.selectAll("image")
@@ -538,11 +547,11 @@ function updateExpandedScatter() {
         const outlets = svg.selectAll("g.outlet")
         const image_size = 100
         outlets.selectAll("image.outlet_image")
-            .attr("href", (d) => `src/assets/${NodeUtils.abbr_dict[d.text.split("-")[1]]}.png`)
+            .attr("href", (d: any) => `src/assets/${NodeUtils.abbr_dict[d.text.split("-")[1]]}.png`)
             .attr("height", image_size)
             .attr("width", image_size)
-            .attr("x", (d) => x(d.pos_sst)-image_size/2)
-            .attr("y", (d) => y(Math.abs(d.neg_sst))-image_size/2)
+            .attr("x", (d: any) => x(d.pos_sst)-image_size/2)
+            .attr("y", (d: any) => y(Math.abs(d.neg_sst))-image_size/2)
             .attr("opacity", 0.3)
             .attr("pointer-events", "none")
             .lower()
@@ -552,20 +561,21 @@ function updateExpandedScatter() {
 }
 
 function updateOverviewScatter() {
+    console.log(max_articles.value, min_articles.value)
     const svg = d3.select(`#${props.id}`).select("svg")
     const article_radius_scale = d3.scalePow()
     .exponent(1)
     .domain([ min_articles.value, max_articles.value ])
     .range([ outlet_min_radius, outlet_max_radius ]);
 
-    let bind_data;
+    let bind_data: ScatterNode[] = [];
     if(props.view?.type === ViewType.EntityScatter) bind_data = filtered_data.value
     if(props.view?.type === ViewType.OutletScatter) bind_data = props.view.data
-    if(props.view?.type === ViewType.CooccurrScatter) bind_data = props.view.data
+    if(props.view?.type === ViewType.CooccurrHex) bind_data = props.view.data
     const node_group = svg.select("g.node_group")
     node_group.selectAll("g.outlet")
-    .data(bind_data, function(d) {return d.text})
-    .join(
+    .data(bind_data, function(d: any) {return d.text})
+    .join( 
         enter => {
             const group = enter.append("g").attr("class", "outlet")
             group.append("circle")
@@ -575,7 +585,7 @@ function updateOverviewScatter() {
                 .attr("cx", (d) => x(d.pos_sst))
                 .attr("cy", (d) => y(Math.abs(d.neg_sst)))
                 // .attr("fill", (d) => SstColors.outlet_color_dict[d.text])
-                .attr("fill", (d) => d.articles === 0? "white" :SstColors.article_num_color_scale(d.articles/max_articles.value))
+                .attr("fill", (d) => d.articles.length === 0? "white" :SstColors.article_num_color_scale(d.articles.length/max_articles.value))
                 .attr("opacity", 0.8)
                 .raise()
             group.append("circle")
@@ -586,7 +596,7 @@ function updateOverviewScatter() {
                 .attr("cy", (d) => y(Math.abs(d.neg_sst)))
                 .attr("fill", "white")
                 .attr("stroke", "black")
-                .attr("stroke-dasharray", (d) => d.articles === 0? 2.5 : 0)
+                .attr("stroke-dasharray", (d) => d.articles.length === 0? 2.5 : 0)
                 .lower()
             group.append("image")
                 .attr("class", "outlet_image")
@@ -595,22 +605,22 @@ function updateOverviewScatter() {
             update.selectAll("circle")
             // .attr("r", (d) => article_radius_scale(d.articles))
                 .attr("r", node_circle_radius/(current_zoom?.k || 1))
-                .attr("cx", (d) => x(d.pos_sst))
-                .attr("cy", (d) => y(Math.abs(d.neg_sst)))
+                .attr("cx", (d: any) => x(d.pos_sst))
+                .attr("cy", (d: any) => y(Math.abs(d.neg_sst)))
 
             update.selectAll("circle.outlet_circle")
             // .attr("fill", (d) => SstColors.outlet_color_dict[d.text])
-            .attr("fill", (d) => SstColors.article_num_color_scale(d.articles/max_articles.value))
+            .attr("fill", (d: any) => SstColors.article_num_color_scale(d.articles.length/max_articles.value))
             // .attr("opacity", 0.8)
         }
     ) 
     const dots = svg.selectAll("g.outlet")
-    dots.sort((da, db) => (da.articles - db.articles))
+    dots.sort((da: any, db: any) => (da.articles.length - db.articles.length))
     if(current_zoom) {
         dots.attr("transform", current_zoom)
     }
     if(props.view?.type === ViewType.EntityScatter) {
-        const highlight_circle = svg.selectAll("circle.outlet_circle").filter(d => (props.highlight_nodes?.includes(d.text.split("-")[0])))
+        const highlight_circle = svg.selectAll("circle.outlet_circle").filter((d: any) => (props.highlight_nodes!.includes(d.text.split("-")[0])))
         highlight_circle.attr("fill", "blue")
     }
     

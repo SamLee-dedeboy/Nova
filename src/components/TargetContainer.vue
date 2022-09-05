@@ -233,7 +233,7 @@ function breakText(data: string): string[] {
                 :topicBins="selectedTopicBins" >
             </ArticleInfo> -->
             <div class="scatter-info-container">
-                <DataTable :value="view.data.sort((a, b) => -(a.articles-b.articles))"
+                <DataTable :value="view.data.nodes.sort((a, b) => -(a.articles-b.articles))"
                 v-model:selection="selectedNodes" selectionMode="multiple" dataKey="text" :metaKeySelection="false"
                 scrollable 
                 scrollHeight="150px"

@@ -16,14 +16,12 @@ export default {
             articles: {},
             outlet_article_dict: {},
             entity_mentions: {},
+            overall_entity_mentions: {},
             entity_cooccurrences_outlet_dict: {},
             isLoading: true,
         }
     },
     async mounted() {
-        // await fetch("candidate_entities.json")
-        // await fetch("entities.json")
-        // await fetch("entities_gt10.json")
         await fetch("candidate_entities_groupby_outlet.json")
             .then(res => res.json())
             .then(json => {
@@ -34,7 +32,15 @@ export default {
                 console.log("Error loading entity mentions.")
             })
 
-        // await fetch("processed_articles_rel_hugFace.json")
+        await fetch("candidate_entity_mention_articles.json")
+            .then(res => res.json())
+            .then(json => {
+                // this.entity_mentions = json.ranked_entity_list
+                this.overall_entity_mentions = json
+            },
+            response => {
+                console.log("Error loading entity mentions.")
+            })
         await fetch("outlet_article_dict.json")
             .then(res => res.json())
             .then(json => {
@@ -93,6 +99,7 @@ export default {
             {
                 outlet_article_dict: this.outlet_article_dict,
                 entity_mentions: this.entity_mentions,
+                overall_entity_mentions: this.overall_entity_mentions.entity_article_dict,
                 entity_cooccurrences_outlet_dict: this.entity_cooccurrences_outlet_dict,
             }
             // {

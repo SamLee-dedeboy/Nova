@@ -1,50 +1,114 @@
 import * as dfd from "danfojs"
 import * as _ from 'lodash'
 import { Series } from "danfojs/dist/danfojs-base"
-import { SentimentType, Sentiment2D, EntityScatterView, OutletScatterView, ScatterNode, ViewType } from "../types"
+import { Article, SentimentType, Sentiment2D, EntityScatterView, OutletScatterView, ScatterNode, ViewType } from "../types"
 
-let pos_max_articles = 0
-let pos_min_articles = 10000
-let neg_max_articles = 0
-let neg_min_articles = 10000
 export function constructEntityGraph(entity_mentions_grouped, article_dict) {
     var r_graph_dict = {}
-    var r_min_articles = Object.keys(article_dict).length
-    var r_max_articles = 0
+    let r_min_articles = Object.keys(article_dict).length
+    let r_max_articles = 0
+    let r_pos_max_articles = 0
+    let r_pos_min_articles = r_min_articles
+    let r_neg_max_articles = 0
+    let r_neg_min_articles = r_min_articles
     var r_node_article_id_dict = {}
+    // generate min/max of articles
     Object.keys(entity_mentions_grouped).forEach(outlet => {
         const entity_mentions = entity_mentions_grouped[outlet]
-        var entity_scatter_view: EntityScatterView= {title: outlet, type: ViewType.EntityScatter, data: []}
         entity_mentions.forEach(entity_mention => {
-            const entity = entity_mention.entity
             const mentioned_article_ids = entity_mention.article_ids
             const mentioned_articles = idsToArticles(mentioned_article_ids, article_dict)
             const pos_articles = mentioned_articles.filter(article => article.sentiment.label === "POSITIVE")
             const neg_articles = mentioned_articles.filter(article => article.sentiment.label === "NEGATIVE")
-            if(pos_articles.length > pos_max_articles) pos_max_articles = pos_articles.length
-            if(pos_articles.length < pos_min_articles) pos_min_articles = pos_articles.length
-            if(neg_articles.length > neg_max_articles) neg_max_articles = neg_articles.length
-            if(neg_articles.length < neg_min_articles) neg_min_articles = neg_articles.length
+            if(pos_articles.length > r_pos_max_articles) r_pos_max_articles = pos_articles.length
+            if(pos_articles.length < r_pos_min_articles) r_pos_min_articles = pos_articles.length
+            if(neg_articles.length > r_neg_max_articles) r_neg_max_articles = neg_articles.length
+            if(neg_articles.length < r_neg_min_articles) r_neg_min_articles = neg_articles.length
+            if(mentioned_articles.length > r_max_articles) r_max_articles = mentioned_articles.length
+            if(mentioned_articles.length < r_min_articles) r_min_articles = mentioned_articles.length
         })
-
+    })
+    // construct view 
+    Object.keys(entity_mentions_grouped).forEach(outlet => {
+        const entity_mentions = entity_mentions_grouped[outlet]
+        var entity_scatter_view: EntityScatterView= {
+            title: outlet, 
+            type: ViewType.EntityScatter, 
+            data: {nodes: [], max_articles: 0, min_articles: 0}
+        }
         entity_mentions.forEach(entity_mention => {
             const entity = entity_mention.entity
             const mentioned_article_ids = entity_mention.article_ids
             const mentioned_articles = idsToArticles(mentioned_article_ids, article_dict)
-            const article_num = mentioned_articles.length
-            if(article_num > r_max_articles) r_max_articles = article_num
-            if(article_num < r_min_articles) r_min_articles = article_num
             const label = `${entity}-${outlet}` 
-            const node = construct_node(mentioned_articles, label)
+            const node = construct_node(
+                mentioned_articles, label, 
+                r_pos_max_articles, r_pos_min_articles,
+                r_neg_max_articles, r_neg_min_articles
+            )
             r_node_article_id_dict[label] = mentioned_article_ids
-            entity_scatter_view.data.push(node)
-
+            entity_scatter_view.data.nodes.push(node)
+            entity_scatter_view.data.max_articles = r_max_articles
+            entity_scatter_view.data.min_articles = r_min_articles
         })
         r_graph_dict[outlet] = entity_scatter_view
     })
-    return {r_graph_dict, r_max_articles, r_min_articles, r_node_article_id_dict}
-
+    return {
+        r_graph_dict, 
+        r_max_articles, r_min_articles, 
+        r_pos_max_articles, r_pos_min_articles,
+        r_neg_max_articles, r_neg_min_articles,
+        r_node_article_id_dict
+    }
 }
+
+export function constructOverallEntityGraph(entity_mentions, article_dict) {
+    let r_min_articles = Object.keys(article_dict).length
+    let r_max_articles = 0
+    let r_pos_max_articles = 0
+    let r_pos_min_articles = r_min_articles
+    let r_neg_max_articles = 0
+    let r_neg_min_articles = r_min_articles
+    let r_node_article_id_dict = {}
+    let entity_scatter_view: EntityScatterView= {
+        title: "Overall", 
+        type: ViewType.EntityScatter, 
+        data: {nodes: [], max_articles: 0, min_articles: 0}
+    }
+    Object.keys(entity_mentions).forEach(entity => {
+        const mentioned_article_ids = entity_mentions[entity]
+        const mentioned_articles = idsToArticles(mentioned_article_ids, article_dict)
+        const pos_articles = mentioned_articles.filter(article => article.sentiment.label === "POSITIVE")
+        const neg_articles = mentioned_articles.filter(article => article.sentiment.label === "NEGATIVE")
+        if(pos_articles.length > r_pos_max_articles) r_pos_max_articles = pos_articles.length
+        if(pos_articles.length < r_pos_min_articles) r_pos_min_articles = pos_articles.length
+        if(neg_articles.length > r_neg_max_articles) r_neg_max_articles = neg_articles.length
+        if(neg_articles.length < r_neg_min_articles) r_neg_min_articles = neg_articles.length
+        if(mentioned_articles.length > r_max_articles) r_max_articles = mentioned_articles.length
+        if(mentioned_articles.length < r_min_articles) r_min_articles = mentioned_articles.length
+    })
+
+    Object.keys(entity_mentions).forEach(entity => {
+        const mentioned_article_ids = entity_mentions[entity]
+        const mentioned_articles = idsToArticles(mentioned_article_ids, article_dict)
+        const label: string = entity 
+        const node = construct_node(
+            mentioned_articles, label,
+            r_pos_max_articles, r_pos_min_articles,
+            r_neg_max_articles, r_neg_min_articles
+        )
+        r_node_article_id_dict[label] = mentioned_article_ids
+        entity_scatter_view.data.nodes.push(node)
+        entity_scatter_view.data.max_articles = r_max_articles
+        entity_scatter_view.data.min_articles = r_min_articles
+    })
+    // return {entity_scatter_view, r_max_articles, r_min_articles, r_node_article_id_dict}
+    return entity_scatter_view
+}
+
+/**
+ * @deprecated 
+ */
 export function constructOutletGraph(entity_mentions, outlet_set, article_dict) {
     var r_graph_dict = {}
     var r_min_articles = Object.keys(article_dict).length
@@ -64,7 +128,10 @@ export function constructOutletGraph(entity_mentions, outlet_set, article_dict) 
             if(article_num > r_max_articles) r_max_articles = article_num
             if(article_num < r_min_articles) r_min_articles = article_num
 
-            const node = construct_node(articles, outlet) 
+            const node = construct_node(
+                articles, outlet,
+                pos_max_articles, pos_min_articles,
+                neg_max_articles, neg_min_articles) 
             outlet_scatter_view.data.push(node)
         }) 
         // center node
@@ -101,18 +168,18 @@ const neg_mean = 0.9315541011156876
 const neg_std = 0.1554181764759948 
 const neg_median = 0.9864524463801179
 
-export function pos_score(pos_article_num) {
-    return Math.pow((pos_article_num-pos_min_articles)/(pos_max_articles-pos_min_articles), 0.4)
+export function pos_score(pos_article_num, pos_max, pos_min) {
+    return Math.pow((pos_article_num-pos_min)/(pos_max-pos_min), 0.4)
 }
-export function neg_score(neg_article_num) {
-    return Math.pow((neg_article_num-neg_min_articles)/(neg_max_articles-neg_min_articles), 0.3)
+export function neg_score(neg_article_num, neg_max, neg_min) {
+    return Math.pow((neg_article_num-neg_min)/(neg_max-neg_min), 0.3)
 }
 
-export function generate_sst_score(articles) {
+export function generate_sst_score(articles, pos_max, pos_min, neg_max, neg_min) {
     const pos_artcs = articles.filter(article => article.sentiment.label === "POSITIVE").map(article => article.sentiment.score)
     const neg_artcs = articles.filter(article => article.sentiment.label === "NEGATIVE").map(article => article.sentiment.score)
-    const pos = pos_score(pos_artcs.length)
-    const neg = neg_score(neg_artcs.length)
+    const pos = pos_score(pos_artcs.length, pos_max, pos_min)
+    const neg = neg_score(neg_artcs.length, neg_max, neg_min)
     return {pos, neg, pos_artcs, neg_artcs}
 
     const median = (x) => { 
@@ -137,13 +204,16 @@ export function generate_sst_score(articles) {
 
 } 
 
-export function construct_node(articles, label) {
+export function construct_node(
+articles: Article[], label, 
+pos_max_articles, pos_min_articles, 
+neg_max_articles, neg_min_articles) {
     let node: ScatterNode;  
     const article_num = articles?.length || 0
     if(article_num == 0) {
         node = {
             text: label,
-            articles: 0,
+            articles: [],
             pos_articles: 0,
             neg_articles: 0,
             pos_sst: 0,
@@ -152,7 +222,9 @@ export function construct_node(articles, label) {
         }
     } else {
         let topicBins = {}
+        let article_ids: number[] = []
         articles.forEach(article => {
+            article_ids.push(article.id)
             if(!topicBins[article.top_level_topic]) {
                 topicBins[article.top_level_topic] = {pos: 0, neg: 0}
             }
@@ -161,10 +233,10 @@ export function construct_node(articles, label) {
             else
                 topicBins[article.top_level_topic].neg += 1
         })
-        const {pos, neg, pos_artcs, neg_artcs} = generate_sst_score(articles)
+        const {pos, neg, pos_artcs, neg_artcs} = generate_sst_score(articles, pos_max_articles, pos_min_articles, neg_max_articles,neg_min_articles)
         node = {
             text: label,
-            articles: article_num,
+            articles: article_ids,
             pos_articles: pos_artcs.length,
             neg_articles: neg_artcs.length,
             pos_sst: pos,
@@ -175,18 +247,18 @@ export function construct_node(articles, label) {
     return node
 }
 
-export function categorizeNode(article_ids: number[], segment_sst: Sentiment2D, article_dict) {
-    const articles = idsToArticles(article_ids, article_dict)
-    const pos_artcs = articles.filter(article => article.sentiment.label === "POSITIVE").map(article => article.sentiment.score)
-    const neg_artcs = articles.filter(article => article.sentiment.label === "NEGATIVE").map(article => article.sentiment.score)
-    const pos = pos_score(pos_artcs)
-    const neg = neg_score(neg_artcs)
-    if(pos < segment_sst.pos && neg < segment_sst.neg) return SentimentType.neu
-    if(pos > segment_sst.pos && neg < segment_sst.neg) return SentimentType.pos
-    if(pos < segment_sst.pos && neg > segment_sst.neg) return SentimentType.neg
-    if(pos > segment_sst.pos && neg > segment_sst.neg) return SentimentType.mix
-    return SentimentType.neu
-}
+// export function categorizeNode(article_ids: number[], segment_sst: Sentiment2D, article_dict) {
+//     const articles = idsToArticles(article_ids, article_dict)
+//     const pos_artcs = articles.filter(article => article.sentiment.label === "POSITIVE").map(article => article.sentiment.score)
+//     const neg_artcs = articles.filter(article => article.sentiment.label === "NEGATIVE").map(article => article.sentiment.score)
+//     const pos = pos_score(pos_artcs)
+//     const neg = neg_score(neg_artcs)
+//     if(pos < segment_sst.pos && neg < segment_sst.neg) return SentimentType.neu
+//     if(pos > segment_sst.pos && neg < segment_sst.neg) return SentimentType.pos
+//     if(pos < segment_sst.pos && neg > segment_sst.neg) return SentimentType.neg
+//     if(pos > segment_sst.pos && neg > segment_sst.neg) return SentimentType.mix
+//     return SentimentType.neu
+// }
 
 
 
