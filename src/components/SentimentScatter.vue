@@ -52,7 +52,7 @@ const total_articles = computed(() => {
         return outlet_article_num_dict.value[outlet]
     } else if(props.view?.type === ViewType.OutletScatter) {
         return _.sumBy(props.view?.data, (node) => (node.articles))
-    } else if(props.view?.type === ViewType.CooccurrScatter) {
+    } else if(props.view?.type === ViewType.CooccurrHex) {
         const outlet = props.view.title.split("-")[0]
         return outlet_article_num_dict.value[outlet]
     } else {

@@ -324,8 +324,9 @@ function breakText(data: string): string[] {
         </div>
         <div class="hex-view-container" v-if="view.type === ViewType.CooccurrHex">
             <HexCooccurrence
-                :id="`hex-${view.title}`"
-                :entity_cooccurrences="view.data" >
+                :id="`${view.title}-${index}`"
+                :entity_cooccurrences="view.data"
+                :segmentation="segmentation" >
             </HexCooccurrence>
         </div>
     </TabPanel>

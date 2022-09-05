@@ -9,7 +9,7 @@ export enum ViewType {
 
 export class EntityCooccurrences {
     entity: string
-    cooccurrences: {[id: string]: number}
+    cooccurrences: {[id: string]: {article_ids: string[], sst: Sentiment2D }}
 }
 
 export class Path {
@@ -124,6 +124,12 @@ export class Sentiment2D {
     neg: number
 }
 
+export enum SentimentType {
+    neu,
+    pos,
+    neg,
+    mix,
+}
 export class Sentiment {
     label: string
     score: number

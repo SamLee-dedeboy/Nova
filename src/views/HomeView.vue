@@ -184,7 +184,7 @@ vue.provide('max_timestamp', max_timestamp)
 /**
  * segmentation threshold of sentiment value.
  */
-const segment_sst: Ref<typeUtils.Sentiment2D> = ref({pos: 0.9, neg: 0.9}) 
+const segment_sst: Ref<typeUtils.Sentiment2D> = ref({pos: 0.5, neg: 0.5}) 
 vue.provide('segment_sst', {segment_sst, updateThreshold})
 /**
  * flag for tutorial mode.
@@ -531,11 +531,16 @@ function handleEntityClicked({type, d}) {
     const title = `co-${entity}-${outlet}` 
     let entity_cooccurrences = new typeUtils.EntityCooccurrences()
     entity_cooccurrences.entity = entity
+    entity_cooccurrences.cooccurrences = {}
     let cooccurr_view: typeUtils.CooccurrHexView= {title: title, type: typeUtils.ViewType.CooccurrHex, data: entity_cooccurrences }
     Object.keys(cooccurrences).forEach(entity2 => {
+      if(entity2 === entity) return
       const cooccurr_article_ids = cooccurrences[entity2]
-      const article_num = cooccurr_article_ids.length
-      entity_cooccurrences[entity2] = article_num
+      const cooccurr_articles = preprocess.idsToArticles(cooccurr_article_ids, article_dict.value)
+      const sst = preprocess.generate_sst_score(cooccurr_articles)
+      // const sst = preprocess.categorizeNode(cooccurr_article_ids, segment_sst.value, article_dict.value)
+      // const article_num = cooccurr_article_ids.length
+      entity_cooccurrences.cooccurrences[entity2] = {article_ids: cooccurr_article_ids, sst: sst}
     });
     selectedScatterViews_left.value.push(cooccurr_view)
     return
