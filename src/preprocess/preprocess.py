@@ -1,3 +1,4 @@
+from code import InteractiveInterpreter
 from email.policy import default
 import json
 import pprint
@@ -129,6 +130,8 @@ article_filepath="data/outlet_article_dict.json"):
             entity = entity_mention[0]
             mentioned_article_ids = entity_mention[1]
             intersection_article_ids = list(set(article_ids) & set(mentioned_article_ids))
+            if(len(intersection_article_ids) == 0):
+                continue 
             intersection_article_ids.sort()
             candidate_entities.append({"entity": entity, "article_ids": intersection_article_ids})
         res[outlet] = candidate_entities
@@ -245,4 +248,4 @@ def extract_candidate_entities(filepath='data/processed_articles_with_summary.js
 
 
     
-gen_entity_cooccurrence()
+entities_groupy_outlet()

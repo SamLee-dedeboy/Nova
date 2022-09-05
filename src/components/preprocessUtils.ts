@@ -45,44 +45,6 @@ export function constructEntityGraph(entity_mentions_grouped, article_dict) {
     return {r_graph_dict, r_max_articles, r_min_articles, r_node_article_id_dict}
 
 }
-/**
- * @deprecated 
- */
-export function constructEntityGraph2(entity_mentions, outlet_set, article_dict, articles) {
-    var r_graph_dict = {}
-    var r_min_articles = articles.length
-    var r_max_articles = 0
-    console.log("construct outlet article dict begin....")
-    const outlet_article_dict = constructOutletArticleDict(articles)
-    console.log("construct outlet article dict done.")
-    console.log("-------------------")
-    outlet_set.forEach(outlet => {
-        console.log(`constructing ${outlet}...`)
-        const outlet_article_ids = outlet_article_dict[outlet].map(article => article.id)
-        var graph: ScatterOutletGraph= {title: outlet, nodes: []}
-        // filter out articles that mentioned an entity
-        console.log("--> going through entities...")
-        entity_mentions.forEach(entity_mention => {
-            const entity = entity_mention[0]
-            const mentioned_article_ids = entity_mention[1]
-            const intersect_article_ids = _.intersection(outlet_article_ids, mentioned_article_ids)
-            if(intersect_article_ids.length < 10) return;
-            const mentioned_articles = idsToArticles(intersect_article_ids, article_dict)
-            const article_num = mentioned_articles.length
-            if(article_num > r_max_articles) r_max_articles = article_num
-            if(article_num < r_min_articles) r_min_articles = article_num
-
-            const node = construct_node(mentioned_articles, entity) 
-            graph.nodes.push(node)
-        });
-        r_graph_dict[outlet] = graph
-        console.log(`${outlet} done.`)
-        console.log("-------------------")
-    })
-    return {r_graph_dict, r_max_articles, r_min_articles}
-
-}
-
 export function constructOutletGraph(entity_mentions, outlet_set, article_dict) {
     var r_graph_dict = {}
     var r_min_articles = Object.keys(article_dict).length
@@ -140,15 +102,19 @@ const neg_std = 0.1554181764759948
 const neg_median = 0.9864524463801179
 
 export function pos_score(pos_article_num) {
-    return Math.pow((pos_article_num.length-pos_min_articles)/(pos_max_articles-pos_min_articles), 0.4)
+    return Math.pow((pos_article_num-pos_min_articles)/(pos_max_articles-pos_min_articles), 0.4)
 }
 export function neg_score(neg_article_num) {
-    return Math.pow((neg_article_num.length-neg_min_articles)/(neg_max_articles-neg_min_articles), 0.3)
+    return Math.pow((neg_article_num-neg_min_articles)/(neg_max_articles-neg_min_articles), 0.3)
 }
 
 export function generate_sst_score(articles) {
     const pos_artcs = articles.filter(article => article.sentiment.label === "POSITIVE").map(article => article.sentiment.score)
     const neg_artcs = articles.filter(article => article.sentiment.label === "NEGATIVE").map(article => article.sentiment.score)
+    const pos = pos_score(pos_artcs.length)
+    const neg = neg_score(neg_artcs.length)
+    return {pos, neg, pos_artcs, neg_artcs}
+
     const median = (x) => { 
         x = x.sort();
         var idx = Math.round(x.length / 2);
@@ -158,20 +124,16 @@ export function generate_sst_score(articles) {
         var avg = _.sum(x) / x.length;
         return Math.sqrt(_.sum(_.map(x, (i) => Math.pow((i - avg), 2))) / x.length);
     }
-    const subset_pos_mean = _.mean(pos_artcs)
-    const subset_pos_median = median(pos_artcs)
-    const subset_pos_std = std(pos_artcs)
-    // const subset_pos_skew = sigmoid(-3*(subset_pos_mean-subse_pos_median)/subset_pos_std) || 0
-    const subset_pos_skew = sigmoid(3*(subset_pos_mean-pos_mean)/pos_std) || 0
+    // const subset_pos_mean = _.mean(pos_artcs)
+    // const subset_pos_median = median(pos_artcs)
+    // const subset_pos_std = std(pos_artcs)
+    // const subset_pos_skew = sigmoid(3*(subset_pos_mean-pos_mean)/pos_std) || 0
 
-    const subset_neg_mean = Math.abs(_.mean(neg_artcs))
-    const subset_neg_median = Math.abs(median(neg_artcs))
-    const subset_neg_std = std(neg_artcs)
-    const subset_neg_skew = sigmoid(3*(subset_neg_mean-neg_mean)/neg_std) || 0
+    // const subset_neg_mean = Math.abs(_.mean(neg_artcs))
+    // const subset_neg_median = Math.abs(median(neg_artcs))
+    // const subset_neg_std = std(neg_artcs)
+    // const subset_neg_skew = sigmoid(3*(subset_neg_mean-neg_mean)/neg_std) || 0
     
-    const pos = pos_score(pos_artcs)
-    const neg = pos_score(neg_artcs)
-    return {pos, neg, pos_artcs, neg_artcs}
 
 } 
 
