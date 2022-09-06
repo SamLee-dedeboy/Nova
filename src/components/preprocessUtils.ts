@@ -62,14 +62,13 @@ export function constructEntityGraph(entity_mentions_grouped, article_dict) {
     }
 }
 
-export function constructOverallEntityGraph(entity_mentions, article_dict) {
+export function constructOverallEntityGraph(entity_mentions, article_dict, node_article_id_dict) {
     let r_min_articles = Object.keys(article_dict).length
     let r_max_articles = 0
     let r_pos_max_articles: any[] = []
     let r_pos_min_articles: any[] = new Array(r_min_articles)
     let r_neg_max_articles: any = []
     let r_neg_min_articles: any[] = new Array(r_min_articles)
-    let r_node_article_id_dict = {}
     let entity_scatter_view: EntityScatterView= {
         title: "Overall", 
         type: ViewType.EntityScatter, 
@@ -110,7 +109,7 @@ export function constructOverallEntityGraph(entity_mentions, article_dict) {
             r_pos_max_articles.length, r_pos_min_articles.length,
             r_neg_max_articles.length, r_neg_min_articles.length
         )
-        r_node_article_id_dict[label] = mentioned_article_ids
+        node_article_id_dict[label] = mentioned_article_ids
         entity_scatter_view.data.nodes.push(node)
         entity_scatter_view.data.mentions_groupby_outlet_dict[entity] = mentions_groupby_outlet_dict
     })

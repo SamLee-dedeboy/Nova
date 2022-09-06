@@ -376,22 +376,24 @@ function datasetImported(dataset) {
         r_node_article_id_dict
       } = preprocess.constructEntityGraph(entity_mentions_grouped.value, article_dict.value)
 
-      const overall_entity_scatter = 
-        preprocess.constructOverallEntityGraph( overall_entity_mentions.value, article_dict.value)
-
-      selectedScatterViews_left.value.push(overall_entity_scatter)
       console.log("preprocess 2 done")
       scatter_dict.value = r_graph_dict
-
+      
       grouped_max_articles.value = r_max_articles
       grouped_min_articles.value = r_min_articles
-
+      
       grouped_pos_max_articles.value = r_pos_max_articles
       grouped_pos_min_articles.value = r_pos_min_articles
       grouped_neg_max_articles.value = r_neg_max_articles
       grouped_neg_min_articles.value = r_neg_min_articles
-
+      
       node_article_id_dict.value = r_node_article_id_dict
+
+      console.log("constructing overall entity scatter")
+      const overall_entity_scatter = 
+        preprocess.constructOverallEntityGraph(overall_entity_mentions.value, article_dict.value, node_article_id_dict.value)
+
+      selectedScatterViews_left.value.push(overall_entity_scatter)
 
       overview_constructed.value = true
       console.log("overview constructed")
@@ -575,11 +577,27 @@ function handleEntityClicked({title, type, d}) {
     const entity = d.text.split("-")[0]
     const outlet = d.text.split("-")[1]
     let cooccurrences: any
-    if(title === "Overall")
+    let view_title: string
+    if(title === "Overall") {
+      view_title = `co-${entity}`
       cooccurrences = entity_cooccurrences_dict.value[entity]
-    else 
+      const article_ids = node_article_id_dict.value[d.text]
+      const articles = preprocess.idsToArticles(article_ids, article_dict.value)
+      selected_entity.value = {
+        name: d.text.split("-")[0],
+        outlet: "Overall",
+        sst_ratio: {
+          pos: articles.filter(article => article.sentiment.label === "POSITIVE").length,
+          neg: articles.filter(article => article.sentiment.label === "NEGATIVE").length,
+        },
+        articles: articles
+      }
+      display_article_view.value = true
+    }
+    else {
       cooccurrences = entity_cooccurrences_groupby_outlet.value[outlet][entity]
-    const view_title = `co-${entity}-${outlet}` 
+      view_title = `co-${entity}-${outlet}` 
+    }
     let entity_cooccurrences = new typeUtils.EntityCooccurrences()
     entity_cooccurrences.entity = entity
     entity_cooccurrences.cooccurrences = {}
@@ -604,7 +622,6 @@ function handleEntityClicked({title, type, d}) {
     // get article data
     const article_ids = node_article_id_dict.value[d.text]
     const articles = preprocess.idsToArticles(article_ids, article_dict.value)
-    console.log(d.text)
     selected_entity.value = {
       name: d.text.split("-")[0],
       outlet: d.text.split("-")[1],

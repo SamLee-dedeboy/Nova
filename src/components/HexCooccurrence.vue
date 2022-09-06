@@ -27,7 +27,7 @@ const props = defineProps({
 
 
 // const viewBox = [1000, 1000/(2*Math.sin(Math.PI/3))*3]
-const viewBox = [1040, 920]
+const viewBox = [640, 580]
 const margin = {top: 0, bottom: 0, right:0, left: 0} 
 const viewBox_width = viewBox[0] - margin.left - margin.right
 const viewBox_height = viewBox[1] - margin.top - margin.bottom
@@ -98,7 +98,7 @@ function updateHexBins() {
     entity_text.enter().append("text")
         .merge(entity_text)
         .attr("x", d => x(d.x))
-        .attr("y", d => y(d.y) - (Math.min(d.entity.split("_").length,4)+0.5)/2*15 )
+        .attr("y", d => y(d.y) - 35 - (Math.min(d.entity.split("_").length,4)+0.5)/2*15 )
         // .attr("y", d => y(d.y))
     const tspan = hex_path_group.selectAll("text").selectAll("tspan")
         .data((d) => {
