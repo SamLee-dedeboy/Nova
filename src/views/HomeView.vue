@@ -1,5 +1,5 @@
 <script setup lang="ts">
-
+import OutletWeightSlider from "../components/OutletWeightSlider.vue";
 import Filter from "../components/deprecated/Filter.vue";
 import Slider from "primevue/slider"
 import InputText from "primevue/inputtext"
@@ -246,6 +246,12 @@ const node_article_id_dict = ref({})
 const selected_entity: Ref<typeUtils.EntityInfo> = ref(new typeUtils.EntityInfo())
 
 /**
+ * dict of outlet weight. \
+ * { [id: string]: number }
+ */
+const outlet_weight_dict: Ref<any> = ref({})
+
+/**
  * @deprecated
  */
 watch(() => timeRange, (new_range, old_range) => {
@@ -355,6 +361,9 @@ function datasetImported(dataset) {
       outlet_article_num_dict.value = r_outlet_article_num_dict
       outlet_article_bins_dict.value = r_article_bins_dict
       enabled_outlet_set.value = outlet_set
+      enabled_outlet_set.value.forEach(outlet => {
+        outlet_weight_dict.value[outlet] = 1
+      })
       min_timestamp.value = r_min_timestamp
       max_timestamp.value = r_max_timestamp
       // articles.value = normalized_articles
@@ -385,6 +394,7 @@ function datasetImported(dataset) {
       node_article_id_dict.value = r_node_article_id_dict
 
       overview_constructed.value = true
+      console.log("overview constructed")
       resolve(""); 
     })
     promise.then(() => overview_constructing.value = false)
@@ -660,6 +670,46 @@ function highlightChanged(new_value) {
 function handleSearch(item) {
   highlight_nodes.value.push(item)
 }
+
+function handleUpdateOutletWeight({outlet, value}) {
+  outlet_weight_dict.value[outlet] = value
+  updateOverallEntityNode({outlet, value})
+}
+
+function updateOverallEntityNode({outlet, value}) {
+  const overall_entity_scatter = selectedScatterViews_left.value.find(view => view.title === "Overall") as typeUtils.EntityScatterView
+  const pos_max: number = _.sumBy(
+    Object.keys(overall_entity_scatter.data.pos_max!),
+    (outlet) => overall_entity_scatter.data.pos_max[outlet]*outlet_weight_dict.value[outlet]
+  )
+  const pos_min: number = _.sumBy(
+    Object.keys(overall_entity_scatter.data.pos_min!),
+    (outlet) => overall_entity_scatter.data.pos_min[outlet]*outlet_weight_dict.value[outlet]
+  )
+  const neg_max: number = _.sumBy(
+    Object.keys(overall_entity_scatter.data.neg_max!),
+    (outlet) => overall_entity_scatter.data.neg_max[outlet]*outlet_weight_dict.value[outlet]
+  )
+  const neg_min: number = _.sumBy(
+    Object.keys(overall_entity_scatter.data.neg_min!),
+    (outlet) => overall_entity_scatter.data.neg_min[outlet]*outlet_weight_dict.value[outlet]
+  )
+  let changed_node: any[] = []
+  overall_entity_scatter?.data.nodes.forEach(node => {
+    const article_num_outlet_dict = overall_entity_scatter?.data.mentions_groupby_outlet_dict[node.text]
+    const pos_sum: number = _.sumBy(
+      Object.keys(article_num_outlet_dict),
+      (outlet) => article_num_outlet_dict[outlet].pos*outlet_weight_dict.value[outlet]
+    )
+    const neg_sum: number = _.sumBy(
+      Object.keys(article_num_outlet_dict),
+      (outlet) => article_num_outlet_dict[outlet].neg*outlet_weight_dict.value[outlet]
+    )
+    node.pos_sst = preprocess.pos_score(pos_sum, pos_max, pos_min)
+    node.neg_sst = preprocess.neg_score(neg_sum, neg_max, neg_min)
+    changed_node.push(node.text)
+  })
+}
 </script>
 
 
@@ -784,6 +834,11 @@ function handleSearch(item) {
                     <div class="max_indicator">{{grouped_max_articles || 100}}</div>
                   </div>
                 </div>
+                <OutletWeightSlider
+                  v-if="overview_constructed"
+                  :outlet_weight_dict="outlet_weight_dict"
+                  @update_outlet_weight="handleUpdateOutletWeight">
+                </OutletWeightSlider>
               </div>
               <Legend v-if="overview_constructed" 
                 id="segment_legend"
@@ -908,8 +963,9 @@ function handleSearch(item) {
   height: 30px;
 }
 .utilities-container {
-  width: 200px;
-  display: inline-block;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
   margin-left: var(--margin_left);
   overflow: hidden
 }
@@ -998,6 +1054,18 @@ function handleSearch(item) {
 
 .article-view {
   overflow: hidden;
+}
+.slider-container {
+  width: 200px;
+}
+.outlet-weight-grid-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  grid-column-gap: 30px;
+  width: 100%;
+  margin-left: 10px;
+  margin-right: 10px;
 }
  </style>
 

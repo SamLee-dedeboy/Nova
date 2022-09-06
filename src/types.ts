@@ -30,7 +30,16 @@ export class CooccurrHexView implements PanelView {
 export class EntityScatterView implements PanelView {
     title: string
     type: ViewType.EntityScatter
-    data: {nodes: ScatterNode[], max_articles: number, min_articles: number}
+    data: {
+        nodes: ScatterNode[], 
+        max_articles: number, 
+        min_articles: number, 
+        mentions_groupby_outlet_dict?: any,
+        pos_max?: any,
+        pos_min?: any,
+        neg_max?: any,
+        neg_min?: any,
+    }
 }
 export class OutletScatterView implements PanelView {
     title: string

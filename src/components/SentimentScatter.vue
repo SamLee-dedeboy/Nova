@@ -143,7 +143,7 @@ vue.watch(() => props.segmentation, (new_value, old_value) => {
 }, {deep: true}) 
 vue.watch(() => props.view, (new_view, old_view) => {
     updateCanvas() 
-})
+}, {deep: true})
 
 vue.watch(() => props.article_num_threshold, () => {
     updateCanvas()
