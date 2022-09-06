@@ -111,25 +111,25 @@ const menu_items = ref([
     {
         label: "Compare with other outlets",
         command: () => {
-            emit("node_clicked", {type: ViewType.OutletScatter, d: clicked_node.value})
+            emit("node_clicked", {title: props.view?.title, type: ViewType.OutletScatter, d: clicked_node.value})
         }
     },
     {
         label: "Show in TemporalView",
         command: () => {
-            emit("node_clicked", {type: ViewType.Temporal, d: clicked_node.value})
+            emit("node_clicked", {title: props.view?.title, type: ViewType.Temporal, d: clicked_node.value})
         }
     },
     {
         label: "Show co-occurrence",
         command: () => {
-            emit("node_clicked", {type: ViewType.CooccurrHex, d: clicked_node.value})
+            emit("node_clicked", {title: props.view?.title, type: ViewType.CooccurrHex, d: clicked_node.value})
         }
     },
     {
         label: "Show articles",
         command: () => {
-            emit("node_clicked", {type: ViewType.Article, d: clicked_node.value})
+            emit("node_clicked", {title: props.view?.title, type: ViewType.Article, d: clicked_node.value})
         }
     },
 ])
@@ -561,7 +561,6 @@ function updateExpandedScatter() {
 }
 
 function updateOverviewScatter() {
-    console.log(max_articles.value, min_articles.value)
     const svg = d3.select(`#${props.id}`).select("svg")
     const article_radius_scale = d3.scalePow()
     .exponent(1)

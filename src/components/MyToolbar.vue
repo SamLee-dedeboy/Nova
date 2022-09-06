@@ -18,6 +18,7 @@ export default {
             entity_mentions: {},
             overall_entity_mentions: {},
             entity_cooccurrences_outlet_dict: {},
+            entity_cooccurrences_dict: {},
             isLoading: true,
         }
     },
@@ -54,6 +55,11 @@ export default {
             .then(res => res.json())
             .then(json => {
                 this.entity_cooccurrences_outlet_dict = json
+            })
+        await fetch("entity_cooccurrences.json")
+            .then(res => res.json())
+            .then(json => {
+                this.entity_cooccurrences_dict = json
             })
         this.isLoading = false
         this.testClicked()
@@ -101,6 +107,7 @@ export default {
                 entity_mentions: this.entity_mentions,
                 overall_entity_mentions: this.overall_entity_mentions.entity_article_dict,
                 entity_cooccurrences_outlet_dict: this.entity_cooccurrences_outlet_dict,
+                entity_cooccurrences_dict: this.entity_cooccurrences_dict,
             }
             // {
                 // articles: this.articles, 

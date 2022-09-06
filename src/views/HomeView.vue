@@ -84,6 +84,11 @@ vue.provide("outlet_article_num_dict", outlet_article_num_dict)
 const entity_cooccurrences_groupby_outlet = ref({})
 
 /**
+ * nested dictionary:  { [entity_1]: { [entity_2]: Article_id[ ] } } 
+ */
+const entity_cooccurrences_dict = ref({})
+
+/**
  * dictionary: { [outlet]: OutletScatterView[] }. \
  * scatter_dict stores all the scatter_view data that are created to easily move scatterplot between views.
  */
@@ -337,6 +342,7 @@ function datasetImported(dataset) {
       entity_mentions_grouped.value = dataset.entity_mentions
       overall_entity_mentions.value = dataset.overall_entity_mentions
       entity_cooccurrences_groupby_outlet.value = dataset.entity_cooccurrences_outlet_dict
+      entity_cooccurrences_dict.value = dataset.entity_cooccurrences_dict
 
       let {
         outlet_set, 
@@ -521,7 +527,7 @@ function handleDropScatter(e) {
   }
 }
 
-function handleEntityClicked({type, d}) {
+function handleEntityClicked({title, type, d}) {
   compare_mode.value = true 
   if(type === typeUtils.ViewType.OutletScatter) {
     // construct outlet graph
@@ -558,12 +564,16 @@ function handleEntityClicked({type, d}) {
   if(type === typeUtils.ViewType.CooccurrHex) {
     const entity = d.text.split("-")[0]
     const outlet = d.text.split("-")[1]
-    const cooccurrences = entity_cooccurrences_groupby_outlet.value[outlet][entity]
-    const title = `co-${entity}-${outlet}` 
+    let cooccurrences: any
+    if(title === "Overall")
+      cooccurrences = entity_cooccurrences_dict.value[entity]
+    else 
+      cooccurrences = entity_cooccurrences_groupby_outlet.value[outlet][entity]
+    const view_title = `co-${entity}-${outlet}` 
     let entity_cooccurrences = new typeUtils.EntityCooccurrences()
     entity_cooccurrences.entity = entity
     entity_cooccurrences.cooccurrences = {}
-    let cooccurr_view: typeUtils.CooccurrHexView= {title: title, type: typeUtils.ViewType.CooccurrHex, data: entity_cooccurrences }
+    let cooccurr_view: typeUtils.CooccurrHexView= {title: view_title, type: typeUtils.ViewType.CooccurrHex, data: entity_cooccurrences }
     Object.keys(cooccurrences).forEach(entity2 => {
       if(entity2 === entity) return
       const cooccurr_article_ids = cooccurrences[entity2]

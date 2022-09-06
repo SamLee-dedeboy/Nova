@@ -68,7 +68,7 @@ def gen_candidate_entities(filepath="data/rel_entities_ner.json", min_mentions=5
     # dict_to_json(candidates, filepath="data/candidate_entities.json")
     dict_to_json(dict({"ranked_entity_list": sorted_entity_list}), filepath="data/entities.json")
 
-def gen_entity_cooccurrence(filepath="data/candidate_entities.json"):
+def gen_entity_cooccurrence_groupby_outlet(filepath="data/candidate_entities.json"):
     file = open(filepath)
     entity_list = json.load(file)["ranked_entity_list"]
     article_list = json.load(open("data/processed_articles_summary_normalized_entity_candidates.json"))
@@ -90,6 +90,23 @@ def gen_entity_cooccurrence(filepath="data/candidate_entities.json"):
                 count+=1
     # dict_to_json(cooccurrence_mat, filepath="data/entity_cooccurrences.json")
     dict_to_json(coocccurrence_groupby_dict, filepath="data/entity_cooccurrences_groupby_outlet.json")
+    return
+def gen_entity_cooccurrence(filepath="data/candidate_entities.json"):
+    file = open(filepath)
+    entity_list = json.load(file)["ranked_entity_list"]
+    article_list = json.load(open("data/processed_articles_summary_normalized_entity_candidates.json"))
+    article_dict = {}
+    count = 0
+    for article in article_list:
+        article_dict[article["id"]] = article
+    cooccurrence_mat = defaultdict(lambda: defaultdict(list)) 
+    coocccurrence_groupby_dict = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+    for [entity1, mentioned_articles1] in entity_list:
+        for [entity2, mentioned_articles2] in entity_list: 
+            cooccurred_article_ids = list(set(mentioned_articles1) & set(mentioned_articles2))
+            
+            cooccurrence_mat[entity1][entity2] = cooccurred_article_ids
+    dict_to_json(cooccurrence_mat, filepath="data/entity_cooccurrences.json")
     return
 
 def articles_groupby_outlet(filepath="data/processed_articles_summary_normalized.json"):
@@ -248,4 +265,4 @@ def extract_candidate_entities(filepath='data/processed_articles_with_summary.js
 
 
     
-entities_groupy_outlet()
+gen_entity_cooccurrence()
