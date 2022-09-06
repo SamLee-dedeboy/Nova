@@ -587,8 +587,10 @@ function handleEntityClicked({title, type, d}) {
         name: d.text.split("-")[0],
         outlet: "Overall",
         sst_ratio: {
-          pos: articles.filter(article => article.sentiment.label === "POSITIVE").length,
-          neg: articles.filter(article => article.sentiment.label === "NEGATIVE").length,
+          pos_artcs: articles.filter(article => article.sentiment.label === "POSITIVE").length,
+          neg_artcs: articles.filter(article => article.sentiment.label === "NEGATIVE").length,
+          pos: d.pos_sst,
+          neg: d.neg_sst,
         },
         articles: articles
       }
@@ -876,6 +878,7 @@ function updateOverallEntityNode({outlet, value}) {
                     outlet: selected_entity.outlet, 
                     sst_ratio: selected_entity.sst_ratio 
                   }"
+                  v-model:segmentation="segment_sst"
                   >
                   </EntityInfoView>
 
