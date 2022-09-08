@@ -1,76 +1,126 @@
 <script setup lang="ts">
-import Graph from "./Graph.vue";
-import Cloud from "./Cloud.vue"
+import Graph from "./deprecated/Graph.vue";
+import Cloud from "./deprecated/Cloud.vue"
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
-import TimeAxes from './TimeAxes.vue'
+import TimeAxes from './deprecated/TimeAxes.vue'
 import * as dfd from "danfojs"
 import Dropdown from 'primevue/dropdown';
-import InfoButton from "./InfoButton.vue";
-import OutletScatter from "./OutletScatter.vue";
+import InfoButton from "./deprecated/InfoButton.vue";
 import * as d3 from "d3"
-import { watch, onMounted, PropType, ref, Ref, toRef, computed, defineEmits } from 'vue'
-import { ScatterOutletNode, ScatterOutletGraph } from "../types";
+import { watch, onMounted, PropType, ref, Ref, toRef, computed, defineEmits, nextTick } from 'vue'
+import * as vue from 'vue'
+import { ScatterNode, PanelView, TemporalBins, ViewType, Article, OutletNodeInfo, Sentiment2D } from "../types";
+import TemporalCoordinates from "./TemporalCoordinates.vue";
+import TemporalPathSelector from "./TemporalPathSelector.vue";
+import SentimentScatter from "./SentimentScatter.vue";
+import NodeInfo from "./NodeInfo.vue"
+import ArticleInfo from "./ArticleInfo.vue";
+import DataTable from "primevue/datatable";
+import Column from 'primevue/column'
+import * as _ from "lodash"
+import HexCooccurrence from "./HexCooccurrence.vue";
 
 const props = defineProps({
     articles: Object as () => any[],
     enabled_outlet_set: Object as () => Set<string>,
-    selectedScatters: Object as () => ScatterOutletGraph[],
-    selectedTimeRange: Object as () => {start: number, end: number},
-    min_articles: Number,
-    max_articles: Number,
+    selectedScatters: Object as () => PanelView[],
     compare_part: String,
     article_num_threshold: Number,
     segment_mode: Boolean,
+    segmentation: Sentiment2D,
+    highlight_nodes: Object as () => string[], 
 })
-const scatterClicked: Ref<Boolean> = ref(false)
+const scatterClicked: Ref<boolean> = ref(false)
 const active: Ref<number> = ref(0)
-// const selectedScatters: Ref<Set<ScatterOutletGraph> | undefined> = toRef(props, 'selectedScatters')
-// const selectedScatters_list = computed(() => {
-//     console.log(selectedScatters.value)
-//     return Array.from(selectedScatters.value || [])
-// })
-        // data() {
-        // return {
-        //     entity_graph: {
-        //         nodes:[]
-        //     },
-        //     cooccur_matrix: {},
-        //     clicked_outlet: undefined,
-        //     opacityThreshold: 0,
-        //     modes: [
-        //         {label: "avg_score", value: "avg_score"},
-        //         {label: "score", value: "score"},
-        //         {label: "#articles", value: "#articles"}],
-        //     selected_mode: "score",
-        //     graph_constructed: false,
-        //     scatterClicked: false,
-        //     clickedScatter: {graph: {}, index: undefined},
-        //     active: 0
-        // }
-    // },
-    // computed: {
-    //     article_dict: function() {
-    //         return this.articles.reduce((dict, article) => (dict[article.id]=article, dict), {})
-    //     },
-    //     entity_list: function() {
-    //         return this.entity_mentions.map(entity_mention => entity_mention[0])
-    //     },
-    // },
+const highlight_entity: Ref<string[]> = ref([])
+const compare_mode = vue.inject("compare_mode") || ref(false)
+const selectedNodes: Ref<ScatterNode[]> = ref([])
+const topicBins = vue.computed(() => {
+    if(selectedNodes.value.length === 0) return undefined
+    let bins = {}
+    const topic_set: Set<string> = new Set()
+    selectedNodes.value.forEach(node => {
+        Object.keys(node.topicBins).forEach(topic => topic_set.add(topic))
+    })
+    selectedNodes.value.forEach(node => {
+        topic_set.forEach(topic => {
+            if(bins[topic] === undefined) {
+                bins[topic] = []
+            } 
+            bins[topic].push({title: node.text, pos: node.topicBins[topic]?.pos || 0, neg: node.topicBins[topic]?.neg || 0 })
+        })
+    })
+    return bins
+})
+// test
+const selectedTopicBins = vue.computed(() => {
+    const view: PanelView | undefined = props.selectedScatters?.[0] || undefined
+    const nodes = [view?.data[0]]
+    let bins = {}
+    const topic_set: Set<string> = new Set()
+    nodes.forEach(node => {
+        Object.keys(node.topicBins).forEach(topic => topic_set.add(topic))
+    })
+    nodes.forEach(node => {
+        topic_set.forEach(topic => {
+            if(bins[topic] === undefined) {
+                bins[topic] = []
+            } 
+            bins[topic].push({title: node.text, pos: node.topicBins[topic]?.pos || 0, neg: node.topicBins[topic]?.neg || 0 })
+        })
+    })
+    return bins
+})
+const highlightNodes: Ref<string[]> = ref([])
+vue.watch(() => props.highlight_nodes, (new_value, old_value) => {
+    highlightNodes.value = props.highlight_nodes || []
+}, {deep:true})
+vue.watch(selectedNodes, (new_value, old_value) => {
+    highlightNodes.value = selectedNodes.value?.map(node => node.text.split("-")[0])
+})
+vue.watch(props.segmentation!, (new_value, old_value) => {
+    console.log({new_value, old_value})
+
+})
+
 watch(() => props.selectedScatters, (new_scatters, old_scatters) => {
     active.value = (props.selectedScatters?.length || 1) - 1 
+    // const tab_navs = document.querySelector(".p-tabview-nav").querySelector('[role="presentation"]')
+    vue.nextTick(() => {
+        const tab_navs = document.querySelectorAll(`.${props.compare_part} .p-tabview-nav > [role=presentation]`)
+        tab_navs.forEach((tab,index) => {
+            tab.setAttribute("draggable", "true")
+            tab.addEventListener("dragstart", function(e: any) {
+                e.dataTransfer.dropEffect = 'move'
+                e.dataTransfer.effectAllowed = 'move'
+                const scatter = props.selectedScatters![index]
+                e.dataTransfer.setData('scatter', JSON.stringify(scatter))  
+            })})
+    })
 }, {deep:true})
-// watch(() => selectedScatters_list, (new_value) => {
-//     console.log(selectedScatters_list.value)
-// })
 
-const emit = defineEmits(['update:selectedScatters', "node-clicked", "entity-clicked"])
+const emit = defineEmits(['update:selectedScatters', "update:segmentation", "node-clicked", "entity-clicked", "show_temporal"])
 
-function handleNodeClicked(clicked_node) {
-    emit("node-clicked", clicked_node)        
+vue.onMounted(() => {
+    highlightNodes.value = props.highlight_nodes || []
+
+})
+
+function gen_color_dict(temporal_bins: TemporalBins) {
+    if(!temporal_bins) return undefined
+    let color_dict = {}
+    Object.keys(temporal_bins).forEach((title, index) => {
+        const color = selectColor(index)
+        color_dict[title] = color
+    })
+    return color_dict
+}
+function handleNodeClicked({type, d}) {
+    emit("node-clicked", d)        
     this.nodeClicked = true
     const target = this.entities[0]
-    const articles = clicked_node.articles
+    const articles = d.articles
     const max_node_num = 10
     // generate candidates that cooccur frequently with target
     let entity_mentioned_articles:{[id: string]: Set<string>} = {}
@@ -86,7 +136,7 @@ function handleNodeClicked(clicked_node) {
     var freq_list = Array.from(Object.entries(entity_mentioned_articles)).map(item => ({entity: item[0], freq: item[1].size})).sort((a,b) => (b.freq - a.freq)).slice(0, max_node_num).map(item => item.entity) 
     var cooccur_matrix = {}
 
-    var nodes: ScatterOutletNode[] = []
+    var nodes: ScatterNode[] = []
     freq_list.forEach(entity_id => {
         // generate candidate cooccur matrix
         cooccur_matrix[entity_id] = {}
@@ -104,7 +154,7 @@ function handleNodeClicked(clicked_node) {
     })
     this.entity_graph.nodes = nodes
     this.cooccur_matrix = cooccur_matrix
-    this.clicked_outlet = clicked_node.text
+    this.clicked_outlet = d.text
 }
 
 function handleCloseTab(e, index) {
@@ -115,66 +165,179 @@ function handleCloseTab(e, index) {
 }
 
 function handleEntityClicked(data) {
-    console.log("🚀 ~ file: TargetContainer.vue ~ line 118 ~ handleEntityClicked ~ data", data)
     emit("entity-clicked", data)
+}
+
+function updateSegmentation(new_value) {
+    emit("update:segmentation", new_value)
+}
+function selectColor(number) {
+  const hue = number * 137.508; // use golden angle approximation
+  return `hsl(${hue},50%,75%)`;
+}
+function handleShowTemporal(nodes) {
+    emit("show_temporal", nodes)
+}
+function handleDragScatter(e) {
+    console.log(e.target)
+}
+function colHeader(graph_type: ViewType): string {
+    if(graph_type === ViewType.OutletScatter) return "outlet"
+    if(graph_type === ViewType.EntityScatter) return "entity"
+    return "title"
+}
+
+function rowHeader(data: string, graph_type: ViewType): string {
+    if(graph_type === ViewType.OutletScatter) return data.split("-")[1] 
+    if(graph_type === ViewType.EntityScatter) return data.split("-")[0]
+    return data 
+}
+
+function breakText(data: string): string[] {
+    return data.split("_")
 }
 </script>
 
 <template>
-<TabView class="graph-container" :class="compare_part" v-model:activeIndex="active" :scrollable="true">
-    <TabPanel class="graph-panel" :class="compare_part" 
-     v-for="(graph, index) in selectedScatters" :key="graph.title" 
+<TabView class="graph-container" :class="compare_part" v-model:activeIndex="active" :scrollable="true"
+    ref="tabview"
+    >
+    <TabPanel class="graph-panel" :class="compare_part"
+     v-for="(view, index) in selectedScatters" :key="view.title" ref="tabpanels" 
       >
         <template #header>
-			<span style="max-width:100px; overflow:hidden" :title="graph.title">{{graph.title}}</span>
+			<span style="max-width:100px; overflow:hidden;display: block ruby;font-size:x-small" :title="view.title"
+            >{{view.title}}</span>
             <Button icon="pi pi-times" class="p-button-rounded p-button-danger p-button-text p-button-sm"
             @click="handleCloseTab($event, index)"/>
 		</template>
-        <KeepAlive>
-        <OutletScatter
-        :graph="graph"
-        :graph_index="index"
-        :id="`${compare_part}-scatter-${index}-expanded`"
-        :expanded="true"
-        :min_articles="min_articles"
-        :max_articles="max_articles"
-        :panel_class="compare_part" 
-        :article_num_threshold="article_num_threshold"
-        :segment_mode="segment_mode"
-        @node_clicked="handleEntityClicked"
-        ></OutletScatter>
-        </KeepAlive>
-        <!-- <Graph 
-            class="graph"
-            :graph="graph_dict[target]"
-            :graph_index="index"
-            :id="`graph-${index}`"
-            :entity_graph="entity_graph.nodes"
-            :cooccur_matrix="cooccur_matrix"
-            :opacityThreshold="opacityThreshold"
-            @node-clicked="handleNodeClicked"
-            >
-        </Graph > -->
-            <!-- <TimeAxes class='time-axes' v-if="targets.length!=0" :selectedTimeRange="selectedTimeRange"></TimeAxes> -->
-            <!-- <div class="dropdown-container">
-                <div class="dropdown-header-container">
-                    <div class="dropdown-header"> Classifier </div>
-                    <InfoButton class='clf-info' info_content="Choose a mode to classify nodes as 'pos'/'neg'/'neu'"></InfoButton>
-                </div>
-                <Dropdown class="clf-dropdown" 
-                v-model="selected_mode" 
-                :options="modes" 
-                optionLabel="label" 
-                optionValue="value"
-                placeholder="Select a clfer" />
-            </div> -->
-        <!-- </div> -->
+        <div class="scatter-panel-container"
+            v-if="view.type === ViewType.EntityScatter || view.type === ViewType.OutletScatter || view.type === ViewType.CooccurrScatter">
+            <SentimentScatter
+                :view="view"
+                :view_index="index"
+                :id="`${compare_part}-scatter-${index}-expanded`"
+                :class="{compare: compare_mode, not_compare: !compare_mode}"
+                :expanded="true"
+                :panel_class="compare_part" 
+                :article_num_threshold="article_num_threshold"
+                :segment_mode="segment_mode"
+                :segmentation="segmentation"
+                :highlight_nodes="highlightNodes"
+                @update:segmentation="updateSegmentation"
+                @node_clicked="handleEntityClicked"
+                @show_temporal="handleShowTemporal"
+            ></SentimentScatter>
+            <!-- <ArticleInfo
+                id="article-info-test"
+                :topicBins="selectedTopicBins" >
+            </ArticleInfo> -->
+            <div class="scatter-info-container">
+                <DataTable :value="view.data.nodes.sort((a, b) => -(a.articles-b.articles))"
+                v-model:selection="selectedNodes" selectionMode="multiple" dataKey="text" :metaKeySelection="false"
+                scrollable 
+                scrollHeight="150px"
+                :virtualScrollerOptions="{itemSize: 30}"
+                style="font-size: x-small" >
+                    <Column field="text" :header="colHeader(view.type)">
+                        <template #body="{data}">
+                            <div class="col-outlet" :title="rowHeader(data.text, view.type)">
+                                <div v-for="word in breakText(rowHeader(data.text, view.type))" :key="word">{{word}}</div>
+                            </div>
+                        </template>
+                    </Column>
+                    <Column field="articles" header="articles"></Column>
+                    <Column field="pos_articles" header="pos articles"></Column>
+                    <Column field="neg_articles" header="neg articles"></Column>
+                    <Column field="pos_sst" header="pos score">
+                        <template #body="{data}">
+                            <span :title="data.pos_sst"> {{data.pos_sst.toFixed(2)}}
+                            </span>
+                        </template>
+                    </Column>
+                    <Column field="neg_sst" header="neg score">
+                        <template #body="{data}">
+                            <span :title="data.neg_sst"> {{data.neg_sst.toFixed(2)}}
+                            </span>
+                        </template>
+                    </Column>
+                </DataTable>
+                <ArticleInfo v-if="selectedNodes.length !== 0" 
+                :id="`${compare_part}-article-info-${index}`"
+                :topicBins="topicBins"></ArticleInfo>
+            </div>
+        </div>
+        <div class="target-temporal-container" v-if="view.type === ViewType.Temporal">
+            <TemporalCoordinates 
+                class="temporal-coord"
+                :id="`compare_temporal`"
+                :article_bin_dict="view.data"
+                :path_keys="Object.keys(view.data) || undefined"
+                :color_dict="gen_color_dict(view.data)"
+                :highlight_object="highlight_entity"
+                :sst_threshold="segmentation"
+            ></TemporalCoordinates>
+            <TemporalPathSelector 
+                class="temporal-selector"
+                v-model:temporalBins="view.data"
+                :color_dict="gen_color_dict(view.data)"
+                closable
+                v-model:selectedTargets="highlight_entity">
+            </TemporalPathSelector>
+        </div>
+        <div class="detail-view-container" v-if="view.type === ViewType.Detail">
+            <div class="detail-outlet-scatter-container">
+                <SentimentScatter
+                    :view="{title: view.title, type:ViewType.OutletScatter, data: view.data.outlet_scatter_data}"
+                    :view_index="index"
+                    :id="`${compare_part}-detail-scatter-${index}-expanded`"
+                    :class="{compare: compare_mode}"
+                    :expanded="true"
+                    :panel_class="compare_part" 
+                    :article_num_threshold="article_num_threshold"
+                    :segment_mode="segment_mode"
+                    :segmentation="segmentation"
+                    :highlight_nodes="highlightNodes"
+                    @update:segmentation="updateSegmentation"
+                    @node_clicked="handleEntityClicked"
+                    @show_temporal="handleShowTemporal"
+                ></SentimentScatter>
+            </div>
+            <div class="detail-temporal-container">
+                <TemporalCoordinates 
+                    class="detail-temporal-coord"
+                    :id="`detail-compare-temporal`"
+                    :article_bin_dict="view.data.temporal_data"
+                    :path_keys="Object.keys(view.data.temporal_data) || undefined"
+                    :color_dict="gen_color_dict(view.data.temporal_data)"
+                    :highlight_object="highlight_entity"
+                    :sst_threshold="segmentation"
+                ></TemporalCoordinates>
+                <TemporalPathSelector 
+                    class="detail-temporal-selector"
+                    v-model:temporalBins="view.data.temporal_data"
+                    :color_dict="gen_color_dict(view.data.temporal_data)"
+                    closable
+                    v-model:selectedTargets="highlight_entity">
+                </TemporalPathSelector>
+            </div>
+        </div>
+        <div class="hex-view-container" v-if="view.type === ViewType.CooccurrHex">
+            <HexCooccurrence
+                :id="`${view.title}-${index}`"
+                :entity_cooccurrences="view.data"
+                :segmentation="segmentation" >
+            </HexCooccurrence>
+        </div>
     </TabPanel>
 </TabView>
 </template>
 
 <style scoped lang="scss">
-.graph-container .graph-panel {
+.graph-container .graph-panel,.scatter-panel-container  {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
     width: inherit;
     height: inherit;
 }
@@ -217,4 +380,75 @@ function handleEntityClicked(data) {
     color: #7c7576;
 }
 
+.target-temporal-container {
+    height: 50%;
+}
+.temporal-coord {
+    height: 60%;
+}
+.temporal-selector {
+    height: 37%;
+}
+:deep(.p-button.p-button-sm .p-button-icon) {
+    font-size: 0.575rem !important;
+}
+:deep(.p-button.p-button-icon-only.p-button-rounded) {
+    height: 1.757rem !important;
+    margin-left: auto;
+    margin-right: 0;
+}
+:deep(.p-datatable .p-datatable-thead > tr > th) {
+    padding: unset !important;
+}
+:deep(.p-datatable .p-datatable-tbody > tr > td) {
+    padding: unset !important;
+}
+:deep(.p-datatable .p-column-header-content) {
+    justify-content: center;
+}
+:deep(.p-datatable .p-datatable-thead > tr > th) {
+    text-align: center;
+}
+:deep(.p-datatable .p-datatable-tbody > tr > td) {
+    display: block;
+    text-align: center;
+    cursor: pointer;
+}
+:deep(.p-datatable .p-datatable-tbody > tr:hover) {
+    background-color: #E3F2FD;
+}
+.col-outlet {
+    text-align: left;
+}
+
+.detail-temporal-container {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.detail-view-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.detail-temporal-selector {
+    overflow: hidden;
+}
+.scatter-info-container {
+    margin: 10px;
+}
+.compare {
+    height: unset;
+}
+.not_compare {
+    height: 100%;
+}
+.detail-temporal-coord {
+    margin-right: 10px !important;
+
+}
 </style>

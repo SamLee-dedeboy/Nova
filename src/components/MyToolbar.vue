@@ -16,14 +16,14 @@ export default {
             articles: {},
             outlet_article_dict: {},
             entity_mentions: {},
+            overall_entity_mentions: {},
+            entity_cooccurrences_outlet_dict: {},
+            entity_cooccurrences_dict: {},
             isLoading: true,
         }
     },
     async mounted() {
-        // await fetch("candidate_entities.json")
-        // await fetch("entities.json")
-        // await fetch("entities_gt10.json")
-        await fetch("entities_groupby_outlet.json")
+        await fetch("candidate_entities_groupby_outlet.json")
             .then(res => res.json())
             .then(json => {
                 // this.entity_mentions = json.ranked_entity_list
@@ -33,7 +33,15 @@ export default {
                 console.log("Error loading entity mentions.")
             })
 
-        // await fetch("processed_articles_rel_hugFace.json")
+        await fetch("candidate_entity_mention_articles.json")
+            .then(res => res.json())
+            .then(json => {
+                // this.entity_mentions = json.ranked_entity_list
+                this.overall_entity_mentions = json
+            },
+            response => {
+                console.log("Error loading entity mentions.")
+            })
         await fetch("outlet_article_dict.json")
             .then(res => res.json())
             .then(json => {
@@ -43,7 +51,18 @@ export default {
             response => {
                 console.log("Error loading articles.")
             })
+        await fetch("entity_cooccurrences_groupby_outlet.json")
+            .then(res => res.json())
+            .then(json => {
+                this.entity_cooccurrences_outlet_dict = json
+            })
+        await fetch("entity_cooccurrences.json")
+            .then(res => res.json())
+            .then(json => {
+                this.entity_cooccurrences_dict = json
+            })
         this.isLoading = false
+        this.testClicked()
         return
         for(const article of this.articles) {
             // topic
@@ -83,8 +102,13 @@ export default {
         
         testClicked() {
             this.$emit("dataset_imported", 
-            {outlet_article_dict: this.outlet_article_dict,
-            entity_mentions: this.entity_mentions}
+            {
+                outlet_article_dict: this.outlet_article_dict,
+                entity_mentions: this.entity_mentions,
+                overall_entity_mentions: this.overall_entity_mentions.entity_article_dict,
+                entity_cooccurrences_outlet_dict: this.entity_cooccurrences_outlet_dict,
+                entity_cooccurrences_dict: this.entity_cooccurrences_dict,
+            }
             // {
                 // articles: this.articles, 
             // entity_mentions: this.entity_mentions,
@@ -100,13 +124,9 @@ export default {
 
 <template>
 
-    <Button label="Import" class="p-button-secondary"></Button>
-    <Button label="Test" @click="testClicked" class="p-button-secondary" :loading="isLoading"></Button>
+    <Button label="Import" class="p-button-secondary" style="display: none"></Button>
+    <!-- <Button label="Test" @click="testClicked" class="p-button-secondary" :loading="isLoading"></Button> -->
 </template> 
 
 <style scoped>
-Button {
-    margin: 10px;
-    border-radius: 8px;
-}
 </style>

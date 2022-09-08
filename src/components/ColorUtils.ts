@@ -1,18 +1,19 @@
 import * as d3 from "d3"
+import { SentimentType } from "../types"
 const brightness = 140
 const offset = 0.15
 const sst_range = d3.interpolateBrBG
 const neg_color = sst_range(0+offset)
 const pos_color = sst_range(1-offset)
 const neu_color = "grey"
-const mixed_color = "#96245c"
+const mixed_color = "#125f3b"
 const entity_selected_color = "#007bff"
 const key_color_dict = {
                 "positive": pos_color,
                 "negative": neg_color,
                 "neutral": neu_color,
                 "mixed": mixed_color, 
-                "no mention": "white"
+                "no data": "white"
             } 
 const color_dict = {
     "pos": pos_color,
@@ -20,6 +21,12 @@ const color_dict = {
     "neu": neu_color,
     "mixed": mixed_color, 
 }
+const enum_color_dict = {}
+enum_color_dict[SentimentType.neu] = neu_color
+enum_color_dict[SentimentType.neg] = neg_color
+enum_color_dict[SentimentType.pos] = pos_color
+enum_color_dict[SentimentType.mix] = mixed_color
+
 const outlet_color_dict = {
     "CNN": "rgb(205 0 0)",
     "FoxNews": "rgb(0 51 102)",
@@ -40,6 +47,7 @@ export {
     entity_selected_color,
     key_color_dict,
     color_dict,
+    enum_color_dict,
     outlet_color_dict,
     article_num_color_scale,
 }
