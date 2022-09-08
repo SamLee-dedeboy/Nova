@@ -9,7 +9,7 @@ export enum ViewType {
 
 export class EntityCooccurrences {
     entity: string
-    cooccurrences: {[id: string]: {article_ids: number[], sst: Sentiment2D }}
+    cooccurrences: {[id: string]: {article_ids: number[], sst: Sentiment2D, mask: boolean }}
 }
 
 export class Path {

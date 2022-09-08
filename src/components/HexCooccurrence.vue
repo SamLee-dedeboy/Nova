@@ -1,7 +1,7 @@
 <template>
-<div id="test-id" class="hex-container">
+<div :id="id" class="hex-container">
     <svg>
-        <filter id="brightness">
+        <filter :id="`${id}-brightness`">
             <feComponentTransfer>
             <feFuncR type="linear" slope="2.4" />
             <feFuncG type="linear" slope="2.4" />
@@ -23,6 +23,7 @@ const props = defineProps({
     id: String,
     entity_cooccurrences: Object as () => EntityCooccurrences,
     segmentation: Sentiment2D, 
+    applyMask: Boolean
 })
 
 
@@ -38,12 +39,23 @@ const hex_width = radius*2*Math.sin(Math.PI/3)
 const hex_height = radius*3/2
 const max_height = viewBox_width/hex_width*hex_height
 
-
+const max_entities = 36
 const sorted_cooccurrence_list = vue.computed(() => {
     const cooccurrence_dict = props.entity_cooccurrences?.cooccurrences!
-    const tmp_list = Object.keys(cooccurrence_dict)
+    let tmp_list = Object.keys(cooccurrence_dict)
     tmp_list.sort((e1,e2) => -(cooccurrence_dict[e1].article_ids.length - cooccurrence_dict[e2].article_ids.length))
-    return tmp_list.map((entity2, index) => {return generate_hex_coord(entity2, index, hex_radius) })
+    tmp_list = tmp_list.slice(0,max_entities) 
+    let res = []
+    tmp_list.forEach((entity2, index) => {
+        const {x, y} = generate_hex_coord(index, hex_radius) 
+        res.push({
+            entity: entity2,
+            x: x,
+            y: y,
+            mask: cooccurrence_dict[entity2].mask
+        })
+    })
+    return res
 })
 const hexbin = d3_hexbin.hexbin()
     .radius(radius) // size of the bin in px
@@ -63,18 +75,23 @@ vue.watch(() => props.entity_cooccurrences, (new_value, old_value) => {
     updateHexBins()
 })
 
+vue.watch(() => props.applyMask, (new_value, old_value) => {
+    // console.log("update masking")
+    // updateHexBins()
+})
+
 vue.onMounted(() => {
     vue.nextTick(() => {
-        // const svg = d3.select(`#${props.id}`).select("svg")
-        const svg = d3.select(`#test-id`).select("svg")
-            .attr("viewBox", `0 0 ${viewBox[0]} ${viewBox[1]}`)
+        const svg = d3.select(`#${props.id}`).select("svg")
+        // const svg = d3.select(`#test-id`).select("svg")
+        .attr("viewBox", `0 0 ${viewBox[0]} ${viewBox[1]}`)
         svg.append("g").attr("class", "hex-path-group")
         updateHexBins()
     })
 })
 
 function updateHexBins() {
-    const svg = d3.select(`#test-id`).select("svg")
+    const svg = d3.select(`#${props.id}`).select("svg")
     const hex_path_group = svg.select("g.hex-path-group")
 
     // prepare data
@@ -89,16 +106,24 @@ function updateHexBins() {
         .attr("d", d => `M${d.x},${d.y}${hexbin.hexagon()}`)
         .attr("stroke", "black")
         .attr("stroke-width", 1)
-        .attr("filter", "url(#brightness)")
+        .attr("filter", `url(#${props.id}-brightness)`)
+        .attr("opacity", (d, i) => {
+            if(!props.applyMask) return 1
+            return sorted_cooccurrence_list.value[i].mask? 1:0
+        })
     updateHexColor()
 
     // add labels
     const entity_text: any = hex_path_group.selectAll("text")
-        .data(sorted_cooccurrence_list.value.concat([{entity: props.entity_cooccurrences?.entity, x: 0, y: 0}]))
+        .data(sorted_cooccurrence_list.value.concat([{entity: props.entity_cooccurrences?.entity, x: 0, y: 0, mask: true}]))
     entity_text.enter().append("text")
         .merge(entity_text)
         .attr("x", d => x(d.x))
         .attr("y", d => y(d.y) - 35 - (Math.min(d.entity.split("_").length,4)+0.5)/2*15 )
+        .attr("opacity", (d) => {
+            if(!props.applyMask) return 1
+            return d.mask? 1:0
+        })
         // .attr("y", d => y(d.y))
     const tspan = hex_path_group.selectAll("text").selectAll("tspan")
         .data((d) => {
@@ -120,7 +145,7 @@ function updateHexBins() {
 }
 
 function updateHexColor() {
-    const svg = d3.select(`#test-id`).select("svg")
+    const svg = d3.select(`#${props.id}`).select("svg")
     const hex_path_group = svg.select("g.hex-path-group")
     const hex_bins: any = hex_path_group.selectAll("path")
         .attr("fill", (d, i) => SstColors.enum_color_dict[categorizeHex(props.entity_cooccurrences?.cooccurrences[sorted_cooccurrence_list.value[i].entity].sst!, props.segmentation)])
@@ -138,11 +163,11 @@ function distance_to_edge({alpha, radius}) {
     const t = alpha % (Math.PI/3)
     return Math.sqrt(3)*radius/(Math.sqrt(3) * Math.cos(t) + Math.sin(t))
 }
-function generate_hex_coord(entity, index, radius) {
-    return polar_to_cartesian(entity, generate_polar(index, radius))
+function generate_hex_coord(index, radius) {
+    return polar_to_cartesian(generate_polar(index, radius))
 }
-function polar_to_cartesian(entity, {alpha, r}) {
-    return {entity: entity, x: r*Math.cos(alpha), y: r*Math.sin(alpha)}
+function polar_to_cartesian({alpha, r}) {
+    return {x: r*Math.cos(alpha), y: r*Math.sin(alpha)}
 }
 function generate_polar(index, radius) {
     const {level, M_l} = find_level(index)
@@ -167,6 +192,14 @@ function find_level(index) {
         if(level > 100) return {level, M_l:M(level)}
     }
 }
+
+function updateMask() {
+    console.log("updateMask")
+    updateHexBins()
+}
+defineExpose({
+    updateMask,
+})
 
 </script>
 

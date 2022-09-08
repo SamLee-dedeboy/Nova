@@ -4,7 +4,7 @@ import Filter from "../components/deprecated/Filter.vue";
 import Slider from "primevue/slider"
 import InputText from "primevue/inputtext"
 //import Target from "../components/Target.vue";
-import TargetContainer from "../components/TargetContainer.vue";
+import PanelContainer from "../components/PanelContainer.vue";
 import MyToolbar from "../components/MyToolbar.vue"
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
@@ -227,7 +227,7 @@ function updateThreshold(new_value) {
 
 /**
  * nested dictionary: { [title]: { [month]: Article[ ] }}. \
- * Used in TargetContainer to store all temporal view data.
+ * Used in PanelContainer to store all temporal view data.
  */
 // const temporalBins = ref({})
 
@@ -250,6 +250,21 @@ const selected_entity: Ref<typeUtils.EntityInfo> = ref(new typeUtils.EntityInfo(
  * { [id: string]: number }
  */
 const outlet_weight_dict: Ref<any> = ref({})
+
+/**
+ * flags for hex views being active
+ */
+const co_hex_active_left: Ref<boolean> = ref(false)
+const co_hex_active_right: Ref<boolean> = ref(false)
+const show_co_button = computed(() => {
+  return co_hex_active_left.value && co_hex_active_right.value && compare_mode.value
+})
+
+/**
+ * refs for panel left & right
+ */
+const panel_left = ref(null)
+const panel_right = ref(null)
 
 /**
  * @deprecated
@@ -460,6 +475,7 @@ function handleDragScatter(evt, index) {
   const dragged_scatter = Array.from(enabled_outlet_set.value)[index]
   const scatter = scatter_dict.value[dragged_scatter]
   evt.dataTransfer.setData('scatter', JSON.stringify(scatter))  
+  console.log("drag", scatter)
 }
 
 function handleDragOver(e) {
@@ -533,6 +549,7 @@ function handleDropScatter(e) {
     selectedScatterViews_right.value.push(scatter)
     const dropped_from = selectedScatterViews_left.value.findIndex(element => element.title === scatter.title)
   }
+
   const button_next = document.getElementsByClassName("p-tabview-nav-next")[0] as HTMLElement || undefined
   if(button_next != undefined) {
     button_next.click()
@@ -615,7 +632,7 @@ function handleEntityClicked({title, type, d}) {
       )
       // const sst = preprocess.categorizeNode(cooccurr_article_ids, segment_sst.value, article_dict.value)
       // const article_num = cooccurr_article_ids.length
-      entity_cooccurrences.cooccurrences[entity2] = {article_ids: cooccurr_article_ids, sst: sst}
+      entity_cooccurrences.cooccurrences[entity2] = {article_ids: cooccurr_article_ids, sst: sst, mask: false}
     });
     selectedScatterViews_left.value.push(cooccurr_view)
     return
@@ -729,6 +746,30 @@ function updateOverallEntityNode({outlet, value}) {
     changed_node.push(node.text)
   })
 }
+
+function handleHexChanged({active, part}) {
+  if(part === "panel-left") {
+    co_hex_active_left.value = active
+  } else {
+    co_hex_active_right.value = active
+  }
+}
+function showCoHexDiff() {
+  const entities_left = panel_left.value.getActiveHexEntities()
+  const entities_right = panel_right.value.getActiveHexEntities()
+  const common = _.intersection(entities_left, entities_right)
+  panel_left.value.applyCoHexMask(common, false)
+  panel_right.value.applyCoHexMask(common, false)
+
+}
+
+function showCoHexCommon() {
+  const entities_left = panel_left.value.getActiveHexEntities()
+  const entities_right = panel_right.value.getActiveHexEntities()
+  const common = _.intersection(entities_left, entities_right)
+  panel_left.value.applyCoHexMask(common, true)
+  panel_right.value.applyCoHexMask(common, true)
+}
 </script>
 
 
@@ -739,8 +780,9 @@ function updateOverallEntityNode({outlet, value}) {
         <Splitter>
           <SplitterPanel id="expanded_section" class="expanded-section flex align-items-center justify-content-center" :size="55" 
             >
-            <TargetContainer
+            <PanelContainer
             id="panel_left"
+            ref="panel_left"
             :class="{compare: compare_mode}"
             compare_part="panel-left"
             :articles="articles"
@@ -750,6 +792,7 @@ function updateOverallEntityNode({outlet, value}) {
             :segment_mode="segment_mode"
             v-model:segmentation="segment_sst"
             :highlight_nodes="highlight_nodes"
+            @hex_active_changed="handleHexChanged"
             @drop="handleDropScatter($event)"
             @dragover="handleDragOver($event)"
             @dragleave="handleDragLeave($event)"
@@ -757,13 +800,19 @@ function updateOverallEntityNode({outlet, value}) {
             @entity-clicked="handleEntityClicked"
             @show_temporal="handleShowTemporal"
             >
-            </TargetContainer>
+            </PanelContainer>
             <Divider v-if="compare_mode" layout="vertical">
             </Divider>
+            <div class="co-hex-button-container"
+              v-if="show_co_button">
+            <Button class="co-common-button p-primary" label="Common" @click="showCoHexCommon"></Button>
+            <Button class="co-diff-button p-primary" label="Diff" @click="showCoHexDiff"></Button>
+            </div>
 
-            <TargetContainer
+            <PanelContainer
             v-if="compare_mode"
             id="panel_right"
+            ref="panel_right"
             :class="{compare: compare_mode}"
             compare_part="panel-right"
             :articles="articles"
@@ -773,6 +822,7 @@ function updateOverallEntityNode({outlet, value}) {
             :segment_mode="segment_mode"
             v-model:segmentation="segment_sst"
             :highlight_nodes="highlight_nodes"
+            @hex_active_changed="handleHexChanged"
             @drop="handleDropScatter($event)"
             @dragover="handleDragOver($event)"
             @dragleave="handleDragLeave($event)"
@@ -780,7 +830,7 @@ function updateOverallEntityNode({outlet, value}) {
             @entity-clicked="handleEntityClicked"
             @show_temporal="handleShowTemporal"
             >
-            </TargetContainer>
+            </PanelContainer>
           </SplitterPanel>
           <SplitterPanel id='sidebar' class="sidebar flex align-items-center justify-content-center" :size="45" :min-size="45">
             <div v-if="!display_article_view" class="overview-container">
@@ -1086,6 +1136,19 @@ function updateOverallEntityNode({outlet, value}) {
   width: 100%;
   margin-left: 10px;
   margin-right: 10px;
+}
+.co-hex-button-container {
+  position: absolute;
+  left: 45.4%;
+  top: 24%;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+.co-common-button, .co-diff-button {
+  font-size: x-small;
+  text-align: center;
 }
  </style>
 
