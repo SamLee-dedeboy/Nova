@@ -12,7 +12,7 @@ import ToggleButton from 'primevue/togglebutton';
 import TopicSelection from "../components/deprecated/TopicSelection.vue";
 import TargetSelection from "../components/deprecated/TargetSelection.vue"
 import MonthSlider from "../components/deprecated/MonthSlider.vue"
-import * as preprocess from "../components/preprocessUtils"
+// import * as preprocess from "../components/preprocessUtils"
 import { watch, computed, onMounted, PropType, ref, Ref, nextTick, } from 'vue'
 import * as vue from 'vue'
 import * as typeUtils from "../types"
@@ -36,6 +36,7 @@ import { resolve } from "path";
 //
 // raw data
 //
+const server_address = "http://127.0.0.1:5000"
 const entity_mentions_grouped: Ref<any[]> = ref([])
 const overall_entity_mentions: Ref<any[]> = ref([])
 let dataset_metadata = {}
@@ -92,6 +93,11 @@ const outlet_article_bins_dict = ref({})
  * dictionary: { [outlet]: Article[ ] }
  */
 const outlet_article_dict = ref({})
+
+/**
+ * entity list
+ */
+const entity_list: Ref<string[]> = ref([])
 
 /**
  * dictionary: { [outlet]: Article[ ].length }
@@ -267,22 +273,9 @@ const show_co_button = computed(() => {
 /**
  * refs for panel left & right
  */
-const panel_left = ref(null)
-const panel_right = ref(null)
+const panel_left: Ref<any> = ref(null)
+const panel_right: Ref<any> = ref(null)
 
-/**
- * @deprecated
- */
-watch(() => timeRange, (new_range, old_range) => {
-  if(new_range[0] != old_range[0] || new_range[1] != old_range[1]) {
-    // TODO: implement slicing with dataframe
-    const subset = preprocess.sliceDatasetByTime(new_range, original_dataset)
-    // const startIndex = this.original_dataset.findIndex(article => parseInt(article.timestamp.split('-')[1]) >= new_range[0])
-    // const endIndex = this.original_dataset.findIndex(article => parseInt(article.timestamp.split('-')[1]) > new_range[1])
-    // const subset = this.original_dataset.slice(startIndex, (endIndex == -1? this.original_dataset.length : endIndex))
-    // this.updateDicts(subset)
-  }
-})
 
 vue.watch(overview_constructed, (new_value, old_value) => {
   if(tutorial_mode.value) {
@@ -338,7 +331,6 @@ vue.watch(selectedScatterViews_right, (new_value, old_value) => {
 // prepare for tutorial
 vue.onMounted(async() => {
   tutorial.prepareComponentsForTutorial({tutorial_mode, tutorial_step})
-  const server_address = "http://127.0.0.1:5000"
   const promiseArray: any[] = []
   promiseArray.push(new Promise((resolve) => {
       fetch(`${server_address}/overview/scatter/overall`)
@@ -351,6 +343,7 @@ vue.onMounted(async() => {
           data: overview_overall_scatter_data.value 
         }
         selectedScatterViews_left.value.push(overall_scatter_view)
+        console.log("overall scatter fetched")
         resolve("success")
       })
   }))
@@ -359,6 +352,7 @@ vue.onMounted(async() => {
     .then(res => res.json())
     .then(json => {
       overview_grouped_scatter_data.value = json
+      console.log("grouped scatter fetched")
       resolve("success")
     })
   }))
@@ -367,6 +361,28 @@ vue.onMounted(async() => {
     .then(res => res.json())
     .then(json => {
       outlet_article_num_dict.value = json
+      console.log("outlet article num dict fetched")
+      resolve("success")
+    })
+  }))
+  promiseArray.push(new Promise((resolve) => {
+    fetch(`${server_address}/processed_data/entity_list`)
+    .then(res => res.json())
+    .then(json => {
+      entity_list.value = json
+      console.log("entity_list fetched")
+      resolve("success")
+    })
+  }))
+  promiseArray.push(new Promise((resolve) => {
+    fetch(`${server_address}/processed_data/outlet_set`)
+    .then(res => res.json())
+    .then(json => {
+      enabled_outlet_set.value = json
+      enabled_outlet_set.value.forEach(outlet => {
+        outlet_weight_dict.value[outlet] = 1
+      })
+      console.log("outlet_set fetched")
       resolve("success")
     })
   }))
@@ -382,120 +398,73 @@ vue.watch(tutorial_step, (new_value, old_value) => {
 })
 
 
-/**
- * @deprecated
- */
-function updateNpList(np_list) {
-  // this.dataset = dataset
-  // this.outlet_set = dataset.outlet_set
-  // this.enabled_outlet_set = dataset.outlet_set
-  // this.topic_list = Object.keys(dataset.topic_dict)
-  entity_mentions.value = np_list
-  dataset_metadata = this.$refs.toolbar.getMetaData()  
-} 
 
-/**
- * @deprecated
- */
-function datasetImported(dataset) {
-  overview_constructing.value = true
-  setTimeout(() => {
-    const promise = new Promise((resolve) => { 
-      console.log("dataset imported")
-      outlet_article_dict.value = dataset.outlet_article_dict
-      entity_mentions_grouped.value = dataset.entity_mentions
-      overall_entity_mentions.value = dataset.overall_entity_mentions
-      entity_cooccurrences_groupby_outlet.value = dataset.entity_cooccurrences_outlet_dict
-      entity_cooccurrences_dict.value = dataset.entity_cooccurrences_dict
+// function datasetImported(dataset) {
+//   overview_constructing.value = true
+//   setTimeout(() => {
+//     const promise = new Promise((resolve) => { 
+//       console.log("dataset imported")
+//       outlet_article_dict.value = dataset.outlet_article_dict
+//       entity_mentions_grouped.value = dataset.entity_mentions
+//       overall_entity_mentions.value = dataset.overall_entity_mentions
+//       entity_cooccurrences_groupby_outlet.value = dataset.entity_cooccurrences_outlet_dict
+//       entity_cooccurrences_dict.value = dataset.entity_cooccurrences_dict
 
-      let {
-        outlet_set, 
-        r_article_dict, 
-        r_article_bins_dict, 
-        r_min_timestamp, r_max_timestamp, 
-        r_outlet_article_num_dict
-      } = preprocess.processArticleDict(outlet_article_dict.value)
-      console.log("preprocess 1 done")
-      outlet_article_num_dict.value = r_outlet_article_num_dict
-      outlet_article_bins_dict.value = r_article_bins_dict
-      enabled_outlet_set.value = outlet_set
-      enabled_outlet_set.value.forEach(outlet => {
-        outlet_weight_dict.value[outlet] = 1
-      })
-      min_timestamp.value = r_min_timestamp
-      max_timestamp.value = r_max_timestamp
-      // articles.value = normalized_articles
-      article_dict.value = r_article_dict
-      let {
-        r_graph_dict, 
-        r_max_articles, r_min_articles, 
-        r_pos_max_articles, r_pos_min_articles,
-        r_neg_max_articles, r_neg_min_articles,
-        r_node_article_id_dict
-      } = preprocess.constructEntityGraph(entity_mentions_grouped.value, article_dict.value)
+//       let {
+//         outlet_set, 
+//         r_article_dict, 
+//         r_article_bins_dict, 
+//         r_min_timestamp, r_max_timestamp, 
+//         r_outlet_article_num_dict
+//       } = preprocess.processArticleDict(outlet_article_dict.value)
+//       console.log("preprocess 1 done")
+//       outlet_article_num_dict.value = r_outlet_article_num_dict
+//       outlet_article_bins_dict.value = r_article_bins_dict
+//       enabled_outlet_set.value = outlet_set
+//       enabled_outlet_set.value.forEach(outlet => {
+//         outlet_weight_dict.value[outlet] = 1
+//       })
+//       min_timestamp.value = r_min_timestamp
+//       max_timestamp.value = r_max_timestamp
+//       // articles.value = normalized_articles
+//       article_dict.value = r_article_dict
+//       let {
+//         r_graph_dict, 
+//         r_max_articles, r_min_articles, 
+//         r_pos_max_articles, r_pos_min_articles,
+//         r_neg_max_articles, r_neg_min_articles,
+//         r_node_article_id_dict
+//       } = preprocess.constructEntityGraph(entity_mentions_grouped.value, article_dict.value)
 
-      console.log("preprocess 2 done")
-      scatter_dict.value = r_graph_dict
+//       console.log("preprocess 2 done")
+//       scatter_dict.value = r_graph_dict
       
-      grouped_max_articles.value = r_max_articles
-      grouped_min_articles.value = r_min_articles
+//       grouped_max_articles.value = r_max_articles
+//       grouped_min_articles.value = r_min_articles
       
-      grouped_pos_max_articles.value = r_pos_max_articles
-      grouped_pos_min_articles.value = r_pos_min_articles
-      grouped_neg_max_articles.value = r_neg_max_articles
-      grouped_neg_min_articles.value = r_neg_min_articles
+//       grouped_pos_max_articles.value = r_pos_max_articles
+//       grouped_pos_min_articles.value = r_pos_min_articles
+//       grouped_neg_max_articles.value = r_neg_max_articles
+//       grouped_neg_min_articles.value = r_neg_min_articles
       
-      node_article_id_dict.value = r_node_article_id_dict
+//       node_article_id_dict.value = r_node_article_id_dict
 
-      console.log("constructing overall entity scatter")
-      const overall_entity_scatter = 
-        preprocess.constructOverallEntityGraph(overall_entity_mentions.value, article_dict.value, node_article_id_dict.value)
+//       console.log("constructing overall entity scatter")
+//       const overall_entity_scatter = 
+//         preprocess.constructOverallEntityGraph(overall_entity_mentions.value, article_dict.value, node_article_id_dict.value)
 
-      selectedScatterViews_left.value.push(overall_entity_scatter)
+//       selectedScatterViews_left.value.push(overall_entity_scatter)
 
-      overview_constructed.value = true
-      console.log("overview constructed")
-      resolve(""); 
-    })
-    promise.then(() => overview_constructing.value = false)
-  }, 10)
+//       overview_constructed.value = true
+//       console.log("overview constructed")
+//       resolve(""); 
+//     })
+//     promise.then(() => overview_constructing.value = false)
+//   }, 10)
 
-}
+// }
 
-/**
- * 
- * @deprecated this function is replaced by datasetImported() 
- */
-function processDataset(dataset) {
-  entity_mentions.value = dataset.entity_mentions
-  dataset_metadata = dataset.metadata
 
-  // save raw dataset 
-  // possibly need deep clone?
-  original_dataset = dataset.articles 
-
-  // get time period
-  const dataset_articles = dataset.articles
-  dataset_articles.sort((a1, a2) => Date.parse(a1.timestamp) > Date.parse(a2.timestamp))
-  const startMonth = parseInt(dataset_articles[0].timestamp.split('-')[1])
-  const endMonth = parseInt(dataset_articles[dataset_articles.length-1].timestamp.split('-')[1])
-  timeRange = {start: startMonth, end: endMonth+1}
-  // process articles
-  let {outlet_set, normalized_articles, r_article_dict} = preprocess.processArticles(dataset_articles)
-  enabled_outlet_set.value = outlet_set
-  articles.value = normalized_articles
-  article_dict.value = r_article_dict
-  // let {r_graph_dict, r_max_articles, r_min_articles} = preprocess.constructOutletGraph(entity_mentions.value, enabled_outlet_set.value, article_dict.value)
-  let {r_graph_dict, r_max_articles, r_min_articles} = preprocess.constructEntityGraph(entity_mentions.value, enabled_outlet_set.value, article_dict.value, dataset_articles)
-  graph_dict.value = r_graph_dict
-  max_articles.value = r_max_articles
-  min_articles.value = r_min_articles
-  overview_constructed.value = true
-}
-
-function updateEnabledOutlet(outlet_set_info) {
-  enabled_outlet_set.value = outlet_set_info.filter(outlet => outlet.enabled).map(outlet => outlet.outlet)
-}
 
 // handlers
 function handleScatterClicked(index) {
@@ -512,7 +481,7 @@ function handleScatterClicked(index) {
     }
 }
 
-function handleDragScatter(evt, index) {
+function handleDragOutletScatter(evt, index) {
   evt.dataTransfer.dropEffect = 'move'
   evt.dataTransfer.effectAllowed = 'move'
   const dragged_scatter = Array.from(enabled_outlet_set.value)[index]
@@ -599,7 +568,7 @@ function handleDropScatter(e) {
   }
 }
 
-function handleEntityClicked({title, type, d}) {
+async function handleEntityClicked({title, type, d}) {
   compare_mode.value = true 
   if(type === typeUtils.ViewType.OutletScatter) {
     // construct outlet graph
@@ -636,48 +605,21 @@ function handleEntityClicked({title, type, d}) {
   if(type === typeUtils.ViewType.CooccurrHex) {
     const entity = d.text.split("-")[0]
     const outlet = d.text.split("-")[1]
-    let cooccurrences: any
-    let view_title: string
-    if(title === "Overall") {
-      view_title = `co-${entity}`
-      cooccurrences = entity_cooccurrences_dict.value[entity]
-      const article_ids = node_article_id_dict.value[d.text]
-      const articles = preprocess.idsToArticles(article_ids, article_dict.value)
-      selected_entity.value = {
-        name: d.text.split("-")[0],
-        outlet: "Overall",
-        sst_ratio: {
-          pos_artcs: articles.filter(article => article.sentiment.label === "POSITIVE").length,
-          neg_artcs: articles.filter(article => article.sentiment.label === "NEGATIVE").length,
-          pos: d.pos_sst,
-          neg: d.neg_sst,
-        },
-        articles: articles
-      }
-      display_article_view.value = true
-    }
-    else {
-      cooccurrences = entity_cooccurrences_groupby_outlet.value[outlet][entity]
-      view_title = `co-${entity}-${outlet}` 
-    }
-    let entity_cooccurrences = new typeUtils.EntityCooccurrences()
-    entity_cooccurrences.entity = entity
-    entity_cooccurrences.cooccurrences = {}
-    let cooccurr_view: typeUtils.CooccurrHexView= {title: view_title, type: typeUtils.ViewType.CooccurrHex, data: entity_cooccurrences }
-    Object.keys(cooccurrences).forEach(entity2 => {
-      if(entity2 === entity) return
-      const cooccurr_article_ids = cooccurrences[entity2]
-      const cooccurr_articles = preprocess.idsToArticles(cooccurr_article_ids, article_dict.value)
-      const sst = preprocess.generate_sst_score(
-        cooccurr_articles, 
-        grouped_pos_max_articles.value, grouped_pos_min_articles.value,
-        grouped_neg_max_articles.value, grouped_neg_min_articles.value
-      )
-      // const sst = preprocess.categorizeNode(cooccurr_article_ids, segment_sst.value, article_dict.value)
-      // const article_num = cooccurr_article_ids.length
-      entity_cooccurrences.cooccurrences[entity2] = {article_ids: cooccurr_article_ids, sst: sst, mask: false}
-    });
-    selectedScatterViews_left.value.push(cooccurr_view)
+    // TODO: add selected entity
+
+    const path_overall_or_grouped = ((title === "Overall")? "overall":"grouped")
+    await fetch(`${server_address}/hexview/${path_overall_or_grouped}/${entity}`)
+      .then(res => res.json())
+      .then(json => {
+        const hexview_data = json
+        const hex_view: typeUtils.CooccurrHexView = {
+          title: `co-${title}`,
+          type: typeUtils.ViewType.CooccurrHex,
+          data: hexview_data
+        }
+        selectedScatterViews_left.value.push(hex_view)
+        console.log("cooccurr hex fetched")
+      })
     return
   }
   if(type === typeUtils.ViewType.Article) {
@@ -688,8 +630,10 @@ function handleEntityClicked({title, type, d}) {
       name: d.text.split("-")[0],
       outlet: d.text.split("-")[1],
       sst_ratio: {
-        pos: articles.filter(article => article.sentiment.label === "POSITIVE").length,
-        neg: articles.filter(article => article.sentiment.label === "NEGATIVE").length,
+        pos_artcs: d.pos_article_ids.length,
+        neg_artcs: d.neg_article_ids,
+        pos: d.pos_sst,
+        neg: d.neg_sst,
       },
       articles: articles
     }
@@ -912,7 +856,7 @@ function showCoHexCommon() {
                   :highlight_nodes="highlight_nodes"
                   :expanded="false"
                   :draggable="true"
-                  @dragstart="handleDragScatter($event, index)"
+                  @dragstart="handleDragOutletScatter($event, index)"
                   @click="handleScatterClicked(index)"
               >
               </SentimentScatter>
@@ -979,7 +923,8 @@ function showCoHexCommon() {
                 <div class="article-view">
                   <ArticleView
                   v-model:sst_threshold="segment_sst"
-                  :articles="selected_entity.articles">
+                  :articles="selected_entity.articles"
+                  :sst_ratio="selected_entity.sst_ratio">
                   </ArticleView>
                 </div>
               </div>

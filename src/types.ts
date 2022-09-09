@@ -34,11 +34,6 @@ export class EntityScatterView implements PanelView {
         nodes: ScatterNode[], 
         max_articles: number, 
         min_articles: number, 
-        mentions_groupby_outlet_dict?: any,
-        pos_max?: any,
-        pos_min?: any,
-        neg_max?: any,
-        neg_min?: any,
     }
 }
 export class OutletScatterView implements PanelView {
@@ -67,8 +62,8 @@ export class TemporalBins {
 export class ScatterNode {
     text: string
     article_ids: number[]
-    pos_articles: number[]
-    neg_articles: number[]
+    pos_article_ids: number[]
+    neg_article_ids: number[]
     pos_sst: number
     neg_sst: number
     topicBins: {[id: string]: {pos: number, neg: number}}

@@ -15,6 +15,12 @@ import { articlesToRadius } from './NodeUtils'
 
 const props = defineProps({
     articles: Object as () => Article[],
+    sst_ratio: Object as () => {
+        pos_artcs: number,
+        neg_artcs: number,
+        pos: number,
+        neg: number,
+    },
     sst_threshold: Sentiment2D,
 })
 

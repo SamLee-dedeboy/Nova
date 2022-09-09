@@ -45,7 +45,7 @@ const sorted_cooccurrence_list = vue.computed(() => {
     let tmp_list = Object.keys(cooccurrence_dict)
     tmp_list.sort((e1,e2) => -(cooccurrence_dict[e1].article_ids.length - cooccurrence_dict[e2].article_ids.length))
     tmp_list = tmp_list.slice(0,max_entities) 
-    let res = []
+    let res: any[] = []
     tmp_list.forEach((entity2, index) => {
         const {x, y} = generate_hex_coord(index, hex_radius) 
         res.push({

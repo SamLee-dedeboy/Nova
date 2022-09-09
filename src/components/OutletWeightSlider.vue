@@ -6,11 +6,15 @@ const props = defineProps({
 })
 
 const emit = defineEmits(["update_outlet_weight"])
+
 const outlet_list = vue.computed(() => {
     if(!props.outlet_weight_dict) return undefined
     return Object.keys(props.outlet_weight_dict)
 })
 
+vue.onMounted(() => {
+    console.log(props.outlet_weight_dict)
+})
 function handleChange(outlet) {
     emit("update_outlet_weight", {outlet: outlet, value: props.outlet_weight_dict![outlet] })
 }
