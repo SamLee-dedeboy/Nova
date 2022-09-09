@@ -6,8 +6,8 @@ import json
 class ScatterNode:
     text: str
     article_ids: list
-    pos_articles: int
-    neg_articles: int
+    pos_article_ids: int
+    neg_article_ids: int
     pos_sst: float
     neg_sst: float
     topicBins: dict
@@ -29,7 +29,7 @@ class EntityScatterData:
 @dataclass
 class EntityCooccurrences:
     entity: str
-    cooccurrences: dict
+    sorted_cooccurrences_list: list
 
 @dataclass
 class Sentiment2D:
@@ -44,6 +44,8 @@ class HexEntity:
     mask: bool
 @dataclass
 class SentimentScatterMetaData:
+    max_articles: int
+    min_articles: int
     pos_max: int
     pos_min: int
     neg_max: int

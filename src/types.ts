@@ -9,7 +9,13 @@ export enum ViewType {
 
 export class EntityCooccurrences {
     entity: string
-    cooccurrences: {[id: string]: {article_ids: number[], sst: Sentiment2D, mask: boolean }}
+    sorted_cooccurrences_list: HexEntity[]
+}
+export class HexEntity {
+    entity: string
+    article_ids: number[]
+    sst: Sentiment2D
+    mask: boolean
 }
 
 export class Path {

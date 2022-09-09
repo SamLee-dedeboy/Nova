@@ -39,20 +39,16 @@ const hex_width = radius*2*Math.sin(Math.PI/3)
 const hex_height = radius*3/2
 const max_height = viewBox_width/hex_width*hex_height
 
-const max_entities = 36
 const sorted_cooccurrence_list = vue.computed(() => {
-    const cooccurrence_dict = props.entity_cooccurrences?.cooccurrences!
-    let tmp_list = Object.keys(cooccurrence_dict)
-    tmp_list.sort((e1,e2) => -(cooccurrence_dict[e1].article_ids.length - cooccurrence_dict[e2].article_ids.length))
-    tmp_list = tmp_list.slice(0,max_entities) 
+    const raw_data = props.entity_cooccurrences?.sorted_cooccurrences_list!
     let res: any[] = []
-    tmp_list.forEach((entity2, index) => {
+    raw_data.forEach((hex_entity, index) => {
         const {x, y} = generate_hex_coord(index, hex_radius) 
         res.push({
-            entity: entity2,
+            entity: hex_entity.entity,
             x: x,
             y: y,
-            mask: cooccurrence_dict[entity2].mask
+            mask: hex_entity.mask
         })
     })
     return res
@@ -148,7 +144,8 @@ function updateHexColor() {
     const svg = d3.select(`#${props.id}`).select("svg")
     const hex_path_group = svg.select("g.hex-path-group")
     const hex_bins: any = hex_path_group.selectAll("path")
-        .attr("fill", (d, i) => SstColors.enum_color_dict[categorizeHex(props.entity_cooccurrences?.cooccurrences[sorted_cooccurrence_list.value[i].entity].sst!, props.segmentation)])
+        .attr("fill", (d, i) => SstColors.enum_color_dict[categorizeHex(props.entity_cooccurrences?.sorted_cooccurrences_list[i].sst!, props.segmentation!)])
+
 }
 
 function categorizeHex(sst: Sentiment2D, segmentation: Sentiment2D) {

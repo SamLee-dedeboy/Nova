@@ -11,12 +11,9 @@ def overall_entity_scatter(entity_mentions, processed_data_manager ):
     pos_min_articles = range(min_articles)
     neg_max_articles = []
     neg_min_articles = range(min_articles)
-    meta_data = OverallSentimentScatterMetaData(0,0,0,0,{},{},{},{},{})
-    data = EntityScatterData(
-        nodes=[], 
-        max_articles=0,
-        min_articles=0,
-    )
+    meta_data = OverallSentimentScatterMetaData(0,0,0,0,0,0,{},{},{},{},{})
+    data = EntityScatterData(nodes=[], max_articles=0, min_articles=0)
+    node_dict = {}
     # get max & min
     for entity, mention_ids in entity_mentions.items():
         mentioned_articles = processed_data_manager.idsToArticles(mention_ids)
@@ -35,8 +32,8 @@ def overall_entity_scatter(entity_mentions, processed_data_manager ):
     # data.pos_min = article_num_groupby_outlet(pos_min_articles)
     # data.neg_max = article_num_groupby_outlet(neg_max_articles)
     # data.neg_min = article_num_groupby_outlet(neg_min_articles)
-    # meta_data.max_articles = max_articles
-    # meta_data.min_articles = min_articles
+    meta_data.max_articles = max_articles
+    meta_data.min_articles = min_articles
     meta_data.pos_max = len(pos_max_articles)
     meta_data.pos_min = len(pos_min_articles)
     meta_data.neg_max = len(neg_max_articles)
@@ -59,9 +56,10 @@ def overall_entity_scatter(entity_mentions, processed_data_manager ):
             len(pos_max_articles), len(pos_min_articles),
             len(neg_max_articles), len(neg_min_articles)
         )
+        node_dict[entity] = node
         data.nodes.append(node)
         meta_data.mentions_groupby_outlet_dict[entity] = mentions_groupby_outlet_dict
-    return data, meta_data
+    return data, meta_data, node_dict
 
 def grouped_entity_scatter(entity_mentions_grouped, processed_data_manager):
     scatter_outlet_dict = {}
@@ -72,7 +70,8 @@ def grouped_entity_scatter(entity_mentions_grouped, processed_data_manager):
     neg_max_articles = []
     neg_min_articles = range(min_articles)
 
-    meta_data = SentimentScatterMetaData(0,0,0,0)
+    meta_data = SentimentScatterMetaData(0,0,0,0,0,0)
+    node_dict = {}
     # get max & min
     for outlet, entity_mentions in entity_mentions_grouped.items():
         for entity_mention in entity_mentions:
@@ -89,8 +88,8 @@ def grouped_entity_scatter(entity_mentions_grouped, processed_data_manager):
             max_articles = max(len(mentioned_articles), max_articles)
             min_articles = min(len(mentioned_articles), min_articles)
 
-    # meta_data.max_articles = max_articles
-    # meta_data.min_articles = min_articles
+    meta_data.max_articles = max_articles
+    meta_data.min_articles = min_articles
     meta_data.pos_max = len(pos_max_articles)
     meta_data.pos_min = len(pos_min_articles)
     meta_data.neg_max = len(neg_max_articles)
@@ -98,6 +97,7 @@ def grouped_entity_scatter(entity_mentions_grouped, processed_data_manager):
 
     for outlet, entity_mentions in entity_mentions_grouped.items():
         data = EntityScatterData(nodes=[], max_articles=max_articles, min_articles=min_articles)
+        node_dict[outlet] = {}
         for entity_mention in entity_mentions:
             entity = entity_mention["entity"]
             mention_ids = entity_mention['article_ids']
@@ -108,9 +108,10 @@ def grouped_entity_scatter(entity_mentions_grouped, processed_data_manager):
                 len(pos_max_articles), len(pos_min_articles),
                 len(neg_max_articles), len(neg_min_articles)
             )
+            node_dict[outlet][entity] = node
             data.nodes.append(node)
         scatter_outlet_dict[outlet] = data
-    return scatter_outlet_dict, meta_data
+    return scatter_outlet_dict, meta_data, node_dict
 
 
 

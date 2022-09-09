@@ -37,15 +37,11 @@ import { resolve } from "path";
 // raw data
 //
 const server_address = "http://127.0.0.1:5000"
-const entity_mentions_grouped: Ref<any[]> = ref([])
-const overall_entity_mentions: Ref<any[]> = ref([])
-let dataset_metadata = {}
-let original_dataset = []
-const articles = ref([])
 
 // overview data 
 const overview_overall_scatter_data: Ref<any> = ref({})
 const overview_grouped_scatter_data: Ref<any> = ref({})
+const overview_grouped_scatter_metadata: Ref<any> = ref({})
 const grouped_scatter_view_dict = vue.computed(() => {
   if(!overview_grouped_scatter_data.value) return undefined
   let res_dict: any = {}
@@ -115,11 +111,6 @@ const entity_cooccurrences_groupby_outlet = ref({})
  */
 const entity_cooccurrences_dict = ref({})
 
-/**
- * dictionary: { [outlet]: OutletScatterView[] }. \
- * scatter_dict stores all the scatter_view data that are created to easily move scatterplot between views.
- */
-const scatter_dict = ref({})
 
 
 /**
@@ -139,22 +130,6 @@ const selectedScatterViews_right: Ref<typeUtils.PanelView[]> = ref([])
 // preprocessed global data used across components
 //
 
-/**
- * max articles of all nodes in overview grid. \
- * Used when scaling node color.
- */
-const grouped_max_articles: Ref<number> = ref(0)
-const grouped_pos_max_articles: Ref<number> = ref(0)
-const grouped_neg_max_articles: Ref<number> = ref(0)
-const overall_max_articles: Ref<number> = ref(0)
-/**
- * min articles of all nodes in overview grid. \
- * Used when scaling node color.
- */
-const grouped_min_articles: Ref<number> = ref(0)
-const grouped_pos_min_articles: Ref<number> = ref(0)
-const grouped_neg_min_articles: Ref<number> = ref(0)
-const overall_min_articles: Ref<number> = ref(0)
 
 /**
  * Flag for compare mode. \
@@ -167,6 +142,12 @@ vue.provide('compare_mode', compare_mode)
  * Flag for displaying article view. 
  */
 const display_article_view: Ref<boolean> = ref(false)
+
+/**
+ * flag for fetching article
+ */
+const fetching_article: Ref<boolean> = ref(false)
+
 /**
  * Flag for segment mode. \
  * Display segmentation on all scatters when segment mode is on.
@@ -333,7 +314,7 @@ vue.onMounted(async() => {
   tutorial.prepareComponentsForTutorial({tutorial_mode, tutorial_step})
   const promiseArray: any[] = []
   promiseArray.push(new Promise((resolve) => {
-      fetch(`${server_address}/overview/scatter/overall`)
+      fetch(`${server_address}/overview/scatter/overall/data`)
       .then(res => res.json())
       .then(json => {
         overview_overall_scatter_data.value = json
@@ -348,13 +329,22 @@ vue.onMounted(async() => {
       })
   }))
   promiseArray.push(new Promise((resolve) => {
-    fetch(`${server_address}/overview/scatter/grouped`)
+    fetch(`${server_address}/overview/scatter/grouped/data`)
     .then(res => res.json())
     .then(json => {
       overview_grouped_scatter_data.value = json
       console.log("grouped scatter fetched")
       resolve("success")
     })
+  }))
+  promiseArray.push(new Promise((resolve) => {
+      fetch(`${server_address}/overview/scatter/grouped/metadata`)
+      .then(res => res.json())
+      .then(json => {
+        overview_grouped_scatter_metadata.value = json
+        console.log("grouped scatter metadata fetched")
+        resolve("success")
+      })
   }))
   promiseArray.push(new Promise((resolve) => {
     fetch(`${server_address}/processed_data/outlet_article_num_dict`)
@@ -468,9 +458,9 @@ vue.watch(tutorial_step, (new_value, old_value) => {
 
 // handlers
 function handleScatterClicked(index) {
-    const clicked_scatter = Array.from(enabled_outlet_set.value)[index]
+    const clicked_scatter = Object.keys(grouped_scatter_view_dict.value)[index]
 
-    selectedScatterViews_left.value.push(scatter_dict.value[clicked_scatter])
+    selectedScatterViews_left.value.push(grouped_scatter_view_dict.value[clicked_scatter])
     const dropped_from = selectedScatterViews_right.value.findIndex(element => element.title === clicked_scatter)
     if(dropped_from > -1) 
       selectedScatterViews_right.value.splice(dropped_from, 1)
@@ -484,10 +474,10 @@ function handleScatterClicked(index) {
 function handleDragOutletScatter(evt, index) {
   evt.dataTransfer.dropEffect = 'move'
   evt.dataTransfer.effectAllowed = 'move'
-  const dragged_scatter = Array.from(enabled_outlet_set.value)[index]
-  const scatter = scatter_dict.value[dragged_scatter]
+  const dragged_scatter = Object.keys(grouped_scatter_view_dict.value)[index]
+
+  const scatter = grouped_scatter_view_dict.value[dragged_scatter]
   evt.dataTransfer.setData('scatter', JSON.stringify(scatter))  
-  console.log("drag", scatter)
 }
 
 function handleDragOver(e) {
@@ -568,8 +558,7 @@ function handleDropScatter(e) {
   }
 }
 
-async function handleEntityClicked({title, type, d}) {
-  compare_mode.value = true 
+async function handleEntityClicked({title, type, d}: {title: string, type: typeUtils.ViewType, d: ScatterNode}) {
   if(type === typeUtils.ViewType.OutletScatter) {
     // construct outlet graph
     const entity_name = d.text.split("-")[0]
@@ -611,14 +600,41 @@ async function handleEntityClicked({title, type, d}) {
     await fetch(`${server_address}/hexview/${path_overall_or_grouped}/${entity}`)
       .then(res => res.json())
       .then(json => {
-        const hexview_data = json
+        const cooccurrences = json
         const hex_view: typeUtils.CooccurrHexView = {
           title: `co-${title}`,
           type: typeUtils.ViewType.CooccurrHex,
-          data: hexview_data
+          data: cooccurrences,
         }
         selectedScatterViews_left.value.push(hex_view)
         console.log("cooccurr hex fetched")
+      })
+    const article_ids = d.article_ids
+    selected_entity.value = {
+      name: d.text.split("-")[0],
+      outlet: d.text.split("-")[1] || "Overall",
+      sst_ratio: {
+        pos_artcs: d.pos_article_ids.length,
+        neg_artcs: d.neg_article_ids.length,
+        pos: d.pos_sst,
+        neg: d.neg_sst,
+      },
+      articles: [],
+    }
+    display_article_view.value = true
+    fetching_article.value = true
+    await fetch(`${server_address}/processed_data/ids_to_articles`,{
+      method: "POST",
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(article_ids)
+    })
+      .then(res => res.json())
+      .then(json => {
+        selected_entity.value.articles = json
+        fetching_article.value = false
       })
     return
   }
@@ -879,15 +895,15 @@ function showCoHexCommon() {
               <div class="utilities-container">
                 <div v-if="overview_constructed" class="slider-container">
                   <InputText class="threshold-input" v-model="article_num_threshold"></InputText>
-                  <Button class="increment-button p-button-secondary" label="+"  @click="() => article_num_threshold=Math.min(article_num_threshold+=10, grouped_max_articles||100)"></Button>
+                  <Button class="increment-button p-button-secondary" label="+"  @click="() => article_num_threshold=Math.min(article_num_threshold+=10, overview_grouped_scatter_metadata.max_articles||100)"></Button>
                   <Button class="decrease-button p-button-secondary " label="-"  @click="() => article_num_threshold=Math.max(article_num_threshold-10, 0)"></Button>
-                  <Slider v-model="article_num_threshold" :step="10" :min="0" :max="grouped_max_articles||100"></Slider>
+                  <Slider v-model="article_num_threshold" :step="10" :min="0" :max="overview_grouped_scatter_metadata.max_articles ||100"></Slider>
                   <ColorSpectrum class="color-spectrum" v-if="overview_constructed" 
                   :color-scale="SstColors.article_num_color_scale"
                   ></ColorSpectrum>
                   <div class="indicator-container">
                     <div class="min_indicator">0</div>
-                    <div class="max_indicator">{{grouped_max_articles || 100}}</div>
+                    <div class="max_indicator">{{overview_grouped_scatter_metadata.max_articles || 100}}</div>
                   </div>
                 </div>
                 <OutletWeightSlider
@@ -904,6 +920,14 @@ function showCoHexCommon() {
                 :interactable="false"></Legend>
               </div>
               <div v-if="display_article_view" class="article-view-container">
+                <i v-if="fetching_article" class="pi pi-spin pi-spinner" 
+                style="
+                position:absolute;
+                left: 45%;
+                top: 30%;
+                font-size: 3rem;
+                z-index: 1000
+                "></i> 
                 <div class="toggler-container">
                   <ToggleButton class='back-toggler p-primary' v-model="display_article_view" onLabel="Back" offLabel="Article"></ToggleButton>
                   <ToggleButton class='segment-toggler p-primary' v-model="segment_mode" onLabel="Segment" offLabel="Segment"></ToggleButton>
@@ -922,6 +946,7 @@ function showCoHexCommon() {
                 </div>
                 <div class="article-view">
                   <ArticleView
+                  v-if="!fetching_article"
                   v-model:sst_threshold="segment_sst"
                   :articles="selected_entity.articles"
                   :sst_ratio="selected_entity.sst_ratio">

@@ -630,11 +630,10 @@ function showTemporal() {
 }
 
 function updateNodeInfo(node_data: ScatterNode) {
-    console.log("🚀 ~ file: SentimentScatter.vue ~ line 633 ~ updateNodeInfo ~ node_data", node_data)
     hovered_node_info.value = {
         text: node_data.text,
-        pos_articles: node_data.pos_articles.length,
-        neg_articles: node_data.neg_articles.length,
+        pos_articles: node_data.pos_article_ids.length,
+        neg_articles: node_data.neg_article_ids.length,
         pos_score: node_data.pos_sst,
         neg_score: node_data.neg_sst,
     }

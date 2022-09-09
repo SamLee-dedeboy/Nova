@@ -117,6 +117,7 @@ const emit = defineEmits(
     "hex_active_changed"])
 
 vue.onMounted(() => {
+    console.log(props.selectedScatters)
     highlightNodes.value = props.highlight_nodes || []
 })
 
