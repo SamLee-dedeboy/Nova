@@ -18,13 +18,44 @@ class EntityScatterData:
     max_articles: int
     min_articles: int
 
+# @dataclass
+# class OverallEntityScatterData(EntityScatterData):
+#     mentions_groupby_outlet_dict: dict
+#     pos_max: dict
+#     pos_min: dict
+#     neg_max: dict
+#     neg_min: dict
+
 @dataclass
-class OverallEntityScatterData(EntityScatterData):
+class EntityCooccurrences:
+    entity: str
+    cooccurrences: dict
+
+@dataclass
+class Sentiment2D:
+    pos: float
+    neg: float
+
+@dataclass
+class HexEntity:
+    entity: str
+    article_ids: list
+    sst: Sentiment2D
+    mask: bool
+@dataclass
+class SentimentScatterMetaData:
+    pos_max: int
+    pos_min: int
+    neg_max: int
+    neg_min: int
+@dataclass
+class OverallSentimentScatterMetaData(SentimentScatterMetaData):
+    pos_max_grouped: dict
+    pos_min_grouped: dict
+    neg_max_grouped: dict
+    neg_min_grouped: dict
     mentions_groupby_outlet_dict: dict
-    pos_max: dict
-    pos_min: dict
-    neg_max: dict
-    neg_min: dict
+    
 
 
 

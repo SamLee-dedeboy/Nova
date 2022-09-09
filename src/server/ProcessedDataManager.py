@@ -10,6 +10,10 @@ class ProcessedDataManager:
         self.max_timestamp, \
         self.outlet_article_num_dict \
         = processArticleDict(raw_data.outlet_article_dict)
+        self.entity_list = list(raw_data.candidate_entity.keys())
+
+    def idsToArticles(self, id_list):
+        return [self.article_dict[id] for id in id_list]
 
 def processArticleDict(outlet_article_dict):
     date_str_template = '%Y-%m-%d'
@@ -30,7 +34,7 @@ def processArticleDict(outlet_article_dict):
         outlet_article_num_dict[outlet] = len(articles)
     min_timestamp = min_timestamp.isoformat()
     max_timestamp = max_timestamp.isoformat()
-    outlet_set = outlet_article_dict.keys()
+    outlet_set = set(outlet_article_dict.keys())
     return outlet_set, article_dict, article_bins_dict, min_timestamp, max_timestamp, outlet_article_num_dict
 
 def binArticlesByMonth(articles):
@@ -44,6 +48,7 @@ def group_by_month(article):
     month = article['timestamp'].split('-')[1]
     if(month[0] == "0"): return month[1]
     return month
+
 
 
 
