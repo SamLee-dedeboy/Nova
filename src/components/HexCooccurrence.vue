@@ -194,9 +194,9 @@ function find_level(index) {
 }
 
 function updateMask() {
-    console.log("updateMask")
     updateHexBins()
 }
+
 defineExpose({
     updateMask,
 })

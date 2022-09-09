@@ -58,7 +58,7 @@ const total_articles = computed(() => {
             return outlet_article_num_dict.value[outlet]
         }
     } else if(props.view?.type === ViewType.OutletScatter) {
-        return _.sumBy(props.view?.data.nodes, (node) => (node.articles.length))
+        return _.sumBy(props.view?.data.nodes, (node) => (node.article_ids.length))
     } else if(props.view?.type === ViewType.CooccurrHex) {
         const outlet = props.view.title.split("-")[0]
         return outlet_article_num_dict.value[outlet]
@@ -101,8 +101,8 @@ const y = d3.scalePow()
     .domain([0, 1])
     .range([ margin.top + viewBox_height, margin.top]);
 const zoom: any = d3.zoom().scaleExtent([1, 3]).on("zoom", handleZoom)
-const filtered_data: Ref<ScatterNode[]> = computed(() => props.view?.data.nodes.filter((node: ScatterNode) => node.articles.length > (props.article_num_threshold || 0)))
-const nodes_freq = computed(() => filtered_data.value?.map(node => {return {title: node.text, freq: node.articles.length}}))
+const filtered_data: Ref<ScatterNode[]> = computed(() => props.view?.data.nodes.filter((node: ScatterNode) => node.article_ids.length > (props.article_num_threshold || 0)))
+const nodes_freq = computed(() => filtered_data.value?.map(node => {return {title: node.text, freq: node.article_ids.length}}))
 const segment_controller_width = 12
 const node_circle_radius = 10
 const clicked_node: Ref<ScatterNode> = ref(new ScatterNode())
@@ -439,7 +439,7 @@ function categorizeNode(node) {
 function updateExpandedTooltipContent(data: ScatterNode) {
     tooltip_content.value = 
     `title: ${data.text} <br>` + 
-    `&nbsp #articles: ${data.articles}/${total_articles.value} <br>` +
+    `&nbsp #articles: ${data.article_ids}/${total_articles.value} <br>` +
     `&nbsp sst: (${data.pos_sst.toFixed(2)}, ${data.neg_sst.toFixed(2)}) <br>` 
     
 
@@ -451,7 +451,7 @@ function updateOverviewTooltipContent() {
     const entity_num = nodes.length || 0
     const avg_pos_sst = _.mean(nodes.map(node => node.pos_sst))
     const avg_neg_sst = _.mean(nodes.map(node => node.neg_sst))
-    nodes.sort((node_a, node_b) => -(node_a.articles.length - node_b.articles.length))
+    nodes.sort((node_a, node_b) => -(node_a.article_ids.length - node_b.article_ids.length))
     tooltip_content.value = 
     `${title}: <br>` + 
     `&nbsp #entities: ${entity_num} <br>` +
@@ -579,42 +579,39 @@ function updateOverviewScatter() {
             const group = enter.append("g").attr("class", "outlet")
             group.append("circle")
                 .attr("class", "outlet_circle")
-                // .attr("r", (d) => article_radius_scale(d.articles))
                 .attr("r", node_circle_radius/(current_zoom?.k || 1))
                 .attr("cx", (d) => x(d.pos_sst))
                 .attr("cy", (d) => y(Math.abs(d.neg_sst)))
                 // .attr("fill", (d) => SstColors.outlet_color_dict[d.text])
-                .attr("fill", (d) => d.articles.length === 0? "white" :SstColors.article_num_color_scale(d.articles.length/max_articles.value))
+                .attr("fill", (d) => d.article_ids.length === 0? "white" :SstColors.article_num_color_scale(d.article_ids.length/max_articles.value))
                 .attr("opacity", 0.8)
                 .raise()
             group.append("circle")
                 .attr("class", "expand_circle")
-                // .attr("r", (d) => article_radius_scale(d.articles))
                 .attr("r", node_circle_radius/(current_zoom?.k || 1))
                 .attr("cx", (d) => x(d.pos_sst))
                 .attr("cy", (d) => y(Math.abs(d.neg_sst)))
                 .attr("fill", "white")
                 .attr("stroke", "black")
-                .attr("stroke-dasharray", (d) => d.articles.length === 0? 2.5 : 0)
+                .attr("stroke-dasharray", (d) => d.article_ids.length === 0? 2.5 : 0)
                 .lower()
             group.append("image")
                 .attr("class", "outlet_image")
         },
         update => {
             update.selectAll("circle")
-            // .attr("r", (d) => article_radius_scale(d.articles))
                 .attr("r", node_circle_radius/(current_zoom?.k || 1))
                 .attr("cx", (d: any) => x(d.pos_sst))
                 .attr("cy", (d: any) => y(Math.abs(d.neg_sst)))
 
             update.selectAll("circle.outlet_circle")
             // .attr("fill", (d) => SstColors.outlet_color_dict[d.text])
-            .attr("fill", (d: any) => SstColors.article_num_color_scale(d.articles.length/max_articles.value))
+            .attr("fill", (d: any) => SstColors.article_num_color_scale(d.article_ids.length/max_articles.value))
             // .attr("opacity", 0.8)
         }
     ) 
     const dots = svg.selectAll("g.outlet")
-    dots.sort((da: any, db: any) => (da.articles.length - db.articles.length))
+    dots.sort((da: any, db: any) => (da.article_ids.length - db.article_ids.length))
     if(current_zoom) {
         dots.attr("transform", current_zoom)
     }
@@ -623,7 +620,6 @@ function updateOverviewScatter() {
         highlight_circle.attr("fill", "blue")
     }
     
-    // dots.attr("opacity", (d) => (d.articles < props.article_num_threshold? 0:0.8))
 }
 
 function showTemporal() {
@@ -634,10 +630,11 @@ function showTemporal() {
 }
 
 function updateNodeInfo(node_data: ScatterNode) {
+    console.log("🚀 ~ file: SentimentScatter.vue ~ line 633 ~ updateNodeInfo ~ node_data", node_data)
     hovered_node_info.value = {
         text: node_data.text,
-        pos_articles: node_data.pos_articles,
-        neg_articles: node_data.neg_articles,
+        pos_articles: node_data.pos_articles.length,
+        neg_articles: node_data.neg_articles.length,
         pos_score: node_data.pos_sst,
         neg_score: node_data.neg_sst,
     }

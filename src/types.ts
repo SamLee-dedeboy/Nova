@@ -66,9 +66,9 @@ export class TemporalBins {
 }
 export class ScatterNode {
     text: string
-    articles: number[]
-    pos_articles: number
-    neg_articles: number
+    article_ids: number[]
+    pos_articles: number[]
+    neg_articles: number[]
     pos_sst: number
     neg_sst: number
     topicBins: {[id: string]: {pos: number, neg: number}}

@@ -30,6 +30,7 @@ import ArticleView from "../components/ArticleView.vue"
 import EntityInfoView from "../components/EntityInfoView.vue"
 import tutorial_intro_json from "../assets/tutorial/tutorial_intro.json"
 import * as tutorial from "../components/TutorialUtils"
+import { resolve } from "path";
 
 
 //
@@ -41,6 +42,26 @@ let dataset_metadata = {}
 let original_dataset = []
 const articles = ref([])
 
+// overview data 
+const overview_overall_scatter_data: Ref<any> = ref({})
+const overview_grouped_scatter_data: Ref<any> = ref({})
+const grouped_scatter_view_dict = vue.computed(() => {
+  if(!overview_grouped_scatter_data.value) return undefined
+  let res_dict: any = {}
+  Object.keys(overview_grouped_scatter_data.value).forEach(outlet => {
+    const scatter_data = overview_grouped_scatter_data.value[outlet]
+    const scatter_view: typeUtils.EntityScatterView = {
+      title: outlet,
+      type: typeUtils.ViewType.EntityScatter,
+      data: scatter_data
+    }
+    res_dict[outlet] = scatter_view
+  })
+  return res_dict
+})
+const overall_scatter_data_loaded: Ref<boolean> = ref(false)
+const grouped_scatter_data_loaded: Ref<boolean> = ref(false)
+const overview_constructed: Ref<boolean> = ref(false)
 //
 // processed data 
 //
@@ -94,15 +115,6 @@ const entity_cooccurrences_dict = ref({})
  */
 const scatter_dict = ref({})
 
-/**
- * flag for constructing overview grid graphs on mounted.
- */
-
-const overview_constructed: Ref<boolean> = ref(false)
-/**
- * @deprecated
- */
-const entity_list: Ref<string[]> = computed(() => entity_mentions_grouped.value?.["CNN"].map(entity_mention => entity_mention.entity))
 
 /**
  * Array: ScatterOutletGraph[]. \
@@ -115,15 +127,7 @@ const selectedScatterViews_left: Ref<typeUtils.PanelView[]> = ref([])
  */
 const selectedScatterViews_right: Ref<typeUtils.PanelView[]> = ref([])
 
-/**
- * @deprecated
- */
-const entity_data = computed(() => entity_mentions_grouped.value.map(entity_mention => { return {"name": entity_mention[0], "num": entity_mention[1].length || 0}}))
 
-/**
- * flag for displaying load icon on mounted.
- */
-const overview_constructing: Ref<boolean> = ref(true)
 
 //
 // preprocessed global data used across components
@@ -332,8 +336,44 @@ vue.watch(selectedScatterViews_right, (new_value, old_value) => {
 }, {deep:true})
 
 // prepare for tutorial
-vue.onMounted(() => {
+vue.onMounted(async() => {
   tutorial.prepareComponentsForTutorial({tutorial_mode, tutorial_step})
+  const server_address = "http://127.0.0.1:5000"
+  const promiseArray: any[] = []
+  promiseArray.push(new Promise((resolve) => {
+      fetch(`${server_address}/overview/scatter/overall`)
+      .then(res => res.json())
+      .then(json => {
+        overview_overall_scatter_data.value = json
+        const overall_scatter_view: typeUtils.EntityScatterView = {
+          title: "Overall",
+          type: typeUtils.ViewType.EntityScatter,
+          data: overview_overall_scatter_data.value 
+        }
+        selectedScatterViews_left.value.push(overall_scatter_view)
+        resolve("success")
+      })
+  }))
+  promiseArray.push(new Promise((resolve) => {
+    fetch(`${server_address}/overview/scatter/grouped`)
+    .then(res => res.json())
+    .then(json => {
+      overview_grouped_scatter_data.value = json
+      resolve("success")
+    })
+  }))
+  promiseArray.push(new Promise((resolve) => {
+    fetch(`${server_address}/processed_data/outlet_article_num_dict`)
+    .then(res => res.json())
+    .then(json => {
+      outlet_article_num_dict.value = json
+      resolve("success")
+    })
+  }))
+  await Promise.all(promiseArray)
+    .then(res => {
+      overview_constructed.value = true
+    })
 })
 
 // tutorial setups
@@ -354,6 +394,9 @@ function updateNpList(np_list) {
   dataset_metadata = this.$refs.toolbar.getMetaData()  
 } 
 
+/**
+ * @deprecated
+ */
 function datasetImported(dataset) {
   overview_constructing.value = true
   setTimeout(() => {
@@ -842,13 +885,13 @@ function showCoHexCommon() {
                 <div v-if="overview_constructed" class="search-bar">
                   <SearchBar :search_terms="entity_list" @entity_searched="handleSearch"></SearchBar>
                 </div>
-                <MyToolbar ref="toolbar" 
+                <!-- <MyToolbar ref="toolbar" 
                 @candidate_updated="updateNpList"
                 @dataset_imported="datasetImported"  >
-                </MyToolbar>
+                </MyToolbar> -->
                 <ToggleButton v-if="overview_constructed" class='temporal-toggler ' v-model="temporal_mode" onIcon="pi pi-chart-line" offIcon="pi pi-chart-line"></ToggleButton>
               </div>
-              <i v-if="overview_constructing" class="pi pi-spin pi-spinner" 
+              <i v-if="!overview_constructed" class="pi pi-spin pi-spinner" 
               style="
               position:absolute;
               left: 45%;
@@ -858,9 +901,9 @@ function showCoHexCommon() {
               "></i> 
             <div class="overview-grid-container" v-if="overview_constructed && !temporal_mode" >
               <SentimentScatter
-                  v-for="(outlet, index) in enabled_outlet_set" :key="outlet" 
+                  v-for="(outlet, index) in Object.keys(grouped_scatter_view_dict)" :key="outlet" 
                   class="outlet-scatter"
-                  :view="scatter_dict[outlet]"
+                  :view="grouped_scatter_view_dict[outlet]"
                   :view_index="index"
                   :id="`scatter-${index}`"
                   :article_num_threshold="article_num_threshold"
