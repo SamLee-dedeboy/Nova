@@ -521,6 +521,7 @@ function handleDragLeave(e) {
 }
 
 function handleDropScatter(e) {
+  const t0 = performance.now()
   // style changes
   const tabview_left = document.querySelector(".p-tabview.panel-left") as HTMLElement
   if(e.target !== tabview_left && tabview_left.contains(e.target)) {
@@ -556,6 +557,8 @@ function handleDropScatter(e) {
   if(button_next != undefined) {
     button_next.click()
   }
+  const t1 = performance.now()
+  console.log("handle Drop:", t1-t0)
 }
 
 async function handleEntityClicked({title, type, d}: {title: string, type: typeUtils.ViewType, d: ScatterNode}) {
@@ -597,7 +600,7 @@ async function handleEntityClicked({title, type, d}: {title: string, type: typeU
     // TODO: add selected entity
 
     const path_overall_or_grouped = ((title === "Overall")? "overall":"grouped")
-    await fetch(`${server_address}/hexview/${path_overall_or_grouped}/${entity}`)
+    await fetch(`${server_address}/hexview/${path_overall_or_grouped}/${d.text}`)
       .then(res => res.json())
       .then(json => {
         const cooccurrences = json
@@ -715,39 +718,58 @@ function handleUpdateOutletWeight({outlet, value}) {
   updateOverallEntityNode({outlet, value})
 }
 
-function updateOverallEntityNode({outlet, value}) {
+async function updateOverallEntityNode({outlet, value}) {
   const overall_entity_scatter = selectedScatterViews_left.value.find(view => view.title === "Overall") as typeUtils.EntityScatterView
-  const pos_max: number = _.sumBy(
-    Object.keys(overall_entity_scatter.data.pos_max!),
-    (outlet) => overall_entity_scatter.data.pos_max[outlet]*outlet_weight_dict.value[outlet]
-  )
-  const pos_min: number = _.sumBy(
-    Object.keys(overall_entity_scatter.data.pos_min!),
-    (outlet) => overall_entity_scatter.data.pos_min[outlet]*outlet_weight_dict.value[outlet]
-  )
-  const neg_max: number = _.sumBy(
-    Object.keys(overall_entity_scatter.data.neg_max!),
-    (outlet) => overall_entity_scatter.data.neg_max[outlet]*outlet_weight_dict.value[outlet]
-  )
-  const neg_min: number = _.sumBy(
-    Object.keys(overall_entity_scatter.data.neg_min!),
-    (outlet) => overall_entity_scatter.data.neg_min[outlet]*outlet_weight_dict.value[outlet]
-  )
-  let changed_node: any[] = []
-  overall_entity_scatter?.data.nodes.forEach(node => {
-    const article_num_outlet_dict = overall_entity_scatter?.data.mentions_groupby_outlet_dict[node.text]
-    const pos_sum: number = _.sumBy(
-      Object.keys(article_num_outlet_dict),
-      (outlet) => article_num_outlet_dict[outlet].pos*outlet_weight_dict.value[outlet]
-    )
-    const neg_sum: number = _.sumBy(
-      Object.keys(article_num_outlet_dict),
-      (outlet) => article_num_outlet_dict[outlet].neg*outlet_weight_dict.value[outlet]
-    )
-    node.pos_sst = preprocess.pos_score(pos_sum, pos_max, pos_min)
-    node.neg_sst = preprocess.neg_score(neg_sum, neg_max, neg_min)
-    changed_node.push(node.text)
+  await fetch(`${server_address}/processed_data/updateOutletWeight`,{
+    method: "POST",
+    headers: {
+      "Accept": "application/json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(outlet_weight_dict.value)
   })
+    .then(res => res.json())
+    .then(json => {
+      console.log("update outlet weight done")
+      // json.nodes.forEach(node => {
+      //   const text = node.text
+      //   const origin_node = overall_entity_scatter.data.nodes.find(node => node.text === text)
+      //   console.log(text, origin_node?.pos_sst, origin_node?.neg_sst, " / ", node.pos_sst, node.neg_sst)
+      // })
+
+      overall_entity_scatter.data = json
+    })
+  // const pos_max: number = _.sumBy(
+  //   Object.keys(overall_entity_scatter.data.pos_max!),
+  //   (outlet) => overall_entity_scatter.data.pos_max[outlet]*outlet_weight_dict.value[outlet]
+  // )
+  // const pos_min: number = _.sumBy(
+  //   Object.keys(overall_entity_scatter.data.pos_min!),
+  //   (outlet) => overall_entity_scatter.data.pos_min[outlet]*outlet_weight_dict.value[outlet]
+  // )
+  // const neg_max: number = _.sumBy(
+  //   Object.keys(overall_entity_scatter.data.neg_max!),
+  //   (outlet) => overall_entity_scatter.data.neg_max[outlet]*outlet_weight_dict.value[outlet]
+  // )
+  // const neg_min: number = _.sumBy(
+  //   Object.keys(overall_entity_scatter.data.neg_min!),
+  //   (outlet) => overall_entity_scatter.data.neg_min[outlet]*outlet_weight_dict.value[outlet]
+  // )
+  // let changed_node: any[] = []
+  // overall_entity_scatter?.data.nodes.forEach(node => {
+  //   const article_num_outlet_dict = overall_entity_scatter?.data.mentions_groupby_outlet_dict[node.text]
+  //   const pos_sum: number = _.sumBy(
+  //     Object.keys(article_num_outlet_dict),
+  //     (outlet) => article_num_outlet_dict[outlet].pos*outlet_weight_dict.value[outlet]
+  //   )
+  //   const neg_sum: number = _.sumBy(
+  //     Object.keys(article_num_outlet_dict),
+  //     (outlet) => article_num_outlet_dict[outlet].neg*outlet_weight_dict.value[outlet]
+  //   )
+  //   node.pos_sst = preprocess.pos_score(pos_sum, pos_max, pos_min)
+  //   node.neg_sst = preprocess.neg_score(neg_sum, neg_max, neg_min)
+  //   changed_node.push(node.text)
+  // })
 }
 
 function handleHexChanged({active, part}) {

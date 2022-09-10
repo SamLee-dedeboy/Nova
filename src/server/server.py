@@ -59,14 +59,20 @@ def get_overall_hexview(title):
 def get_grouped_hexview(title):
     entity = title.split("-")[0]
     outlet = title.split("-")[1]
-    cooccurrences = raw_data.entity_cooccurrences[outlet][title]
+    cooccurrences = raw_data.entity_cooccurrences_grouped[outlet][entity]
     request_data = hexview_data.constructHexData(entity, cooccurrences, grouped_node_dict[outlet])
-    return json.dumps(request_data)
+    return json.dumps(request_data, default=vars)
 
 @app.route("/processed_data/ids_to_articles", methods=['POST'])
 def ids_to_articles():
     ids = request.json
     return json.dumps(processed_data.idsToArticles(ids))
+
+@app.route("/processed_data/updateOutletWeight", methods=['POST'])
+def updateOutletWeight():
+    outlet_weight_dict = request.json
+    scatter_data.updateOutletWeight(overview_scatter_overall_data, sentiment_processor.overall_metadata, outlet_weight_dict)
+    return json.dumps(overview_scatter_overall_data, default=vars)
 
 @app.route("/test")
 def test():

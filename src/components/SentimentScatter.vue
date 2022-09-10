@@ -142,6 +142,7 @@ vue.watch(() => props.segmentation, (new_value, old_value) => {
     updateSegmentation()
 }, {deep: true}) 
 vue.watch(() => props.view, (new_view, old_view) => {
+    console.log(props.view?.title, " updating")
     updateCanvas() 
 }, {deep: true})
 

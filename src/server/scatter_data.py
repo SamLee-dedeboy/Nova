@@ -1,8 +1,11 @@
+from email.policy import default
 import itertools
 from collections import defaultdict
+from re import I
 from data_types import *
 from ProcessedDataManager import *
 import sentiment_processor
+import functools
 
 def overall_entity_scatter(entity_mentions, processed_data_manager ):
     min_articles = len(processed_data_manager.article_dict.keys())
@@ -12,7 +15,7 @@ def overall_entity_scatter(entity_mentions, processed_data_manager ):
     neg_max_articles = []
     neg_min_articles = range(min_articles)
     meta_data = OverallSentimentScatterMetaData(0,0,0,0,0,0,{},{},{},{},{})
-    data = EntityScatterData(nodes=[], max_articles=0, min_articles=0)
+    data = EntityScatterData( nodes=[], max_articles=0, min_articles=0,)
     node_dict = {}
     # get max & min
     for entity, mention_ids in entity_mentions.items():
@@ -46,11 +49,14 @@ def overall_entity_scatter(entity_mentions, processed_data_manager ):
     for entity, mention_ids in entity_mentions.items():
         mentioned_articles = processed_data_manager.idsToArticles(mention_ids)
         mentions_groupby_outlet_dict = grouped_dict(mentioned_articles, lambda article: article["journal"])
+        entity_pos_neg_mentions_grouped_dict = defaultdict(dict)
         for outlet, mention_list in mentions_groupby_outlet_dict.items():
             pos_mentions, neg_mentions = [], []
             for article in mention_list:
                 (pos_mentions if article['sentiment']['label'] == 'POSITIVE' else neg_mentions).append(article["id"])
             mentions_groupby_outlet_dict[outlet] = {"pos": len(pos_mentions), "neg": len(neg_mentions)}
+            entity_pos_neg_mentions_grouped_dict["pos"][outlet] = len(pos_mentions)
+            entity_pos_neg_mentions_grouped_dict["neg"][outlet] = len(neg_mentions)
         node = construct_node(
             mentioned_articles, entity,
             len(pos_max_articles), len(pos_min_articles),
@@ -58,7 +64,7 @@ def overall_entity_scatter(entity_mentions, processed_data_manager ):
         )
         node_dict[entity] = node
         data.nodes.append(node)
-        meta_data.mentions_groupby_outlet_dict[entity] = mentions_groupby_outlet_dict
+        meta_data.mentions_groupby_outlet_dict[entity] = entity_pos_neg_mentions_grouped_dict
     return data, meta_data, node_dict
 
 def grouped_entity_scatter(entity_mentions_grouped, processed_data_manager):
@@ -143,3 +149,31 @@ def grouped_dict(target_list, group_func=None):
     for k, g in itertools.groupby(target_list, group_func):
         res_dict[k] += list(g)
     return res_dict
+
+def updateOutletWeight(
+    overall_scatter_data: EntityScatterData, 
+    overall_scatter_metadata: OverallSentimentScatterMetaData, 
+    outlet_weight_dict: dict):
+    new_pos_max = dict_weighted_sum(overall_scatter_metadata.pos_max_grouped, outlet_weight_dict)
+    new_pos_min = dict_weighted_sum(overall_scatter_metadata.pos_min_grouped, outlet_weight_dict)
+    new_neg_max = dict_weighted_sum(overall_scatter_metadata.neg_max_grouped, outlet_weight_dict)
+    new_neg_min = dict_weighted_sum(overall_scatter_metadata.neg_min_grouped, outlet_weight_dict)
+    for node in overall_scatter_data.nodes:
+        new_pos_sum = dict_weighted_sum(overall_scatter_metadata.mentions_groupby_outlet_dict[node.text]["pos"], outlet_weight_dict) 
+        new_neg_sum = dict_weighted_sum(overall_scatter_metadata.mentions_groupby_outlet_dict[node.text]["neg"], outlet_weight_dict) 
+        node.pos_sst = sentiment_processor.min_max_norm_sst_score(
+            new_pos_sum, 
+            new_pos_max, new_pos_min, 
+            sentiment_processor.pos_scale_func)
+        node.neg_sst = sentiment_processor.min_max_norm_sst_score(
+            new_neg_sum, 
+            new_neg_max, new_neg_min, 
+            sentiment_processor.neg_scale_func)
+    return overall_scatter_data
+
+def dict_weighted_sum(target_dict: dict, weight_dict: dict):
+    sum = 0
+    for key in target_dict.keys():
+        sum += target_dict[key]*weight_dict[key] 
+    return sum
+

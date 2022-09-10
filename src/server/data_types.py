@@ -21,10 +21,6 @@ class EntityScatterData:
 # @dataclass
 # class OverallEntityScatterData(EntityScatterData):
 #     mentions_groupby_outlet_dict: dict
-#     pos_max: dict
-#     pos_min: dict
-#     neg_max: dict
-#     neg_min: dict
 
 @dataclass
 class EntityCooccurrences:
