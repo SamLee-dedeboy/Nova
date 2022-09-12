@@ -158,18 +158,29 @@ def updateOutletWeight(
     new_pos_min = dict_weighted_sum(overall_scatter_metadata.pos_min_grouped, outlet_weight_dict)
     new_neg_max = dict_weighted_sum(overall_scatter_metadata.neg_max_grouped, outlet_weight_dict)
     new_neg_min = dict_weighted_sum(overall_scatter_metadata.neg_min_grouped, outlet_weight_dict)
+    weighted_nodes = []
     for node in overall_scatter_data.nodes:
         new_pos_sum = dict_weighted_sum(overall_scatter_metadata.mentions_groupby_outlet_dict[node.text]["pos"], outlet_weight_dict) 
         new_neg_sum = dict_weighted_sum(overall_scatter_metadata.mentions_groupby_outlet_dict[node.text]["neg"], outlet_weight_dict) 
-        node.pos_sst = sentiment_processor.min_max_norm_sst_score(
+        pos_sst = sentiment_processor.min_max_norm_sst_score(
             new_pos_sum, 
             new_pos_max, new_pos_min, 
             sentiment_processor.pos_scale_func)
-        node.neg_sst = sentiment_processor.min_max_norm_sst_score(
+        neg_sst = sentiment_processor.min_max_norm_sst_score(
             new_neg_sum, 
             new_neg_max, new_neg_min, 
             sentiment_processor.neg_scale_func)
-    return overall_scatter_data
+        weighted_nodes.append(ScatterNode(
+            node.text, 
+            node.article_ids, 
+            node.pos_article_ids,
+            node.neg_article_ids,
+            pos_sst,
+            neg_sst,
+            node.topicBins)
+        )
+
+    return EntityScatterData(weighted_nodes, overall_scatter_data.max_articles, overall_scatter_data.min_articles)
 
 def dict_weighted_sum(target_dict: dict, weight_dict: dict):
     sum = 0

@@ -71,8 +71,8 @@ def ids_to_articles():
 @app.route("/processed_data/updateOutletWeight", methods=['POST'])
 def updateOutletWeight():
     outlet_weight_dict = request.json
-    scatter_data.updateOutletWeight(overview_scatter_overall_data, sentiment_processor.overall_metadata, outlet_weight_dict)
-    return json.dumps(overview_scatter_overall_data, default=vars)
+    response = scatter_data.updateOutletWeight(overview_scatter_overall_data, sentiment_processor.overall_metadata, outlet_weight_dict)
+    return json.dumps(response, default=vars)
 
 @app.route("/test")
 def test():

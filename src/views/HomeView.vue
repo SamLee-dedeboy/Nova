@@ -748,6 +748,11 @@ async function updateOverallEntityNode({outlet, value}) {
       //   const origin_node = overall_entity_scatter.data.nodes.find(node => node.text === text)
       //   console.log(text, origin_node?.pos_sst, origin_node?.neg_sst, " / ", node.pos_sst, node.neg_sst)
       // })
+      json.nodes.forEach(node => {
+        if(node.text == "Donald_Trump") {
+          console.log(node.text, node.pos_sst, node.neg_sst)
+        }
+      })
 
       overall_entity_scatter.data = json
     })
