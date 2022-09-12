@@ -19,11 +19,11 @@ import { updateOverviewGrid } from "./TutorialUtils";
 import * as SstColors from "./ColorUtils"
 import { SentimentType, Sentiment2D, EntityCooccurrences } from "../types"
 import { nextTick } from "process";
+import { Ref, ref } from "vue"
 const props = defineProps({
     id: String,
     entity_cooccurrences: Object as () => EntityCooccurrences,
     segmentation: Sentiment2D, 
-    applyMask: Boolean
 })
 
 
@@ -53,6 +53,7 @@ const sorted_cooccurrence_list = vue.computed(() => {
     })
     return res
 })
+const applyMask: Ref<boolean> = ref(false)
 const hexbin = d3_hexbin.hexbin()
     .radius(radius) // size of the bin in px
     .extent([[0, 0], [viewBox_width, max_height]])
@@ -71,10 +72,6 @@ vue.watch(() => props.entity_cooccurrences, (new_value, old_value) => {
     updateHexBins()
 })
 
-vue.watch(() => props.applyMask, (new_value, old_value) => {
-    // console.log("update masking")
-    // updateHexBins()
-})
 
 vue.onMounted(() => {
     vue.nextTick(() => {
@@ -87,6 +84,8 @@ vue.onMounted(() => {
 })
 
 function updateHexBins() {
+    console.log(applyMask.value)
+    console.log(sorted_cooccurrence_list.value)
     const svg = d3.select(`#${props.id}`).select("svg")
     const hex_path_group = svg.select("g.hex-path-group")
 
@@ -104,7 +103,7 @@ function updateHexBins() {
         .attr("stroke-width", 1)
         .attr("filter", `url(#${props.id}-brightness)`)
         .attr("opacity", (d, i) => {
-            if(!props.applyMask) return 1
+            if(!applyMask.value) return 1
             return sorted_cooccurrence_list.value[i].mask? 1:0
         })
     updateHexColor()
@@ -117,7 +116,7 @@ function updateHexBins() {
         .attr("x", d => x(d.x))
         .attr("y", d => y(d.y) - 35 - (Math.min(d.entity.split("_").length,4)+0.5)/2*15 )
         .attr("opacity", (d) => {
-            if(!props.applyMask) return 1
+            if(!applyMask.value) return 1
             return d.mask? 1:0
         })
         // .attr("y", d => y(d.y))
@@ -191,6 +190,8 @@ function find_level(index) {
 }
 
 function updateMask() {
+    console.log("update Mask")
+    applyMask.value = true
     updateHexBins()
 }
 

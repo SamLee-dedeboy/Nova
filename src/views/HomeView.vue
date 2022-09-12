@@ -31,6 +31,7 @@ import EntityInfoView from "../components/EntityInfoView.vue"
 import tutorial_intro_json from "../assets/tutorial/tutorial_intro.json"
 import * as tutorial from "../components/TutorialUtils"
 import { resolve } from "path";
+import SelectButton  from "../components/SelectButton.vue";
 
 
 //
@@ -251,13 +252,24 @@ const show_co_button = computed(() => {
   return co_hex_active_left.value && co_hex_active_right.value && compare_mode.value
 })
 
+const cohex_mode: Ref<any> = ref(null)
+const cohex_options: Ref<string[]> = ref(["Common", "Diff"])
+
 /**
  * refs for panel left & right
  */
 const panel_left: Ref<any> = ref(null)
 const panel_right: Ref<any> = ref(null)
 
-
+vue.watch(cohex_mode, (new_value, old_value) => {
+  console.log("🚀 ~ file: HomeView.vue ~ line 265 ~ vue.watch ~ new_value", new_value)
+  if(new_value === "Common")
+    showCoHexCommon()
+  if(new_value === "Diff")
+    showCoHexDiff()
+  if(new_value === null) 
+    showOriginalCoHex()
+})
 vue.watch(overview_constructed, (new_value, old_value) => {
   if(tutorial_mode.value) {
     tutorial.updateOverviewGrid()
@@ -605,7 +617,7 @@ async function handleEntityClicked({title, type, d}: {title: string, type: typeU
       .then(json => {
         const cooccurrences = json
         const hex_view: typeUtils.CooccurrHexView = {
-          title: `co-${title}`,
+          title: `co-${d.text}`,
           type: typeUtils.ViewType.CooccurrHex,
           data: cooccurrences,
         }
@@ -795,6 +807,14 @@ function showCoHexCommon() {
   panel_left.value.applyCoHexMask(common, true)
   panel_right.value.applyCoHexMask(common, true)
 }
+
+function showOriginalCoHex() {
+  const entities_left = panel_left.value.getActiveHexEntities()
+  const entities_right = panel_right.value.getActiveHexEntities()
+  panel_left.value.applyCoHexMask(entities_left, true)
+  panel_right.value.applyCoHexMask(entities_right, true)
+
+}
 </script>
 
 
@@ -830,8 +850,9 @@ function showCoHexCommon() {
             </Divider>
             <div class="co-hex-button-container"
               v-if="show_co_button">
-            <Button class="co-common-button p-primary" label="Common" @click="showCoHexCommon"></Button>
-            <Button class="co-diff-button p-primary" label="Diff" @click="showCoHexDiff"></Button>
+            <!-- <Button class="co-common-button p-primary" label="Common" @click="showCoHexCommon"></Button>
+            <Button class="co-diff-button p-primary" label="Diff" @click="showCoHexDiff"></Button> -->
+            <SelectButton class="common-diff" v-model="cohex_mode" :options="cohex_options" aria-labelledby="single"  />
             </div>
 
             <PanelContainer
@@ -1181,9 +1202,13 @@ function showCoHexCommon() {
   flex-direction: column;
 }
 
-.co-common-button, .co-diff-button {
+.common-diff {
+  display: flex;
+  flex-direction: column;
   font-size: x-small;
-  text-align: center;
+}
+.common-diff > :deep(.p-button.p-component) {
+  font-size: inherit;
 }
  </style>
 

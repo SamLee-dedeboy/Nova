@@ -108,30 +108,30 @@ const node_circle_radius = 10
 const clicked_node: Ref<ScatterNode> = ref(new ScatterNode())
 const menu = ref()
 const menu_items = ref([
-    {
-        label: "Compare with other outlets",
-        command: () => {
-            emit("node_clicked", {title: props.view?.title, type: ViewType.OutletScatter, d: clicked_node.value})
-        }
-    },
-    {
-        label: "Show in TemporalView",
-        command: () => {
-            emit("node_clicked", {title: props.view?.title, type: ViewType.Temporal, d: clicked_node.value})
-        }
-    },
+    // {
+    //     label: "Compare with other outlets",
+    //     command: () => {
+    //         emit("node_clicked", {title: props.view?.title, type: ViewType.OutletScatter, d: clicked_node.value})
+    //     }
+    // },
+    // {
+    //     label: "Show in TemporalView",
+    //     command: () => {
+    //         emit("node_clicked", {title: props.view?.title, type: ViewType.Temporal, d: clicked_node.value})
+    //     }
+    // },
     {
         label: "Show co-occurrence",
         command: () => {
             emit("node_clicked", {title: props.view?.title, type: ViewType.CooccurrHex, d: clicked_node.value})
         }
     },
-    {
-        label: "Show articles",
-        command: () => {
-            emit("node_clicked", {title: props.view?.title, type: ViewType.Article, d: clicked_node.value})
-        }
-    },
+    // {
+    //     label: "Show articles",
+    //     command: () => {
+    //         emit("node_clicked", {title: props.view?.title, type: ViewType.Article, d: clicked_node.value})
+    //     }
+    // },
 ])
 var segment_point = {x: 0, y: 0} 
 var segment_controller_start_x:number

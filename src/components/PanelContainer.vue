@@ -10,7 +10,7 @@ import InfoButton from "./deprecated/InfoButton.vue";
 import * as d3 from "d3"
 import { watch, onMounted, PropType, ref, Ref, toRef, computed, defineEmits, nextTick } from 'vue'
 import * as vue from 'vue'
-import { ScatterNode, PanelView, TemporalBins, ViewType, Article, OutletNodeInfo, Sentiment2D } from "../types";
+import { ScatterNode, PanelView, TemporalBins, ViewType, Article, EntityCooccurrences, Sentiment2D } from "../types";
 import TemporalCoordinates from "./TemporalCoordinates.vue";
 import TemporalPathSelector from "./TemporalPathSelector.vue";
 import SentimentScatter from "./SentimentScatter.vue";
@@ -36,8 +36,7 @@ const active: Ref<number> = ref(0)
 const highlight_entity: Ref<string[]> = ref([])
 const compare_mode = vue.inject("compare_mode") || ref(false)
 const selectedNodes: Ref<ScatterNode[]> = ref([])
-const apply_mask_flag: Ref<Boolean> = ref(false)
-const panels = ref([])
+const panels: Ref<any> = ref([])
 const hex_active: Ref<boolean> = vue.computed(() => {
     return props.selectedScatters?.[active.value]?.type === ViewType.CooccurrHex
 })
@@ -211,21 +210,20 @@ function breakText(data: string): string[] {
 }
 
 function getActiveHexEntities() {
-    return Object.keys(props.selectedScatters?.[active.value]?.data.cooccurrences)
+    return props.selectedScatters?.[active.value]?.data.sorted_cooccurrences_list.map(hex => hex.entity)
 }
 
 function applyCoHexMask(masked_entities, mask_value) {
     const hexview_data: EntityCooccurrences = props.selectedScatters?.[active.value]?.data
-    const all_entities_dict = hexview_data.cooccurrences
-    Object.keys(all_entities_dict).forEach(entity => {
-        all_entities_dict[entity].mask = masked_entities.includes(entity) === mask_value 
+    const all_hex_list = hexview_data.sorted_cooccurrences_list
+    all_hex_list.forEach(hex => {
+        hex.mask = masked_entities.includes(hex.entity) === mask_value 
     })
     console.log(panels.value)
     panels.value[active.value].updateMask()
     // masked_entities.forEach(entity => {
     //     all_entities_dict[entity].mask = true
     // })
-    apply_mask_flag.value = true
 
 }
 defineExpose({
@@ -248,7 +246,7 @@ defineExpose({
             @click="handleCloseTab($event, index)"/>
 		</template>
         <div class="scatter-panel-container"
-            v-if="view.type === ViewType.EntityScatter || view.type === ViewType.OutletScatter || view.type === ViewType.CooccurrScatter">
+            v-if="view.type === ViewType.EntityScatter || view.type === ViewType.OutletScatter">
             <SentimentScatter
                 :view="view"
                 :view_index="index"
@@ -363,8 +361,7 @@ defineExpose({
                 :ref="(el) => {panels[index] = el}"
                 :id="`${compare_part}-co-hex-${index}`"
                 :entity_cooccurrences="view.data"
-                :segmentation="segmentation"
-                :applyMask="apply_mask_flag" >
+                :segmentation="segmentation">
                 
             </HexCooccurrence>
         </div>
