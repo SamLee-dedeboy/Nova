@@ -91,8 +91,9 @@ vue.watch(selectedNodes, (new_value, old_value) => {
     highlightNodes.value = selectedNodes.value?.map(node => node.text.split("-")[0])
 })
 
-watch(() => props.selectedScatters, (new_scatters, old_scatters) => {
-    active.value = (props.selectedScatters?.length || 1) - 1 
+watch(() => props.selectedScatters?.length, (new_length, old_length) => {
+    if(new_length! > old_length!)
+        active.value = (props.selectedScatters?.length || 1) - 1 
     // const tab_navs = document.querySelector(".p-tabview-nav").querySelector('[role="presentation"]')
     vue.nextTick(() => {
         const tab_navs = document.querySelectorAll(`.${props.compare_part} .p-tabview-nav > [role=presentation]`)
@@ -222,6 +223,7 @@ function applyCoHexMask(masked_entities, mask_value) {
     all_hex_list.forEach(hex => {
         hex.mask = masked_entities.includes(hex.entity) === mask_value 
     })
+    console.log(`${props.compare_part}-${active.value} updateMask`)
     panels.value[active.value].updateMask()
     // masked_entities.forEach(entity => {
     //     all_entities_dict[entity].mask = true

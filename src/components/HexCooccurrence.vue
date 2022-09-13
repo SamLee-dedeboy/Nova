@@ -42,7 +42,7 @@ const max_height = viewBox_width/hex_width*hex_height
 const sorted_cooccurrence_list = vue.computed(() => {
     const raw_data = props.entity_cooccurrences?.sorted_cooccurrences_list!
     const entity: string = props.entity_cooccurrences?.entity!
-    let res: any[] = [{entity: entity, sst: undefined, x:0,y:0, mask:true}]
+    let res: any[] = [{entity: entity, sst: undefined, x:0,y:0, mask:true, index:0}]
     raw_data.forEach((hex_entity, index) => {
         const {x, y} = generate_hex_coord(index, hex_radius) 
         res.push({
@@ -50,7 +50,8 @@ const sorted_cooccurrence_list = vue.computed(() => {
             x: x,
             y: y,
             sst: hex_entity.sst,
-            mask: hex_entity.mask
+            mask: hex_entity.mask,
+            index:index+1,
         })
     })
     return res
@@ -86,6 +87,7 @@ vue.onMounted(() => {
 })
 
 function updateHexBins() {
+    console.log(`apply mask: ${applyMask.value}`)
     const svg = d3.select(`#${props.id}`).select("svg")
     const hex_group = svg.select("g.hex-group")
 
@@ -101,21 +103,41 @@ function updateHexBins() {
         .on("click", function(e, d) {
             emit("hex-clicked", {title: props.title, entity: d.entity})
         })
+        .append("path")
+        .attr("class", "hex-path")
 
     const hex_path: any = hex_group.selectAll("g.hex-bin").selectAll("path.hex-path")
         .data((d: any) => {
             return hexbin([[x(d.x), y(d.y)]])
         })
-    hex_path.enter().append("path")
-        .merge(hex_path)
-        .attr("d", (d:any) => `M${d.x},${d.y}${hexbin.hexagon()}`)
+    console.log(hex_path)
+    hex_path.attr("d", (d:any) => `M${d.x},${d.y}${hexbin.hexagon()}`)
         .attr("stroke", "black")
-        .attr("stroke-width", 1)
-        .attr("filter", `url(#${props.id}-brightness)`)
-        .attr("opacity", (d, i) => {
-            if(!applyMask.value) return 1
-            return sorted_cooccurrence_list.value[i].mask? 1:0
+        .attr("stroke-width", function(d, i) {
+            const parentNode: any = (this as HTMLElement).parentNode
+            const container: any = d3.select(parentNode)
+            const parent_data: any = container.data()[0]
+            if(parent_data.x === 0 && parent_data.y === 0) return 5.5
+            const index = parent_data.index
+            const level = index === 0? 0: find_level(index-1).level
+            const level_stroke_width = [3.2, 2, 1, 1, 1, 1]
+            return level_stroke_width[level]
+
         })
+        .attr("filter", `url(#${props.id}-brightness)`)
+        .attr("opacity", function(d) {
+            const parentNode: any = (this as HTMLElement).parentNode
+            const container: any = d3.select(parentNode)
+            const parent_data: any = container.data()[0]
+            const index = parent_data.index
+            const level = index === 0? 0: find_level(index-1).level
+            const level_opacity = [0.88, 0.8, 0.8, 0.8, 0.8, 0.8]
+            const opacity = level_opacity[level]
+            if(!applyMask.value) return opacity
+            if(sorted_cooccurrence_list.value[index].mask === false) return 0
+            else return opacity
+        })
+    hex_path.exit().remove()
     const hex_label: any = hex_group.selectAll("g.hex-bin").selectAll("text.hex-label")
         .data((d) => [d])
     hex_label.enter().append("text")
@@ -123,12 +145,20 @@ function updateHexBins() {
         .attr("class", "hex-label")
         .attr("x", d => x(d.x))
         .attr("y", d => y(d.y) - 35 - (Math.min(d.entity.split("_").length,4)+0.5)/2*15 )
-        .attr("opacity", (d) => {
-            if(!applyMask.value) return 1
-            return d.mask? 1:0
+        .attr("opacity", function(d) {
+            const parentNode: any = (this as HTMLElement).parentNode
+            const container: any = d3.select(parentNode)
+            const parent_data: any = container.data()[0]
+            const index = parent_data.index
+            const level = index === 0? 0: find_level(index-1).level 
+            const level_opacity = [0.95, 0.6, 0.55, 0.5, 0.7, 0.7]
+            const opacity = level_opacity[level]
+            if(!applyMask.value) return opacity
+            if(sorted_cooccurrence_list.value[index].mask === false) return 0
+            else return opacity
         })
     updateHexColor()
-    const tspan = hex_group.selectAll("g.hex-bin").selectAll("text.hex-label").selectAll("tspan")
+    const tspan:any = hex_group.selectAll("g.hex-bin").selectAll("text.hex-label").selectAll("tspan")
         .data((d: any) => {
             const words = d.entity.split("_")
             if(words.length > 4) {
@@ -138,6 +168,7 @@ function updateHexBins() {
             return words
         })
     tspan.enter().append("tspan")
+        .merge(tspan)
         .text((d:any) => d)
         .attr("x", function(d) { return parseFloat(d3.select((this.parentNode) as any).attr("x") ) })
         .attr("dy", 15)
@@ -205,6 +236,7 @@ function find_level(index) {
 
 function updateMask() {
     applyMask.value = true
+    console.log(`${props.id} update mask`)
     updateHexBins()
 }
 
