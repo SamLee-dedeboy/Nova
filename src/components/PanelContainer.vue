@@ -229,7 +229,11 @@ function applyCoHexMask(masked_entities, mask_value) {
 
 }
 
-function handleHexClicked(entity: string) {
+function handleHexClicked({title, entity}) {
+    if(title != "Overall") {
+        const outlet = title.split('-')[2]
+        entity = entity + "-" + outlet
+    }
     emit("hex-clicked", entity)
 }
 
@@ -365,6 +369,7 @@ defineExpose({
         </div>
         <div class="hex-view-container" v-if="view.type === ViewType.CooccurrHex">
             <HexCooccurrence
+                :title="view.title"
                 :ref="(el) => {panels[index] = el}"
                 :id="`${compare_part}-co-hex-${index}`"
                 :entity_cooccurrences="view.data"

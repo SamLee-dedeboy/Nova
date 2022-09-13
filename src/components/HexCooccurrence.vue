@@ -20,6 +20,7 @@ import * as SstColors from "./ColorUtils"
 import { SentimentType, Sentiment2D, EntityCooccurrences, HexEntity } from "../types"
 import { Ref, ref } from "vue"
 const props = defineProps({
+    title: String,
     id: String,
     entity_cooccurrences: Object as () => EntityCooccurrences,
     segmentation: Sentiment2D, 
@@ -98,7 +99,7 @@ function updateHexBins() {
     hex_bins.enter().append("g").attr("class", "hex-bin")
         .style("cursor", "pointer")
         .on("click", function(e, d) {
-            emit("hex-clicked", d.entity)
+            emit("hex-clicked", {title: props.title, entity: d.entity})
         })
 
     const hex_path: any = hex_group.selectAll("g.hex-bin").selectAll("path.hex-path")
