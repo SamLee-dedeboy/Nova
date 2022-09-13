@@ -15,7 +15,6 @@ CORS(app)
 raw_data = RawDataManager()
 processed_data = ProcessedDataManager(raw_data)
 sentiment_processor = SentimentProcessor()
-node_article_dict = {}
 overview_scatter_overall_data, sentiment_processor.overall_metadata, overall_node_dict = scatter_data.overall_entity_scatter(raw_data.candidate_entity, processed_data)
 overview_scatter_grouped_data, sentiment_processor.grouped_metadata, grouped_node_dict = scatter_data.grouped_entity_scatter(raw_data.candidate_entity_grouped, processed_data)
 
@@ -73,6 +72,14 @@ def updateOutletWeight():
     outlet_weight_dict = request.json
     response = scatter_data.updateOutletWeight(overview_scatter_overall_data, sentiment_processor.overall_metadata, outlet_weight_dict)
     return json.dumps(response, default=vars)
+
+@app.route("/processed_data/scatter_node/<node_text>")
+def get_scatter_node(node_text):
+    split = node_text.split("-")
+    if len(split) == 1:
+        return json.dumps(overall_node_dict[split[0]], default=vars)
+    else:
+        return json.dumps(grouped_node_dict[split[1]][split[0]], default=vars)
 
 @app.route("/test")
 def test():

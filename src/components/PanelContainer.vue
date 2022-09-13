@@ -10,7 +10,7 @@ import InfoButton from "./deprecated/InfoButton.vue";
 import * as d3 from "d3"
 import { watch, onMounted, PropType, ref, Ref, toRef, computed, defineEmits, nextTick } from 'vue'
 import * as vue from 'vue'
-import { ScatterNode, PanelView, TemporalBins, ViewType, Article, EntityCooccurrences, Sentiment2D } from "../types";
+import { ScatterNode, PanelView, TemporalBins, ViewType, Article, EntityCooccurrences, Sentiment2D, HexEntity } from "../types";
 import TemporalCoordinates from "./TemporalCoordinates.vue";
 import TemporalPathSelector from "./TemporalPathSelector.vue";
 import SentimentScatter from "./SentimentScatter.vue";
@@ -113,7 +113,10 @@ const emit = defineEmits(
     "node-clicked", 
     "entity-clicked", 
     "show_temporal",
-    "hex_active_changed"])
+    "hex_active_changed",
+    "hex-clicked",
+    ]
+)
 
 vue.onMounted(() => {
     highlightNodes.value = props.highlight_nodes || []
@@ -219,13 +222,17 @@ function applyCoHexMask(masked_entities, mask_value) {
     all_hex_list.forEach(hex => {
         hex.mask = masked_entities.includes(hex.entity) === mask_value 
     })
-    console.log(panels.value)
     panels.value[active.value].updateMask()
     // masked_entities.forEach(entity => {
     //     all_entities_dict[entity].mask = true
     // })
 
 }
+
+function handleHexClicked(entity: string) {
+    emit("hex-clicked", entity)
+}
+
 defineExpose({
     getActiveHexEntities,
     applyCoHexMask,
@@ -361,7 +368,9 @@ defineExpose({
                 :ref="(el) => {panels[index] = el}"
                 :id="`${compare_part}-co-hex-${index}`"
                 :entity_cooccurrences="view.data"
-                :segmentation="segmentation">
+                :segmentation="segmentation"
+                v-on:hex-clicked="handleHexClicked"
+                >
                 
             </HexCooccurrence>
         </div>

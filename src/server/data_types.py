@@ -6,8 +6,8 @@ import json
 class ScatterNode:
     text: str
     article_ids: list
-    pos_article_ids: int
-    neg_article_ids: int
+    pos_article_ids: list
+    neg_article_ids: list
     pos_sst: float
     neg_sst: float
     topicBins: dict

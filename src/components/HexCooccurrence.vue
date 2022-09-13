@@ -17,15 +17,14 @@ import * as d3 from "d3"
 import * as d3_hexbin from "d3-hexbin"
 import { updateOverviewGrid } from "./TutorialUtils";
 import * as SstColors from "./ColorUtils"
-import { SentimentType, Sentiment2D, EntityCooccurrences } from "../types"
-import { nextTick } from "process";
+import { SentimentType, Sentiment2D, EntityCooccurrences, HexEntity } from "../types"
 import { Ref, ref } from "vue"
 const props = defineProps({
     id: String,
     entity_cooccurrences: Object as () => EntityCooccurrences,
     segmentation: Sentiment2D, 
 })
-
+const emit = defineEmits(["hex-clicked"])
 
 // const viewBox = [1000, 1000/(2*Math.sin(Math.PI/3))*3]
 const viewBox = [640, 580]
@@ -41,13 +40,15 @@ const max_height = viewBox_width/hex_width*hex_height
 
 const sorted_cooccurrence_list = vue.computed(() => {
     const raw_data = props.entity_cooccurrences?.sorted_cooccurrences_list!
-    let res: any[] = []
+    const entity: string = props.entity_cooccurrences?.entity!
+    let res: any[] = [{entity: entity, sst: undefined, x:0,y:0, mask:true}]
     raw_data.forEach((hex_entity, index) => {
         const {x, y} = generate_hex_coord(index, hex_radius) 
         res.push({
             entity: hex_entity.entity,
             x: x,
             y: y,
+            sst: hex_entity.sst,
             mask: hex_entity.mask
         })
     })
@@ -78,27 +79,35 @@ vue.onMounted(() => {
         const svg = d3.select(`#${props.id}`).select("svg")
         // const svg = d3.select(`#test-id`).select("svg")
         .attr("viewBox", `0 0 ${viewBox[0]} ${viewBox[1]}`)
-        svg.append("g").attr("class", "hex-path-group")
+        svg.append("g").attr("class", "hex-group")
         updateHexBins()
     })
 })
 
 function updateHexBins() {
-    console.log(applyMask.value)
-    console.log(sorted_cooccurrence_list.value)
     const svg = d3.select(`#${props.id}`).select("svg")
-    const hex_path_group = svg.select("g.hex-path-group")
+    const hex_group = svg.select("g.hex-group")
 
     // prepare data
     const inputForHexbin: any[] = []
     sorted_cooccurrence_list.value.forEach((d: any) => {
         inputForHexbin.push( [x(d.x), y(d.y)] )  
     })
-    const hex_bins: any = hex_path_group.selectAll("path")
-        .data(hexbin(inputForHexbin))
-    hex_bins.enter().append("path")
-        .merge(hex_bins)
-        .attr("d", d => `M${d.x},${d.y}${hexbin.hexagon()}`)
+    const hex_bins: any = hex_group.selectAll("g.hex-bin")
+        .data(sorted_cooccurrence_list.value)
+    hex_bins.enter().append("g").attr("class", "hex-bin")
+        .style("cursor", "pointer")
+        .on("click", function(e, d) {
+            emit("hex-clicked", d.entity)
+        })
+
+    const hex_path: any = hex_group.selectAll("g.hex-bin").selectAll("path.hex-path")
+        .data((d: any) => {
+            return hexbin([[x(d.x), y(d.y)]])
+        })
+    hex_path.enter().append("path")
+        .merge(hex_path)
+        .attr("d", (d:any) => `M${d.x},${d.y}${hexbin.hexagon()}`)
         .attr("stroke", "black")
         .attr("stroke-width", 1)
         .attr("filter", `url(#${props.id}-brightness)`)
@@ -106,22 +115,20 @@ function updateHexBins() {
             if(!applyMask.value) return 1
             return sorted_cooccurrence_list.value[i].mask? 1:0
         })
-    updateHexColor()
-
-    // add labels
-    const entity_text: any = hex_path_group.selectAll("text")
-        .data(sorted_cooccurrence_list.value.concat([{entity: props.entity_cooccurrences?.entity, x: 0, y: 0, mask: true}]))
-    entity_text.enter().append("text")
-        .merge(entity_text)
+    const hex_label: any = hex_group.selectAll("g.hex-bin").selectAll("text.hex-label")
+        .data((d) => [d])
+    hex_label.enter().append("text")
+        .merge(hex_label)
+        .attr("class", "hex-label")
         .attr("x", d => x(d.x))
         .attr("y", d => y(d.y) - 35 - (Math.min(d.entity.split("_").length,4)+0.5)/2*15 )
         .attr("opacity", (d) => {
             if(!applyMask.value) return 1
             return d.mask? 1:0
         })
-        // .attr("y", d => y(d.y))
-    const tspan = hex_path_group.selectAll("text").selectAll("tspan")
-        .data((d) => {
+    updateHexColor()
+    const tspan = hex_group.selectAll("g.hex-bin").selectAll("text.hex-label").selectAll("tspan")
+        .data((d: any) => {
             const words = d.entity.split("_")
             if(words.length > 4) {
                 words[3] = "..."
@@ -130,24 +137,30 @@ function updateHexBins() {
             return words
         })
     tspan.enter().append("tspan")
-        .text(d => d)
-        .attr("x", function(d) { return parseFloat(d3.select(this.parentNode).attr("x") )})
+        .text((d:any) => d)
+        .attr("x", function(d) { return parseFloat(d3.select((this.parentNode) as any).attr("x") ) })
         .attr("dy", 15)
         .attr("font-size", "small")
         .attr("text-anchor", "middle")
         .attr("dominant-baseline", "middle")
-    
-}
+}        
 
 function updateHexColor() {
+    console.log(sorted_cooccurrence_list.value)
     const svg = d3.select(`#${props.id}`).select("svg")
-    const hex_path_group = svg.select("g.hex-path-group")
+    const hex_path_group = svg.select("g.hex-group")
     const hex_bins: any = hex_path_group.selectAll("path")
-        .attr("fill", (d, i) => SstColors.enum_color_dict[categorizeHex(props.entity_cooccurrences?.sorted_cooccurrences_list[i].sst!, props.segmentation!)])
+        .attr("fill", function (d) {
+            const parentNode: any = (this as HTMLElement).parentNode
+            const container: any = d3.select(parentNode)
+            const parent_data: any = container.data()[0]
+            return SstColors.enum_color_dict[categorizeHex(parent_data.sst!, props.segmentation!)]
+        })
 
 }
 
 function categorizeHex(sst: Sentiment2D, segmentation: Sentiment2D) {
+    if(sst === undefined) return SentimentType.unknown
     if(sst.pos < segmentation.pos && sst.neg < segmentation.neg) return SentimentType.neu
     if(sst.pos < segmentation.pos && sst.neg > segmentation.neg) return SentimentType.neg
     if(sst.pos > segmentation.pos && sst.neg < segmentation.neg) return SentimentType.pos
@@ -170,7 +183,7 @@ function generate_polar(index, radius) {
     const d_alpha = 2*Math.PI/(6*(level+1))
     const d_index = index - M_l
     const alpha = d_alpha * d_index
-    const r = (level+1) * 2 * distance_to_edge({alpha, radius})
+    const r = (level+1) * 2 * (distance_to_edge({alpha, radius}))
     return {alpha, r}
 }
 
@@ -190,7 +203,6 @@ function find_level(index) {
 }
 
 function updateMask() {
-    console.log("update Mask")
     applyMask.value = true
     updateHexBins()
 }

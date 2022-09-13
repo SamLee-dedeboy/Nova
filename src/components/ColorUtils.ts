@@ -26,6 +26,7 @@ enum_color_dict[SentimentType.neu] = neu_color
 enum_color_dict[SentimentType.neg] = neg_color
 enum_color_dict[SentimentType.pos] = pos_color
 enum_color_dict[SentimentType.mix] = mixed_color
+enum_color_dict[SentimentType.unknown] = "white"
 
 const outlet_color_dict = {
     "CNN": "rgb(205 0 0)",

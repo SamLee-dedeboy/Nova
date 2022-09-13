@@ -254,6 +254,7 @@ const show_co_button = computed(() => {
 
 const cohex_mode: Ref<any> = ref(null)
 const cohex_options: Ref<string[]> = ref(["Common", "Diff"])
+const cached_nodes: Ref<typeUtils.ScatterNode[]> = ref([])
 
 /**
  * refs for panel left & right
@@ -399,75 +400,6 @@ vue.watch(tutorial_step, (new_value, old_value) => {
   tutorial.handleNextStep({tutorial_mode, tutorial_step}) 
 })
 
-
-
-// function datasetImported(dataset) {
-//   overview_constructing.value = true
-//   setTimeout(() => {
-//     const promise = new Promise((resolve) => { 
-//       console.log("dataset imported")
-//       outlet_article_dict.value = dataset.outlet_article_dict
-//       entity_mentions_grouped.value = dataset.entity_mentions
-//       overall_entity_mentions.value = dataset.overall_entity_mentions
-//       entity_cooccurrences_groupby_outlet.value = dataset.entity_cooccurrences_outlet_dict
-//       entity_cooccurrences_dict.value = dataset.entity_cooccurrences_dict
-
-//       let {
-//         outlet_set, 
-//         r_article_dict, 
-//         r_article_bins_dict, 
-//         r_min_timestamp, r_max_timestamp, 
-//         r_outlet_article_num_dict
-//       } = preprocess.processArticleDict(outlet_article_dict.value)
-//       console.log("preprocess 1 done")
-//       outlet_article_num_dict.value = r_outlet_article_num_dict
-//       outlet_article_bins_dict.value = r_article_bins_dict
-//       enabled_outlet_set.value = outlet_set
-//       enabled_outlet_set.value.forEach(outlet => {
-//         outlet_weight_dict.value[outlet] = 1
-//       })
-//       min_timestamp.value = r_min_timestamp
-//       max_timestamp.value = r_max_timestamp
-//       // articles.value = normalized_articles
-//       article_dict.value = r_article_dict
-//       let {
-//         r_graph_dict, 
-//         r_max_articles, r_min_articles, 
-//         r_pos_max_articles, r_pos_min_articles,
-//         r_neg_max_articles, r_neg_min_articles,
-//         r_node_article_id_dict
-//       } = preprocess.constructEntityGraph(entity_mentions_grouped.value, article_dict.value)
-
-//       console.log("preprocess 2 done")
-//       scatter_dict.value = r_graph_dict
-      
-//       grouped_max_articles.value = r_max_articles
-//       grouped_min_articles.value = r_min_articles
-      
-//       grouped_pos_max_articles.value = r_pos_max_articles
-//       grouped_pos_min_articles.value = r_pos_min_articles
-//       grouped_neg_max_articles.value = r_neg_max_articles
-//       grouped_neg_min_articles.value = r_neg_min_articles
-      
-//       node_article_id_dict.value = r_node_article_id_dict
-
-//       console.log("constructing overall entity scatter")
-//       const overall_entity_scatter = 
-//         preprocess.constructOverallEntityGraph(overall_entity_mentions.value, article_dict.value, node_article_id_dict.value)
-
-//       selectedScatterViews_left.value.push(overall_entity_scatter)
-
-//       overview_constructed.value = true
-//       console.log("overview constructed")
-//       resolve(""); 
-//     })
-//     promise.then(() => overview_constructing.value = false)
-//   }, 10)
-
-// }
-
-
-
 // handlers
 function handleScatterClicked(index) {
     const clicked_scatter = Object.keys(grouped_scatter_view_dict.value)[index]
@@ -573,7 +505,7 @@ function handleDropScatter(e) {
   console.log("handle Drop:", t1-t0)
 }
 
-async function handleEntityClicked({title, type, d}: {title: string, type: typeUtils.ViewType, d: ScatterNode}) {
+async function handleEntityClicked({title, type, d}: {title: string, type: typeUtils.ViewType, d: typeUtils.ScatterNode}) {
   if(type === typeUtils.ViewType.OutletScatter) {
     // construct outlet graph
     const entity_name = d.text.split("-")[0]
@@ -609,7 +541,7 @@ async function handleEntityClicked({title, type, d}: {title: string, type: typeU
   if(type === typeUtils.ViewType.CooccurrHex) {
     const entity = d.text.split("-")[0]
     const outlet = d.text.split("-")[1]
-    // TODO: add selected entity
+    cached_nodes.value.push(d)
 
     const path_overall_or_grouped = ((title === "Overall")? "overall":"grouped")
     await fetch(`${server_address}/hexview/${path_overall_or_grouped}/${d.text}`)
@@ -624,33 +556,7 @@ async function handleEntityClicked({title, type, d}: {title: string, type: typeU
         selectedScatterViews_left.value.push(hex_view)
         console.log("cooccurr hex fetched")
       })
-    const article_ids = d.article_ids
-    selected_entity.value = {
-      name: d.text.split("-")[0],
-      outlet: d.text.split("-")[1] || "Overall",
-      sst_ratio: {
-        pos_artcs: d.pos_article_ids.length,
-        neg_artcs: d.neg_article_ids.length,
-        pos: d.pos_sst,
-        neg: d.neg_sst,
-      },
-      articles: [],
-    }
-    display_article_view.value = true
-    fetching_article.value = true
-    await fetch(`${server_address}/processed_data/ids_to_articles`,{
-      method: "POST",
-      headers: {
-        "Accept": "application/json",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(article_ids)
-    })
-      .then(res => res.json())
-      .then(json => {
-        selected_entity.value.articles = json
-        fetching_article.value = false
-      })
+    fetch_articles(d)
     return
   }
   if(type === typeUtils.ViewType.Article) {
@@ -820,6 +726,47 @@ function showOriginalCoHex() {
   panel_right.value.applyCoHexMask(entities_right, true)
 
 }
+
+async function fetch_articles(d: typeUtils.ScatterNode) {
+    const article_ids = d.article_ids
+    selected_entity.value = {
+      name: d.text.split("-")[0],
+      outlet: d.text.split("-")[1] || "Overall",
+      sst_ratio: {
+        pos_artcs: d.pos_article_ids.length,
+        neg_artcs: d.neg_article_ids.length,
+        pos: d.pos_sst,
+        neg: d.neg_sst,
+      },
+      articles: [],
+    }
+    display_article_view.value = true
+    fetching_article.value = true
+    await fetch(`${server_address}/processed_data/ids_to_articles`,{
+      method: "POST",
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(article_ids)
+    })
+      .then(res => res.json())
+      .then(json => {
+        console.log("articles fetched")
+        selected_entity.value.articles = json
+        fetching_article.value = false
+      })
+
+}
+
+async function handleHexClicked(entity: string) {
+  await fetch(`${server_address}/processed_data/scatter_node/${entity}`)
+    .then(res => res.json())
+    .then(json => {
+      console.log("scatter_node fetched")
+      fetch_articles(json as typeUtils.ScatterNode)
+    })
+}
 </script>
 
 
@@ -848,6 +795,7 @@ function showOriginalCoHex() {
             @dragleave="handleDragLeave($event)"
             @dragenter="(e) => (e.preventDefault())"
             @entity-clicked="handleEntityClicked"
+            @hex-clicked="handleHexClicked"
             @show_temporal="handleShowTemporal"
             >
             </PanelContainer>
@@ -879,6 +827,7 @@ function showOriginalCoHex() {
             @dragleave="handleDragLeave($event)"
             @dragenter="(e) => (e.preventDefault())"
             @entity-clicked="handleEntityClicked"
+            @hex-clicked="handleHexClicked"
             @show_temporal="handleShowTemporal"
             >
             </PanelContainer>
