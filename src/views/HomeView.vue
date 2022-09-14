@@ -58,7 +58,7 @@ const grouped_scatter_view_dict = vue.computed(() => {
   })
   return res_dict
 })
-const overall_scatter_data_loaded: Ref<boolean> = ref(false)
+const overall_scatter_data_loading: Ref<boolean> = ref(true)
 const grouped_scatter_data_loaded: Ref<boolean> = ref(false)
 const overview_constructed: Ref<boolean> = ref(false)
 //
@@ -338,6 +338,7 @@ vue.onMounted(async() => {
         }
         selectedScatterViews_left.value.push(overall_scatter_view)
         console.log("overall scatter fetched")
+        overall_scatter_data_loading.value = false
         resolve("success")
       })
   }))
@@ -647,6 +648,7 @@ function handleUpdateOutletWeight({outlet, value}) {
 
 async function updateOverallEntityNode({outlet, value}) {
   const overall_entity_scatter = selectedScatterViews_left.value.find(view => view.title === "Overall") as typeUtils.EntityScatterView
+  overall_scatter_data_loading.value = true
   await fetch(`${server_address}/processed_data/updateOutletWeight`,{
     method: "POST",
     headers: {
@@ -658,13 +660,8 @@ async function updateOverallEntityNode({outlet, value}) {
     .then(res => res.json())
     .then(json => {
       console.log("update outlet weight done")
-      json.nodes.forEach(node => {
-        if(node.text == "Donald_Trump") {
-          console.log(node.text, node.pos_sst, node.neg_sst)
-        }
-      })
-
       overall_entity_scatter.data = json
+      overall_scatter_data_loading.value = false
     })
 }
 
@@ -756,8 +753,16 @@ async function handleHexClicked(entity: string) {
     <Splitter class="splitter-outmost" layout="vertical">
       <SplitterPanel class="homeview-container flex align-items-center justify-content-center" :size="100">
         <Splitter>
-          <SplitterPanel id="expanded_section" class="expanded-section flex align-items-center justify-content-center" :size="55" 
-            >
+          <SplitterPanel id="expanded_section" class="expanded-section flex align-items-center justify-content-center" :size="55" >
+            <i v-if="overall_scatter_data_loading" class="pi pi-spin pi-spinner" 
+            style="
+            position:absolute;
+            left: 45%;
+            top: 30%;
+            font-size: 3rem;
+            z-index: 1000
+            "></i> 
+
             <PanelContainer
             id="panel_left"
             ref="panel_left"

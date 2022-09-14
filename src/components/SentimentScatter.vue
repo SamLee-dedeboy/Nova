@@ -609,11 +609,13 @@ function updateOverviewScatter() {
         },
         update => {
             update.select("circle.outlet_circle")
+                .transition().duration(1000)
                 .attr("r", node_circle_radius/(current_zoom?.k || 1))
                 .attr("cx", (d: any) => x(d.pos_sst))
                 .attr("cy", (d: any) => y(Math.abs(d.neg_sst)))
 
             update.select("circle.expand_circle")
+                .transition().duration(1000)
                 .attr("r", node_circle_radius/(current_zoom?.k || 1))
                 .attr("cx", (d: any) => x(d.pos_sst))
                 .attr("cy", (d: any) => y(Math.abs(d.neg_sst)))
