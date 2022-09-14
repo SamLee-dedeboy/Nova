@@ -43,6 +43,7 @@ const server_address = "http://127.0.0.1:5000"
 const overview_overall_scatter_data: Ref<any> = ref({})
 const overview_grouped_scatter_data: Ref<any> = ref({})
 const overview_grouped_scatter_metadata: Ref<any> = ref({})
+const overview_overall_scatter_metadata: Ref<any> = ref({})
 const grouped_scatter_view_dict = vue.computed(() => {
   if(!overview_grouped_scatter_data.value) return undefined
   let res_dict: any = {}
@@ -263,7 +264,6 @@ const panel_left: Ref<any> = ref(null)
 const panel_right: Ref<any> = ref(null)
 
 vue.watch(cohex_mode, (new_value, old_value) => {
-  console.log("🚀 ~ file: HomeView.vue ~ line 265 ~ vue.watch ~ new_value", new_value)
   if(new_value === "Common")
     showCoHexCommon()
   if(new_value === "Diff")
@@ -349,6 +349,15 @@ vue.onMounted(async() => {
       console.log("grouped scatter fetched")
       resolve("success")
     })
+  }))
+  promiseArray.push(new Promise((resolve) => {
+      fetch(`${server_address}/overview/scatter/overall/metadata`)
+      .then(res => res.json())
+      .then(json => {
+        overview_overall_scatter_metadata.value = json
+        console.log("overall scatter metadata fetched")
+        resolve("success")
+      })
   }))
   promiseArray.push(new Promise((resolve) => {
       fetch(`${server_address}/overview/scatter/grouped/metadata`)
@@ -568,7 +577,7 @@ async function handleEntityClicked({title, type, d}: {title: string, type: typeU
       outlet: d.text.split("-")[1],
       sst_ratio: {
         pos_artcs: d.pos_article_ids.length,
-        neg_artcs: d.neg_article_ids,
+        neg_artcs: d.neg_article_ids.length,
         pos: d.pos_sst,
         neg: d.neg_sst,
       },
@@ -649,11 +658,6 @@ async function updateOverallEntityNode({outlet, value}) {
     .then(res => res.json())
     .then(json => {
       console.log("update outlet weight done")
-      // json.nodes.forEach(node => {
-      //   const text = node.text
-      //   const origin_node = overall_entity_scatter.data.nodes.find(node => node.text === text)
-      //   console.log(text, origin_node?.pos_sst, origin_node?.neg_sst, " / ", node.pos_sst, node.neg_sst)
-      // })
       json.nodes.forEach(node => {
         if(node.text == "Donald_Trump") {
           console.log(node.text, node.pos_sst, node.neg_sst)
@@ -662,37 +666,6 @@ async function updateOverallEntityNode({outlet, value}) {
 
       overall_entity_scatter.data = json
     })
-  // const pos_max: number = _.sumBy(
-  //   Object.keys(overall_entity_scatter.data.pos_max!),
-  //   (outlet) => overall_entity_scatter.data.pos_max[outlet]*outlet_weight_dict.value[outlet]
-  // )
-  // const pos_min: number = _.sumBy(
-  //   Object.keys(overall_entity_scatter.data.pos_min!),
-  //   (outlet) => overall_entity_scatter.data.pos_min[outlet]*outlet_weight_dict.value[outlet]
-  // )
-  // const neg_max: number = _.sumBy(
-  //   Object.keys(overall_entity_scatter.data.neg_max!),
-  //   (outlet) => overall_entity_scatter.data.neg_max[outlet]*outlet_weight_dict.value[outlet]
-  // )
-  // const neg_min: number = _.sumBy(
-  //   Object.keys(overall_entity_scatter.data.neg_min!),
-  //   (outlet) => overall_entity_scatter.data.neg_min[outlet]*outlet_weight_dict.value[outlet]
-  // )
-  // let changed_node: any[] = []
-  // overall_entity_scatter?.data.nodes.forEach(node => {
-  //   const article_num_outlet_dict = overall_entity_scatter?.data.mentions_groupby_outlet_dict[node.text]
-  //   const pos_sum: number = _.sumBy(
-  //     Object.keys(article_num_outlet_dict),
-  //     (outlet) => article_num_outlet_dict[outlet].pos*outlet_weight_dict.value[outlet]
-  //   )
-  //   const neg_sum: number = _.sumBy(
-  //     Object.keys(article_num_outlet_dict),
-  //     (outlet) => article_num_outlet_dict[outlet].neg*outlet_weight_dict.value[outlet]
-  //   )
-  //   node.pos_sst = preprocess.pos_score(pos_sum, pos_max, pos_min)
-  //   node.neg_sst = preprocess.neg_score(neg_sum, neg_max, neg_min)
-  //   changed_node.push(node.text)
-  // })
 }
 
 function handleHexChanged({active, part}) {
@@ -729,14 +702,21 @@ function showOriginalCoHex() {
 
 async function fetch_articles(d: typeUtils.ScatterNode) {
     const article_ids = d.article_ids
+    const overall_flag = d.text.split("-")[1] === undefined
+    const outlet = overall_flag? "Overall": d.text.split("-")[1] 
+    const metadata = overall_flag? overview_overall_scatter_metadata.value: overview_grouped_scatter_metadata
     selected_entity.value = {
       name: d.text.split("-")[0],
-      outlet: d.text.split("-")[1] || "Overall",
+      outlet: outlet,
       sst_ratio: {
         pos_artcs: d.pos_article_ids.length,
         neg_artcs: d.neg_article_ids.length,
         pos: d.pos_sst,
         neg: d.neg_sst,
+        pos_max: metadata.pos_max,
+        pos_min: metadata.pos_min,
+        neg_max: metadata.neg_max,
+        neg_min: metadata.neg_min,
       },
       articles: [],
     }
@@ -755,6 +735,7 @@ async function fetch_articles(d: typeUtils.ScatterNode) {
         console.log("articles fetched")
         selected_entity.value.articles = json
         fetching_article.value = false
+        console.log(selected_entity.value)
       })
 
 }
@@ -931,11 +912,7 @@ async function handleHexClicked(entity: string) {
                 </div>
                 <div class="entity-info-container">
                   <EntityInfoView
-                  :entity_info="{ 
-                    name: selected_entity.name, 
-                    outlet: selected_entity.outlet, 
-                    sst_ratio: selected_entity.sst_ratio 
-                  }"
+                  :entity_info="selected_entity"
                   v-model:segmentation="segment_sst"
                   >
                   </EntityInfoView>

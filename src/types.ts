@@ -84,7 +84,12 @@ export class OutletNodeInfo {
 export class EntityInfo {
     name: string
     outlet: string
-    sst_ratio: {pos_artcs: number, neg_artcs: number, pos: number, neg: number}
+    sst_ratio: {
+        pos_artcs: number, neg_artcs: number, 
+        pos: number, neg: number,
+        pos_max: number, pos_min: number,
+        neg_max: number, neg_min: number
+    }
     articles: Article[]
 }
 export class OutletNode {

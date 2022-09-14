@@ -93,7 +93,9 @@ function updateSstRect() {
     <div class="entity-info-view-container">
         <span class="entity-name">{{props.entity_info?.name || "unknown"}}</span>
         <span class="outlet-name">-{{props.entity_info?.outlet || "unknown"}}</span>
-        <svg class="entity-sst-ratio" style="display:block"></svg>
+        <div class="pos-ratio">{{"pos: " + props.entity_info?.sst_ratio.pos.toFixed(2) + " (" + props.entity_info?.sst_ratio.pos_artcs +"/"+ props.entity_info?.sst_ratio.pos_max + ")"}}</div>
+        <div class="neg-ratio">{{"neg: " + props.entity_info?.sst_ratio.neg.toFixed(2) + " (" + props.entity_info?.sst_ratio.neg_artcs +"/"+ props.entity_info?.sst_ratio.neg_max + ")"}}</div>
+        <!-- <svg class="entity-sst-ratio" style="display:block"></svg> -->
         <SelectButton
             v-model="selectedCategory"
             :options="sentiment_options"
