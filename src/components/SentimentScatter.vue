@@ -96,7 +96,7 @@ const viewBox_height = viewBox[1] - margin.top - margin.bottom
 const x = d3.scalePow()
     .exponent(1)
     .domain([0, 1])
-    .range([ margin.left, viewBox_width ]);
+    .range([ margin.left, viewBox_width+margin.left ]);
 
 const y = d3.scalePow()
     .exponent(1)
@@ -357,8 +357,8 @@ function updateSegmentation() {
                 .merge(neg_rect)
                 .attr("x", margin.left)
                 .attr("y", margin.top)
-                .attr("width", (d) => segment_point.x-margin.left)
-                .attr("height", (d) => segment_point.y-margin.top)
+                .attr("width", (d) => segment_point.x+margin.left)
+                .attr("height", (d) => segment_point.y+margin.top)
                 .lower()
     // neu
     const neu_rect: any = segment_group.selectAll("rect.neu")
@@ -381,7 +381,7 @@ function updateSegmentation() {
                 .merge(pos_rect)
                 .attr("x", (d) => segment_point.x)
                 .attr("y", (d) => segment_point.y)
-                .attr("width", (d) => viewBox_width-segment_point.x)
+                .attr("width", (d) => viewBox_width-segment_point.x+margin.left)
                 .attr("height", (d) => viewBox_height-segment_point.y + margin.top)
     // mixed
     const mixed_rect: any = segment_group.selectAll("rect.mixed")
@@ -392,7 +392,7 @@ function updateSegmentation() {
                 .merge(mixed_rect)
                 .attr("x", (d) => segment_point.x)
                 .attr("y", margin.top)
-                .attr("width", (d) => viewBox_width-segment_point.x)
+                .attr("width", (d) => viewBox_width-segment_point.x+margin.left)
                 .attr("height", (d) => segment_point.y-margin.top)
     svg.selectAll("g.segmentation")
         .style("opacity", props.segment_mode?1:0)
