@@ -232,7 +232,7 @@ function applyCoHexMask(masked_entities, mask_value) {
 }
 
 function handleHexClicked({title, entity}) {
-    if(title != "Overall") {
+    if(title.split("-").length == 3) {
         const outlet = title.split('-')[2]
         entity = entity + "-" + outlet
     }
