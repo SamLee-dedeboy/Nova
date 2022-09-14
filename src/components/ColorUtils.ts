@@ -13,7 +13,6 @@ const key_color_dict = {
                 "negative": neg_color,
                 "neutral": neu_color,
                 "mixed": mixed_color, 
-                "no data": "white"
             } 
 const color_dict = {
     "pos": pos_color,
