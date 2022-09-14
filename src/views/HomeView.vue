@@ -704,7 +704,7 @@ async function fetch_articles(d: typeUtils.ScatterNode) {
     const article_ids = d.article_ids
     const overall_flag = d.text.split("-")[1] === undefined
     const outlet = overall_flag? "Overall": d.text.split("-")[1] 
-    const metadata = overall_flag? overview_overall_scatter_metadata.value: overview_grouped_scatter_metadata
+    const metadata = overall_flag? overview_overall_scatter_metadata.value: overview_grouped_scatter_metadata.value
     selected_entity.value = {
       name: d.text.split("-")[0],
       outlet: outlet,

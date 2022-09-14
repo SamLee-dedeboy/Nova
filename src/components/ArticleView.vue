@@ -32,7 +32,7 @@ vue.onMounted(() => {
     const neg_scroll_panel = document.querySelector(".neg-article-list > .p-scrollpanel-wrapper > .p-scrollpanel-content")
     pos_scroll_panel?.addEventListener("scroll", function(event) {
         const element = event.target as HTMLElement
-        if (element.scrollHeight - element.scrollTop === element.clientHeight) {
+        if (element.scrollHeight - element.scrollTop - element.clientHeight < 5) {
             const old_len = pos_panel_articles.value.length
             const next_ten_articles: Article[] | undefined = pos_articles.value?.slice(old_len, old_len+10)
             if(next_ten_articles)
@@ -41,7 +41,7 @@ vue.onMounted(() => {
     })
     neg_scroll_panel?.addEventListener("scroll", function(event) {
         const element = event.target as HTMLElement
-        if (element.scrollHeight - element.scrollTop === element.clientHeight) {
+        if (element.scrollHeight - element.scrollTop - element.clientHeight < 5) {
             const old_len = neg_panel_articles.value.length
             const next_ten_articles: Article[] | undefined = neg_articles.value?.slice(old_len, old_len+10)
             if(next_ten_articles)
