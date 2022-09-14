@@ -8,7 +8,8 @@ class ProcessedDataManager:
         self.article_bins_dict, \
         self.min_timestamp, \
         self.max_timestamp, \
-        self.outlet_article_num_dict \
+        self.outlet_article_num_dict, \
+        self.outlet_article_classified_num_dict \
         = processArticleDict(raw_data.outlet_article_dict)
         self.entity_list = list(raw_data.candidate_entity.keys())
 
@@ -22,6 +23,7 @@ def processArticleDict(outlet_article_dict):
     article_dict = {}
     article_bins_dict = {}
     outlet_article_num_dict = {}
+    outlet_article_classified_num_dict = defaultdict(dict)
     for outlet, articles in outlet_article_dict.items():
         for article in articles:
             if(article["sentiment"]["label"] == "NEGATIVE"):
@@ -32,10 +34,17 @@ def processArticleDict(outlet_article_dict):
             article_dict[article["id"]] = article
         article_bins_dict[outlet] = binArticlesByMonth(articles)
         outlet_article_num_dict[outlet] = len(articles)
+        pos_articles, neg_articles = [], []
+        for article in articles:
+            (pos_articles if article['sentiment']['label'] == 'POSITIVE' else neg_articles).append(article["id"])
+        outlet_article_classified_num_dict[outlet]["pos"] = len(pos_articles)
+        outlet_article_classified_num_dict[outlet]["neg"] = len(neg_articles)
+
+
     min_timestamp = min_timestamp.isoformat()
     max_timestamp = max_timestamp.isoformat()
     outlet_set = set(outlet_article_dict.keys())
-    return outlet_set, article_dict, article_bins_dict, min_timestamp, max_timestamp, outlet_article_num_dict
+    return outlet_set, article_dict, article_bins_dict, min_timestamp, max_timestamp, outlet_article_num_dict, outlet_article_classified_num_dict
 
 def binArticlesByMonth(articles):
     article_bin_dict = defaultdict(list)

@@ -7,7 +7,7 @@ from ProcessedDataManager import *
 import sentiment_processor
 import functools
 
-def overall_entity_scatter(entity_mentions, processed_data_manager ):
+def overall_entity_scatter(entity_mentions, processed_data_manager: ProcessedDataManager ):
     min_articles = len(processed_data_manager.article_dict.keys())
     max_articles = 0
     pos_max_articles = []
@@ -18,6 +18,12 @@ def overall_entity_scatter(entity_mentions, processed_data_manager ):
     data = EntityScatterData( nodes=[], max_articles=0, min_articles=0,)
     node_dict = {}
     # get max & min
+    outlet_article_classified_num_dict = processed_data_manager.outlet_article_classified_num_dict
+    overall_pos_max = 0
+    overall_neg_max = 0
+    for outlet, clf_dict in outlet_article_classified_num_dict.items():
+        overall_pos_max += clf_dict["pos"]
+        overall_neg_max += clf_dict["neg"]
     for entity, mention_ids in entity_mentions.items():
         mentioned_articles = processed_data_manager.idsToArticles(mention_ids)
         pos_articles, neg_articles = [], []
@@ -31,16 +37,16 @@ def overall_entity_scatter(entity_mentions, processed_data_manager ):
         min_articles = min(len(mentioned_articles), min_articles)
     data.max_articles = max_articles
     data.min_articles = min_articles
-    # data.pos_max = article_num_groupby_outlet(pos_max_articles)
-    # data.pos_min = article_num_groupby_outlet(pos_min_articles)
-    # data.neg_max = article_num_groupby_outlet(neg_max_articles)
-    # data.neg_min = article_num_groupby_outlet(neg_min_articles)
     meta_data.max_articles = max_articles
     meta_data.min_articles = min_articles
-    meta_data.pos_max = len(pos_max_articles)
-    meta_data.pos_min = len(pos_min_articles)
-    meta_data.neg_max = len(neg_max_articles)
-    meta_data.neg_min = len(neg_min_articles)
+    meta_data.pos_max = overall_pos_max
+    meta_data.pos_min = 0
+    meta_data.neg_max = overall_neg_max
+    meta_data.neg_min = 0
+    # meta_data.pos_max = len(pos_max_articles)
+    # meta_data.pos_min = len(pos_min_articles)
+    # meta_data.neg_max = len(neg_max_articles)
+    # meta_data.neg_min = len(neg_min_articles)
     meta_data.pos_max_grouped = article_num_groupby_outlet(pos_max_articles)
     meta_data.pos_min_grouped = article_num_groupby_outlet(pos_min_articles)
     meta_data.neg_max_grouped = article_num_groupby_outlet(neg_max_articles)
@@ -59,8 +65,8 @@ def overall_entity_scatter(entity_mentions, processed_data_manager ):
             entity_pos_neg_mentions_grouped_dict["neg"][outlet] = len(neg_mentions)
         node = construct_node(
             mentioned_articles, entity,
-            len(pos_max_articles), len(pos_min_articles),
-            len(neg_max_articles), len(neg_min_articles)
+            meta_data.pos_max, meta_data.pos_min,
+            meta_data.neg_max, meta_data.neg_min,
         )
         node_dict[entity] = node
         data.nodes.append(node)
@@ -153,11 +159,20 @@ def grouped_dict(target_list, group_func=None):
 def updateOutletWeight(
     overall_scatter_data: EntityScatterData, 
     overall_scatter_metadata: OverallSentimentScatterMetaData, 
+    processed_data_manager: ProcessedDataManager,
     outlet_weight_dict: dict):
-    new_pos_max = dict_weighted_sum(overall_scatter_metadata.pos_max_grouped, outlet_weight_dict)
-    new_pos_min = dict_weighted_sum(overall_scatter_metadata.pos_min_grouped, outlet_weight_dict)
-    new_neg_max = dict_weighted_sum(overall_scatter_metadata.neg_max_grouped, outlet_weight_dict)
-    new_neg_min = dict_weighted_sum(overall_scatter_metadata.neg_min_grouped, outlet_weight_dict)
+    # new_pos_max = dict_weighted_sum(overall_scatter_metadata.pos_max_grouped, outlet_weight_dict)
+    # new_pos_min = dict_weighted_sum(overall_scatter_metadata.pos_min_grouped, outlet_weight_dict)
+    # new_neg_max = dict_weighted_sum(overall_scatter_metadata.neg_max_grouped, outlet_weight_dict)
+    # new_neg_min = dict_weighted_sum(overall_scatter_metadata.neg_min_grouped, outlet_weight_dict)
+    outlet_article_classified_num_dict = processed_data_manager.outlet_article_classified_num_dict
+    new_pos_max = 0
+    new_neg_max = 0
+    new_pos_min = 0
+    new_neg_min = 0
+    for outlet, clf_dict in outlet_article_classified_num_dict.items():
+        new_pos_max += clf_dict["pos"]*outlet_weight_dict[outlet]
+        new_neg_max += clf_dict["neg"]*outlet_weight_dict[outlet] 
     weighted_nodes = []
     for node in overall_scatter_data.nodes:
         new_pos_sum = dict_weighted_sum(overall_scatter_metadata.mentions_groupby_outlet_dict[node.text]["pos"], outlet_weight_dict) 
