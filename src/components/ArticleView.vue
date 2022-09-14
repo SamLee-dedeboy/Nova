@@ -59,11 +59,11 @@ const sorted_articles = vue.computed(() => {
 const pos_articles = vue.computed(() => {
     return props.articles?.filter(article => article.sentiment.label === "POSITIVE")
 })
-const pos_panel_articles: Ref<Article[]> = ref(pos_articles.value?.splice(0,10) || []) 
+const pos_panel_articles: Ref<Article[]> = ref(pos_articles.value?.slice(0,10) || []) 
 const neg_articles = vue.computed(() => {
     return props.articles?.filter(article => article.sentiment.label === "NEGATIVE")
 })
-const neg_panel_articles: Ref<Article[]> = ref(pos_articles.value?.splice(0,10) || []) 
+const neg_panel_articles: Ref<Article[]> = ref(neg_articles.value?.slice(0,10) || []) 
 
 function sstToColor(sst: number) {
     if(isNeutral(sst)) return SstColors.neu_color
