@@ -28,10 +28,12 @@ import Tooltip from "../components/Tooltip.vue";
 import SearchBar from "../components/SearchBar.vue";
 import ArticleView from "../components/ArticleView.vue"
 import EntityInfoView from "../components/EntityInfoView.vue"
+import HexCooccurrence from "../components/HexCooccurrence.vue";
 import tutorial_intro_json from "../assets/tutorial/tutorial_intro.json"
 import * as tutorial from "../components/TutorialUtils"
 import { resolve } from "path";
 import SelectButton  from "../components/SelectButton.vue";
+import { type } from "os";
 
 
 //
@@ -58,9 +60,11 @@ const grouped_scatter_view_dict = vue.computed(() => {
   })
   return res_dict
 })
+const overall_entity_dict: Ref<any> = ref({})
 const overall_scatter_data_loading: Ref<boolean> = ref(true)
 const grouped_scatter_data_loaded: Ref<boolean> = ref(false)
 const overview_constructed: Ref<boolean> = ref(false)
+const overall_co_hexview: Ref<any> = ref(null)
 //
 // processed data 
 //
@@ -237,6 +241,7 @@ const node_article_id_dict = ref({})
  */
 // const selected_articles: Ref<typeUtils.Article[]> = ref([])
 const selected_entity: Ref<typeUtils.EntityInfo> = ref(new typeUtils.EntityInfo())
+const overall_selected_hexview: Ref<typeUtils.CooccurrHexView | undefined> = ref(undefined)
 
 /**
  * dict of outlet weight. \
@@ -255,7 +260,6 @@ const show_co_button = computed(() => {
 
 const cohex_mode: Ref<any> = ref(null)
 const cohex_options: Ref<string[]> = ref(["Common", "Diff"])
-const cached_nodes: Ref<typeUtils.ScatterNode[]> = ref([])
 
 /**
  * refs for panel left & right
@@ -338,6 +342,9 @@ vue.onMounted(async() => {
         }
         selectedScatterViews_left.value.push(overall_scatter_view)
         console.log("overall scatter fetched")
+        overall_scatter_view.data.nodes.forEach(node => {
+          overall_entity_dict.value[node.text] = node
+        })
         overall_scatter_data_loading.value = false
         resolve("success")
       })
@@ -551,7 +558,6 @@ async function handleEntityClicked({title, type, d}: {title: string, type: typeU
   if(type === typeUtils.ViewType.CooccurrHex) {
     const entity = d.text.split("-")[0]
     const outlet = d.text.split("-")[1]
-    cached_nodes.value.push(d)
 
     const path_overall_or_grouped = ((title === "Overall")? "overall":"grouped")
     await fetch(`${server_address}/hexview/${path_overall_or_grouped}/${d.text}`)
@@ -563,10 +569,16 @@ async function handleEntityClicked({title, type, d}: {title: string, type: typeU
           type: typeUtils.ViewType.CooccurrHex,
           data: cooccurrences,
         }
-        selectedScatterViews_left.value.push(hex_view)
+        if(title === "Overall") {
+          overall_selected_hexview.value = hex_view
+        } else {
+          selectedScatterViews_left.value.push(hex_view)
+        }
+        console.log(overall_selected_hexview.value)
         console.log("cooccurr hex fetched")
       })
-    fetch_articles(d)
+    if(title !== "Overall")
+      fetch_articles(d)
     return
   }
   if(type === typeUtils.ViewType.Article) {
@@ -661,6 +673,10 @@ async function updateOverallEntityNode({outlet, value}) {
     .then(json => {
       console.log("update outlet weight done")
       overall_entity_scatter.data = json
+      overall_entity_scatter.data.nodes.forEach(node => {
+        overall_entity_dict.value[node.text] = node
+      })
+      console.log(overall_entity_dict.value)
       overall_scatter_data_loading.value = false
     })
 }
@@ -745,6 +761,11 @@ async function handleHexClicked(entity: string) {
       fetch_articles(json as typeUtils.ScatterNode)
     })
 }
+
+function handleUpdateWeightEnded() {
+  overall_co_hexview.value.updateHexColor(overall_entity_dict.value)
+
+}
 </script>
 
 
@@ -783,6 +804,7 @@ async function handleHexClicked(entity: string) {
             @entity-clicked="handleEntityClicked"
             @hex-clicked="handleHexClicked"
             @show_temporal="handleShowTemporal"
+            @update-weight-ended="handleUpdateWeightEnded"
             >
             </PanelContainer>
             <Divider v-if="compare_mode" layout="vertical">
@@ -832,7 +854,7 @@ async function handleHexClicked(entity: string) {
                 @candidate_updated="updateNpList"
                 @dataset_imported="datasetImported"  >
                 </MyToolbar> -->
-                <ToggleButton v-if="overview_constructed" class='temporal-toggler ' v-model="temporal_mode" onIcon="pi pi-chart-line" offIcon="pi pi-chart-line"></ToggleButton>
+                <!-- <ToggleButton v-if="overview_constructed" class='temporal-toggler ' v-model="temporal_mode" onIcon="pi pi-chart-line" offIcon="pi pi-chart-line"></ToggleButton> -->
               </div>
               <i v-if="!overview_constructed" class="pi pi-spin pi-spinner" 
               style="
@@ -842,24 +864,38 @@ async function handleHexClicked(entity: string) {
               font-size: 3rem;
               z-index: 1000
               "></i> 
-            <div class="overview-grid-container" v-if="overview_constructed && !temporal_mode" >
-              <SentimentScatter
-                  v-for="(outlet, index) in Object.keys(grouped_scatter_view_dict)" :key="outlet" 
-                  class="outlet-scatter"
-                  :view="grouped_scatter_view_dict[outlet]"
-                  :view_index="index"
-                  :id="`scatter-${index}`"
-                  :article_num_threshold="article_num_threshold"
-                  :segment_mode="segment_mode"
+              <div class="overall-hex-container">
+                <HexCooccurrence
+                  ref="overall_co_hexview"
+                  v-if="overall_selected_hexview"
+                  class="overall-co-hexview"
+                  :title="overall_selected_hexview.title"
+                  :id="`overall-co-hex`"
+                  :entity_cooccurrences="overall_selected_hexview.data"
                   :segmentation="segment_sst"
-                  :highlight_nodes="highlight_nodes"
-                  :expanded="false"
-                  :draggable="true"
-                  @dragstart="handleDragOutletScatter($event, index)"
-                  @click="handleScatterClicked(index)"
-              >
-              </SentimentScatter>
+                  :overall_entity_dict="overall_entity_dict"
+                  v-on:hex-clicked="handleHexClicked" >
+                </HexCooccurrence>
               </div>
+
+              <!-- <div class="overview-grid-container" v-if="overview_constructed && !temporal_mode" >
+                <SentimentScatter
+                    v-for="(outlet, index) in Object.keys(grouped_scatter_view_dict)" :key="outlet" 
+                    class="outlet-scatter"
+                    :view="grouped_scatter_view_dict[outlet]"
+                    :view_index="index"
+                    :id="`scatter-${index}`"
+                    :article_num_threshold="article_num_threshold"
+                    :segment_mode="segment_mode"
+                    :segmentation="segment_sst"
+                    :highlight_nodes="highlight_nodes"
+                    :expanded="false"
+                    :draggable="true"
+                    @dragstart="handleDragOutletScatter($event, index)"
+                    @click="handleScatterClicked(index)"
+                >
+                </SentimentScatter>
+                </div> -->
               <div class="overview-temporal-container" v-if="overview_constructed && temporal_mode">
                 <TemporalCoordinates class="overview-temporal-coord" 
                   :id="`overview_temporal`"
@@ -900,8 +936,9 @@ async function handleHexClicked(entity: string) {
                 class="segment-legend"
                 :color_dict="SstColors.key_color_dict" 
                 :filter="true" 
-                :interactable="false"></Legend>
-              </div>
+                :interactable="false">
+              </Legend>
+            </div>
               <div v-if="display_article_view" class="article-view-container">
                 <i v-if="fetching_article" class="pi pi-spin pi-spinner" 
                 style="
@@ -1146,5 +1183,19 @@ async function handleHexClicked(entity: string) {
 .common-diff > :deep(.p-button.p-component) {
   font-size: inherit;
 }
+
+.overview-container {
+  width: 100%;
+  height: 100%;
+}
+.overall-hex-container {
+  width: 100%;
+  height: 59%;
+}
+.overall-co-hexview {
+  width: 100% !important;
+  height: 100% !important;
+}
+
  </style>
 

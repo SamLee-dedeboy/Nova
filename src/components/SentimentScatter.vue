@@ -42,7 +42,7 @@ const props = defineProps({
     segment_mode: Boolean,
     segmentation: Sentiment2D, 
 })
-const emit = defineEmits(['node_clicked', 'update:segmentation', 'show_temporal'])
+const emit = defineEmits(['node_clicked', 'update:segmentation', 'show_temporal', 'update-weight-ended'])
 const max_articles = vue.computed(() => props.view?.data.max_articles)
 const min_articles = vue.computed(() => props.view?.data.min_articles)
 const outlet_article_num_dict: Ref<any> = vue.inject("outlet_article_num_dict") || ref({})
@@ -109,6 +109,7 @@ const nodes_freq = computed(() => filtered_data.value?.map(node => {return {titl
 const segment_controller_width = 12
 const node_circle_radius = 10
 const clicked_node: Ref<ScatterNode> = ref(new ScatterNode())
+const clicked_node_element: Ref<any> = ref(undefined)
 const menu = ref()
 const menu_items = ref([
     // {
@@ -520,34 +521,37 @@ function updateExpandedScatter() {
                 .style("opacity", 1)
         })
         .on("mouseout", function(e, d) {
+            d3.select(`#${props.id}`).select(".nodeinfo")
+                .style("opacity", 0)
+            if((d as ScatterNode).text === clicked_node.value.text) return
             const parentNode: any = (this as HTMLElement).parentNode
             const container: any = d3.select(parentNode)
-            container.style("filter", "brightness(100%)")
-            container.selectAll("circle.expand_circle")
-                .transition().duration(100)
-                .attr("r", (d) => (parseFloat(container.select("circle.outlet_circle").attr("r"))))
-            const target_node_text = container.data()[0].text
-            const other_nodes_container = d3.select(`#${props.id}`).selectAll("g.outlet").filter((d: any) => d.text != target_node_text)
-            other_nodes_container.selectAll("image")
-                .attr("opacity", 0.3)
-            container.selectAll("image")
-                .transition().duration(100)
-                .attr("opacity", 0.3)
+            removeExpandedStyle(container)
 
-            d3.select(`#${props.id}`).select(".nodeinfo")
-                .style("opacity", 0)
         })
-        .on("click", (e, d) =>  {
+        .on("click", function (e, d) {
             if(tutorial_mode.value && tutorial_step.value < 7) { return }
-            menu.value.toggle(e)
-            d3.select(`#${props.id}`).select(".nodeinfo")
-                .style("opacity", 0)
-            nextTick(() => {
-                const overlay_menu = d3.select("#overlay_menu")
-                    overlay_menu.style("left", e.clientX + 5 + "px")
-                    .style("top", e.clientY + 5 + "px")
-                clicked_node.value = d as ScatterNode
-            })
+            console.log(clicked_node_element.value)
+            if(clicked_node_element.value !== undefined) {
+                const parentNode: any = (clicked_node_element.value as HTMLElement).parentNode
+                const container: any = d3.select(parentNode)
+                removeExpandedStyle(container)
+                console.log("expanded style removed")
+            }
+            clicked_node_element.value = this
+            console.log(clicked_node_element.value)
+            clicked_node.value = d as ScatterNode
+            emit("node_clicked", {title: props.view?.title, type: ViewType.CooccurrHex, d: clicked_node.value})
+
+            // menu.value.toggle(e)
+            // d3.select(`#${props.id}`).select(".nodeinfo")
+            //     .style("opacity", 0)
+            // nextTick(() => {
+            //     const overlay_menu = d3.select("#overlay_menu")
+            //         overlay_menu.style("left", e.clientX + 5 + "px")
+            //         .style("top", e.clientY + 5 + "px")
+            //     clicked_node.value = d as ScatterNode
+            // })
         })
 
     // add images if comparing across outlets
@@ -566,6 +570,20 @@ function updateExpandedScatter() {
             .lower()
     }
 
+}
+
+function removeExpandedStyle(container: any) {
+    container.style("filter", "brightness(100%)")
+    container.selectAll("circle.expand_circle")
+        .transition().duration(100)
+        .attr("r", (d) => (parseFloat(container.select("circle.outlet_circle").attr("r"))))
+    const target_node_text = container.data()[0].text
+    const other_nodes_container = d3.select(`#${props.id}`).selectAll("g.outlet").filter((d: any) => d.text != target_node_text)
+    other_nodes_container.selectAll("image")
+        .attr("opacity", 0.3)
+    container.selectAll("image")
+        .transition().duration(100)
+        .attr("opacity", 0.3)
 }
 
 function updateOverviewScatter() {
@@ -619,6 +637,9 @@ function updateOverviewScatter() {
                 .attr("r", node_circle_radius/(current_zoom?.k || 1))
                 .attr("cx", (d: any) => x(d.pos_sst))
                 .attr("cy", (d: any) => y(Math.abs(d.neg_sst)))
+            .on("end", function() {
+                emit("update-weight-ended")
+            })
 
             update.selectAll("circle.outlet_circle")
             .attr("fill", (d: any) => SstColors.article_num_color_scale(d.article_ids.length/max_articles.value))

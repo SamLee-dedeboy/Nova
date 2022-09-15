@@ -1,6 +1,6 @@
 <template>
 <div :id="id" class="hex-container">
-    <svg>
+    <svg class="hex-svg">
         <filter :id="`${id}-brightness`">
             <feComponentTransfer>
             <feFuncR type="linear" slope="2.4" />
@@ -17,16 +17,18 @@ import * as d3 from "d3"
 import * as d3_hexbin from "d3-hexbin"
 import { updateOverviewGrid } from "./TutorialUtils";
 import * as SstColors from "./ColorUtils"
-import { SentimentType, Sentiment2D, EntityCooccurrences, HexEntity } from "../types"
+import { SentimentType, Sentiment2D, EntityCooccurrences, HexEntity, ScatterNode } from "../types"
 import { Ref, ref } from "vue"
 const props = defineProps({
     title: String,
     id: String,
     entity_cooccurrences: Object as () => EntityCooccurrences,
     segmentation: Sentiment2D, 
+    overall_entity_dict: Object as () => {[id: string]: ScatterNode}
 })
 const emit = defineEmits(["hex-clicked"])
 
+const isOverall = vue.computed(() => props.title?.split("-").length === 2)
 // const viewBox = [1000, 1000/(2*Math.sin(Math.PI/3))*3]
 const viewBox = [640, 580]
 const margin = {top: 0, bottom: 0, right:0, left: 0} 
@@ -70,6 +72,9 @@ const y = d3.scaleLinear()
 vue.watch(() => props.segmentation, (new_value, old_value) => {
     updateHexColor()
 }, {deep: true}) 
+// vue.watch(() => props.overall_entity_dict, (new_value, old_value) => {
+//     // updateHexColor(1000)
+// }, {deep:true})
 
 vue.watch(() => props.entity_cooccurrences, (new_value, old_value) => {
     updateHexBins()
@@ -175,10 +180,10 @@ function updateHexBins() {
         .attr("font-size", "small")
         .attr("text-anchor", "middle")
         .attr("dominant-baseline", "middle")
+    tspan.exit().remove()
 }        
 
-function updateHexColor() {
-    console.log(sorted_cooccurrence_list.value)
+function updateHexColor(overall_entity_dict:any=undefined) {
     const svg = d3.select(`#${props.id}`).select("svg")
     const hex_path_group = svg.select("g.hex-group")
     const hex_bins: any = hex_path_group.selectAll("path")
@@ -186,12 +191,18 @@ function updateHexColor() {
             const parentNode: any = (this as HTMLElement).parentNode
             const container: any = d3.select(parentNode)
             const parent_data: any = container.data()[0]
-            return SstColors.enum_color_dict[categorizeHex(parent_data.sst!, props.segmentation!)]
+            const sst: Sentiment2D|undefined = (overall_entity_dict !== undefined && parent_data.sst !== undefined)? 
+            { 
+                pos: overall_entity_dict?.[parent_data.entity].pos_sst,
+                neg: overall_entity_dict?.[parent_data.entity].neg_sst,
+            }:
+            parent_data.sst
+            return SstColors.enum_color_dict[categorizeHex(sst, props.segmentation!)]
         })
 
 }
 
-function categorizeHex(sst: Sentiment2D, segmentation: Sentiment2D) {
+function categorizeHex(sst: Sentiment2D|undefined, segmentation: Sentiment2D) {
     if(sst === undefined) return SentimentType.unknown
     if(sst.pos < segmentation.pos && sst.neg < segmentation.neg) return SentimentType.neu
     if(sst.pos < segmentation.pos && sst.neg > segmentation.neg) return SentimentType.neg
@@ -242,11 +253,15 @@ function updateMask() {
 
 defineExpose({
     updateMask,
+    updateHexColor
 })
 
 </script>
 
 
 <style scoped>
-
+.hex-svg {
+    width: inherit;
+    height: inherit;
+}
 </style>

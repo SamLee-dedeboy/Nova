@@ -116,6 +116,7 @@ const emit = defineEmits(
     "show_temporal",
     "hex_active_changed",
     "hex-clicked",
+    "update-weight-ended"
     ]
 )
 
@@ -274,6 +275,7 @@ defineExpose({
                 @update:segmentation="updateSegmentation"
                 @node_clicked="handleEntityClicked"
                 @show_temporal="handleShowTemporal"
+                @update-weight-ended="$emit('update-weight-ended')"
             ></SentimentScatter>
             <!-- <ArticleInfo
                 id="article-info-test"
