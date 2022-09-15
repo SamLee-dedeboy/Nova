@@ -15,6 +15,6 @@ def min_max_norm_sst_score(num, max, min, scale_func):
     return scale_func((num - min)/(max - min))
 
 def pos_scale_func(x):
-    return pow(x, 0.4)
-def neg_scale_func(x):
     return pow(x, 0.3)
+def neg_scale_func(x):
+    return pow(x, 0.2)
