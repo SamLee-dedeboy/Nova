@@ -61,6 +61,11 @@ export default {
             .then(json => {
                 this.entity_cooccurrences_dict = json
             })
+        await fetch("http://127.0.0.1:5000/test")
+            .then(res => res.json())
+            .then(json => {
+                console.log("server respond: ", json)
+            })
         this.isLoading = false
         this.testClicked()
         return

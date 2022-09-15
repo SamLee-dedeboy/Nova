@@ -10,7 +10,7 @@ import InfoButton from "./deprecated/InfoButton.vue";
 import * as d3 from "d3"
 import { watch, onMounted, PropType, ref, Ref, toRef, computed, defineEmits, nextTick } from 'vue'
 import * as vue from 'vue'
-import { ScatterNode, PanelView, TemporalBins, ViewType, Article, OutletNodeInfo, Sentiment2D } from "../types";
+import { ScatterNode, PanelView, TemporalBins, ViewType, Article, EntityCooccurrences, Sentiment2D, HexEntity } from "../types";
 import TemporalCoordinates from "./TemporalCoordinates.vue";
 import TemporalPathSelector from "./TemporalPathSelector.vue";
 import SentimentScatter from "./SentimentScatter.vue";
@@ -36,6 +36,17 @@ const active: Ref<number> = ref(0)
 const highlight_entity: Ref<string[]> = ref([])
 const compare_mode = vue.inject("compare_mode") || ref(false)
 const selectedNodes: Ref<ScatterNode[]> = ref([])
+const panels: Ref<any> = ref([])
+const hex_active: Ref<boolean> = vue.computed(() => {
+    return props.selectedScatters?.[active.value]?.type === ViewType.CooccurrHex
+})
+vue.watch(hex_active, (new_value, old_value) => {
+    if(new_value) {
+        emit("hex_active_changed", {active: true, part: props.compare_part}) 
+    } else {
+        emit("hex_active_changed", {active: false, part: props.compare_part}) 
+    }
+})
 const topicBins = vue.computed(() => {
     if(selectedNodes.value.length === 0) return undefined
     let bins = {}
@@ -79,13 +90,10 @@ vue.watch(() => props.highlight_nodes, (new_value, old_value) => {
 vue.watch(selectedNodes, (new_value, old_value) => {
     highlightNodes.value = selectedNodes.value?.map(node => node.text.split("-")[0])
 })
-vue.watch(props.segmentation!, (new_value, old_value) => {
-    console.log({new_value, old_value})
 
-})
-
-watch(() => props.selectedScatters, (new_scatters, old_scatters) => {
-    active.value = (props.selectedScatters?.length || 1) - 1 
+watch(() => props.selectedScatters?.length, (new_length, old_length) => {
+    if(new_length! > old_length!)
+        active.value = (props.selectedScatters?.length || 1) - 1 
     // const tab_navs = document.querySelector(".p-tabview-nav").querySelector('[role="presentation"]')
     vue.nextTick(() => {
         const tab_navs = document.querySelectorAll(`.${props.compare_part} .p-tabview-nav > [role=presentation]`)
@@ -100,11 +108,19 @@ watch(() => props.selectedScatters, (new_scatters, old_scatters) => {
     })
 }, {deep:true})
 
-const emit = defineEmits(['update:selectedScatters', "update:segmentation", "node-clicked", "entity-clicked", "show_temporal"])
+const emit = defineEmits(
+    ['update:selectedScatters', 
+    "update:segmentation", 
+    "node-clicked", 
+    "entity-clicked", 
+    "show_temporal",
+    "hex_active_changed",
+    "hex-clicked",
+    ]
+)
 
 vue.onMounted(() => {
     highlightNodes.value = props.highlight_nodes || []
-
 })
 
 function gen_color_dict(temporal_bins: TemporalBins) {
@@ -196,6 +212,37 @@ function rowHeader(data: string, graph_type: ViewType): string {
 function breakText(data: string): string[] {
     return data.split("_")
 }
+
+function getActiveHexEntities() {
+    return props.selectedScatters?.[active.value]?.data.sorted_cooccurrences_list.map(hex => hex.entity)
+}
+
+function applyCoHexMask(masked_entities, mask_value) {
+    const hexview_data: EntityCooccurrences = props.selectedScatters?.[active.value]?.data
+    const all_hex_list = hexview_data.sorted_cooccurrences_list
+    all_hex_list.forEach(hex => {
+        hex.mask = masked_entities.includes(hex.entity) === mask_value 
+    })
+    console.log(`${props.compare_part}-${active.value} updateMask`)
+    panels.value[active.value].updateMask()
+    // masked_entities.forEach(entity => {
+    //     all_entities_dict[entity].mask = true
+    // })
+
+}
+
+function handleHexClicked({title, entity}) {
+    if(title.split("-").length == 3) {
+        const outlet = title.split('-')[2]
+        entity = entity + "-" + outlet
+    }
+    emit("hex-clicked", entity)
+}
+
+defineExpose({
+    getActiveHexEntities,
+    applyCoHexMask,
+})
 </script>
 
 <template>
@@ -203,7 +250,7 @@ function breakText(data: string): string[] {
     ref="tabview"
     >
     <TabPanel class="graph-panel" :class="compare_part"
-     v-for="(view, index) in selectedScatters" :key="view.title" ref="tabpanels" 
+     v-for="(view, index) in selectedScatters" :key="view.title"  
       >
         <template #header>
 			<span style="max-width:100px; overflow:hidden;display: block ruby;font-size:x-small" :title="view.title"
@@ -212,7 +259,7 @@ function breakText(data: string): string[] {
             @click="handleCloseTab($event, index)"/>
 		</template>
         <div class="scatter-panel-container"
-            v-if="view.type === ViewType.EntityScatter || view.type === ViewType.OutletScatter || view.type === ViewType.CooccurrScatter">
+            v-if="view.type === ViewType.EntityScatter || view.type === ViewType.OutletScatter">
             <SentimentScatter
                 :view="view"
                 :view_index="index"
@@ -324,9 +371,14 @@ function breakText(data: string): string[] {
         </div>
         <div class="hex-view-container" v-if="view.type === ViewType.CooccurrHex">
             <HexCooccurrence
-                :id="`${view.title}-${index}`"
+                :title="view.title"
+                :ref="(el) => {panels[index] = el}"
+                :id="`${compare_part}-co-hex-${index}`"
                 :entity_cooccurrences="view.data"
-                :segmentation="segmentation" >
+                :segmentation="segmentation"
+                v-on:hex-clicked="handleHexClicked"
+                >
+                
             </HexCooccurrence>
         </div>
     </TabPanel>

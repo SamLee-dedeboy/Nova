@@ -9,7 +9,13 @@ export enum ViewType {
 
 export class EntityCooccurrences {
     entity: string
-    cooccurrences: {[id: string]: {article_ids: number[], sst: Sentiment2D }}
+    sorted_cooccurrences_list: HexEntity[]
+}
+export class HexEntity {
+    entity: string
+    article_ids: number[]
+    sst: Sentiment2D
+    mask: boolean
 }
 
 export class Path {
@@ -34,11 +40,6 @@ export class EntityScatterView implements PanelView {
         nodes: ScatterNode[], 
         max_articles: number, 
         min_articles: number, 
-        mentions_groupby_outlet_dict?: any,
-        pos_max?: any,
-        pos_min?: any,
-        neg_max?: any,
-        neg_min?: any,
     }
 }
 export class OutletScatterView implements PanelView {
@@ -66,9 +67,9 @@ export class TemporalBins {
 }
 export class ScatterNode {
     text: string
-    articles: number[]
-    pos_articles: number
-    neg_articles: number
+    article_ids: number[]
+    pos_article_ids: number[]
+    neg_article_ids: number[]
     pos_sst: number
     neg_sst: number
     topicBins: {[id: string]: {pos: number, neg: number}}
@@ -83,7 +84,12 @@ export class OutletNodeInfo {
 export class EntityInfo {
     name: string
     outlet: string
-    sst_ratio: {pos_artcs: number, neg_artcs: number, pos: number, neg: number}
+    sst_ratio: {
+        pos_artcs: number, neg_artcs: number, 
+        pos: number, neg: number,
+        pos_max: number, pos_min: number,
+        neg_max: number, neg_min: number
+    }
     articles: Article[]
 }
 export class OutletNode {
@@ -138,6 +144,7 @@ export enum SentimentType {
     pos,
     neg,
     mix,
+    unknown,
 }
 export class Sentiment {
     label: string

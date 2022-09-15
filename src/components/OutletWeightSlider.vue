@@ -6,6 +6,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(["update_outlet_weight"])
+
 const outlet_list = vue.computed(() => {
     if(!props.outlet_weight_dict) return undefined
     return Object.keys(props.outlet_weight_dict)

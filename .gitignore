@@ -34,3 +34,5 @@ src/preprocess/rel_ned/*
 !src/preprocess/rel_ned/*.py
 *.pem
 public/*.json
+src/server/__pycache__/
+src/server/data/

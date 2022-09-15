@@ -4,7 +4,7 @@ import Filter from "../components/deprecated/Filter.vue";
 import Slider from "primevue/slider"
 import InputText from "primevue/inputtext"
 //import Target from "../components/Target.vue";
-import TargetContainer from "../components/TargetContainer.vue";
+import PanelContainer from "../components/PanelContainer.vue";
 import MyToolbar from "../components/MyToolbar.vue"
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
@@ -12,7 +12,7 @@ import ToggleButton from 'primevue/togglebutton';
 import TopicSelection from "../components/deprecated/TopicSelection.vue";
 import TargetSelection from "../components/deprecated/TargetSelection.vue"
 import MonthSlider from "../components/deprecated/MonthSlider.vue"
-import * as preprocess from "../components/preprocessUtils"
+// import * as preprocess from "../components/preprocessUtils"
 import { watch, computed, onMounted, PropType, ref, Ref, nextTick, } from 'vue'
 import * as vue from 'vue'
 import * as typeUtils from "../types"
@@ -30,17 +30,37 @@ import ArticleView from "../components/ArticleView.vue"
 import EntityInfoView from "../components/EntityInfoView.vue"
 import tutorial_intro_json from "../assets/tutorial/tutorial_intro.json"
 import * as tutorial from "../components/TutorialUtils"
+import { resolve } from "path";
+import SelectButton  from "../components/SelectButton.vue";
 
 
 //
 // raw data
 //
-const entity_mentions_grouped: Ref<any[]> = ref([])
-const overall_entity_mentions: Ref<any[]> = ref([])
-let dataset_metadata = {}
-let original_dataset = []
-const articles = ref([])
+const server_address = "http://127.0.0.1:5000"
 
+// overview data 
+const overview_overall_scatter_data: Ref<any> = ref({})
+const overview_grouped_scatter_data: Ref<any> = ref({})
+const overview_grouped_scatter_metadata: Ref<any> = ref({})
+const overview_overall_scatter_metadata: Ref<any> = ref({})
+const grouped_scatter_view_dict = vue.computed(() => {
+  if(!overview_grouped_scatter_data.value) return undefined
+  let res_dict: any = {}
+  Object.keys(overview_grouped_scatter_data.value).forEach(outlet => {
+    const scatter_data = overview_grouped_scatter_data.value[outlet]
+    const scatter_view: typeUtils.EntityScatterView = {
+      title: outlet,
+      type: typeUtils.ViewType.EntityScatter,
+      data: scatter_data
+    }
+    res_dict[outlet] = scatter_view
+  })
+  return res_dict
+})
+const overall_scatter_data_loading: Ref<boolean> = ref(true)
+const grouped_scatter_data_loaded: Ref<boolean> = ref(false)
+const overview_constructed: Ref<boolean> = ref(false)
 //
 // processed data 
 //
@@ -73,6 +93,11 @@ const outlet_article_bins_dict = ref({})
 const outlet_article_dict = ref({})
 
 /**
+ * entity list
+ */
+const entity_list: Ref<string[]> = ref([])
+
+/**
  * dictionary: { [outlet]: Article[ ].length }
  */
 const outlet_article_num_dict = ref({})
@@ -88,21 +113,7 @@ const entity_cooccurrences_groupby_outlet = ref({})
  */
 const entity_cooccurrences_dict = ref({})
 
-/**
- * dictionary: { [outlet]: OutletScatterView[] }. \
- * scatter_dict stores all the scatter_view data that are created to easily move scatterplot between views.
- */
-const scatter_dict = ref({})
 
-/**
- * flag for constructing overview grid graphs on mounted.
- */
-
-const overview_constructed: Ref<boolean> = ref(false)
-/**
- * @deprecated
- */
-const entity_list: Ref<string[]> = computed(() => entity_mentions_grouped.value?.["CNN"].map(entity_mention => entity_mention.entity))
 
 /**
  * Array: ScatterOutletGraph[]. \
@@ -115,36 +126,12 @@ const selectedScatterViews_left: Ref<typeUtils.PanelView[]> = ref([])
  */
 const selectedScatterViews_right: Ref<typeUtils.PanelView[]> = ref([])
 
-/**
- * @deprecated
- */
-const entity_data = computed(() => entity_mentions_grouped.value.map(entity_mention => { return {"name": entity_mention[0], "num": entity_mention[1].length || 0}}))
 
-/**
- * flag for displaying load icon on mounted.
- */
-const overview_constructing: Ref<boolean> = ref(true)
 
 //
 // preprocessed global data used across components
 //
 
-/**
- * max articles of all nodes in overview grid. \
- * Used when scaling node color.
- */
-const grouped_max_articles: Ref<number> = ref(0)
-const grouped_pos_max_articles: Ref<number> = ref(0)
-const grouped_neg_max_articles: Ref<number> = ref(0)
-const overall_max_articles: Ref<number> = ref(0)
-/**
- * min articles of all nodes in overview grid. \
- * Used when scaling node color.
- */
-const grouped_min_articles: Ref<number> = ref(0)
-const grouped_pos_min_articles: Ref<number> = ref(0)
-const grouped_neg_min_articles: Ref<number> = ref(0)
-const overall_min_articles: Ref<number> = ref(0)
 
 /**
  * Flag for compare mode. \
@@ -157,6 +144,12 @@ vue.provide('compare_mode', compare_mode)
  * Flag for displaying article view. 
  */
 const display_article_view: Ref<boolean> = ref(false)
+
+/**
+ * flag for fetching article
+ */
+const fetching_article: Ref<boolean> = ref(false)
+
 /**
  * Flag for segment mode. \
  * Display segmentation on all scatters when segment mode is on.
@@ -227,7 +220,7 @@ function updateThreshold(new_value) {
 
 /**
  * nested dictionary: { [title]: { [month]: Article[ ] }}. \
- * Used in TargetContainer to store all temporal view data.
+ * Used in PanelContainer to store all temporal view data.
  */
 // const temporalBins = ref({})
 
@@ -252,19 +245,32 @@ const selected_entity: Ref<typeUtils.EntityInfo> = ref(new typeUtils.EntityInfo(
 const outlet_weight_dict: Ref<any> = ref({})
 
 /**
- * @deprecated
+ * flags for hex views being active
  */
-watch(() => timeRange, (new_range, old_range) => {
-  if(new_range[0] != old_range[0] || new_range[1] != old_range[1]) {
-    // TODO: implement slicing with dataframe
-    const subset = preprocess.sliceDatasetByTime(new_range, original_dataset)
-    // const startIndex = this.original_dataset.findIndex(article => parseInt(article.timestamp.split('-')[1]) >= new_range[0])
-    // const endIndex = this.original_dataset.findIndex(article => parseInt(article.timestamp.split('-')[1]) > new_range[1])
-    // const subset = this.original_dataset.slice(startIndex, (endIndex == -1? this.original_dataset.length : endIndex))
-    // this.updateDicts(subset)
-  }
+const co_hex_active_left: Ref<boolean> = ref(false)
+const co_hex_active_right: Ref<boolean> = ref(false)
+const show_co_button = computed(() => {
+  return co_hex_active_left.value && co_hex_active_right.value && compare_mode.value
 })
 
+const cohex_mode: Ref<any> = ref(null)
+const cohex_options: Ref<string[]> = ref(["Common", "Diff"])
+const cached_nodes: Ref<typeUtils.ScatterNode[]> = ref([])
+
+/**
+ * refs for panel left & right
+ */
+const panel_left: Ref<any> = ref(null)
+const panel_right: Ref<any> = ref(null)
+
+vue.watch(cohex_mode, (new_value, old_value) => {
+  if(new_value === "Common")
+    showCoHexCommon()
+  if(new_value === "Diff")
+    showCoHexDiff()
+  if(new_value === null) 
+    showOriginalCoHex()
+})
 vue.watch(overview_constructed, (new_value, old_value) => {
   if(tutorial_mode.value) {
     tutorial.updateOverviewGrid()
@@ -317,8 +323,86 @@ vue.watch(selectedScatterViews_right, (new_value, old_value) => {
 }, {deep:true})
 
 // prepare for tutorial
-vue.onMounted(() => {
+vue.onMounted(async() => {
   tutorial.prepareComponentsForTutorial({tutorial_mode, tutorial_step})
+  const promiseArray: any[] = []
+  promiseArray.push(new Promise((resolve) => {
+      fetch(`${server_address}/overview/scatter/overall/data`)
+      .then(res => res.json())
+      .then(json => {
+        overview_overall_scatter_data.value = json
+        const overall_scatter_view: typeUtils.EntityScatterView = {
+          title: "Overall",
+          type: typeUtils.ViewType.EntityScatter,
+          data: overview_overall_scatter_data.value 
+        }
+        selectedScatterViews_left.value.push(overall_scatter_view)
+        console.log("overall scatter fetched")
+        overall_scatter_data_loading.value = false
+        resolve("success")
+      })
+  }))
+  promiseArray.push(new Promise((resolve) => {
+    fetch(`${server_address}/overview/scatter/grouped/data`)
+    .then(res => res.json())
+    .then(json => {
+      overview_grouped_scatter_data.value = json
+      console.log("grouped scatter fetched")
+      resolve("success")
+    })
+  }))
+  promiseArray.push(new Promise((resolve) => {
+      fetch(`${server_address}/overview/scatter/overall/metadata`)
+      .then(res => res.json())
+      .then(json => {
+        overview_overall_scatter_metadata.value = json
+        console.log("overall scatter metadata fetched")
+        resolve("success")
+      })
+  }))
+  promiseArray.push(new Promise((resolve) => {
+      fetch(`${server_address}/overview/scatter/grouped/metadata`)
+      .then(res => res.json())
+      .then(json => {
+        overview_grouped_scatter_metadata.value = json
+        console.log("grouped scatter metadata fetched")
+        resolve("success")
+      })
+  }))
+  promiseArray.push(new Promise((resolve) => {
+    fetch(`${server_address}/processed_data/outlet_article_num_dict`)
+    .then(res => res.json())
+    .then(json => {
+      outlet_article_num_dict.value = json
+      console.log("outlet article num dict fetched")
+      resolve("success")
+    })
+  }))
+  promiseArray.push(new Promise((resolve) => {
+    fetch(`${server_address}/processed_data/entity_list`)
+    .then(res => res.json())
+    .then(json => {
+      entity_list.value = json
+      console.log("entity_list fetched")
+      resolve("success")
+    })
+  }))
+  promiseArray.push(new Promise((resolve) => {
+    fetch(`${server_address}/processed_data/outlet_set`)
+    .then(res => res.json())
+    .then(json => {
+      enabled_outlet_set.value = json
+      enabled_outlet_set.value.forEach(outlet => {
+        outlet_weight_dict.value[outlet] = 1
+      })
+      console.log("outlet_set fetched")
+      resolve("success")
+    })
+  }))
+  await Promise.all(promiseArray)
+    .then(res => {
+      overview_constructed.value = true
+    })
 })
 
 // tutorial setups
@@ -326,124 +410,11 @@ vue.watch(tutorial_step, (new_value, old_value) => {
   tutorial.handleNextStep({tutorial_mode, tutorial_step}) 
 })
 
-
-/**
- * @deprecated
- */
-function updateNpList(np_list) {
-  // this.dataset = dataset
-  // this.outlet_set = dataset.outlet_set
-  // this.enabled_outlet_set = dataset.outlet_set
-  // this.topic_list = Object.keys(dataset.topic_dict)
-  entity_mentions.value = np_list
-  dataset_metadata = this.$refs.toolbar.getMetaData()  
-} 
-
-function datasetImported(dataset) {
-  overview_constructing.value = true
-  setTimeout(() => {
-    const promise = new Promise((resolve) => { 
-      console.log("dataset imported")
-      outlet_article_dict.value = dataset.outlet_article_dict
-      entity_mentions_grouped.value = dataset.entity_mentions
-      overall_entity_mentions.value = dataset.overall_entity_mentions
-      entity_cooccurrences_groupby_outlet.value = dataset.entity_cooccurrences_outlet_dict
-      entity_cooccurrences_dict.value = dataset.entity_cooccurrences_dict
-
-      let {
-        outlet_set, 
-        r_article_dict, 
-        r_article_bins_dict, 
-        r_min_timestamp, r_max_timestamp, 
-        r_outlet_article_num_dict
-      } = preprocess.processArticleDict(outlet_article_dict.value)
-      console.log("preprocess 1 done")
-      outlet_article_num_dict.value = r_outlet_article_num_dict
-      outlet_article_bins_dict.value = r_article_bins_dict
-      enabled_outlet_set.value = outlet_set
-      enabled_outlet_set.value.forEach(outlet => {
-        outlet_weight_dict.value[outlet] = 1
-      })
-      min_timestamp.value = r_min_timestamp
-      max_timestamp.value = r_max_timestamp
-      // articles.value = normalized_articles
-      article_dict.value = r_article_dict
-      let {
-        r_graph_dict, 
-        r_max_articles, r_min_articles, 
-        r_pos_max_articles, r_pos_min_articles,
-        r_neg_max_articles, r_neg_min_articles,
-        r_node_article_id_dict
-      } = preprocess.constructEntityGraph(entity_mentions_grouped.value, article_dict.value)
-
-      console.log("preprocess 2 done")
-      scatter_dict.value = r_graph_dict
-      
-      grouped_max_articles.value = r_max_articles
-      grouped_min_articles.value = r_min_articles
-      
-      grouped_pos_max_articles.value = r_pos_max_articles
-      grouped_pos_min_articles.value = r_pos_min_articles
-      grouped_neg_max_articles.value = r_neg_max_articles
-      grouped_neg_min_articles.value = r_neg_min_articles
-      
-      node_article_id_dict.value = r_node_article_id_dict
-
-      console.log("constructing overall entity scatter")
-      const overall_entity_scatter = 
-        preprocess.constructOverallEntityGraph(overall_entity_mentions.value, article_dict.value, node_article_id_dict.value)
-
-      selectedScatterViews_left.value.push(overall_entity_scatter)
-
-      overview_constructed.value = true
-      console.log("overview constructed")
-      resolve(""); 
-    })
-    promise.then(() => overview_constructing.value = false)
-  }, 10)
-
-}
-
-/**
- * 
- * @deprecated this function is replaced by datasetImported() 
- */
-function processDataset(dataset) {
-  entity_mentions.value = dataset.entity_mentions
-  dataset_metadata = dataset.metadata
-
-  // save raw dataset 
-  // possibly need deep clone?
-  original_dataset = dataset.articles 
-
-  // get time period
-  const dataset_articles = dataset.articles
-  dataset_articles.sort((a1, a2) => Date.parse(a1.timestamp) > Date.parse(a2.timestamp))
-  const startMonth = parseInt(dataset_articles[0].timestamp.split('-')[1])
-  const endMonth = parseInt(dataset_articles[dataset_articles.length-1].timestamp.split('-')[1])
-  timeRange = {start: startMonth, end: endMonth+1}
-  // process articles
-  let {outlet_set, normalized_articles, r_article_dict} = preprocess.processArticles(dataset_articles)
-  enabled_outlet_set.value = outlet_set
-  articles.value = normalized_articles
-  article_dict.value = r_article_dict
-  // let {r_graph_dict, r_max_articles, r_min_articles} = preprocess.constructOutletGraph(entity_mentions.value, enabled_outlet_set.value, article_dict.value)
-  let {r_graph_dict, r_max_articles, r_min_articles} = preprocess.constructEntityGraph(entity_mentions.value, enabled_outlet_set.value, article_dict.value, dataset_articles)
-  graph_dict.value = r_graph_dict
-  max_articles.value = r_max_articles
-  min_articles.value = r_min_articles
-  overview_constructed.value = true
-}
-
-function updateEnabledOutlet(outlet_set_info) {
-  enabled_outlet_set.value = outlet_set_info.filter(outlet => outlet.enabled).map(outlet => outlet.outlet)
-}
-
 // handlers
 function handleScatterClicked(index) {
-    const clicked_scatter = Array.from(enabled_outlet_set.value)[index]
+    const clicked_scatter = Object.keys(grouped_scatter_view_dict.value)[index]
 
-    selectedScatterViews_left.value.push(scatter_dict.value[clicked_scatter])
+    selectedScatterViews_left.value.push(grouped_scatter_view_dict.value[clicked_scatter])
     const dropped_from = selectedScatterViews_right.value.findIndex(element => element.title === clicked_scatter)
     if(dropped_from > -1) 
       selectedScatterViews_right.value.splice(dropped_from, 1)
@@ -454,11 +425,12 @@ function handleScatterClicked(index) {
     }
 }
 
-function handleDragScatter(evt, index) {
+function handleDragOutletScatter(evt, index) {
   evt.dataTransfer.dropEffect = 'move'
   evt.dataTransfer.effectAllowed = 'move'
-  const dragged_scatter = Array.from(enabled_outlet_set.value)[index]
-  const scatter = scatter_dict.value[dragged_scatter]
+  const dragged_scatter = Object.keys(grouped_scatter_view_dict.value)[index]
+
+  const scatter = grouped_scatter_view_dict.value[dragged_scatter]
   evt.dataTransfer.setData('scatter', JSON.stringify(scatter))  
 }
 
@@ -503,6 +475,7 @@ function handleDragLeave(e) {
 }
 
 function handleDropScatter(e) {
+  const t0 = performance.now()
   // style changes
   const tabview_left = document.querySelector(".p-tabview.panel-left") as HTMLElement
   if(e.target !== tabview_left && tabview_left.contains(e.target)) {
@@ -533,14 +506,16 @@ function handleDropScatter(e) {
     selectedScatterViews_right.value.push(scatter)
     const dropped_from = selectedScatterViews_left.value.findIndex(element => element.title === scatter.title)
   }
+
   const button_next = document.getElementsByClassName("p-tabview-nav-next")[0] as HTMLElement || undefined
   if(button_next != undefined) {
     button_next.click()
   }
+  const t1 = performance.now()
+  console.log("handle Drop:", t1-t0)
 }
 
-function handleEntityClicked({title, type, d}) {
-  compare_mode.value = true 
+async function handleEntityClicked({title, type, d}: {title: string, type: typeUtils.ViewType, d: typeUtils.ScatterNode}) {
   if(type === typeUtils.ViewType.OutletScatter) {
     // construct outlet graph
     const entity_name = d.text.split("-")[0]
@@ -576,48 +551,22 @@ function handleEntityClicked({title, type, d}) {
   if(type === typeUtils.ViewType.CooccurrHex) {
     const entity = d.text.split("-")[0]
     const outlet = d.text.split("-")[1]
-    let cooccurrences: any
-    let view_title: string
-    if(title === "Overall") {
-      view_title = `co-${entity}`
-      cooccurrences = entity_cooccurrences_dict.value[entity]
-      const article_ids = node_article_id_dict.value[d.text]
-      const articles = preprocess.idsToArticles(article_ids, article_dict.value)
-      selected_entity.value = {
-        name: d.text.split("-")[0],
-        outlet: "Overall",
-        sst_ratio: {
-          pos_artcs: articles.filter(article => article.sentiment.label === "POSITIVE").length,
-          neg_artcs: articles.filter(article => article.sentiment.label === "NEGATIVE").length,
-          pos: d.pos_sst,
-          neg: d.neg_sst,
-        },
-        articles: articles
-      }
-      display_article_view.value = true
-    }
-    else {
-      cooccurrences = entity_cooccurrences_groupby_outlet.value[outlet][entity]
-      view_title = `co-${entity}-${outlet}` 
-    }
-    let entity_cooccurrences = new typeUtils.EntityCooccurrences()
-    entity_cooccurrences.entity = entity
-    entity_cooccurrences.cooccurrences = {}
-    let cooccurr_view: typeUtils.CooccurrHexView= {title: view_title, type: typeUtils.ViewType.CooccurrHex, data: entity_cooccurrences }
-    Object.keys(cooccurrences).forEach(entity2 => {
-      if(entity2 === entity) return
-      const cooccurr_article_ids = cooccurrences[entity2]
-      const cooccurr_articles = preprocess.idsToArticles(cooccurr_article_ids, article_dict.value)
-      const sst = preprocess.generate_sst_score(
-        cooccurr_articles, 
-        grouped_pos_max_articles.value, grouped_pos_min_articles.value,
-        grouped_neg_max_articles.value, grouped_neg_min_articles.value
-      )
-      // const sst = preprocess.categorizeNode(cooccurr_article_ids, segment_sst.value, article_dict.value)
-      // const article_num = cooccurr_article_ids.length
-      entity_cooccurrences.cooccurrences[entity2] = {article_ids: cooccurr_article_ids, sst: sst}
-    });
-    selectedScatterViews_left.value.push(cooccurr_view)
+    cached_nodes.value.push(d)
+
+    const path_overall_or_grouped = ((title === "Overall")? "overall":"grouped")
+    await fetch(`${server_address}/hexview/${path_overall_or_grouped}/${d.text}`)
+      .then(res => res.json())
+      .then(json => {
+        const cooccurrences = json
+        const hex_view: typeUtils.CooccurrHexView = {
+          title: `co-${d.text}`,
+          type: typeUtils.ViewType.CooccurrHex,
+          data: cooccurrences,
+        }
+        selectedScatterViews_left.value.push(hex_view)
+        console.log("cooccurr hex fetched")
+      })
+    fetch_articles(d)
     return
   }
   if(type === typeUtils.ViewType.Article) {
@@ -628,8 +577,10 @@ function handleEntityClicked({title, type, d}) {
       name: d.text.split("-")[0],
       outlet: d.text.split("-")[1],
       sst_ratio: {
-        pos: articles.filter(article => article.sentiment.label === "POSITIVE").length,
-        neg: articles.filter(article => article.sentiment.label === "NEGATIVE").length,
+        pos_artcs: d.pos_article_ids.length,
+        neg_artcs: d.neg_article_ids.length,
+        pos: d.pos_sst,
+        neg: d.neg_sst,
       },
       articles: articles
     }
@@ -695,39 +646,104 @@ function handleUpdateOutletWeight({outlet, value}) {
   updateOverallEntityNode({outlet, value})
 }
 
-function updateOverallEntityNode({outlet, value}) {
+async function updateOverallEntityNode({outlet, value}) {
   const overall_entity_scatter = selectedScatterViews_left.value.find(view => view.title === "Overall") as typeUtils.EntityScatterView
-  const pos_max: number = _.sumBy(
-    Object.keys(overall_entity_scatter.data.pos_max!),
-    (outlet) => overall_entity_scatter.data.pos_max[outlet]*outlet_weight_dict.value[outlet]
-  )
-  const pos_min: number = _.sumBy(
-    Object.keys(overall_entity_scatter.data.pos_min!),
-    (outlet) => overall_entity_scatter.data.pos_min[outlet]*outlet_weight_dict.value[outlet]
-  )
-  const neg_max: number = _.sumBy(
-    Object.keys(overall_entity_scatter.data.neg_max!),
-    (outlet) => overall_entity_scatter.data.neg_max[outlet]*outlet_weight_dict.value[outlet]
-  )
-  const neg_min: number = _.sumBy(
-    Object.keys(overall_entity_scatter.data.neg_min!),
-    (outlet) => overall_entity_scatter.data.neg_min[outlet]*outlet_weight_dict.value[outlet]
-  )
-  let changed_node: any[] = []
-  overall_entity_scatter?.data.nodes.forEach(node => {
-    const article_num_outlet_dict = overall_entity_scatter?.data.mentions_groupby_outlet_dict[node.text]
-    const pos_sum: number = _.sumBy(
-      Object.keys(article_num_outlet_dict),
-      (outlet) => article_num_outlet_dict[outlet].pos*outlet_weight_dict.value[outlet]
-    )
-    const neg_sum: number = _.sumBy(
-      Object.keys(article_num_outlet_dict),
-      (outlet) => article_num_outlet_dict[outlet].neg*outlet_weight_dict.value[outlet]
-    )
-    node.pos_sst = preprocess.pos_score(pos_sum, pos_max, pos_min)
-    node.neg_sst = preprocess.neg_score(neg_sum, neg_max, neg_min)
-    changed_node.push(node.text)
+  overall_scatter_data_loading.value = true
+  await fetch(`${server_address}/processed_data/updateOutletWeight`,{
+    method: "POST",
+    headers: {
+      "Accept": "application/json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(outlet_weight_dict.value)
   })
+    .then(res => res.json())
+    .then(json => {
+      console.log("update outlet weight done")
+      overall_entity_scatter.data = json
+      overall_scatter_data_loading.value = false
+    })
+}
+
+function handleHexChanged({active, part}) {
+  if(part === "panel-left") {
+    co_hex_active_left.value = active
+  } else {
+    co_hex_active_right.value = active
+  }
+}
+function showCoHexDiff() {
+  const entities_left = panel_left.value.getActiveHexEntities()
+  const entities_right = panel_right.value.getActiveHexEntities()
+  const common = _.intersection(entities_left, entities_right)
+  panel_left.value.applyCoHexMask(common, false)
+  panel_right.value.applyCoHexMask(common, false)
+
+}
+
+function showCoHexCommon() {
+  const entities_left = panel_left.value.getActiveHexEntities()
+  const entities_right = panel_right.value.getActiveHexEntities()
+  const common = _.intersection(entities_left, entities_right)
+  panel_left.value.applyCoHexMask(common, true)
+  panel_right.value.applyCoHexMask(common, true)
+}
+
+function showOriginalCoHex() {
+  const entities_left = panel_left.value.getActiveHexEntities()
+  const entities_right = panel_right.value.getActiveHexEntities()
+  panel_left.value.applyCoHexMask(entities_left, true)
+  panel_right.value.applyCoHexMask(entities_right, true)
+
+}
+
+async function fetch_articles(d: typeUtils.ScatterNode) {
+    const article_ids = d.article_ids
+    const overall_flag = d.text.split("-")[1] === undefined
+    const outlet = overall_flag? "Overall": d.text.split("-")[1] 
+    const metadata = overall_flag? overview_overall_scatter_metadata.value: overview_grouped_scatter_metadata.value
+    selected_entity.value = {
+      name: d.text.split("-")[0],
+      outlet: outlet,
+      sst_ratio: {
+        pos_artcs: d.pos_article_ids.length,
+        neg_artcs: d.neg_article_ids.length,
+        pos: d.pos_sst,
+        neg: d.neg_sst,
+        pos_max: metadata.pos_max,
+        pos_min: metadata.pos_min,
+        neg_max: metadata.neg_max,
+        neg_min: metadata.neg_min,
+      },
+      articles: [],
+    }
+    display_article_view.value = true
+    fetching_article.value = true
+    await fetch(`${server_address}/processed_data/ids_to_articles`,{
+      method: "POST",
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(article_ids)
+    })
+      .then(res => res.json())
+      .then(json => {
+        console.log("articles fetched")
+        selected_entity.value.articles = json
+        fetching_article.value = false
+        console.log(selected_entity.value)
+      })
+
+}
+
+async function handleHexClicked(entity: string) {
+  await fetch(`${server_address}/processed_data/scatter_node/${entity}`)
+    .then(res => res.json())
+    .then(json => {
+      console.log("scatter_node fetched")
+      fetch_articles(json as typeUtils.ScatterNode)
+    })
 }
 </script>
 
@@ -737,10 +753,19 @@ function updateOverallEntityNode({outlet, value}) {
     <Splitter class="splitter-outmost" layout="vertical">
       <SplitterPanel class="homeview-container flex align-items-center justify-content-center" :size="100">
         <Splitter>
-          <SplitterPanel id="expanded_section" class="expanded-section flex align-items-center justify-content-center" :size="55" 
-            >
-            <TargetContainer
+          <SplitterPanel id="expanded_section" class="expanded-section flex align-items-center justify-content-center" :size="55" >
+            <i v-if="overall_scatter_data_loading" class="pi pi-spin pi-spinner" 
+            style="
+            position:absolute;
+            left: 45%;
+            top: 30%;
+            font-size: 3rem;
+            z-index: 1000
+            "></i> 
+
+            <PanelContainer
             id="panel_left"
+            ref="panel_left"
             :class="{compare: compare_mode}"
             compare_part="panel-left"
             :articles="articles"
@@ -750,20 +775,29 @@ function updateOverallEntityNode({outlet, value}) {
             :segment_mode="segment_mode"
             v-model:segmentation="segment_sst"
             :highlight_nodes="highlight_nodes"
+            @hex_active_changed="handleHexChanged"
             @drop="handleDropScatter($event)"
             @dragover="handleDragOver($event)"
             @dragleave="handleDragLeave($event)"
             @dragenter="(e) => (e.preventDefault())"
             @entity-clicked="handleEntityClicked"
+            @hex-clicked="handleHexClicked"
             @show_temporal="handleShowTemporal"
             >
-            </TargetContainer>
+            </PanelContainer>
             <Divider v-if="compare_mode" layout="vertical">
             </Divider>
+            <div class="co-hex-button-container"
+              v-if="show_co_button">
+            <!-- <Button class="co-common-button p-primary" label="Common" @click="showCoHexCommon"></Button>
+            <Button class="co-diff-button p-primary" label="Diff" @click="showCoHexDiff"></Button> -->
+            <SelectButton class="common-diff" v-model="cohex_mode" :options="cohex_options" aria-labelledby="single"  />
+            </div>
 
-            <TargetContainer
+            <PanelContainer
             v-if="compare_mode"
             id="panel_right"
+            ref="panel_right"
             :class="{compare: compare_mode}"
             compare_part="panel-right"
             :articles="articles"
@@ -773,14 +807,16 @@ function updateOverallEntityNode({outlet, value}) {
             :segment_mode="segment_mode"
             v-model:segmentation="segment_sst"
             :highlight_nodes="highlight_nodes"
+            @hex_active_changed="handleHexChanged"
             @drop="handleDropScatter($event)"
             @dragover="handleDragOver($event)"
             @dragleave="handleDragLeave($event)"
             @dragenter="(e) => (e.preventDefault())"
             @entity-clicked="handleEntityClicked"
+            @hex-clicked="handleHexClicked"
             @show_temporal="handleShowTemporal"
             >
-            </TargetContainer>
+            </PanelContainer>
           </SplitterPanel>
           <SplitterPanel id='sidebar' class="sidebar flex align-items-center justify-content-center" :size="45" :min-size="45">
             <div v-if="!display_article_view" class="overview-container">
@@ -792,13 +828,13 @@ function updateOverallEntityNode({outlet, value}) {
                 <div v-if="overview_constructed" class="search-bar">
                   <SearchBar :search_terms="entity_list" @entity_searched="handleSearch"></SearchBar>
                 </div>
-                <MyToolbar ref="toolbar" 
+                <!-- <MyToolbar ref="toolbar" 
                 @candidate_updated="updateNpList"
                 @dataset_imported="datasetImported"  >
-                </MyToolbar>
+                </MyToolbar> -->
                 <ToggleButton v-if="overview_constructed" class='temporal-toggler ' v-model="temporal_mode" onIcon="pi pi-chart-line" offIcon="pi pi-chart-line"></ToggleButton>
               </div>
-              <i v-if="overview_constructing" class="pi pi-spin pi-spinner" 
+              <i v-if="!overview_constructed" class="pi pi-spin pi-spinner" 
               style="
               position:absolute;
               left: 45%;
@@ -808,9 +844,9 @@ function updateOverallEntityNode({outlet, value}) {
               "></i> 
             <div class="overview-grid-container" v-if="overview_constructed && !temporal_mode" >
               <SentimentScatter
-                  v-for="(outlet, index) in enabled_outlet_set" :key="outlet" 
+                  v-for="(outlet, index) in Object.keys(grouped_scatter_view_dict)" :key="outlet" 
                   class="outlet-scatter"
-                  :view="scatter_dict[outlet]"
+                  :view="grouped_scatter_view_dict[outlet]"
                   :view_index="index"
                   :id="`scatter-${index}`"
                   :article_num_threshold="article_num_threshold"
@@ -819,7 +855,7 @@ function updateOverallEntityNode({outlet, value}) {
                   :highlight_nodes="highlight_nodes"
                   :expanded="false"
                   :draggable="true"
-                  @dragstart="handleDragScatter($event, index)"
+                  @dragstart="handleDragOutletScatter($event, index)"
                   @click="handleScatterClicked(index)"
               >
               </SentimentScatter>
@@ -842,15 +878,15 @@ function updateOverallEntityNode({outlet, value}) {
               <div class="utilities-container">
                 <div v-if="overview_constructed" class="slider-container">
                   <InputText class="threshold-input" v-model="article_num_threshold"></InputText>
-                  <Button class="increment-button p-button-secondary" label="+"  @click="() => article_num_threshold=Math.min(article_num_threshold+=10, grouped_max_articles||100)"></Button>
+                  <Button class="increment-button p-button-secondary" label="+"  @click="() => article_num_threshold=Math.min(article_num_threshold+=10, overview_grouped_scatter_metadata.max_articles||100)"></Button>
                   <Button class="decrease-button p-button-secondary " label="-"  @click="() => article_num_threshold=Math.max(article_num_threshold-10, 0)"></Button>
-                  <Slider v-model="article_num_threshold" :step="10" :min="0" :max="grouped_max_articles||100"></Slider>
+                  <Slider v-model="article_num_threshold" :step="10" :min="0" :max="overview_grouped_scatter_metadata.max_articles ||100"></Slider>
                   <ColorSpectrum class="color-spectrum" v-if="overview_constructed" 
                   :color-scale="SstColors.article_num_color_scale"
                   ></ColorSpectrum>
                   <div class="indicator-container">
                     <div class="min_indicator">0</div>
-                    <div class="max_indicator">{{grouped_max_articles || 100}}</div>
+                    <div class="max_indicator">{{overview_grouped_scatter_metadata.max_articles || 100}}</div>
                   </div>
                 </div>
                 <OutletWeightSlider
@@ -867,17 +903,21 @@ function updateOverallEntityNode({outlet, value}) {
                 :interactable="false"></Legend>
               </div>
               <div v-if="display_article_view" class="article-view-container">
+                <i v-if="fetching_article" class="pi pi-spin pi-spinner" 
+                style="
+                position:absolute;
+                left: 45%;
+                top: 30%;
+                font-size: 3rem;
+                z-index: 1000
+                "></i> 
                 <div class="toggler-container">
                   <ToggleButton class='back-toggler p-primary' v-model="display_article_view" onLabel="Back" offLabel="Article"></ToggleButton>
                   <ToggleButton class='segment-toggler p-primary' v-model="segment_mode" onLabel="Segment" offLabel="Segment"></ToggleButton>
                 </div>
                 <div class="entity-info-container">
                   <EntityInfoView
-                  :entity_info="{ 
-                    name: selected_entity.name, 
-                    outlet: selected_entity.outlet, 
-                    sst_ratio: selected_entity.sst_ratio 
-                  }"
+                  :entity_info="selected_entity"
                   v-model:segmentation="segment_sst"
                   >
                   </EntityInfoView>
@@ -885,8 +925,10 @@ function updateOverallEntityNode({outlet, value}) {
                 </div>
                 <div class="article-view">
                   <ArticleView
+                  v-if="!fetching_article"
                   v-model:sst_threshold="segment_sst"
-                  :articles="selected_entity.articles">
+                  :articles="selected_entity.articles"
+                  :sst_ratio="selected_entity.sst_ratio">
                   </ArticleView>
                 </div>
               </div>
@@ -1086,6 +1128,23 @@ function updateOverallEntityNode({outlet, value}) {
   width: 100%;
   margin-left: 10px;
   margin-right: 10px;
+}
+.co-hex-button-container {
+  position: absolute;
+  left: 45.4%;
+  top: 24%;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+.common-diff {
+  display: flex;
+  flex-direction: column;
+  font-size: x-small;
+}
+.common-diff > :deep(.p-button.p-component) {
+  font-size: inherit;
 }
  </style>
 
