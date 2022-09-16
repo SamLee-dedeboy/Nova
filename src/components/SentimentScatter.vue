@@ -502,18 +502,7 @@ function updateExpandedScatter() {
         .on("mouseover", function(e, d) {
             const parentNode: any = (this as HTMLElement).parentNode
             const container: any = d3.select(parentNode)
-            container.style("filter", "brightness(90%)")
-            // apply hover effect
-            container.selectAll("circle.expand_circle")
-                .transition().duration(100)
-                .attr("r", (d) => (parseFloat(container.select("circle.outlet_circle").attr("r"))*1.5 ))
-            const target_node_text = container.data()[0].text
-            const other_nodes_container = d3.select(`#${props.id}`).selectAll("g.outlet").filter((d: any) => d.text != target_node_text)
-            other_nodes_container.selectAll("image")
-                .attr("opacity", 0)
-            container.selectAll("image")
-                .transition().duration(100)
-                .attr("opacity", 0.8)
+            applyExpandStyle(container)
 
             // update tooltip
             updateNodeInfo(d as ScatterNode)
@@ -531,15 +520,12 @@ function updateExpandedScatter() {
         })
         .on("click", function (e, d) {
             if(tutorial_mode.value && tutorial_step.value < 7) { return }
-            console.log(clicked_node_element.value)
             if(clicked_node_element.value !== undefined) {
                 const parentNode: any = (clicked_node_element.value as HTMLElement).parentNode
                 const container: any = d3.select(parentNode)
                 removeExpandedStyle(container)
-                console.log("expanded style removed")
             }
             clicked_node_element.value = this
-            console.log(clicked_node_element.value)
             clicked_node.value = d as ScatterNode
             emit("node_clicked", {title: props.view?.title, type: ViewType.CooccurrHex, d: clicked_node.value})
 
@@ -570,6 +556,20 @@ function updateExpandedScatter() {
             .lower()
     }
 
+}
+function applyExpandStyle(container: any) {
+    container.style("filter", "brightness(90%)")
+    // apply hover effect
+    container.selectAll("circle.expand_circle")
+        .transition().duration(100)
+        .attr("r", (d) => (parseFloat(container.select("circle.outlet_circle").attr("r"))*1.5 ))
+    const target_node_text = container.data()[0].text
+    const other_nodes_container = d3.select(`#${props.id}`).selectAll("g.outlet").filter((d: any) => d.text != target_node_text)
+    other_nodes_container.selectAll("image")
+        .attr("opacity", 0)
+    container.selectAll("image")
+        .transition().duration(100)
+        .attr("opacity", 0.8)
 }
 
 function removeExpandedStyle(container: any) {
@@ -628,23 +628,29 @@ function updateOverviewScatter() {
         update => {
             update.select("circle.outlet_circle")
                 .transition().duration(1000)
-                .attr("r", node_circle_radius/(current_zoom?.k || 1))
+                // .attr("r", node_circle_radius/(current_zoom?.k || 1))
                 .attr("cx", (d: any) => x(d.pos_sst))
                 .attr("cy", (d: any) => y(Math.abs(d.neg_sst)))
 
             update.select("circle.expand_circle")
                 .transition().duration(1000)
-                .attr("r", node_circle_radius/(current_zoom?.k || 1))
+                // .attr("r", node_circle_radius/(current_zoom?.k || 1))
                 .attr("cx", (d: any) => x(d.pos_sst))
                 .attr("cy", (d: any) => y(Math.abs(d.neg_sst)))
             .on("end", function() {
                 emit("update-weight-ended")
+                // if(clicked_node_element.value !== undefined) {
+                //     const clicked_node_parentNode: any = (clicked_node_element.value as HTMLElement).parentNode
+                //     const clicked_node_container: any = d3.select(clicked_node_parentNode)
+                //     applyExpandStyle(clicked_node_container)
+                // }
             })
 
             update.selectAll("circle.outlet_circle")
             .attr("fill", (d: any) => SstColors.article_num_color_scale(d.article_ids.length/max_articles.value))
         }
     ) 
+
     const dots = svg.selectAll("g.outlet")
     dots.sort((da: any, db: any) => (da.article_ids.length - db.article_ids.length))
     if(current_zoom) {

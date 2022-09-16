@@ -84,14 +84,26 @@ export class OutletNodeInfo {
 export class EntityInfo {
     name: string
     outlet: string
-    sst_ratio: {
+    num_of_mentions: number
+    sst_ratio?: {
         pos_artcs: number, neg_artcs: number, 
         pos: number, neg: number,
         pos_max: number, pos_min: number,
         neg_max: number, neg_min: number
     }
-    articles: Article[]
+    articles?: Article[]
+    mentions_grouped?: {
+        pos: {[id: string]: number}
+        neg: {[id: string]: number}
+    }
+    articles_topic_dict?: {[id: string]: {pos: number, neg: number}}
 }
+
+export class CooccurrEntityInfo extends EntityInfo{
+    target: string
+    target_num_of_mentions: number
+}
+
 export class OutletNode {
     x?: number
     y?: number

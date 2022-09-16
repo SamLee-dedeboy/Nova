@@ -81,6 +81,24 @@ def get_scatter_node(node_text):
     else:
         return json.dumps(grouped_node_dict[split[1]][split[0]], default=vars)
 
+@app.route("/processed_data/cooccurr_info/<target>/<co_occurr_entity>")
+def get_cooccurr_info(target, co_occurr_entity):
+    split = target.split("-")
+
+    if len(split) == 1: # overall
+        entity = split[0]
+        cooccurr_article_ids = raw_data.entity_cooccurrences[entity][co_occurr_entity]
+        cooccurr_articles = processed_data.idsToArticles(cooccurr_article_ids)
+        articles_topic_dict = processed_data.binArticlesByTopic(cooccurr_articles)
+        response = {
+            "target": target,
+            "cooccurr_entity": co_occurr_entity,
+            "cooccurr_num": len(cooccurr_articles),
+            "articles_topic_dict": articles_topic_dict
+        }
+        return json.dumps(response)
+
+
 @app.route("/test")
 def test():
     return get_overall_scatter_data()

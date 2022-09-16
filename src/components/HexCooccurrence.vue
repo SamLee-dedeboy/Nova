@@ -92,7 +92,6 @@ vue.onMounted(() => {
 })
 
 function updateHexBins() {
-    console.log(`apply mask: ${applyMask.value}`)
     const svg = d3.select(`#${props.id}`).select("svg")
     const hex_group = svg.select("g.hex-group")
 
@@ -106,7 +105,8 @@ function updateHexBins() {
     hex_bins.enter().append("g").attr("class", "hex-bin")
         .style("cursor", "pointer")
         .on("click", function(e, d) {
-            emit("hex-clicked", {title: props.title, entity: d.entity})
+            const target = props.title?.split("-")[1]
+            emit("hex-clicked", {target: target, co_occurr_entity: d.entity})
         })
         .append("path")
         .attr("class", "hex-path")
@@ -115,7 +115,6 @@ function updateHexBins() {
         .data((d: any) => {
             return hexbin([[x(d.x), y(d.y)]])
         })
-    console.log(hex_path)
     hex_path.attr("d", (d:any) => `M${d.x},${d.y}${hexbin.hexagon()}`)
         .attr("stroke", "black")
         .attr("stroke-width", function(d, i) {
@@ -261,7 +260,7 @@ defineExpose({
 
 <style scoped>
 .hex-svg {
-    width: inherit;
-    height: inherit;
+    width: 100%;
+    height: 100%;
 }
 </style>

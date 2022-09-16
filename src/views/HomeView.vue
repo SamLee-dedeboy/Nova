@@ -29,6 +29,7 @@ import SearchBar from "../components/SearchBar.vue";
 import ArticleView from "../components/ArticleView.vue"
 import EntityInfoView from "../components/EntityInfoView.vue"
 import HexCooccurrence from "../components/HexCooccurrence.vue";
+import TopicBars from "../components/TopicBars.vue"
 import tutorial_intro_json from "../assets/tutorial/tutorial_intro.json"
 import * as tutorial from "../components/TutorialUtils"
 import { resolve } from "path";
@@ -240,7 +241,8 @@ const node_article_id_dict = ref({})
  * Used in ArticleView.
  */
 // const selected_articles: Ref<typeUtils.Article[]> = ref([])
-const selected_entity: Ref<typeUtils.EntityInfo> = ref(new typeUtils.EntityInfo())
+const selected_entity: Ref<typeUtils.EntityInfo|undefined> = ref(undefined)
+const selected_cooccurr_entity: Ref<typeUtils.CooccurrEntityInfo|undefined> = ref(undefined)
 const overall_selected_hexview: Ref<typeUtils.CooccurrHexView | undefined> = ref(undefined)
 
 /**
@@ -558,8 +560,26 @@ async function handleEntityClicked({title, type, d}: {title: string, type: typeU
   if(type === typeUtils.ViewType.CooccurrHex) {
     const entity = d.text.split("-")[0]
     const outlet = d.text.split("-")[1]
+    const overall_flag = title === "Overall"
+    const path_overall_or_grouped = (overall_flag? "overall":"grouped")
+    const metadata = overview_overall_scatter_metadata.value
+    selected_entity.value = {
+      name: d.text,
+      outlet: "Overall",
+      num_of_mentions:d.article_ids.length,
+      sst_ratio: {
+        pos_artcs: d.pos_article_ids.length,
+        neg_artcs: d.neg_article_ids.length,
+        pos: d.pos_sst,
+        neg: d.neg_sst,
+        pos_max: metadata.pos_max,
+        pos_min: metadata.pos_min,
+        neg_max: metadata.neg_max,
+        neg_min: metadata.neg_min,
+      },
+      articles_topic_dict: d.topicBins
+    }
 
-    const path_overall_or_grouped = ((title === "Overall")? "overall":"grouped")
     await fetch(`${server_address}/hexview/${path_overall_or_grouped}/${d.text}`)
       .then(res => res.json())
       .then(json => {
@@ -753,12 +773,28 @@ async function fetch_articles(d: typeUtils.ScatterNode) {
 
 }
 
-async function handleHexClicked(entity: string) {
-  await fetch(`${server_address}/processed_data/scatter_node/${entity}`)
+async function fetch_topic_bins(target, callback) {
+  await fetch(`${server_address}/processed_data/topic_bins/${target}`)
+    .then(res => res.json())
+    .then(callback)
+}
+
+
+async function handleHexClicked({target, co_occurr_entity}: {target: string, co_occurr_entity: string}) {
+  await fetch(`${server_address}/processed_data/cooccurr_info/${target}/${co_occurr_entity}`)
     .then(res => res.json())
     .then(json => {
-      console.log("scatter_node fetched")
-      fetch_articles(json as typeUtils.ScatterNode)
+      console.log("cooccurr_info fetched", json)
+      const overall_flag = target.split("-")[1] === undefined
+      const outlet = overall_flag? "Overall": target.split("-")[1] 
+      selected_cooccurr_entity.value = {
+        target: json.target,
+        name: json.cooccurr_entity,
+        outlet: outlet,
+        num_of_mentions: json.cooccurr_num,
+        target_num_of_mentions: json.target_num_of_mentions,
+        articles_topic_dict: json.articles_topic_dict
+      }
     })
 }
 
@@ -876,6 +912,32 @@ function handleUpdateWeightEnded() {
                   :overall_entity_dict="overall_entity_dict"
                   v-on:hex-clicked="handleHexClicked" >
                 </HexCooccurrence>
+                <div class="entity-info-container">
+                  <div class="target-cooccurr-container">
+                    <EntityInfoView
+                    v-if="selected_entity"
+                    title="Target Entity"
+                    :entity_info="selected_entity"
+                    v-model:segmentation="segment_sst"
+                    >
+                    </EntityInfoView>
+                    <Divider v-if="selected_cooccurr_entity" layout="vertical"></Divider>
+                    <EntityInfoView
+                    v-if="selected_cooccurr_entity"
+                    title="Co-occurr Entity"
+                    :entity_info="selected_cooccurr_entity"
+                    >
+                    </EntityInfoView>
+                  </div>
+                  <div class="topic-bar-container">
+                    <TopicBars
+                      v-if="selected_entity"
+                      id="cooccurr_topic_bars"
+                      :targetTopicBins="selected_entity?.articles_topic_dict"
+                      :cooccurrTopicBins="selected_cooccurr_entity?.articles_topic_dict"
+                    ></TopicBars>
+                  </div>
+                </div>
               </div>
 
               <!-- <div class="overview-grid-container" v-if="overview_constructed && !temporal_mode" >
@@ -1191,10 +1253,17 @@ function handleUpdateWeightEnded() {
 .overall-hex-container {
   width: 100%;
   height: 59%;
+  display: flex;
 }
 .overall-co-hexview {
-  width: 100% !important;
+  width: 60% !important;
   height: 100% !important;
+}
+.entity-info-container {
+  width: 40% !important;
+}
+.target-cooccurr-container {
+  display: flex;
 }
 
  </style>

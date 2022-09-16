@@ -7,6 +7,7 @@ import * as SstColors from "./ColorUtils"
 import { SentimentType, Sentiment2D, EntityInfo } from "../types"
 import { Ref, ref } from "vue"
 const props = defineProps({
+    title: String,
     entity_info: EntityInfo,
     segmentation: Sentiment2D,
 
@@ -18,8 +19,8 @@ const viewBox = [100, 20]
 const canvas_width = 100
 const canvas_height = 20
 const pos_ratio = vue.computed(() => {
-    const pos = props.entity_info?.sst_ratio.pos_artcs || 0
-    const neg = props.entity_info?.sst_ratio.neg_artcs || 0
+    const pos = props.entity_info?.sst_ratio?.pos_artcs || 0
+    const neg = props.entity_info?.sst_ratio?.neg_artcs || 0
     return pos / (pos + neg)
 })
 const neg_ratio = vue.computed(() => {
@@ -29,7 +30,7 @@ const neg_ratio = vue.computed(() => {
 const selectedCategory: Ref<any> = ref({})
 vue.watch(selectedCategory, (new_value, old_value) => {
     if(props.segmentation === undefined || props.entity_info === undefined) return
-    const adjust_target: Sentiment2D = props.entity_info.sst_ratio
+    const adjust_target: Sentiment2D = props.entity_info.sst_ratio || {pos: 0.5, neg: 0.5}
     const offset = 0.05
     if(new_value.type === SentimentType.neu) {
         props.segmentation.pos = adjust_target.pos + offset
@@ -91,18 +92,29 @@ function updateSstRect() {
 </script>
 <template>
     <div class="entity-info-view-container">
-        <span class="entity-name">{{props.entity_info?.name || "unknown"}}</span>
-        <span class="outlet-name">-{{props.entity_info?.outlet || "unknown"}}</span>
-        <div class="pos-ratio">{{"pos: " + props.entity_info?.sst_ratio.pos.toFixed(2) + " (" + props.entity_info?.sst_ratio.pos_artcs +"/"+ props.entity_info?.sst_ratio.pos_max + ")"}}</div>
-        <div class="neg-ratio">{{"neg: " + props.entity_info?.sst_ratio.neg.toFixed(2) + " (" + props.entity_info?.sst_ratio.neg_artcs +"/"+ props.entity_info?.sst_ratio.neg_max + ")"}}</div>
-        <!-- <svg class="entity-sst-ratio" style="display:block"></svg> -->
-        <SelectButton
+        <div class="title">{{props.title}}</div>
+        <div class="entity-name" :title="props.entity_info?.name">{{"id: " + props.entity_info?.name || "unknown"}}</div>
+        <div class="outlet-name">{{"journal: " + props.entity_info?.outlet || "unknown"}}</div>
+        <div class="num-of-mention">{{"#mentions: " + props.entity_info?.num_of_mentions || "unknown"}}</div>
+
+    </div>
+        <!-- <SelectButton
+            v-if="props.segmentation"
             v-model="selectedCategory"
             :options="sentiment_options"
             option-label="value"
-            data-key="type"
-        >
-        </SelectButton>
+            data-key="type" >
+        </SelectButton> -->
 
-    </div>
 </template>
+
+<style scoped>
+div {
+    font-size:small;
+    overflow: hidden;
+    white-space: nowrap;
+}
+.entity-info-view-container {
+max-width: 50%;
+}
+</style>

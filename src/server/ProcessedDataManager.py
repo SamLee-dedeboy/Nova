@@ -15,6 +15,16 @@ class ProcessedDataManager:
 
     def idsToArticles(self, id_list):
         return [self.article_dict[id] for id in id_list]
+    def binArticlesByTopic(self, articles):
+        topicBins = {}
+        for article in articles:
+            topic = article['top_level_topic']
+            if topic not in topicBins.keys():
+                topicBins[topic] = {"pos": 0, "neg": 0}
+            if article['sentiment']['label'] == 'POSITIVE': topicBins[topic]["pos"] += 1
+            if article['sentiment']['label'] == 'NEGATIVE': topicBins[topic]["neg"] += 1
+        return topicBins
+    
 
 def processArticleDict(outlet_article_dict):
     date_str_template = '%Y-%m-%d'
