@@ -579,6 +579,7 @@ async function handleEntityClicked({title, type, d}: {title: string, type: typeU
       },
       articles_topic_dict: d.topicBins
     }
+    selected_cooccurr_entity.value = undefined
 
     await fetch(`${server_address}/hexview/${path_overall_or_grouped}/${d.text}`)
       .then(res => res.json())
