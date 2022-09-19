@@ -3,7 +3,7 @@
     <svg class="outlet-scatterplot" :class="panel_class"></svg>
     <div class="button-set">
         <Button v-if="expanded" class="reset-zoom p-button-secondary" @click="resetZoom">reset</Button>
-        <Button v-if="expanded" class="show-temporal p-button-secondary" @click="showTemporal">temporal</Button>
+        <!-- <Button v-if="expanded" class="show-temporal p-button-secondary" @click="showTemporal">temporal</Button> -->
     </div>
     <TooltipVue class='tooltip' 
     :id="`${id}-tooltip`" 
@@ -704,8 +704,8 @@ function updateNodeInfo(node_data: ScatterNode) {
 }
 .button-set {
     position: absolute;
-    left: 70%;
-    top:-2%;
+    left: 78.5%;
+    top: 0%;
     display:inline-flex;
 }
 .reset-zoom {
