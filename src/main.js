@@ -5,7 +5,21 @@ import router from "./router";
 import PrimeVue from 'primevue/config';
 import Button from 'primevue/button';
 import mitt from 'mitt';
+import { createStore } from "vuex"
+import { EntityInfo } from "./types"
 
+const store = createStore({
+  state () {
+    return {
+      selected_entity: undefined
+    }
+  },
+  mutations: {
+    setEntity (state, entity) {
+      state.selected_entity = entity
+    }
+  }
+})
 
 import "primevue/resources/themes/saga-blue/theme.css"
 import "primevue/resources/primevue.min.css"
@@ -23,6 +37,7 @@ app.config.globalProperties.axios = axios
 
 app.use(router);
 app.use(PrimeVue, {ripple:true})
+app.use(store)
 app.component('Button', Button);
 // app.provide('articles', articleData)
 // app.provide('entity_mentions', entity_mentions.ranked_entity_list)

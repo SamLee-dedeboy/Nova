@@ -34,7 +34,15 @@ import tutorial_intro_json from "../assets/tutorial/tutorial_intro.json"
 import * as tutorial from "../components/TutorialUtils"
 import { resolve } from "path";
 import SelectButton  from "../components/SelectButton.vue";
-import { type } from "os";
+import { useRouter, useRoute } from 'vue-router'
+import { useStore } from 'vuex'
+
+
+const store = useStore()
+const router = useRouter()
+const route = useRoute()
+
+
 
 
 //
@@ -144,6 +152,7 @@ const selectedScatterViews_right: Ref<typeUtils.PanelView[]> = ref([])
  */
 const compare_mode: Ref<boolean> = ref(false)
 vue.provide('compare_mode', compare_mode)
+const compare_stage: Ref<boolean> = ref(false)
 
 /**
  * Flag for displaying article view. 
@@ -241,7 +250,9 @@ const node_article_id_dict = ref({})
  * Used in ArticleView.
  */
 // const selected_articles: Ref<typeUtils.Article[]> = ref([])
-const selected_entity: Ref<typeUtils.EntityInfo|undefined> = ref(undefined)
+// const selected_entity: Ref<typeUtils.EntityInfo|undefined> = ref(undefined)
+const selected_entity = vue.computed(() => store.state.selected_entity) 
+const setEntity = (entity) => store.commit("setEntity", entity) 
 const selected_cooccurr_entity: Ref<typeUtils.CooccurrEntityInfo|undefined> = ref(undefined)
 const overall_selected_hexview: Ref<typeUtils.CooccurrHexView | undefined> = ref(undefined)
 
@@ -408,6 +419,23 @@ vue.onMounted(async() => {
       resolve("success")
     })
   }))
+  if(selected_entity.value) {
+    promiseArray.push(new Promise((resolve) => {
+      fetch(`${server_address}/hexview/overall/${selected_entity.value.name}`)
+      .then(res => res.json())
+      .then(json => {
+        const cooccurrences = json
+        const hex_view: typeUtils.CooccurrHexView = {
+          title: `co-${selected_entity.value.name}`,
+          type: typeUtils.ViewType.CooccurrHex,
+          data: cooccurrences,
+        }
+        overall_selected_hexview.value = hex_view
+        resolve("success")
+      })
+    }))
+
+  }
   await Promise.all(promiseArray)
     .then(res => {
       overview_constructed.value = true
@@ -563,7 +591,7 @@ async function handleEntityClicked({title, type, d}: {title: string, type: typeU
     const overall_flag = title === "Overall"
     const path_overall_or_grouped = (overall_flag? "overall":"grouped")
     const metadata = overview_overall_scatter_metadata.value
-    selected_entity.value = {
+    const store_entity: typeUtils.EntityInfo = {
       name: d.text,
       outlet: "Overall",
       num_of_mentions:d.article_ids.length,
@@ -579,6 +607,7 @@ async function handleEntityClicked({title, type, d}: {title: string, type: typeU
       },
       articles_topic_dict: d.topicBins
     }
+    setEntity(store_entity)
     selected_cooccurr_entity.value = undefined
 
     await fetch(`${server_address}/hexview/${path_overall_or_grouped}/${d.text}`)
@@ -880,7 +909,7 @@ function handleUpdateWeightEnded() {
           <SplitterPanel id='sidebar' class="sidebar flex align-items-center justify-content-center" :size="45" :min-size="45">
             <div v-if="!display_article_view" class="overview-container">
               <div  class="toolbar-container">
-                <ToggleButton v-if="overview_constructed" class='compare_toggle ' v-model="compare_mode" onIcon="pi pi-images" offIcon="pi pi-images"></ToggleButton>
+                <!-- <ToggleButton v-if="overview_constructed" class='compare_toggle ' v-model="compare_mode" onIcon="pi pi-images" offIcon="pi pi-images"></ToggleButton> -->
                 <div v-if="overview_constructed" class="segment-toggler-container">
                   <ToggleButton class='segment-toggler p-primary' v-model="segment_mode" onLabel="Segment" offLabel="Segment"></ToggleButton>
                 </div>
@@ -901,7 +930,7 @@ function handleUpdateWeightEnded() {
               font-size: 3rem;
               z-index: 1000
               "></i> 
-              <div class="overall-hex-container">
+              <div class="overall-hex-container"  v-if="overview_constructed">
                 <HexCooccurrence
                   ref="overall_co_hexview"
                   v-if="overall_selected_hexview"
@@ -938,6 +967,12 @@ function handleUpdateWeightEnded() {
                       :cooccurrTopicBins="selected_cooccurr_entity?.articles_topic_dict"
                     ></TopicBars>
                   </div>
+                  <!-- <Button v-if="selected_entity"
+                  class="next-stage-button p-button-secondary" label="Next Stage"  @click="() => router.push(`/compare/${selected_entity?.name}`)"></Button> -->
+                  <router-link v-if="selected_entity" :to="{path: '/compare', params: {entity: selected_entity.name}}">Next Stage</router-link>
+                  <keep-alive>
+                    <router-view></router-view>
+                  </keep-alive>
                 </div>
               </div>
 
