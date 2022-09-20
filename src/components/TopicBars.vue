@@ -98,7 +98,7 @@ function updateBars() {
     if(props.cooccurrTopicBins) {
         console.log("update cooccurr bars", props.cooccurrTopicBins)
         const cooccurr_rects: any = bars_group.selectAll("g.topic").selectAll("rect.cooccurr")
-            .data((d: any) => { return [{topic: d, num: props.cooccurrTopicBins![d].pos + props.cooccurrTopicBins![d].neg}]})
+            .data((d: any) => { return [{topic: d, num: (props.cooccurrTopicBins![d]?.pos||0) + (props.cooccurrTopicBins![d]?.neg||0)}]})
         cooccurr_rects.enter().append("rect")
             .attr("class", "cooccurr")
             .attr("y", y(0))
