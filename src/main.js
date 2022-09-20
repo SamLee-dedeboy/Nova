@@ -11,12 +11,23 @@ import { EntityInfo } from "./types"
 const store = createStore({
   state () {
     return {
-      selected_entity: undefined
+      selected_entity: undefined,
+      outlet_weight_dict: undefined,
+      segmentation: {pos: 0.5, neg: 0.5},
     }
   },
   mutations: {
     setEntity (state, entity) {
       state.selected_entity = entity
+    },
+    resetOutletWeight(state, weight_dict) {
+      state.outlet_weight_dict = weight_dict
+    },
+    setOutletWeight(state, outlet, weight) {
+      state.outlet_weight_dict[outlet] = weight
+    },
+    setSegmentation(state, segmentation) {
+      state.segmentation = segmentation
     }
   }
 })
@@ -39,6 +50,9 @@ app.use(router);
 app.use(PrimeVue, {ripple:true})
 app.use(store)
 app.component('Button', Button);
+app.provide('server_address', "http://127.0.0.1:5000")
+
+
 // app.provide('articles', articleData)
 // app.provide('entity_mentions', entity_mentions.ranked_entity_list)
 // app.provide('entity_cooccurrences', entity_cooccurrences)

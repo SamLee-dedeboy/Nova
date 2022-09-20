@@ -199,11 +199,6 @@ const max_timestamp: Ref<string> = ref("")
 vue.provide('max_timestamp', max_timestamp)
 
 /**
- * segmentation threshold of sentiment value.
- */
-const segment_sst: Ref<typeUtils.Sentiment2D> = ref({pos: 0.5, neg: 0.5}) 
-vue.provide('segment_sst', {segment_sst, updateThreshold})
-/**
  * flag for tutorial mode.
  */
 const tutorial_mode: Ref<boolean> = ref(false)
@@ -229,7 +224,7 @@ const tutorial_intro: Ref<string[]> = ref(tutorial_intro_json.map(step => _.sum(
 const highlight_nodes: Ref<string[]> = ref([])
 
 function updateThreshold(new_value) {
-  segment_sst.value = new_value
+  setSegmentation(new_value)
 }
 
 /**
@@ -260,7 +255,16 @@ const overall_selected_hexview: Ref<typeUtils.CooccurrHexView | undefined> = ref
  * dict of outlet weight. \
  * { [id: string]: number }
  */
-const outlet_weight_dict: Ref<any> = ref({})
+const outlet_weight_dict = vue.computed(() => store.state.outlet_weight_dict) 
+const resetOutletWeight = (outlet_weight_dict) => store.commit("resetOutletWeight", outlet_weight_dict) 
+const setOutletWeight = (outlet, weight) => store.commit("setOutletWeight", outlet, weight) 
+/**
+ * segmentation threshold of sentiment value.
+ */
+const segment_sst: Ref<typeUtils.Sentiment2D> = vue.computed(() => store.state.segmentation)
+const setSegmentation = (segmentation) => store.commit("setSegmentation", segmentation) 
+
+vue.provide('segment_sst', {segment_sst, updateThreshold})
 
 /**
  * flags for hex views being active
@@ -412,9 +416,11 @@ vue.onMounted(async() => {
     .then(res => res.json())
     .then(json => {
       enabled_outlet_set.value = json
+      const tmp_weight_dict = {}
       enabled_outlet_set.value.forEach(outlet => {
-        outlet_weight_dict.value[outlet] = 1
+        tmp_weight_dict[outlet] = 1
       })
+      resetOutletWeight(tmp_weight_dict)
       console.log("outlet_set fetched")
       resolve("success")
     })
@@ -613,6 +619,7 @@ async function handleEntityClicked({title, type, d}: {title: string, type: typeU
     await fetch(`${server_address}/hexview/${path_overall_or_grouped}/${d.text}`)
       .then(res => res.json())
       .then(json => {
+        console.log("🚀 ~ file: HomeView.vue ~ line 616 ~ handleEntityClicked ~ json", json)
         const cooccurrences = json
         const hex_view: typeUtils.CooccurrHexView = {
           title: `co-${d.text}`,
@@ -704,7 +711,7 @@ function handleSearch(item) {
 }
 
 function handleUpdateOutletWeight({outlet, value}) {
-  outlet_weight_dict.value[outlet] = value
+  setOutletWeight(outlet, value)
   updateOverallEntityNode({outlet, value})
 }
 
@@ -916,10 +923,6 @@ function handleUpdateWeightEnded() {
                 <div v-if="overview_constructed" class="search-bar">
                   <SearchBar :search_terms="entity_list" @entity_searched="handleSearch"></SearchBar>
                 </div>
-                <!-- <MyToolbar ref="toolbar" 
-                @candidate_updated="updateNpList"
-                @dataset_imported="datasetImported"  >
-                </MyToolbar> -->
                 <!-- <ToggleButton v-if="overview_constructed" class='temporal-toggler ' v-model="temporal_mode" onIcon="pi pi-chart-line" offIcon="pi pi-chart-line"></ToggleButton> -->
               </div>
               <i v-if="!overview_constructed" class="pi pi-spin pi-spinner" 
@@ -940,7 +943,7 @@ function handleUpdateWeightEnded() {
                   :entity_cooccurrences="overall_selected_hexview.data"
                   :segmentation="segment_sst"
                   :overall_entity_dict="overall_entity_dict"
-                  v-on:hex-clicked="handleHexClicked" >
+                  v-on:hex-clicked="handleHexClicked">
                 </HexCooccurrence>
                 <div class="entity-info-container">
                   <div class="target-cooccurr-container">
@@ -969,31 +972,10 @@ function handleUpdateWeightEnded() {
                   </div>
                   <!-- <Button v-if="selected_entity"
                   class="next-stage-button p-button-secondary" label="Next Stage"  @click="() => router.push(`/compare/${selected_entity?.name}`)"></Button> -->
-                  <router-link v-if="selected_entity" :to="{path: '/compare', params: {entity: selected_entity.name}}">Next Stage</router-link>
-                  <keep-alive>
-                    <router-view></router-view>
-                  </keep-alive>
+                  <router-link v-if="selected_entity" :to="{ name: 'compare', params: { entity: selected_entity.name }}">Next Stage</router-link>
                 </div>
               </div>
 
-              <!-- <div class="overview-grid-container" v-if="overview_constructed && !temporal_mode" >
-                <SentimentScatter
-                    v-for="(outlet, index) in Object.keys(grouped_scatter_view_dict)" :key="outlet" 
-                    class="outlet-scatter"
-                    :view="grouped_scatter_view_dict[outlet]"
-                    :view_index="index"
-                    :id="`scatter-${index}`"
-                    :article_num_threshold="article_num_threshold"
-                    :segment_mode="segment_mode"
-                    :segmentation="segment_sst"
-                    :highlight_nodes="highlight_nodes"
-                    :expanded="false"
-                    :draggable="true"
-                    @dragstart="handleDragOutletScatter($event, index)"
-                    @click="handleScatterClicked(index)"
-                >
-                </SentimentScatter>
-                </div> -->
               <div class="overview-temporal-container" v-if="overview_constructed && temporal_mode">
                 <TemporalCoordinates class="overview-temporal-coord" 
                   :id="`overview_temporal`"
