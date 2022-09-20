@@ -248,7 +248,8 @@ const node_article_id_dict = ref({})
 // const selected_entity: Ref<typeUtils.EntityInfo|undefined> = ref(undefined)
 const selected_entity = vue.computed(() => store.state.selected_entity) 
 const setEntity = (entity) => store.commit("setEntity", entity) 
-const selected_cooccurr_entity: Ref<typeUtils.CooccurrEntityInfo|undefined> = ref(undefined)
+const selected_cooccurr_entity = vue.computed(() => store.state.selected_cooccurr_entity)
+const setCooccurrEntity = (cooccurr_entity) => store.commit("setCooccurrEntity", cooccurr_entity) 
 const overall_selected_hexview: Ref<typeUtils.CooccurrHexView | undefined> = ref(undefined)
 
 /**
@@ -614,7 +615,6 @@ async function handleEntityClicked({title, type, d}: {title: string, type: typeU
       articles_topic_dict: d.topicBins
     }
     setEntity(store_entity)
-    selected_cooccurr_entity.value = undefined
 
     await fetch(`${server_address}/hexview/${path_overall_or_grouped}/${d.text}`)
       .then(res => res.json())
@@ -818,20 +818,19 @@ async function fetch_topic_bins(target, callback) {
 
 
 async function handleHexClicked({target, co_occurr_entity}: {target: string, co_occurr_entity: string}) {
-  await fetch(`${server_address}/processed_data/cooccurr_info/${target}/${co_occurr_entity}`)
+  await fetch(`${server_address}/processed_data/cooccurr_info/overall/${target}/${co_occurr_entity}`)
     .then(res => res.json())
     .then(json => {
       console.log("cooccurr_info fetched", json)
-      const overall_flag = target.split("-")[1] === undefined
-      const outlet = overall_flag? "Overall": target.split("-")[1] 
-      selected_cooccurr_entity.value = {
+      const cooccurr_entity = {
         target: json.target,
         name: json.cooccurr_entity,
-        outlet: outlet,
+        outlet: "Overall",
         num_of_mentions: json.cooccurr_num,
         target_num_of_mentions: json.target_num_of_mentions,
         articles_topic_dict: json.articles_topic_dict
       }
+      setCooccurrEntity(cooccurr_entity)
     })
 }
 

@@ -12,6 +12,7 @@ const store = createStore({
   state () {
     return {
       selected_entity: undefined,
+      selected_cooccurr_entity: undefined,
       outlet_weight_dict: undefined,
       segmentation: {pos: 0.5, neg: 0.5},
     }
@@ -19,6 +20,9 @@ const store = createStore({
   mutations: {
     setEntity (state, entity) {
       state.selected_entity = entity
+    },
+    setCooccurrEntity (state, cooccurr_entity) {
+      state.selected_cooccurr_entity = cooccurr_entity
     },
     resetOutletWeight(state, weight_dict) {
       state.outlet_weight_dict = weight_dict
