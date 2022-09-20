@@ -24,7 +24,8 @@ const props = defineProps({
     id: String,
     entity_cooccurrences: Object as () => EntityCooccurrences,
     segmentation: Sentiment2D, 
-    overall_entity_dict: Object as () => {[id: string]: ScatterNode}
+    overall_entity_dict: Object as () => {[id: string]: ScatterNode},
+    showDiff: Boolean,
 })
 const emit = defineEmits(["hex-clicked"])
 
@@ -44,7 +45,7 @@ const max_height = viewBox_width/hex_width*hex_height
 const sorted_cooccurrence_list = vue.computed(() => {
     const raw_data = props.entity_cooccurrences?.sorted_cooccurrences_list!
     const entity: string = props.entity_cooccurrences?.entity!
-    let res: any[] = [{entity: entity, sst: undefined, x:0,y:0, mask:true, index:0}]
+    let res: any[] = [{entity: entity, sst: undefined, x:0,y:0, mask:true, index:0, exists:true}]
     raw_data.forEach((hex_entity, index) => {
         const {x, y} = generate_hex_coord(index, hex_radius) 
         res.push({
@@ -53,6 +54,7 @@ const sorted_cooccurrence_list = vue.computed(() => {
             y: y,
             sst: hex_entity.sst,
             mask: hex_entity.mask,
+            exists: hex_entity.article_ids.length !== 0,
             index:index+1,
         })
     })
@@ -72,6 +74,10 @@ const y = d3.scaleLinear()
 vue.watch(() => props.segmentation, (new_value, old_value) => {
     updateHexColor()
 }, {deep: true}) 
+
+vue.watch(() => props.showDiff, (new_value, old_value) => {
+    updateHexBins()
+})
 // vue.watch(() => props.overall_entity_dict, (new_value, old_value) => {
 //     // updateHexColor(1000)
 // }, {deep:true})
@@ -133,6 +139,10 @@ function updateHexBins() {
             const parentNode: any = (this as HTMLElement).parentNode
             const container: any = d3.select(parentNode)
             const parent_data: any = container.data()[0]
+            if(parent_data.exists) return 1
+            else if(props.showDiff) return 0.5
+            else return 0
+
             const index = parent_data.index
             const level = index === 0? 0: find_level(index-1).level
             const level_opacity = [0.88, 0.8, 0.8, 0.8, 0.8, 0.8]
@@ -153,6 +163,10 @@ function updateHexBins() {
             const parentNode: any = (this as HTMLElement).parentNode
             const container: any = d3.select(parentNode)
             const parent_data: any = container.data()[0]
+            if(parent_data.exists) return 1
+            else if(props.showDiff) return 0.5
+            else return 0
+
             const index = parent_data.index
             const level = index === 0? 0: find_level(index-1).level 
             const level_opacity = [0.95, 0.6, 0.55, 0.5, 0.7, 0.7]

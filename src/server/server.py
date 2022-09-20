@@ -7,6 +7,7 @@ from RawDataManager import RawDataManager
 import scatter_data
 import hexview_data
 from ProcessedDataManager import ProcessedDataManager
+from data_types import *
 from sentiment_processor import SentimentProcessor
 
 app = Flask(__name__)
@@ -56,11 +57,40 @@ def get_overall_hexview(title):
 
 @app.route("/hexview/grouped/<title>")
 def get_grouped_hexview(title):
-    entity = title.split("-")[0]
-    outlet = title.split("-")[1]
-    cooccurrences = raw_data.entity_cooccurrences_grouped[outlet][entity]
-    request_data = hexview_data.constructHexData(entity, cooccurrences, grouped_node_dict[outlet])
-    return json.dumps(request_data, default=vars)
+    res = []
+    merged_entities = []
+    for outlet, cooccurrences_dict in raw_data.entity_cooccurrences_grouped.items():
+        cooccurrences = cooccurrences_dict[title]
+        hex_data = hexview_data.constructHexData(title, cooccurrences, grouped_node_dict[outlet])
+        res.append({"entity": title, "outlet": outlet, "sorted_cooccurrences_list": hex_data.sorted_cooccurrences_list})
+        entities = list(map(lambda hex_entity: hex_entity.entity, hex_data.sorted_cooccurrences_list))
+        merged_entities = list(set(merged_entities + entities))
+        # sort by freq in overall scatter
+    merged_entities.sort(reverse=True, key=lambda entity: len(overall_node_dict[entity].article_ids))
+    for hex_data in res: 
+        blanked_list = []
+        for entity in merged_entities:
+            # entities = list(map(lambda hex_entity: hex_entity.entity, hex_data['sorted_cooccurrences_list']))
+            target = (i for i, e in enumerate(hex_data['sorted_cooccurrences_list']) if e.entity == entity)
+            index = next(target, None)
+            if index != None:
+                blanked_list.append(hex_data['sorted_cooccurrences_list'][index])
+            else:
+                blanked_list.append(HexEntity(
+                    entity=entity,
+                    article_ids=[],
+                    sst=Sentiment2D(0,0),
+                    mask=False)
+                )
+
+        # blanked_list = [None for i in range(len(merged_entities))]
+        # for hex_entity in hex_data['sorted_cooccurrences_list']:
+        #     index = merged_entities.index(hex_entity.entity)
+        #     blanked_list[index] = hex_entity
+        hex_data['sorted_cooccurrences_list'] = blanked_list[0:36]
+
+    return json.dumps(res, default=vars)
+
 
 @app.route("/processed_data/ids_to_articles", methods=['POST'])
 def ids_to_articles():
@@ -97,6 +127,7 @@ def get_cooccurr_info(target, co_occurr_entity):
             "articles_topic_dict": articles_topic_dict
         }
         return json.dumps(response)
+
 
 
 @app.route("/test")
