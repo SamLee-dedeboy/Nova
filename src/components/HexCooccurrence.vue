@@ -111,7 +111,9 @@ function updateHexBins() {
     hex_bins.enter().append("g").attr("class", "hex-bin")
         .style("cursor", "pointer")
         .on("click", function(e, d) {
-            const target = props.title?.split("-")[1]
+            console.log(props.title)
+            const target = props.title?.split("-").slice(1).join("-")
+            
             emit("hex-clicked", {target: target, co_occurr_entity: d.entity})
         })
         .append("path")
