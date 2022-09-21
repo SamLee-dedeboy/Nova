@@ -8,7 +8,7 @@ import { nextTick } from 'vue'
 import * as d3 from "d3";
 // import Dialog from "primevue/dialog"
 import * as vue from "vue"
-import * as SstColors from "./ColorUtils"
+import * as SstColors from "./utils/ColorUtils"
 import { Ref, ref } from "vue"
 import { Article, Sentiment2D, Sentiment } from "../types"
 import { articlesToRadius } from './NodeUtils'

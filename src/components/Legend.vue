@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import * as d3 from "d3";
-import * as SstColors from "./ColorUtils"
+import * as SstColors from "./utils/ColorUtils"
 import * as vue from "vue"
 
 const props = defineProps({

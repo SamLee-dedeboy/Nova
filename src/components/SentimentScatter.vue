@@ -24,10 +24,10 @@ import TooltipVue from "./Tooltip.vue"
 import Menu from "primevue/menu"
 import * as d3 from "d3"
 import { ScatterNode, PanelView, ViewType, Sentiment2D, OutletNodeInfo } from '../types'
-import * as SstColors from "./ColorUtils"
+import * as SstColors from "./utils/ColorUtils"
 import { onMounted, PropType, computed, Ref, ref, defineEmits, nextTick} from 'vue'
 import * as vue from 'vue'
-import * as NodeUtils from "./NodeUtils"
+import * as NodeUtils from "./utils/NodeUtils"
 import NodeInfo from './NodeInfo.vue'
 
 // initialization
@@ -597,6 +597,8 @@ function updateOverviewScatter() {
     if(props.view?.type === ViewType.EntityScatter) bind_data = filtered_data.value
     if(props.view?.type === ViewType.OutletScatter) bind_data = props.view.data
     if(props.view?.type === ViewType.CooccurrHex) bind_data = filtered_data.value
+
+    console.log("What is this? ", filtered_data)
 
     const node_group = svg.select("g.node_group")
     node_group.selectAll("g.outlet")

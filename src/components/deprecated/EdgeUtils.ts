@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 import { OutletEdge, OutletNode } from "../../types"
-import * as SstColors from '../ColorUtils'
+import * as SstColors from '../utils/ColorUtils'
 
 export function edgeRotation(
     source: OutletNode, 

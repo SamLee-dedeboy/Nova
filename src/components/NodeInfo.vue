@@ -2,7 +2,7 @@
 import * as d3 from "d3"
 import { OutletNode } from '../types'
 import { defineComponent, computed, watch, onMounted, PropType} from 'vue'
-import * as SstColors from './ColorUtils'
+import * as SstColors from './utils/ColorUtils'
 import { enableTracking } from "@vue/reactivity";
 import {OutletNodeInfo} from "../types"
 
