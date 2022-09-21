@@ -74,7 +74,8 @@ async function handleHexClicked({target, co_occurr_entity}: {target: string, co_
                 outlet: outlet,
                 num_of_mentions: json.cooccurr_num,
                 target_num_of_mentions: json.target_num_of_mentions,
-                articles_topic_dict: json.cooccurr_articles_topic_dict
+                articles_topic_dict: json.cooccurr_articles_topic_dict,
+                cooccurr_article_ids: json.cooccurr_article_ids
             }
         setCooccurrEntity(cooccurr_entity)
         })
@@ -126,6 +127,7 @@ async function handleHexClicked({target, co_occurr_entity}: {target: string, co_
                     :cooccurrTopicBins="selected_cooccurr_entity?.articles_topic_dict"
                 ></TopicBars>
                 </div>
+                <router-link v-if="selected_cooccurr_entity" :to="{ name: 'inspection', params: { entity: selected_entity.name, outlet:selected_entity.outlet }}">Next Stage</router-link>
             </div>
 
         </SplitterPanel>

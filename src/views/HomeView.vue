@@ -612,7 +612,7 @@ async function handleEntityClicked({title, type, d}: {title: string, type: typeU
         neg_max: metadata.neg_max,
         neg_min: metadata.neg_min,
       },
-      articles_topic_dict: d.topicBins
+      articles_topic_dict: d.topicBins,
     }
     setEntity(store_entity)
 
@@ -828,7 +828,8 @@ async function handleHexClicked({target, co_occurr_entity}: {target: string, co_
         outlet: "Overall",
         num_of_mentions: json.cooccurr_num,
         target_num_of_mentions: json.target_num_of_mentions,
-        articles_topic_dict: json.articles_topic_dict
+        articles_topic_dict: json.articles_topic_dict,
+        article_ids: json.cooccurr_article_ids,
       }
       setCooccurrEntity(cooccurr_entity)
     })

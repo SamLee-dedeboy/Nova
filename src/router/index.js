@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import HomeView from "../views/HomeView.vue";
 import CompareView from "../views/CompareView.vue";
+import InspectionView from "../views/InspectionView.vue"
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -15,7 +16,11 @@ const router = createRouter({
       name: "compare",
       component: CompareView,
     },
-    
+    {
+      path: "/inspection/:entity/:outlet",
+      name: "inspection",
+      component: InspectionView,
+    },
   ],
 });
 

@@ -97,6 +97,7 @@ export class EntityInfo {
         neg: {[id: string]: number}
     }
     articles_topic_dict?: {[id: string]: {pos: number, neg: number}}
+    article_ids: number[]
 }
 
 export class CooccurrEntityInfo extends EntityInfo{
