@@ -115,6 +115,9 @@ div {
     white-space: nowrap;
 }
 .entity-info-view-container {
-max-width: 50%;
+    max-width: 100px;
+}
+.entity_name {
+    overflow:hidden;
 }
 </style>
