@@ -1,31 +1,18 @@
 <script setup lang="ts">
 import ScrollPanel from 'primevue/scrollpanel'
 import Panel from 'primevue/panel'
-import Chip from 'primevue/chip'
 import DeferreedContent from 'primevue/deferredcontent'
-import ToggleButton from 'primevue/togglebutton'
-import { nextTick } from 'vue'
-import * as d3 from "d3";
-// import Dialog from "primevue/dialog"
 import * as vue from "vue"
+import * as d3 from "d3"
 import * as SstColors from "./ColorUtils"
 import { Ref, ref } from "vue"
-import { Article, Sentiment2D, Sentiment } from "../types"
-import { articlesToRadius } from './NodeUtils'
+import { Article } from "../types"
 
 
 const props = defineProps({
     articles: Object as () => Article[],
-    sst_ratio: Object as () => {
-        pos_artcs: number,
-        neg_artcs: number,
-        pos: number,
-        neg: number,
-    },
-    sst_threshold: Sentiment2D,
 })
 
-const emit = defineEmits(["update:sst_threshold"])
 
 vue.onMounted(() => {
     const pos_scroll_panel = document.querySelector(".pos-article-list > .p-scrollpanel-wrapper > .p-scrollpanel-content")
@@ -49,13 +36,6 @@ vue.onMounted(() => {
         }
     })
 })
-const sorted_articles = vue.computed(() => {
-    return props.articles?.sort((a1, a2) => {
-        const s1 = a1.sentiment.score || 0
-        const s2 = a2.sentiment.score || 0
-        return s1 - s2
-    })
-})
 const pos_articles = vue.computed(() => {
     return props.articles?.filter(article => article.sentiment.label === "POSITIVE")
 })
@@ -65,34 +45,18 @@ const neg_articles = vue.computed(() => {
 })
 const neg_panel_articles: Ref<Article[]> = ref(neg_articles.value?.slice(0,10) || []) 
 
-function sstToColor(sst: number) {
-    if(isNeutral(sst)) return SstColors.neu_color
-    if(sst >= 0) return SstColors.pos_color
-    else return SstColors.neg_color
+function addHighlights(content, entities, index) {
+    return content
 }
 
-function isPositive(sst_score: number) {
-    return sst_score > 0 && sst_score >= props.sst_threshold!.pos
-}
-
-function isNegative(sst_score: number) {
-    return sst_score < 0 && Math.abs(sst_score) >= Math.abs(props.sst_threshold!.neg)
-}
-function isNeutral(sst_score: number) {
-    if(sst_score >= 0) return sst_score < props.sst_threshold!.pos
-    else if(sst_score < 0) return Math.abs(sst_score) < Math.abs(props.sst_threshold!.neg)
-}
-
-function adjustThreshold(article) {
-    const sst = article.sentiment
-    if(sst >= 0) props.sst_threshold!.pos = sst
-    else if(sst < 0) props.sst_threshold!.neg = Math.abs(sst)
-    emit('update:sst_threshold', props.sst_threshold)
+function removeTags(content) {
+    const res = content.replaceAll("<n>", "\n")
+    console.log(res)
+    return res
 }
 </script>
 
 <template>
-<DeferredContent>
 <ScrollPanel class="pos-article-list">
     <Panel v-for="(article, index) in pos_panel_articles"
     :header="index+1 + '. ' + article.headline"
@@ -101,15 +65,14 @@ function adjustThreshold(article) {
     :collapsed=true 
     :style="{ 'background-color': SstColors.pos_color, 'filter': `brightness(${SstColors.brightness}%)`, }">
     <template #header>
-        <span>
+        <span class="headline">
             {{index+1 + '. ' + article.headline}}
         </span>
-        <!-- <Chip >
-            {{article.sentiment.score.toFixed(2)}}
-        </Chip> -->
     </template>
     <ScrollPanel style="width: 100%; height: 200px">
-        {{article.summary}}
+        <span class="summary">
+            {{removeTags(article.summary)}}
+        </span>
     </ScrollPanel>
     </Panel>
 </ScrollPanel>
@@ -122,19 +85,19 @@ function adjustThreshold(article) {
     :collapsed=true 
     :style="{ 'background-color': SstColors.neg_color, 'filter': `brightness(${SstColors.brightness}%)`, }">
     <template #header>
-        <span>
-            {{index+1 + '. ' + article.headline}}
+        <span class="headline" v-html="addHighlights(article.headline, article.entities, index)">
         </span>
         <!-- <Chip >
             {{article.sentiment.score.toFixed(2)}}
         </Chip> -->
     </template>
     <ScrollPanel style="width: 100%; height: 200px">
-        {{article.summary}}
+        <span class="summary">
+            {{removeTags(article.summary)}}
+        </span>
     </ScrollPanel>
     </Panel>
 </ScrollPanel>
-</DeferredContent>
 </template>
 <style scoped>
 :deep(.p-panel-header) {
@@ -147,7 +110,13 @@ function adjustThreshold(article) {
 } 
 
 .pos-article-list, .neg-article-list {
-    height: 50%;
+    max-height:50%;
+    /* height:50%; */
+}
+
+.summary {
+    white-space: pre-line;
+
 }
 
 </style>
