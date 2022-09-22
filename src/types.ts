@@ -1,10 +1,15 @@
-export enum ViewType {
-   EntityScatter,
-   OutletScatter,
-   CooccurrHex,
-   Temporal,
-   Article,
-   Detail,
+export class CooccurrHexView {
+    title: string
+    data: EntityCooccurrences
+}
+
+export class EntityScatterView {
+    title: string
+    data: {
+        nodes: ScatterNode[], 
+        max_articles: number, 
+        min_articles: number, 
+    }
 }
 
 export class EntityCooccurrences {
@@ -15,56 +20,8 @@ export class HexEntity {
     entity: string
     article_ids: number[]
     sst: Sentiment2D
-    mask: boolean
 }
 
-export class Path {
-    title: string
-    start: Number
-    end: Number
-}
-export interface PanelView {
-    title: string,
-    type: ViewType,
-    data: any,
-}
-export class CooccurrHexView implements PanelView {
-    title: string
-    type: ViewType.CooccurrHex
-    data: EntityCooccurrences
-}
-export class EntityScatterView implements PanelView {
-    title: string
-    type: ViewType.EntityScatter
-    data: {
-        nodes: ScatterNode[], 
-        max_articles: number, 
-        min_articles: number, 
-    }
-}
-export class OutletScatterView implements PanelView {
-    title: string
-    type: ViewType.OutletScatter
-    data: {nodes: ScatterNode[], max_articles: number, min_articles: number}
-}
-export class TemporalView implements PanelView {
-    title: string
-    type: ViewType.Temporal
-    data: TemporalBins
-}
-export class ArticleView implements PanelView {
-    title: string
-    type: ViewType.Article
-    data: any[]
-}
-export class DetailView implements PanelView {
-    title: string
-    type: ViewType.Detail
-    data: {outlet_scatter_data: ScatterNode[], temporal_data: TemporalBins}
-}
-export class TemporalBins {
-    [id: string] : {[id: string]: Article[]}
-}
 export class ScatterNode {
     text: string
     article_ids: number[]
@@ -97,7 +54,7 @@ export class EntityInfo {
         neg: {[id: string]: number}
     }
     articles_topic_dict?: {[id: string]: {pos: number, neg: number}}
-    article_ids: number[]
+    article_ids?: number[]
 }
 
 export class CooccurrEntityInfo extends EntityInfo{
@@ -105,27 +62,6 @@ export class CooccurrEntityInfo extends EntityInfo{
     target_num_of_mentions: number
 }
 
-export class OutletNode {
-    x?: number
-    y?: number
-    text: string
-    sentiment: string
-    pos_articles: number
-    neg_articles: number
-    neu_articles: number
-    pos_sent: number
-    neg_sent: number
-    neu_sent: number
-    neu_pos_sent: number
-    neu_neg_sent: number
-    articles: Article[]
-    dotted?: Boolean
-    isCenter?: Boolean
-}
-export class OutletEdge {
-    source: number
-    target: number
-}
 export class Article {
     id: number
     headline: string
@@ -138,6 +74,7 @@ export class Article {
     entities: EntityMention[]
     sentiment: Sentiment
 }
+
 export class EntityMention {
     start_pos: number
     length: number
@@ -163,10 +100,3 @@ export class Sentiment {
     label: string
     score: number
 }
-// export class Sentiment {
-//     pos: number
-//     neg: number
-//     pos_sentences: number
-//     neg_sentences: number
-//     normalized_sst?: number
-// }

@@ -1,4 +1,4 @@
-import { ViewType, ScatterNode, OutletNodeInfo } from "../../types"
+import { ScatterNode, OutletNodeInfo } from "../../types"
 import {ComputedRef, Ref} from "vue"
 import * as d3 from "d3"
 import * as _ from "lodash"

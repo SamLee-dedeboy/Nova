@@ -48,7 +48,6 @@ const grouped_scatter_view_dict = vue.computed(() => {
     const scatter_data = overview_grouped_scatter_data.value[outlet]
     const scatter_view: typeUtils.EntityScatterView = {
       title: outlet,
-      type: typeUtils.ViewType.EntityScatter,
       data: scatter_data
     }
     res_dict[outlet] = scatter_view
@@ -56,7 +55,7 @@ const grouped_scatter_view_dict = vue.computed(() => {
   return res_dict
 })
 
-const overall_scatter_view: Ref<typeUtils.EntityScatterView> = ref(undefined)
+const overall_scatter_view: Ref<typeUtils.EntityScatterView | undefined> = ref(undefined)
 const overall_entity_dict: Ref<any> = ref({})
 const overall_scatter_data_loading: Ref<boolean> = ref(true)
 const grouped_scatter_data_loaded: Ref<boolean> = ref(false)
@@ -190,7 +189,6 @@ vue.onMounted(async() => {
         overview_overall_scatter_data.value = json
         overall_scatter_view.value = {
           title: "Overall",
-          type: typeUtils.ViewType.EntityScatter,
           data: overview_overall_scatter_data.value 
         }
         console.log("overall scatter fetched")
@@ -268,7 +266,6 @@ vue.onMounted(async() => {
         const cooccurrences = json
         const hex_view: typeUtils.CooccurrHexView = {
           title: `co-${selected_entity.value.name}`,
-          type: typeUtils.ViewType.CooccurrHex,
           data: cooccurrences,
         }
         overall_selected_hexview.value = hex_view
@@ -290,8 +287,7 @@ vue.watch(tutorial_step, (new_value, old_value) => {
 
 // handlers
   // send data
-async function handleEntityClicked({title, type, d}: {title: string, type: typeUtils.ViewType, d: typeUtils.ScatterNode}) {
-  if(type === typeUtils.ViewType.CooccurrHex) {
+async function handleEntityClicked({title, d}: {title: string, d: typeUtils.ScatterNode}) {
     const entity = d.text.split("-")[0]
     const outlet = d.text.split("-")[1]
     const overall_flag = title === "Overall"
@@ -321,14 +317,12 @@ async function handleEntityClicked({title, type, d}: {title: string, type: typeU
       .then(json => {
         const hex_view: typeUtils.CooccurrHexView = {
           title: `co-${d.text}`,
-          type: typeUtils.ViewType.CooccurrHex,
           data: json,
         }
         overall_selected_hexview.value = hex_view
         console.log("cooccurr hex fetched")
       })
     return
-  }
 
 }
 
@@ -358,8 +352,8 @@ async function updateOverallEntityNode({outlet, value}) {
     .then(res => res.json())
     .then(json => {
       console.log("update outlet weight done")
-      overall_scatter_view.value.data = json
-      overall_scatter_view.value.data.nodes.forEach(node => {
+      overall_scatter_view.value!.data = json
+      overall_scatter_view.value?.data.nodes.forEach(node => {
         overall_entity_dict.value[node.text] = node
       })
       console.log(overall_entity_dict.value)

@@ -1,31 +1,58 @@
 <script setup lang="ts">
+/**
+ * primevue components
+ */
+import Splitter from 'primevue/splitter';
+import SplitterPanel from "primevue/splitterpanel"
+import Divider from "primevue/divider"
+
+/**
+ * libraries
+ */
 import * as vue from "vue"
 import {Ref, ref} from 'vue'
 import { useRoute } from 'vue-router'
 import { useStore } from 'vuex'
-import Splitter from 'primevue/splitter';
-import SplitterPanel from "primevue/splitterpanel"
-import HexCooccurrence from "../components/HexCooccurrence.vue";
+
+/**
+ * types
+ */
 import * as typeUtils from "../types"
-import ToggleButton from "primevue/togglebutton";
+
+/**
+ * vue components
+ */
+import HexCooccurrence from "../components/HexCooccurrence.vue";
 import EntityInfoView from "../components/EntityInfoView.vue";
 import TopicBars from "../components/TopicBars.vue";
-import Divider from "primevue/divider"
 
 const route = useRoute()
 const store = useStore()
+/**
+ * vuex store objects
+ */
 const segmentation = vue.computed(() => store.state.segmentation)
 const setSegmentation = (segmentation) => store.commit("setSegmentation", segmentation) 
 const selected_entity = vue.computed(() => store.state.selected_entity)
 const setEntity = (entity) => store.commit("setEntity", entity) 
 const selected_cooccurr_entity = vue.computed(() => store.state.selected_cooccurr_entity)
 const setCooccurrEntity = (cooccurr_entity) => store.commit("setCooccurrEntity", cooccurr_entity) 
+
+/**
+ * left & right section width (percentage)
+ */
 const left_section_size = 83 
 const right_section_size = vue.computed(() => 100-left_section_size)
+
+
 const server_address = vue.inject("server_address")
+
+/**
+ * data
+ */
 const hexview_grid: Ref<any[]> = ref([])
 const data_fetched: Ref<boolean> = ref(false)
-const showDiff: Ref<boolean> = ref(false)
+
 
 
 vue.onMounted(async () => {
@@ -39,7 +66,6 @@ vue.onMounted(async () => {
             data_list.forEach(hex_data => {
                 const hex_view: typeUtils.CooccurrHexView = {
                     title: `co-${hex_data.entity}-${hex_data.outlet}`,
-                    type: typeUtils.ViewType.CooccurrHex,
                     data: hex_data
                 }
                 hexview_grid.value.push(hex_view)
@@ -60,7 +86,7 @@ async function handleHexClicked({target, co_occurr_entity}: {target: string, co_
     await fetch(`${server_address}/processed_data/cooccurr_info/grouped/${outlet}/${entity}/${co_occurr_entity}`)
         .then(res => res.json())
         .then(json => {
-            console.log("cooccurr_info fetched", json)
+            console.log("cooccurr_info fetched")
             const target_entity = {
                 name: json.target,
                 outlet: outlet,
@@ -77,7 +103,7 @@ async function handleHexClicked({target, co_occurr_entity}: {target: string, co_
                 articles_topic_dict: json.cooccurr_articles_topic_dict,
                 cooccurr_article_ids: json.cooccurr_article_ids
             }
-        setCooccurrEntity(cooccurr_entity)
+            setCooccurrEntity(cooccurr_entity)
         })
 }
 </script>
@@ -93,15 +119,11 @@ async function handleHexClicked({target, co_occurr_entity}: {target: string, co_
                     :id="`compare-co-hex-${index}`"
                     :entity_cooccurrences="view.data"
                     :segmentation="segmentation"
-                    :showDiff="showDiff"
                     v-on:hex-clicked="handleHexClicked">
                 </HexCooccurrence>
             </div>
         </SplitterPanel>    
         <SplitterPanel id="entity_info_section" class="entity-info-section flex align-items-center justify-content-center" :size="right_section_size" >
-            <div class="utilities-container">
-                <ToggleButton v-model="showDiff" class="w-full sm:w-10rem" onLabel="Show Diff" offLabel="Show Diff" />
-            </div>
             <div class="entity-info-container">
                 <div class="target-cooccurr-container">
                 <EntityInfoView

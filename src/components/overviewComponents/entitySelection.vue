@@ -23,7 +23,7 @@
     import * as d3 from "d3"
     import * as _ from "lodash"
     import Menu from "primevue/menu"
-    import { ScatterNode, PanelView, ViewType, Sentiment2D, OutletNodeInfo } from '../../types'
+    import { ScatterNode, Sentiment2D, OutletNodeInfo, EntityScatterView } from '../../types'
 
     import * as SstColors from "../utils/ColorUtils"
 
@@ -34,7 +34,7 @@
 
     // initialization
     const props = defineProps({
-        view: Object as () => PanelView,
+        view: Object as () => EntityScatterView,
         view_index: Number,
         id: String,
         article_num_threshold: Number,
@@ -64,7 +64,7 @@
         {
             label: "Show co-occurrence",
             command: () => {
-                emit("node_clicked", {title: props.view?.title, type: ViewType.CooccurrHex, d: clicked_node.value})
+                emit("node_clicked", {title: props.view?.title,  d: clicked_node.value})
             }
         },
     ])
