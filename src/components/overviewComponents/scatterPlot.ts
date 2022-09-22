@@ -18,15 +18,12 @@ interface SegmentPoint {
 }
 
 
-// const viewBox: [number, number] = [1000, 1000]
-// const outlet_min_radius = 10
-// const outlet_max_radius = 150
-// const margin = {top: 60, bottom: 60, right:40, left: 80} 
+
 // var segment_controller_start_x:number
 // var segment_controller_start_y:number
 // let current_zoom: any = undefined
 
-class entityScatter {
+export class EntityScatter {
     props: any;
     viewBox: [number, number];
     vbWidth: number;
@@ -104,7 +101,15 @@ class entityScatter {
 
     /* Exposed for event handling */
     resetView(){
-        
+        const svg = d3.select(`#${this.props.id}`).select("svg")
+        svg.call(this.zoom.transform, d3.zoomIdentity)
+        svg.selectAll("g.axis_x")
+            .call(this.zoom.transform, d3.zoomIdentity)
+        svg.selectAll("g.axis_y")
+            .call(this.zoom.transform, d3.zoomIdentity)
+        svg.selectAll("g.outlet")
+            .call(this.zoom.transform, d3.zoomIdentity)
+        this.current_zoom = d3.zoomIdentity
     }
 
     updateCanvas(emit:any) {
@@ -114,7 +119,10 @@ class entityScatter {
             this.updateOverviewScatter(emit)
     } 
 
-    updateSegmentation() : void{
+    updateSegmentation(x:number, y:number) : void{
+        this.segment_point.x = x;
+        this.segment_point.y = y;
+
         const svg = d3.select(`#${this.props.id}`).select("svg")
         const segment_group = svg.selectAll("g.segmentation")
         .data([this.segment_point])
@@ -255,8 +263,8 @@ class entityScatter {
         this.svg.append("g").attr("class", "node_group");
 
         this.updateOverviewTooltipContent();
-        this.segment_point = {x: this.xScale(this.props.segmentation?.pos || 0.5), y: this.yScale(this.props.segmentation?.neg || 0.5)}
-        this.updateSegmentation()
+        let segment_point = {x: this.xScale(this.props.segmentation?.pos || 0.5), y: this.yScale(this.props.segmentation?.neg || 0.5)}
+        this.updateSegmentation(segment_point.x,segment_point.y)
     }
 
     drawSegementation(emit){
@@ -288,9 +296,9 @@ class entityScatter {
                     .attr("y", d.y=(end_y-(this.segment_controller_width/(this.current_zoom?.k || 1))/2))
                     .raise();
 
-                this.segment_point = {x: Math.max(this.margin.left, Math.min(end_x, this.vbWidth)), y: Math.max(this.margin.top, Math.min(end_y, this.vbHeight))} 
+                let segment_point = {x: Math.max(this.margin.left, Math.min(end_x, this.vbWidth)), y: Math.max(this.margin.top, Math.min(end_y, this.vbHeight))} 
                 emit("update:segmentation", {pos: this.xScale.invert(this.segment_point.x), neg: this.yScale.invert(this.segment_point.y)})
-                this.updateSegmentation()
+                this.updateSegmentation(segment_point.x,segment_point.y)
             })
             .on("end", function(e, d) { d3.select(this).attr("stroke", null)})
 

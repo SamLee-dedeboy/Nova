@@ -24,13 +24,15 @@
         import * as d3 from "d3"
 
         import Menu from "primevue/menu"
-        import { ScatterNode, PanelView, ViewType, Sentiment2D, OutletNodeInfo, EntityScatterView } from '../../types'
+        import { ScatterNode, PanelView, ViewType, Sentiment2D, OutletNodeInfo } from '../../types'
 
         import * as SstColors from "../utils/ColorUtils"
         import * as NodeUtils from "../utils/NodeUtils"
 
         import TooltipVue from "../Tooltip.vue"
         import NodeInfo from '../NodeInfo.vue'
+        import {EntityScatter} from "./scatterPlot"
+import { filter } from 'lodash'
 
     
         // initialization
@@ -48,8 +50,6 @@
         const emit = defineEmits(['node_clicked', 'update:segmentation', 'show_temporal', 'update-weight-ended'])
         const tooltip_content: Ref<string> = ref("") 
         const hovered_node_info: Ref<OutletNodeInfo> = ref(new OutletNodeInfo())
-        const tutorial_mode: Ref<boolean> = vue.inject("tutorial_mode") || ref(false)
-        const tutorial_step: Ref<number> = vue.inject("tutorial_step") || ref(0)
 
         const max_articles = vue.computed(() => props.view?.data.max_articles)
         const min_articles = vue.computed(() => props.view?.data.min_articles)
@@ -88,85 +88,45 @@
                 }
             },
         ])
+        const viewBox: [number, number] = [1000, 1000]
+        const margin = {top: 60, bottom: 60, right:40, left: 80} 
 
-        //Init the class
-
-    
-        vue.watch(tutorial_step, (new_value, old_value) => {
-            if(new_value === 1) {
-                const svg = d3.select(`#${props.id}`).select("svg")
-                svg.selectAll("circle.outlet_circle")
-                    .style("pointer-events", "none")
-            }
-        })
+        const entityScatterPlot = new EntityScatter(props,margin,viewBox,filtered_data,tooltip_content,total_articles,min_articles,max_articles,clicked_node,clicked_node_element,hovered_node_info);
         
         vue.watch(() => props.highlight_nodes, (new_value, old_value) => {
-            updateCanvas()
+            entityScatterPlot.updateCanvas(emit)
         }, {deep: true})
         
         
         vue.watch(() => props.segmentation, (new_value, old_value) => {
-            let segment_point = {x: x(new_value?.pos || 0.5), y: y(new_value?.neg || 0.5)}
-            updateSegmentation(segment_point)
+            let segment_point = {x: entityScatterPlot.xScale(new_value?.pos || 0.5), y: entityScatterPlot.yScale(new_value?.neg || 0.5)}
+            entityScatterPlot.updateSegmentation(segment_point.x,segment_point.y)
         }, {deep: true}) 
         
         vue.watch(() => props.view, (new_view, old_view) => {
-            updateCanvas() 
+            entityScatterPlot.updateCanvas(emit) 
         }, {deep: true})
         
         vue.watch(() => props.article_num_threshold, () => {
-            updateCanvas()
-            updateOverviewTooltipContent()
+            entityScatterPlot.updateCanvas(emit)
+            entityScatterPlot.updateOverviewTooltipContent()
         })
         
         vue.watch(() => props.segment_mode, (new_value) => {
-            updateSegmentation()
+            entityScatterPlot.updateSegmentation(0.5,0.5)
             const svg = d3.select(`#${props.id}`).select("svg")
             svg.select("rect.segment-controller").style("opacity", new_value?1:0).raise()
         })
         
         onMounted(() => {
             // Render Scatter
-            EntityScatter.draw()
+            entityScatterPlot.draw(emit);
         })
     
     
-    function resetZoom() {
-        
-    }
-    
-    function handleZoom(e) {
-        const svg = d3.select(`#${props.id}`).select("svg")
-        const outlet_group = svg.selectAll("g.outlet")
-            .attr("transform", e.transform)
-        
-        outlet_group.selectAll("circle")
-            .attr("r", node_circle_radius/e.transform.k)
-    
-        svg.selectAll("g.axis_x")
-            .attr("transform", `translate(${e.transform.x},${margin.top+viewBox_height}) scale(${e.transform.k})`)
-    
-        svg.selectAll("g.axis_y")
-            .attr("transform", `translate(${margin.left},${e.transform.y}) scale(${e.transform.k})` )
-        svg.selectAll("g.segmentation > rect")
-            .attr("transform", e.transform)
-        const segment_controller = svg.selectAll("rect.segment-controller")
-        segment_controller
-            .attr("transform", e.transform)
-            .attr("width", segment_controller_width/e.transform.k)
-            .attr("height", segment_controller_width/e.transform.k)
-            .attr("x", () => (segment_point.x - (segment_controller_width/e.transform.k)/2))
-            .attr("y", () => (segment_point.y - (segment_controller_width/e.transform.k)/2))
-    
-        current_zoom = e.transform
-    }
-
-    function updateExpandedTooltipContent(data: ScatterNode) {
-        tooltip_content.value = 
-        `title: ${data.text} <br>` + 
-        `&nbsp #articles: ${data.article_ids}/${total_articles.value} <br>` +
-        `&nbsp sst: (${data.pos_sst.toFixed(2)}, ${data.neg_sst.toFixed(2)}) <br>` 
-    }
+        function resetZoom() {
+            entityScatterPlot.resetView()
+        }
         
     </script>
     
