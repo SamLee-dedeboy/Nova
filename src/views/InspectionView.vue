@@ -1,11 +1,28 @@
 <script setup lang="ts">
+/**
+ * primevue components
+ */
+import Splitter from 'primevue/splitter';
+import SplitterPanel from "primevue/splitterpanel"
+import Divider from 'primevue/divider'
+
+/**
+ * libraries
+ */
 import * as vue from "vue"
 import {Ref, ref} from 'vue'
 import { useStore } from 'vuex'
-import Splitter from 'primevue/splitter';
-import SplitterPanel from "primevue/splitterpanel"
+
+/**
+ * types
+ */
+import { Article, SentimentType, Sentiment2D } from "../types"
+
+/**
+ * vue components
+ */
 import ArticleView from "../components/ArticleView.vue";
-import { Article } from "../types"
+import EntityInfoView from "../components/EntityInfoView.vue";
 
 const store = useStore()
 
@@ -17,14 +34,39 @@ const data_fetched: Ref<boolean> = ref(false)
 const selected_entity = vue.computed(() => store.state.selected_entity)
 const selected_cooccurr_entity = vue.computed(() => store.state.selected_cooccurr_entity)
 const segmentation = vue.computed(() => store.state.segmentation)
+const setSegmentation = (segmentation) => store.commit("setSegmentation", segmentation) 
 
 const target_articles: Ref<Article[]> = ref([])
 vue.onMounted(() => {
     const article_ids = selected_cooccurr_entity.value.cooccurr_article_ids
     fetch_articles(article_ids)
 })
+
+const sentiment_options = [
+    {type: SentimentType.neu, value: "neu"}, 
+    {type: SentimentType.neg, value: "neg"}, 
+    {type: SentimentType.pos, value: "pos"}, 
+    {type: SentimentType.mix, value: "mix"}, 
+]
+const selectedCategory: Ref<any> = ref({})
+vue.watch(selectedCategory, (new_value, old_value) => {
+    const adjust_target: Sentiment2D = selected_entity.value.sst_ratio || {pos: 0.5, neg: 0.5}
+    const offset = 0.05
+    if(new_value.type === SentimentType.neu) {
+        setSegmentation({pos: adjust_target.pos + offset, neg: adjust_target.neg + offset})
+    }
+    if(new_value.type === SentimentType.neg) {
+        setSegmentation({pos: adjust_target.pos + offset, neg: adjust_target.neg - offset})
+    }
+    if(new_value.type === SentimentType.pos) {
+        setSegmentation({pos: adjust_target.pos - offset, neg: adjust_target.neg + offset})
+    }
+    if(new_value.type === SentimentType.mix) {
+        setSegmentation({pos: adjust_target.pos - offset, neg: adjust_target.neg - offset})
+    }
+})
+
 async function fetch_articles(article_ids) {
-    console.log("🚀 ~ file: InspectionView.vue ~ line 27 ~ fetch_articles ~ article_ids", article_ids)
     await fetch(`${server_address}/processed_data/ids_to_articles`,{
       method: "POST",
       headers: {
@@ -66,20 +108,26 @@ async function fetch_articles(article_ids) {
                 <EntityInfoView
                     v-if="selected_entity"
                     title="Target Entity"
-                    :entity_info="selected_entity"
-                    v-model:segmentation="segmentation"
-                >
+                    :entity_info="selected_entity">
                 </EntityInfoView>
                 <Divider v-if="selected_cooccurr_entity" layout="vertical"></Divider>
                 <EntityInfoView
                     v-if="selected_cooccurr_entity"
                     title="Co-occurr Entity"
-                    :entity_info="selected_cooccurr_entity"
-                >
+                    :entity_info="selected_cooccurr_entity" >
                 </EntityInfoView>
                 </div>
             </div>
             <div class="outlet-weight-container">
+
+            </div>
+            <div class="select-category-container">
+                <SelectButton
+                    v-model="selectedCategory"
+                    :options="sentiment_options"
+                    option-label="value"
+                    data-key="type" >
+                </SelectButton>
 
             </div>
 
@@ -91,6 +139,12 @@ async function fetch_articles(article_ids) {
 .splitter-outmost {
   width: 97vw;
   height: 95vh;
+  display: flex;
+}
+:deep(.p-divider.p-divider-vertical::before) {
+  border-left: 1px solid #dee2e6 !important;
+}
+.target-cooccurr-container {
   display: flex;
 }
 

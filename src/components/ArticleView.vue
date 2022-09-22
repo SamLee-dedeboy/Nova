@@ -45,13 +45,13 @@ const neg_panel_articles: Ref<Article[]> = ref(neg_articles.value?.slice(0,10) |
 
 function removeTags(content) {
     const res = content.replaceAll("<n>", "\n")
-    console.log(res)
     return res
 }
 </script>
 
 <template>
 <ScrollPanel class="pos-article-list">
+    <div class="pos-panel-header"> Positive </div>
     <Panel v-for="(article, index) in pos_panel_articles"
     :header="index+1 + '. ' + article.headline"
     :key="article.id"
@@ -72,6 +72,7 @@ function removeTags(content) {
 </ScrollPanel>
 
 <ScrollPanel class="neg-article-list">
+    <div class="neg-panel-header"> Negative </div>
     <Panel v-for="(article, index) in neg_panel_articles"
     :header="index+1 + '. ' + article.headline"
     :key="article.id"
@@ -79,7 +80,8 @@ function removeTags(content) {
     :collapsed=true 
     :style="{ 'background-color': SstColors.neg_color, 'filter': `brightness(${SstColors.brightness}%)`, }">
     <template #header>
-        <span class="headline" v-html="addHighlights(article.headline, article.entities, index)">
+        <span class="headline">
+            {{index+1 + '. ' + article.headline}}
         </span>
         <!-- <Chip >
             {{article.sentiment.score.toFixed(2)}}
@@ -110,7 +112,9 @@ function removeTags(content) {
 
 .summary {
     white-space: pre-line;
-
+}
+:deep(.p-splitter-gutter) {
+    pointer-events: none;
 }
 
 </style>

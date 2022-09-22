@@ -129,16 +129,13 @@ async function handleHexClicked({target, co_occurr_entity}: {target: string, co_
                 <EntityInfoView
                     v-if="selected_entity"
                     title="Target Entity"
-                    :entity_info="selected_entity"
-                    v-model:segmentation="segmentation"
-                >
+                    :entity_info="selected_entity">
                 </EntityInfoView>
                 <Divider v-if="selected_cooccurr_entity" layout="vertical"></Divider>
                 <EntityInfoView
                     v-if="selected_cooccurr_entity"
                     title="Co-occurr Entity"
-                    :entity_info="selected_cooccurr_entity"
-                >
+                    :entity_info="selected_cooccurr_entity">
                 </EntityInfoView>
                 </div>
                 <div class="topic-bar-container">
