@@ -94,11 +94,7 @@ export class EntityScatter {
 
     draw(emit) : void {
         this.initScatterSvg("entitySVG")
-        if(this.props.expanded) { 
-            this.drawSegementation(emit)
-        } else {
-            this.drawDefault()
-        }
+        this.drawSegementation(emit)
         this.drawAxis(emit)
     }
 
@@ -116,10 +112,7 @@ export class EntityScatter {
     }
 
     updateCanvas(emit:any) {
-        if(this.props.expanded)
-            this.updateExpandedScatter(emit)
-        else 
-            this.updateOverviewScatter(emit)
+        this.updateExpandedScatter(emit)
     } 
 
     updateSegmentation(x:number, y:number) : void{
@@ -226,12 +219,6 @@ export class EntityScatter {
         return "unknown" 
     }
 
-    showTemporal(emit) {
-        let emit_data;
-        if(this.props.view?.type === ViewType.EntityScatter) emit_data = this.filtered_data.value
-        if(this.props.view?.type === ViewType.OutletScatter) emit_data = this.props.view.data
-        emit("show_temporal", emit_data)
-    }
 
     handleZoom(e) {
         const svg = d3.select(`#${this.props.id}`).select("svg")

@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import ScrollPanel from 'primevue/scrollpanel'
 import Panel from 'primevue/panel'
-import DeferreedContent from 'primevue/deferredcontent'
 import * as vue from "vue"
-import * as d3 from "d3"
-import * as SstColors from "./ColorUtils"
+import * as SstColors from "./utils/ColorUtils"
 import { Ref, ref } from "vue"
 import { Article } from "../types"
 
@@ -44,12 +42,6 @@ const neg_articles = vue.computed(() => {
     return props.articles?.filter(article => article.sentiment.label === "NEGATIVE")
 })
 const neg_panel_articles: Ref<Article[]> = ref(neg_articles.value?.slice(0,10) || []) 
-
-function sstToColor(sst: number) {
-    if(isNeutral(sst)) return SstColors.neu_color
-    if(sst >= 0) return SstColors.pos_color
-    else return SstColors.neg_color
-}
 
 function removeTags(content) {
     const res = content.replaceAll("<n>", "\n")

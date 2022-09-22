@@ -408,6 +408,7 @@ function updateSegmentation(){
 
 <template>
   <main>
+    <div class="overview-container">
       <div class="overview-scatter-container">
            <!-- load icon -->
             <i v-if="overall_scatter_data_loading" class="pi pi-spin pi-spinner" 
@@ -521,7 +522,8 @@ function updateSegmentation(){
     "<span v-if="tutorial_mode" class="skip-button" 
     style='text-decoration:underline;'
     @click="tutorial_mode=false">Skip</span>", 
-  </main>
+  </div>
+</main>
 </template>
 
 <style scoped lang="scss">
@@ -530,217 +532,7 @@ function updateSegmentation(){
 }
 .overview-scatter-container {
     width: 800px;
-    height: 800px;
+    height: 600px;
 }
-.splitter-outmost {
-  width: 97vw;
-  height: 95vh;
-}
-.homeview-container {
-  height: 100%;
-}
-
-.overview-grid-container > :deep(.scatter-container) {
-  display:flex;
-  aspect-ratio: 1;
-}
-
-:deep(.outlet-scatter) {
-  cursor: pointer;
-}
-:deep(.p-tabview) {
-  height: 95vh !important;
-  width: 100% !important;
-}
-:deep(.p-tabview-panels) {
-  height: 91vh !important;
-  width: 100% !important;
-  padding: 0 !important;
-}
-:deep(.p-tabview-panel) {
-  height: 100% !important;
-  width: 100% !important;
-}
-:deep(.p-tabview-nav-container) {
-  width: 100% !important;
-}
-.compare {
-  max-width: 48%;
-}
-.expanded-section {
-  display: flex;
-  width: 55vw;
-}
-:deep(.p-tabview-panels:dragover) {
-  background: #b8b8b8 !important;
-}
-.increment-button {
-  display:inline-block;
-}
-.threshold-input {
-  width: 60% !important;
-  display:inline-block;
-}
-.increment-button, .decrease-button {
-  width: 20% !important;
-  display:inline-block;
-}
-.indicator-container {
-  display: flex;
-  justify-content: space-between;
-}
-.segment-toggler-container {
-  display: inline-flex;
-  width: fit-content;
-  margin-left: 10px;
-  margin: 3px;
-}
-.color-spectrum {
-  width: inherit;
-  height: 30px;
-}
-.utilities-container {
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  margin-left: var(--margin_left);
-  overflow: hidden
-}
-:deep(.p-slider) {
-  width: 100%;
-  top: 13px;
-}
-:deep(.p-slider-handle) {
-    border-radius: 10px !important; 
-    background: white !important;
-    z-index: 100;
-} 
-:deep(.p-slider.p-slider-horizontal .p-slider-handle) {
-  margin-left: unset !important;
-}
-:deep(.p-slider .p-slider-handle) {
-  height: 1.3rem !important;
-  width: 0.4rem !important;
-  border: 2px solid black !important;
-}
-:deep(.p-slider-handle:hover) {
-    background: #007bff !important;
-} 
-:deep(.p-divider.p-divider-vertical::before) {
-  border-left: 1px solid #dee2e6 !important;
-}
-.overview-temporal-coord {
-  width: 500px;
-  height: 300px;
-}
-.toolbar-container {
-  margin-left: var(--margin_left); 
-  height: 50px;
-  display: flex;
-}
-.toolbar-container > :deep(.p-button) {
-  border-radius: 8px !important;
-  // display: flex !important;
-  margin: 3px;
-}
-.overview-temporal-container {
-  display: flex;
-}
-.outlet-legend {
-  position: absolute;
-  top: 50%;
-  right: 0%;
-  transform: translateY(-50%);
-  width:150px;
-}
-.segment-legend {
-  width: 125px;
-  height: 150px;
-  margin-left: var(--margin_left);
-}
-:deep(.p-button:focus) {
-  box-shadow: unset !important;
-}
-:deep(.overview-temporal-container > .temporal-selector-container) {
-  margin-top: 28px;
-}
-.tutorial_tooltip {
-  opacity: 0;
-}
-.skip-button {
-  position: absolute;
-  opacity: 0;
-  cursor: pointer;
-}
-.temporal-toggler {
-  margin-left: auto !important;
-}
-.search-bar {
-  z-index:1000;
-  display:inline-block;
-  // transform: translateY(-50%);
-  height: 50px;
-  margin-left: 3px;
-}
-.article-view-container {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-}
-
-.article-view {
-  overflow: hidden;
-}
-.slider-container {
-  width: 200px;
-}
-.outlet-weight-grid-container {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-template-rows: repeat(3, 1fr);
-  grid-column-gap: 30px;
-  width: 100%;
-  margin-left: 10px;
-  margin-right: 10px;
-}
-.co-hex-button-container {
-  position: absolute;
-  left: 45.4%;
-  top: 24%;
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-}
-
-.common-diff {
-  display: flex;
-  flex-direction: column;
-  font-size: x-small;
-}
-.common-diff > :deep(.p-button.p-component) {
-  font-size: inherit;
-}
-
-.overview-container {
-  width: 100%;
-  height: 100%;
-}
-.overall-hex-container {
-  width: 100%;
-  height: 59%;
-  display: flex;
-}
-.overall-co-hexview {
-  width: 60% !important;
-  height: 100% !important;
-}
-.entity-info-container {
-  width: 40% !important;
-}
-.target-cooccurr-container {
-  display: flex;
-}
-
  </style>
 

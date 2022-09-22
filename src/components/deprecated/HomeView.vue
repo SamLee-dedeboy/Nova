@@ -33,7 +33,6 @@ import TopicBars from "../components/TopicBars.vue"
 import tutorial_intro_json from "../assets/tutorial/tutorial_intro.json"
 import * as tutorial from "../components/utils/TutorialUtils"
 import { resolve } from "path";
-import SelectButton  from "../components/SelectButton.vue";
 import { useRouter, useRoute } from 'vue-router'
 import { useStore } from 'vuex'
 
