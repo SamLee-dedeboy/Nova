@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import * as vue from "vue"
 import * as d3 from "d3"
-import { updateOverviewGrid } from "./TutorialUtils";
+import { updateOverviewGrid } from "./utils/TutorialUtils";
 import SelectButton from "primevue/selectbutton"
-import * as SstColors from "./ColorUtils"
+import * as SstColors from "./utils/ColorUtils"
 import { SentimentType, Sentiment2D, EntityInfo } from "../types"
 import { Ref, ref } from "vue"
 const props = defineProps({

@@ -13,7 +13,6 @@ import { RouterLink, RouterView } from "vue-router";
 @import "@/assets/base.css";
 
 #app {
-
   font-weight: normal;
 }
 
@@ -24,20 +23,12 @@ header {
 main {
   min-height: 100vh;
 }
-
-
-
-
-
-
-
-
-
+/* 
 @media (min-width: 1024px) {
 
   #app {
     padding: 0 2rem;
   }
 
-}
+} */
 </style>

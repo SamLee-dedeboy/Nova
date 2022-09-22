@@ -2,7 +2,7 @@
 import * as d3 from "d3"
 import * as vue from "vue"
 import * as preprocess from "../components/preprocessUtils"
-import * as SstColors from "./ColorUtils"
+import * as SstColors from "./utils/ColorUtils"
 import { Path, Article, Sentiment2D } from "../types"
 import { start } from "repl"
 import {Ref, ref} from 'vue'

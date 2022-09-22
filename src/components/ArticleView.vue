@@ -45,8 +45,10 @@ const neg_articles = vue.computed(() => {
 })
 const neg_panel_articles: Ref<Article[]> = ref(neg_articles.value?.slice(0,10) || []) 
 
-function addHighlights(content, entities, index) {
-    return content
+function sstToColor(sst: number) {
+    if(isNeutral(sst)) return SstColors.neu_color
+    if(sst >= 0) return SstColors.pos_color
+    else return SstColors.neg_color
 }
 
 function removeTags(content) {

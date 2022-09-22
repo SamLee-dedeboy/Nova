@@ -1,4 +1,4 @@
-import { OutletNode } from '../types'
+import { OutletNode } from '../../types'
 import * as SstColors from './ColorUtils'
 import * as d3 from "d3";
 export function sentiment_classify(node_data: OutletNode) {

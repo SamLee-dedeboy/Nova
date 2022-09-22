@@ -15,8 +15,8 @@
 import * as vue from "vue"
 import * as d3 from "d3"
 import * as d3_hexbin from "d3-hexbin"
-import { updateOverviewGrid } from "./TutorialUtils";
-import * as SstColors from "./ColorUtils"
+import { updateOverviewGrid } from "./utils/TutorialUtils";
+import * as SstColors from "./utils/ColorUtils"
 import { SentimentType, Sentiment2D, EntityCooccurrences, HexEntity, ScatterNode } from "../types"
 import { Ref, ref } from "vue"
 const props = defineProps({

@@ -19,7 +19,7 @@ import * as typeUtils from "../types"
 import Legend from "../components/Legend.vue";
 import Divider from 'primevue/divider';
 import ColorSpectrum from '../components/ColorSpectrum.vue'
-import * as SstColors from "../components/ColorUtils"
+import * as SstColors from "../components/utils/ColorUtils"
 import * as _ from "lodash"
 import TemporalCoordinates from "../components/TemporalCoordinates.vue";
 import TemporalPathSelector from "../components/TemporalPathSelector.vue";
@@ -31,7 +31,7 @@ import EntityInfoView from "../components/EntityInfoView.vue"
 import HexCooccurrence from "../components/HexCooccurrence.vue";
 import TopicBars from "../components/TopicBars.vue"
 import tutorial_intro_json from "../assets/tutorial/tutorial_intro.json"
-import * as tutorial from "../components/TutorialUtils"
+import * as tutorial from "../components/utils/TutorialUtils"
 import { resolve } from "path";
 import SelectButton  from "../components/SelectButton.vue";
 import { useRouter, useRoute } from 'vue-router'

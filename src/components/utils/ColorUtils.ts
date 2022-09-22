@@ -1,5 +1,5 @@
 import * as d3 from "d3"
-import { SentimentType } from "../types"
+import { SentimentType } from "../../types"
 const brightness = 140
 const offset = 0.15
 const sst_range = d3.interpolateBrBG
