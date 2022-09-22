@@ -29,15 +29,13 @@ import { onMounted, PropType, computed, Ref, ref, defineEmits, nextTick} from 'v
 import * as vue from 'vue'
 import * as NodeUtils from "./utils/NodeUtils"
 import NodeInfo from './NodeInfo.vue'
+import { filter } from 'd3-array'
 
 // initialization
 const props = defineProps({
     view: Object as () => PanelView,
-    view_index: Number,
     id: String,
     highlight_nodes: Object as () => String[],
-    expanded: Boolean,
-    panel_class: String,
     article_num_threshold: Number,
     segment_mode: Boolean,
     segmentation: Sentiment2D, 
@@ -153,7 +151,6 @@ vue.watch(() => props.view, (new_view, old_view) => {
 
 vue.watch(() => props.article_num_threshold, () => {
     updateCanvas()
-    updateOverviewTooltipContent()
 })
 
 vue.watch(() => props.segment_mode, (new_value) => {
@@ -170,108 +167,60 @@ onMounted(() => {
     d3.select(`#${props.id}`).select(".nodeinfo")
         .style("opacity", 0)
     svg.append("g").attr("class", "node_group")
-    updateOverviewTooltipContent()
     segment_point = {x: x(props.segmentation?.pos || 0.5), y: y(props.segmentation?.neg || 0.5)}
     updateSegmentation()
 
-    if(props.expanded) {
-        // svg.append("text")
-        //     .text(props.graph?.title)
-        //     .attr("x", () => viewBox[0]/2)
-        //     .attr("y", 0)
-        //     .attr("text-anchor", "middle")
-        //     .attr("font-size", () => (props.expanded?"2em":"8em"))
-        //     .attr("dominant-baseline", "hanging")
-        svg.call(zoom)
-
-
-        const drag = d3.drag()
-            .on("start", function(e, d) { 
-                segment_controller_start_x = e.x
-                segment_controller_start_y = e.y
-                d3.select(this).attr("stroke", "black")
-            })
-            .on("drag", function(e, d) { 
-                let current_scale
-                if (this.getAttribute("transform") === null)
-                {
-                    current_scale = 1; 
-                } 
-                //case where we have transformed the circle 
-                else {
-                    const current_scale_string = this.getAttribute("transform")?.split(' ')[1] || "";
-                    current_scale = +current_scale_string.substring(6,current_scale_string.length-1);
-                }
-                const end_x = segment_controller_start_x + ((e.x - segment_controller_start_x) / current_scale) 
-                const end_y = segment_controller_start_y + ((e.y - segment_controller_start_y) / current_scale) 
-                d3.select(this)
-                    // .attr("x", d.x=(end_x-segment_controller_width/2) + (segment_controller_width-segment_controller_width/(current_zoom?.k || 1))/2)
-                    // .attr("y", d.y=(end_y-segment_controller_width/2) + (segment_controller_width-segment_controller_width/(current_zoom?.k || 1))/2)
-                    .attr("x", d.x=(end_x-(segment_controller_width/(current_zoom?.k || 1))/2))
-                    .attr("y", d.y=(end_y-(segment_controller_width/(current_zoom?.k || 1))/2))
-                    .raise()
-
-                segment_point = {x: Math.max(margin.left, Math.min(end_x, viewBox_width)), y: Math.max(margin.top, Math.min(end_y, viewBox_height))} 
-                emit("update:segmentation", {pos: x.invert(segment_point.x), neg: y.invert(segment_point.y)})
-                updateSegmentation()
-            })
-            .on("end", function(e, d) { d3.select(this).attr("stroke", null)})
-
-        svg.append("rect")
-            .data([{x: segment_point.x-segment_controller_width/2, y:segment_point.y-segment_controller_width/2}])
-            .attr("class", "segment-controller")
-            .attr("x", (d) => d.x)
-            .attr("y", (d) => d.y)
-            .attr("width", segment_controller_width)
-            .attr("height", segment_controller_width)
-            .attr("fill", "white")
-            .style("cursor", "pointer")
-            .style("opacity", props.segment_mode?1:0)
-            .call(drag as any)
-            .on("mouseover", function(e, d) {
-                d3.select(this).attr("stroke", "black")
-            })
-            .on("mouseout", function(e, d) {
-                d3.select(this).attr("stroke", null)
-            })
-
-    } else {
-        let break_text = props.view?.title.split('_') || "known"
-        var break_num = break_text.length
-        if(break_num >= 4) {
-            break_text = [break_text[0], break_text[1], break_text[2], '...']
-            break_num = 4
-        }
-        svg.append("text")
-            .selectAll("tspan")
-            .data(break_text)
-            .join("tspan")
-            .text(d => d)
-            .attr("x", viewBox[0]/2.1)
-            .attr("y", 0)
-            .attr("text-anchor", "middle")
-            .attr("font-size", "4em")
-            .attr("dominant-baseline", "hanging")
-        svg.on("mousemove", function(e, d) {
-            d3.select(`#${props.id}`).select("div.tooltip")
-            .style("left", e.offsetX + 15 + "px")
-            .style("top", e.offsetY - 5 + "px")
+    svg.call(zoom)
+    const drag = d3.drag()
+        .on("start", function(e, d) { 
+            segment_controller_start_x = e.x
+            segment_controller_start_y = e.y
+            d3.select(this).attr("stroke", "black")
         })
-        .on("mouseover", function(e, d) {
-            if(tutorial_mode.value && tutorial_step.value === 0) return
-            svg.style("filter", "brightness(80%)")
-            .style("background-color", "rgb(191,189,189)")
-            d3.select(`#${props.id}`).select("div.tooltip")
-            .style("opacity", 1)
+        .on("drag", function(e, d) { 
+            let current_scale
+            if (this.getAttribute("transform") === null)
+            {
+                current_scale = 1; 
+            } 
+            //case where we have transformed the circle 
+            else {
+                const current_scale_string = this.getAttribute("transform")?.split(' ')[1] || "";
+                current_scale = +current_scale_string.substring(6,current_scale_string.length-1);
+            }
+            const end_x = segment_controller_start_x + ((e.x - segment_controller_start_x) / current_scale) 
+            const end_y = segment_controller_start_y + ((e.y - segment_controller_start_y) / current_scale) 
+            d3.select(this)
+                // .attr("x", d.x=(end_x-segment_controller_width/2) + (segment_controller_width-segment_controller_width/(current_zoom?.k || 1))/2)
+                // .attr("y", d.y=(end_y-segment_controller_width/2) + (segment_controller_width-segment_controller_width/(current_zoom?.k || 1))/2)
+                .attr("x", d.x=(end_x-(segment_controller_width/(current_zoom?.k || 1))/2))
+                .attr("y", d.y=(end_y-(segment_controller_width/(current_zoom?.k || 1))/2))
+                .raise()
 
+            segment_point = {x: Math.max(margin.left, Math.min(end_x, viewBox_width)), y: Math.max(margin.top, Math.min(end_y, viewBox_height))} 
+            emit("update:segmentation", {pos: x.invert(segment_point.x), neg: y.invert(segment_point.y)})
+            updateSegmentation()
+        })
+        .on("end", function(e, d) { d3.select(this).attr("stroke", null)})
+
+    svg.append("rect")
+        .data([{x: segment_point.x-segment_controller_width/2, y:segment_point.y-segment_controller_width/2}])
+        .attr("class", "segment-controller")
+        .attr("x", (d) => d.x)
+        .attr("y", (d) => d.y)
+        .attr("width", segment_controller_width)
+        .attr("height", segment_controller_width)
+        .attr("fill", "white")
+        .style("cursor", "pointer")
+        .style("opacity", props.segment_mode?1:0)
+        .call(drag as any)
+        .on("mouseover", function(e, d) {
+            d3.select(this).attr("stroke", "black")
         })
         .on("mouseout", function(e, d) {
-            svg.style("filter", "brightness(100%)")
-            .style("background-color", "white")
-            d3.select(`#${props.id}`).select("div.tooltip")
-            .style("opacity", 0)
+            d3.select(this).attr("stroke", null)
         })
-    }       
+
     updateCanvas()
     if(tutorial_mode.value && tutorial_step.value === 0) {
         // svg.call(zoom)
@@ -404,8 +353,7 @@ function updateSegmentation() {
         .attr("y", (d) => d.y)
         // .attr("x", () => (segment_point.x-segment_controller_width/2))
         // .attr("y", () => (segment_point.y-segment_controller_width/2))
-    if(props.expanded)
-        updateCategorization()
+    updateCategorization()
 
 }
 
@@ -450,45 +398,15 @@ function updateExpandedTooltipContent(data: ScatterNode) {
     `title: ${data.text} <br>` + 
     `&nbsp #articles: ${data.article_ids}/${total_articles.value} <br>` +
     `&nbsp sst: (${data.pos_sst.toFixed(2)}, ${data.neg_sst.toFixed(2)}) <br>` 
-    
-
-}
-
-function updateOverviewTooltipContent() {
-    const nodes = filtered_data.value! 
-    const title = props.view?.title
-    const entity_num = nodes.length || 0
-    const avg_pos_sst = _.mean(nodes.map(node => node.pos_sst))
-    const avg_neg_sst = _.mean(nodes.map(node => node.neg_sst))
-    nodes.sort((node_a, node_b) => -(node_a.article_ids.length - node_b.article_ids.length))
-    tooltip_content.value = 
-    `${title}: <br>` + 
-    `&nbsp #entities: ${entity_num} <br>` +
-    `&nbsp top entities:<ol>` 
-    for(let i = 0; i < Math.min(3, nodes.length); ++i) {
-        tooltip_content.value +=
-        `<li>${nodes[i].text.split("-")[0]}</li>`
-    }
-    tooltip_content.value += "</ol>" +
-    `&nbsp avg_sst: (${avg_pos_sst.toFixed(2)}, ${avg_neg_sst.toFixed(2)}) <br>` 
-    if(props.view?.type === ViewType.EntityScatter) {
-        tooltip_content.value += `&nbsp total_articles: ${total_articles.value} <br>`
-    }
-    // tooltip_content.value += `<svg id='${props.id}-wordcloud' class='tooltip_canvas' width='250px' height='100px'></svg>`
-    
 }
 
 function updateCanvas() {
-    if(props.expanded)
-        updateExpandedScatter()
-    else 
-        updateOverviewScatter()
+    updateExpandedScatter()
 } 
 
 function updateExpandedScatter() {
     updateOverviewScatter()
     const svg = d3.select(`#${props.id}`).select("svg")
-
     // add events
     svg.selectAll("circle.outlet_circle")
         .style("cursor", "pointer")
@@ -528,35 +446,9 @@ function updateExpandedScatter() {
             clicked_node_element.value = this
             clicked_node.value = d as ScatterNode
             emit("node_clicked", {title: props.view?.title, type: ViewType.CooccurrHex, d: clicked_node.value})
-
-            // menu.value.toggle(e)
-            // d3.select(`#${props.id}`).select(".nodeinfo")
-            //     .style("opacity", 0)
-            // nextTick(() => {
-            //     const overlay_menu = d3.select("#overlay_menu")
-            //         overlay_menu.style("left", e.clientX + 5 + "px")
-            //         .style("top", e.clientY + 5 + "px")
-            //     clicked_node.value = d as ScatterNode
-            // })
         })
-
-    // add images if comparing across outlets
-    if(props.view?.type === ViewType.OutletScatter) {
-        const outlets = svg.selectAll("g.outlet")
-        const image_size = 100
-        outlets.selectAll("image.outlet_image")
-            .attr("href", (d: any) => `src/assets/${NodeUtils.abbr_dict[d.text.split("-")[1]]}.png`)
-            .attr("height", image_size)
-            .attr("width", image_size)
-            .attr("x", (d: any) => x(d.pos_sst)-image_size/2)
-            .attr("y", (d: any) => y(Math.abs(d.neg_sst))-image_size/2)
-            .attr("opacity", 0.3)
-            .attr("pointer-events", "none")
-            .lower()
-            .lower()
-    }
-
 }
+
 function applyExpandStyle(container: any) {
     container.style("filter", "brightness(90%)")
     // apply hover effect
@@ -587,18 +479,16 @@ function removeExpandedStyle(container: any) {
 }
 
 function updateOverviewScatter() {
+    console.log(props.view)
+    console.log(filtered_data.value)
     const svg = d3.select(`#${props.id}`).select("svg")
     const article_radius_scale = d3.scalePow()
-    .exponent(1)
-    .domain([ min_articles.value, max_articles.value ])
-    .range([ outlet_min_radius, outlet_max_radius ]);
+        .exponent(1)
+        .domain([ min_articles.value, max_articles.value ])
+        .range([ outlet_min_radius, outlet_max_radius ]);
 
     let bind_data: ScatterNode[] = [];
     if(props.view?.type === ViewType.EntityScatter) bind_data = filtered_data.value
-    if(props.view?.type === ViewType.OutletScatter) bind_data = props.view.data
-    if(props.view?.type === ViewType.CooccurrHex) bind_data = filtered_data.value
-
-    console.log("What is this? ", filtered_data)
 
     const node_group = svg.select("g.node_group")
     node_group.selectAll("g.outlet")
@@ -641,11 +531,6 @@ function updateOverviewScatter() {
                 .attr("cy", (d: any) => y(Math.abs(d.neg_sst)))
             .on("end", function() {
                 emit("update-weight-ended")
-                // if(clicked_node_element.value !== undefined) {
-                //     const clicked_node_parentNode: any = (clicked_node_element.value as HTMLElement).parentNode
-                //     const clicked_node_container: any = d3.select(clicked_node_parentNode)
-                //     applyExpandStyle(clicked_node_container)
-                // }
             })
 
             update.selectAll("circle.outlet_circle")
@@ -658,18 +543,11 @@ function updateOverviewScatter() {
     if(current_zoom) {
         dots.attr("transform", current_zoom)
     }
-    if(props.view?.type === ViewType.EntityScatter) {
+    if(props.view?.type === ViewType.EntityScatter && props.highlight_nodes) {
         const highlight_circle = svg.selectAll("circle.outlet_circle").filter((d: any) => (props.highlight_nodes!.includes(d.text.split("-")[0])))
         highlight_circle.attr("fill", "blue")
     }
     
-}
-
-function showTemporal() {
-    let emit_data;
-    if(props.view?.type === ViewType.EntityScatter) emit_data = filtered_data.value
-    if(props.view?.type === ViewType.OutletScatter) emit_data = props.view.data
-    emit("show_temporal", emit_data)
 }
 
 function updateNodeInfo(node_data: ScatterNode) {
@@ -690,15 +568,9 @@ function updateNodeInfo(node_data: ScatterNode) {
     background-color: white;
 }
 .outlet-scatterplot {
-    // overflow: hidden;
-    // height: inherit;
     max-height: 100%;
     aspect-ratio: 1;
     overflow: hidden;
-    // height: auto;
-    // width: inherit;
-    // aspect-ratio: 1;
-    // height: 95vh;
 }
 .tooltip {
     transform-origin: top left;

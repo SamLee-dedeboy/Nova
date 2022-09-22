@@ -4,6 +4,7 @@ import * as d3 from "d3"
 import * as _ from "lodash"
 import * as SstColors from "../utils/ColorUtils"
 import * as NodeUtils from "../utils/NodeUtils"
+import { randomIrwinHall } from "d3"
 
 interface Margin {
     top: number,
@@ -57,6 +58,7 @@ export class EntityScatter {
     public constructor(props:any, margin:Margin, viewBox:[number,number], filtered_data:Ref<ScatterNode[]>, tooltip_content: Ref<string>, 
         total_articles: ComputedRef<any>, min_articles: ComputedRef<any>, max_articles: ComputedRef<any>, clicked_node: Ref<ScatterNode>, clicked_node_element: Ref<any>,
         hovered_node_info: Ref<OutletNodeInfo>){
+        this.props = props
         this.margin = margin;
         this.viewBox = viewBox;
         this.vbWidth = this.viewBox[0] - this.margin.left - this.margin.right;
@@ -91,6 +93,7 @@ export class EntityScatter {
     }
 
     draw(emit) : void {
+        this.initScatterSvg("entitySVG")
         if(this.props.expanded) { 
             this.drawSegementation(emit)
         } else {
@@ -186,8 +189,8 @@ export class EntityScatter {
             .attr("y", (d) => d.y)
             // .attr("x", () => (segment_point.x-segment_controller_width/2))
             // .attr("y", () => (segment_point.y-segment_controller_width/2))
-        if(this.props.expanded)
-            this.updateCategorization()
+        // if(this.props.expanded)
+        //     this.updateCategorization()
     }
 
     updateCategorization() :void {
@@ -427,6 +430,7 @@ export class EntityScatter {
         if(this.props.view?.type === ViewType.OutletScatter) bind_data = this.props.view.data
         if(this.props.view?.type === ViewType.CooccurrHex) bind_data = this.filtered_data.value
     
+        console.log(bind_data)
         const node_group = svg.select("g.node_group")
         node_group.selectAll("g.outlet")
         .data(bind_data, function(d: any) {return d.text})

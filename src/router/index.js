@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import HomeView from "../views/HomeView.vue";
+import Overview from "../views/overview.vue"
 import CompareView from "../views/CompareView.vue";
 
 const router = createRouter({
@@ -8,7 +9,7 @@ const router = createRouter({
     {
       path: "/",
       name: "home",
-      component: HomeView,
+      component: Overview,
     },
     {
       path: "/compare/:entity",
