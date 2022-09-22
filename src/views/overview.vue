@@ -484,8 +484,7 @@ function updateSegmentation(){
         id="segment_legend"
         class="segment-legend"
         :color_dict="SstColors.key_color_dict" 
-        :filter="true" 
-        :interactable="false">
+        :filter="true">
         </Legend>
     </div>
     <!-- Entity Info -->
@@ -493,13 +492,12 @@ function updateSegmentation(){
         <div class="target-cooccurr-container">
             <EntityInfoView v-if="selected_entity"
                 title="Target Entity"
-                :entity_info="selected_entity"
-                v-model:segmentation="segment_sst" >
+                :entity_info="selected_entity">
             </EntityInfoView>
             <Divider v-if="selected_cooccurr_entity" layout="vertical"></Divider>
             <EntityInfoView v-if="selected_cooccurr_entity"
                 title="Co-occurr Entity"
-                :entity_info="selected_cooccurr_entity" >
+                :entity_info="selected_cooccurr_entity">
             </EntityInfoView>
         </div>
         <div class="topic-bar-container">

@@ -1,15 +1,9 @@
 <script setup lang="ts">
 import * as d3 from "d3"
 import * as vue from "vue"
-import * as preprocess from "../components/preprocessUtils"
 import * as SstColors from "./utils/ColorUtils"
-import { Path, Article, Sentiment2D } from "../types"
-import { start } from "repl"
-import {Ref, ref} from 'vue'
-import { processSlotOutlet } from "@vue/compiler-core"
 const props = defineProps({
     id: String,
-    // topicBins: Object as () => {[id: string]: {title: string, pos: number, neg: number}[]},
     targetTopicBins: Object as () => { [id: string]: {pos: number, neg: number}},
     cooccurrTopicBins: Object as () => { [id: string]: {pos: number, neg: number}},
 })
@@ -32,6 +26,7 @@ const abbr_dict = {
 }
 let x: any = d3.scaleBand()
 let y: any = d3.scaleLinear()
+
 vue.watch(() => props.targetTopicBins, (new_value, old_value) => {
     // update y axis
     y = d3.scaleLinear()
@@ -42,10 +37,12 @@ vue.watch(() => props.targetTopicBins, (new_value, old_value) => {
     // update bars
     updateBars()
 })
+
 vue.watch(() => props.cooccurrTopicBins, (new_value, old_value) => {
     // update bars
     updateBars()
 })
+
 vue.onMounted(() => {
     const svg = d3.select(`#${props.id}`).select("svg")
         .attr("viewBox", `0 0 ${viewBox[0]} ${viewBox[1]}`)
@@ -96,7 +93,6 @@ function updateBars() {
             .attr("stroke", "black")
             .style("filter", `brightness(${SstColors.brightness}%)`)
     if(props.cooccurrTopicBins) {
-        console.log("update cooccurr bars", props.cooccurrTopicBins)
         const cooccurr_rects: any = bars_group.selectAll("g.topic").selectAll("rect.cooccurr")
             .data((d: any) => { return [{topic: d, num: (props.cooccurrTopicBins![d]?.pos||0) + (props.cooccurrTopicBins![d]?.neg||0)}]})
         cooccurr_rects.enter().append("rect")
@@ -120,17 +116,15 @@ function updateBars() {
 }
 </script>
 <template>
-   <div class="article-info-container" :id="id">
-   <svg class="article-topic-barchart"></svg>
-
-
+   <div class="topic-barchart-container" :id="id">
+    <svg class="topic-barchart"></svg>
    </div> 
 </template>
 <style scoped>
-.article-info-container {
+.topic-barchart-container {
     height: 58%
 }
-.article-topic-barchart {
+.topic-barchart {
     height: 100%
 }
 </style>

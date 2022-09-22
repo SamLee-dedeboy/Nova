@@ -9,7 +9,6 @@ const props = defineProps({
     filter: Boolean,
     interactable: Boolean,
 })
-const emit = defineEmits(['outlet-hovered'])
 vue.onMounted(()=> {
     const len = Object.keys(props.color_dict!).length
     const param = {top: 3, bottom: 0, left: 2, vertical: 2}
@@ -17,7 +16,6 @@ vue.onMounted(()=> {
     const margin = {top: param.top*r, bottom: param.bottom*r, left: param.left*r, vertical: param.vertical*r}
     var svg = d3.select(`#${props.id}`)
     var index = 0
-    // svg.attr("height", margin.top + margin.bottom + len*2*r + (len-1)*margin.vertical + "px")
     for(const [title, color] of Object.entries(props.color_dict!)) {
         const circle = svg.append("circle")
             .attr("cx", margin.left)
@@ -37,23 +35,7 @@ vue.onMounted(()=> {
             .text(title)
             .attr("font-size", "small")
             .attr("dominant-baseline", "middle")
-        if(props.interactable) {
-            const rect = svg.append("rect")
-                .attr("x", margin.left - r)
-                .attr("y", margin.top - 2*r + index*(2*r + margin.vertical))
-                .attr("width", 180 )
-                .attr("height", 2*r+margin.vertical)
-                .style("fill", "none")
-                .style("cursor", "pointer")
-                .style("pointer-events", "all")
-                .on("mouseover", () => {
-                    emit("outlet-hovered", title)
-                })
-                .on("mouseout", () => {
-                    emit("outlet-hovered", undefined)
-                })
-                .raise()
-        }
+        // index is used for vertical offset calculation
         index += 1
     }
 })
