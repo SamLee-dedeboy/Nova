@@ -187,9 +187,7 @@ export class EntityScatter {
     }
 
     updateCategorization() :void {
-        let bind_data: ScatterNode[] = [];
-        if(this.props.view?.type === ViewType.EntityScatter) bind_data = this.filtered_data.value
-        if(this.props.view?.type === ViewType.OutletScatter) bind_data = this.props.view.data.nodes
+        let bind_data: ScatterNode[] = this.filtered_data.value
         // if(props.graph?.type === ViewType.CooccurrScatter) bind_data = props.graph.nodes
     
         const ctg_nodes = _.groupBy(bind_data, this.categorizeNode)
@@ -252,7 +250,7 @@ export class EntityScatter {
         d3.select(`#${this.props.id}`).select(".nodeinfo").style("opacity", 0);
         this.svg.append("g").attr("class", "node_group");
 
-        this.updateOverviewTooltipContent();
+        // this.updateOverviewTooltipContent();
         let segment_point = {x: this.xScale(this.props.segmentation?.pos || 0.5), y: this.yScale(this.props.segmentation?.neg || 0.5)}
         this.updateSegmentation(segment_point.x,segment_point.y)
     }
@@ -398,9 +396,9 @@ export class EntityScatter {
         }
         this.tooltip_content.value += "</ol>" +
         `&nbsp avg_sst: (${avg_pos_sst.toFixed(2)}, ${avg_neg_sst.toFixed(2)}) <br>` 
-        if(this.props.view?.type === ViewType.EntityScatter) {
-            this.tooltip_content.value += `&nbsp total_articles: ${this.total_articles.value} <br>`
-        }
+        // if(this.props.view?.type === ViewType.EntityScatter) {
+        //     this.tooltip_content.value += `&nbsp total_articles: ${this.total_articles.value} <br>`
+        // }
         // tooltip_content.value += `<svg id='${props.id}-wordcloud' class='tooltip_canvas' width='250px' height='100px'></svg>`
         
     }
@@ -412,10 +410,7 @@ export class EntityScatter {
         .domain([ this.min_articles.value, this.max_articles.value ])
         .range([ this.outlet_min_radius, this.outlet_max_radius ]);
     
-        let bind_data: ScatterNode[] = [];
-        if(this.props.view?.type === ViewType.EntityScatter) bind_data = this.filtered_data.value
-        if(this.props.view?.type === ViewType.OutletScatter) bind_data = this.props.view.data
-        if(this.props.view?.type === ViewType.CooccurrHex) bind_data = this.filtered_data.value
+        let bind_data: ScatterNode[] = this.filtered_data.value
     
         console.log(bind_data)
         const node_group = svg.select("g.node_group")
@@ -490,7 +485,7 @@ export class EntityScatter {
             .style("cursor", "pointer")
             .on("mousemove", (e, d) => {
                 let align_image_offset = 0
-                if(this.props.view?.type === ViewType.OutletScatter) align_image_offset = 50 - 15
+                // if(this.props.view?.type === ViewType.OutletScatter) align_image_offset = 50 - 15
                 d3.select(`#${this.props.id}`).select(".nodeinfo")
                     .style("left", e.offsetX + align_image_offset + 15 + "px")
                     .style("top", e.offsetY - 5 - align_image_offset + "px")
@@ -523,24 +518,24 @@ export class EntityScatter {
                 }
                 cvThis.clicked_node_element.value = this
                 cvThis.clicked_node.value = d as ScatterNode
-                emit("node_clicked", {title: cvThis.props.view?.title, type: ViewType.CooccurrHex, d: cvThis.clicked_node.value})
+                emit("node_clicked", {title: cvThis.props.view?.title, d: cvThis.clicked_node.value})
             })
     
         // add images if comparing across outlets
-        if(this.props.view?.type === ViewType.OutletScatter) {
-            const outlets = this.svg.selectAll("g.outlet")
-            const image_size = 100
-            outlets.selectAll("image.outlet_image")
-                .attr("href", (d: any) => `src/assets/${NodeUtils.abbr_dict[d.text.split("-")[1]]}.png`)
-                .attr("height", image_size)
-                .attr("width", image_size)
-                .attr("x", (d: any) => this.xScale(d.pos_sst)-image_size/2)
-                .attr("y", (d: any) => this.yScale(Math.abs(d.neg_sst))-image_size/2)
-                .attr("opacity", 0.3)
-                .attr("pointer-events", "none")
-                .lower()
-                .lower()
-        }
+        // if(this.props.view?.type === ViewType.OutletScatter) {
+        //     const outlets = this.svg.selectAll("g.outlet")
+        //     const image_size = 100
+        //     outlets.selectAll("image.outlet_image")
+        //         .attr("href", (d: any) => `src/assets/${NodeUtils.abbr_dict[d.text.split("-")[1]]}.png`)
+        //         .attr("height", image_size)
+        //         .attr("width", image_size)
+        //         .attr("x", (d: any) => this.xScale(d.pos_sst)-image_size/2)
+        //         .attr("y", (d: any) => this.yScale(Math.abs(d.neg_sst))-image_size/2)
+        //         .attr("opacity", 0.3)
+        //         .attr("pointer-events", "none")
+        //         .lower()
+        //         .lower()
+        // }
     }
 
     applyExpandStyle(container: any, cvThis) {
