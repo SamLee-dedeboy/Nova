@@ -27,9 +27,7 @@ import { ScatterNode, PanelView, ViewType, Sentiment2D, OutletNodeInfo } from '.
 import * as SstColors from "./utils/ColorUtils"
 import { onMounted, PropType, computed, Ref, ref, defineEmits, nextTick} from 'vue'
 import * as vue from 'vue'
-import * as NodeUtils from "./utils/NodeUtils"
 import NodeInfo from './NodeInfo.vue'
-import { filter } from 'd3-array'
 
 // initialization
 const props = defineProps({

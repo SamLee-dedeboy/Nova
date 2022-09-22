@@ -458,7 +458,6 @@ export class EntityScatter {
 
                 enter.append("g").attr("class", "outlet").append("image")
                     .attr("class", "outlet_image")
-                return enter;
             },
             update => {
                 update.select("circle.outlet_circle")
@@ -477,7 +476,6 @@ export class EntityScatter {
                 })
                 update.selectAll("circle.outlet_circle")
                 .attr("fill", (d: any) => SstColors.article_num_color_scale(d.article_ids.length/this.max_articles.value))
-                return update;
             }
         ) 
         const dots = svg.selectAll("g.outlet")
@@ -485,10 +483,10 @@ export class EntityScatter {
         if(this.current_zoom) {
             dots.attr("transform", this.current_zoom)
         }
-        if(this.props.view?.type === ViewType.EntityScatter) {
-            const highlight_circle = svg.selectAll("circle.outlet_circle").filter((d: any) => (this.props.highlight_nodes!.includes(d.text.split("-")[0])))
-            highlight_circle.attr("fill", "blue")
-        }
+        // if(this.props.view?.type === ViewType.EntityScatter) {
+        //     const highlight_circle = svg.selectAll("circle.outlet_circle").filter((d: any) => (this.props.highlight_nodes!.includes(d.text.split("-")[0])))
+        //     highlight_circle.attr("fill", "blue")
+        // }
     }
 
     updateExpandedScatter(emit:any) {
@@ -513,10 +511,10 @@ export class EntityScatter {
             .on("mouseover", function(e, d) {
                 const parentNode: any = (this as HTMLElement).parentNode
                 const container: any = d3.select(parentNode)
-                applyExpandStyle(container)
+                applyExpandStyle(container,cvThis)
     
                 // update tooltip
-                updateNodeInfo(d as ScatterNode)
+                updateNodeInfo(d as ScatterNode, cvThis)
                 d3.select(`#${cvThis.props.id}`).select(".nodeinfo")
                     .style("opacity", 1)
             })
@@ -526,7 +524,7 @@ export class EntityScatter {
                 if((d as ScatterNode).text === cvThis.clicked_node.value.text) return
                 const parentNode: any = (this as HTMLElement).parentNode
                 const container: any = d3.select(parentNode)
-                removeExpandedStyle(container)
+                removeExpandedStyle(container,cvThis)
     
             })
             .on("click", function (e, d) {
@@ -534,7 +532,7 @@ export class EntityScatter {
                 if(cvThis.clicked_node_element.value !== undefined) {
                     const parentNode: any = (cvThis.clicked_node_element.value as HTMLElement).parentNode
                     const container: any = d3.select(parentNode)
-                    removeExpandedStyle(container)
+                    removeExpandedStyle(container,cvThis)
                 }
                 cvThis.clicked_node_element.value = this
                 cvThis.clicked_node.value = d as ScatterNode
@@ -558,14 +556,14 @@ export class EntityScatter {
         }
     }
 
-    applyExpandStyle(container: any) {
+    applyExpandStyle(container: any, cvThis) {
         container.style("filter", "brightness(90%)")
         // apply hover effect
         container.selectAll("circle.expand_circle")
             .transition().duration(100)
             .attr("r", (d) => (parseFloat(container.select("circle.outlet_circle").attr("r"))*1.5 ))
         const target_node_text = container.data()[0].text
-        const other_nodes_container = d3.select(`#${this.props.id}`).selectAll("g.outlet").filter((d: any) => d.text != target_node_text)
+        const other_nodes_container = d3.select(`#${cvThis.props.id}`).selectAll("g.outlet").filter((d: any) => d.text != target_node_text)
         other_nodes_container.selectAll("image")
             .attr("opacity", 0)
         container.selectAll("image")
@@ -573,13 +571,14 @@ export class EntityScatter {
             .attr("opacity", 0.8)
     }
     
-    removeExpandedStyle(container: any) {
+    removeExpandedStyle(container: any, cvThis) {
+        console.log("THIS EXAPND", cvThis);
         container.style("filter", "brightness(100%)")
         container.selectAll("circle.expand_circle")
             .transition().duration(100)
             .attr("r", (d) => (parseFloat(container.select("circle.outlet_circle").attr("r"))))
         const target_node_text = container.data()[0].text
-        const other_nodes_container = d3.select(`#${this.props.id}`).selectAll("g.outlet").filter((d: any) => d.text != target_node_text)
+        const other_nodes_container = d3.select(`#${cvThis.props.id}`).selectAll("g.outlet").filter((d: any) => d.text != target_node_text)
         other_nodes_container.selectAll("image")
             .attr("opacity", 0.3)
         container.selectAll("image")
@@ -587,8 +586,8 @@ export class EntityScatter {
             .attr("opacity", 0.3)
     }
     
-    updateNodeInfo(node_data: ScatterNode) {
-        this.hovered_node_info.value = {
+    updateNodeInfo(node_data: ScatterNode, cvThis) {
+        cvThis.hovered_node_info.value = {
             text: node_data.text,
             pos_articles: node_data.pos_article_ids.length,
             neg_articles: node_data.neg_article_ids.length,

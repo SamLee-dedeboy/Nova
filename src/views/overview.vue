@@ -395,8 +395,14 @@ async function handleHexClicked({target, co_occurr_entity}: {target: string, co_
 
 function handleUpdateWeightEnded() {
   overall_co_hexview.value.updateHexColor(overall_entity_dict.value)
+}
+
+function updateSegmentation(){
 
 }
+
+
+
 </script>
 
 
@@ -412,19 +418,18 @@ function handleUpdateWeightEnded() {
             font-size: 3rem;
             z-index: 1000
             "></i> 
-        <entitySelection
+        <EntitySelection
             v-if="overall_scatter_view"
             :view="overall_scatter_view"
-            :id="`overview-scatter-${index}`"
+            id="overview-scatter"
             :article_num_threshold="article_num_threshold"
             :segment_mode="segment_mode"
-            :segmentation="segmentation"
-            :highlight_nodes="highlightNodes"
+            :segmentation="segment_sst"
             :expanded="true"
             @update:segmentation="updateSegmentation"
             @node_clicked="handleEntityClicked"
             @update-weight-ended="$emit('update-weight-ended')"
-        ></entitySelection>
+        ></EntitySelection>
     </div>
     <div class="overview-hex-container"  v-if="overview_constructed">
             <!-- load icon -->
@@ -523,7 +528,7 @@ function handleUpdateWeightEnded() {
 * {
   --margin_left: 10px;
 }
-overview-scatter-container {
+.overview-scatter-container {
     width: 800px;
     height: 800px;
 }
