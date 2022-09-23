@@ -13,7 +13,7 @@ const store = createStore({
     return {
       selected_entity: undefined,
       selected_cooccurr_entity: undefined,
-      outlet_weight_dict: undefined,
+      outlet_weight_dict: {"CNN": 1, "Washington Post": 1, "Fox News": 1, "New York Times": 1, "Breitbart": 1, "ABC News": 1},
       segmentation: {pos: 0.5, neg: 0.5},
     }
   },

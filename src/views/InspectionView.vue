@@ -5,6 +5,8 @@
 import Splitter from 'primevue/splitter';
 import SplitterPanel from "primevue/splitterpanel"
 import Divider from 'primevue/divider'
+import SelectButton from "primevue/selectbutton"
+import Slider from "primevue/slider"
 
 /**
  * libraries
@@ -35,6 +37,7 @@ const selected_entity = vue.computed(() => store.state.selected_entity)
 const selected_cooccurr_entity = vue.computed(() => store.state.selected_cooccurr_entity)
 const segmentation = vue.computed(() => store.state.segmentation)
 const setSegmentation = (segmentation) => store.commit("setSegmentation", segmentation) 
+const outlet_weight_dict = vue.computed(() => store.state.outlet_weight_dict)
 
 const target_articles: Ref<Article[]> = ref([])
 vue.onMounted(() => {
@@ -67,6 +70,7 @@ vue.watch(selectedCategory, (new_value, old_value) => {
 })
 
 async function fetch_articles(article_ids) {
+    console.log("🚀 ~ file: InspectionView.vue ~ line 71 ~ fetch_articles ~ article_ids", article_ids)
     await fetch(`${server_address}/processed_data/ids_to_articles`,{
       method: "POST",
       headers: {
@@ -81,6 +85,7 @@ async function fetch_articles(article_ids) {
         console.log("articles fetched")
         data_fetched.value = true
       })
+      console.log(outlet_weight_dict.value[selected_entity.value.outlet])
 
 }
 </script>
@@ -105,30 +110,41 @@ async function fetch_articles(article_ids) {
         <SplitterPanel id="entity_info_section" class="entity-info-section flex align-items-center justify-content-center" :size="right_section_size" >
             <div class="entity-info-container">
                 <div class="target-cooccurr-container">
-                <EntityInfoView
-                    v-if="selected_entity"
-                    title="Target Entity"
-                    :entity_info="selected_entity">
-                </EntityInfoView>
-                <Divider v-if="selected_cooccurr_entity" layout="vertical"></Divider>
-                <EntityInfoView
-                    v-if="selected_cooccurr_entity"
-                    title="Co-occurr Entity"
-                    :entity_info="selected_cooccurr_entity" >
-                </EntityInfoView>
+                    <EntityInfoView
+                        v-if="selected_entity"
+                        title="Target Entity"
+                        :entity_info="selected_entity">
+                    </EntityInfoView>
+                    <!-- <Divider v-if="selected_cooccurr_entity" layout="vertical"></Divider> -->
+                    <EntityInfoView
+                        v-if="selected_cooccurr_entity"
+                        title="Co-occurr Entity"
+                        :entity_info="selected_cooccurr_entity" >
+                    </EntityInfoView>
+                    <!-- <Divider v-if="selected_cooccurr_entity" layout="vertical"></Divider> -->
+                    <div class="journal-info-container" style="font-size:small">
+                        <div> Journal </div>
+                        <div> {{selected_entity.outlet}} </div>
+                    </div>
                 </div>
             </div>
             <div class="outlet-weight-container">
-
+                <span class="slider-label" style="font-size:small">{{selected_entity.outlet}}</span>
+                <Slider 
+                    :modelValue="outlet_weight_dict[selected_entity.outlet]"
+                    :step="0.01"
+                    :min="0"
+                    :max="1">
+                </Slider> 
             </div>
             <div class="select-category-container">
+                <span> How would you describe the coverage of {{selected_entity.outlet}} on {{selected_entity.name}}? </span>
                 <SelectButton
                     v-model="selectedCategory"
                     :options="sentiment_options"
                     option-label="value"
                     data-key="type" >
                 </SelectButton>
-
             </div>
 
         </SplitterPanel>
@@ -146,6 +162,28 @@ async function fetch_articles(article_ids) {
 }
 .target-cooccurr-container {
   display: flex;
+  justify-content: space-between;
+  padding-left: 10px;
+  padding-right: 10px;
 }
+.entity-info-view-container {
+  display: flex;
+  flex-direction: column;
+  align-content: center;
+  width: 100%;
+  justify-content: center;
+}
+.outlet-weight-container {
+  display: flex;
+  align-items: center;
+}
+:deep(.p-slider.p-component.p-slider-horizontal) {
+  width: 50%;
+  margin-left: 15px;
+}
+.journal-info-container {
+  white-space: nowrap;
+}
+
 
 </style>

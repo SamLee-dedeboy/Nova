@@ -38,6 +38,8 @@ const setEntity = (entity) => store.commit("setEntity", entity)
 const selected_cooccurr_entity = vue.computed(() => store.state.selected_cooccurr_entity)
 const setCooccurrEntity = (cooccurr_entity) => store.commit("setCooccurrEntity", cooccurr_entity) 
 
+const outlet_weight_dict = vue.computed(() => store.state.outlet_weight_dict)
+
 /**
  * left & right section width (percentage)
  */
@@ -103,7 +105,9 @@ async function handleHexClicked({target, co_occurr_entity}: {target: string, co_
                 articles_topic_dict: json.cooccurr_articles_topic_dict,
                 cooccurr_article_ids: json.cooccurr_article_ids
             }
+            console.log("🚀 ~ file: CompareView.vue ~ line 105 ~ handleHexClicked ~ json", json)
             setCooccurrEntity(cooccurr_entity)
+
         })
 }
 </script>

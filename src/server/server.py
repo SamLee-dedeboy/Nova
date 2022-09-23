@@ -146,7 +146,8 @@ def get_cooccurr_info_grouped(outlet, target, co_occurr_entity):
             "target_articles_topic_dict": target_articles_topic_dict,
             "cooccurr_entity": co_occurr_entity,
             "cooccurr_num": len(cooccurr_articles),
-            "cooccurr_articles_topic_dict": cooccurr_articles_topic_dict
+            "cooccurr_articles_topic_dict": cooccurr_articles_topic_dict,
+            "cooccurr_article_ids": cooccurr_article_ids,
         }
         return json.dumps(response)
 
