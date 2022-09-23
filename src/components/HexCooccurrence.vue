@@ -43,17 +43,29 @@ const max_height = viewBox_width/hex_width*hex_height
 const sorted_cooccurrence_list = vue.computed(() => {
     const raw_data = props.entity_cooccurrences?.sorted_cooccurrences_list!
     const hex_entity: HexEntity = props.entity_cooccurrences?.target! 
-    let res: any[] = [{entity: hex_entity.entity, sst: hex_entity.sst, x:0,y:0, index:0, exists:true}]
+    // let res: any[] = [{entity: hex_entity.entity, sst: hex_entity.sst, x:0,y:0, index:0, exists:true}]
+    let res:any[] = []
     raw_data.forEach((hex_entity, index) => {
-        const {x, y} = generate_hex_coord(index, hex_radius) 
-        res.push({
-            entity: hex_entity.entity,
-            x: x,
-            y: y,
-            sst: hex_entity.sst,
-            exists: hex_entity.article_ids.length !== 0,
-            index:index+1,
-        })
+        if(index === 0) {
+           res.push({
+               entity: hex_entity.entity,
+               x: 0,
+               y: 0,
+               sst: hex_entity.sst,
+               exists: true,
+               index: index
+           }) 
+        } else {
+            const {x, y} = generate_hex_coord(index-1, hex_radius) 
+            res.push({
+                entity: hex_entity.entity,
+                x: x,
+                y: y,
+                sst: hex_entity.sst,
+                exists: hex_entity.article_ids.length !== 0,
+                index:index,
+            })
+        }
     })
     return res
 })
@@ -96,6 +108,7 @@ function updateHexBins() {
 
     // prepare data
     const inputForHexbin: any[] = []
+    console.log(sorted_cooccurrence_list.value)
     sorted_cooccurrence_list.value.forEach((d: any) => {
         inputForHexbin.push( [x(d.x), y(d.y)] )  
     })
