@@ -66,7 +66,7 @@ vue.onMounted(async () => {
             data_list.forEach(hex_data => {
                 const hex_view: typeUtils.CooccurrHexView = {
                     title: `co-${hex_data.entity}-${hex_data.outlet}`,
-                    data: hex_data
+                    data: hex_data.cooccurrences_data
                 }
                 hexview_grid.value.push(hex_view)
             })

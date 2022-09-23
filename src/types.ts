@@ -13,7 +13,7 @@ export class EntityScatterView {
 }
 
 export class EntityCooccurrences {
-    entity: string
+    target: HexEntity
     sorted_cooccurrences_list: HexEntity[]
 }
 export class HexEntity {

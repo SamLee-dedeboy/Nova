@@ -62,7 +62,7 @@ def get_grouped_hexview(title):
     for outlet, cooccurrences_dict in raw_data.entity_cooccurrences_grouped.items():
         cooccurrences = cooccurrences_dict[title]
         hex_data = hexview_data.constructHexData(title, cooccurrences, grouped_node_dict[outlet])
-        res.append({"entity": title, "outlet": outlet, "sorted_cooccurrences_list": hex_data.sorted_cooccurrences_list})
+        res.append({"entity": title, "outlet": outlet, "cooccurrences_data": hex_data})
         entities = list(map(lambda hex_entity: hex_entity.entity, hex_data.sorted_cooccurrences_list))
         merged_entities = list(set(merged_entities + entities))
         # sort by freq in overall scatter
@@ -71,23 +71,22 @@ def get_grouped_hexview(title):
         blanked_list = []
         for entity in merged_entities:
             # entities = list(map(lambda hex_entity: hex_entity.entity, hex_data['sorted_cooccurrences_list']))
-            target = (i for i, e in enumerate(hex_data['sorted_cooccurrences_list']) if e.entity == entity)
+            target = (i for i, e in enumerate(hex_data['cooccurrences_data'].sorted_cooccurrences_list) if e.entity == entity)
             index = next(target, None)
             if index != None:
-                blanked_list.append(hex_data['sorted_cooccurrences_list'][index])
+                blanked_list.append(hex_data['cooccurrences_data'].sorted_cooccurrences_list[index])
             else:
                 blanked_list.append(HexEntity(
                     entity=entity,
                     article_ids=[],
-                    sst=Sentiment2D(0,0),
-                    mask=False)
-                )
+                    sst=Sentiment2D(0,0)
+                ))
 
         # blanked_list = [None for i in range(len(merged_entities))]
         # for hex_entity in hex_data['sorted_cooccurrences_list']:
         #     index = merged_entities.index(hex_entity.entity)
         #     blanked_list[index] = hex_entity
-        hex_data['sorted_cooccurrences_list'] = blanked_list[0:36]
+        hex_data['cooccurrences_data'].sorted_cooccurrences_list = blanked_list[0:36]
 
     return json.dumps(res, default=vars)
 
