@@ -1,11 +1,32 @@
 <script setup lang="ts">
+/**
+ * primevue components
+ */
+import Splitter from 'primevue/splitter';
+import SplitterPanel from "primevue/splitterpanel"
+import Divider from 'primevue/divider'
+import SelectButton from "primevue/selectbutton"
+import Slider from "primevue/slider"
+
+/**
+ * libraries
+ */
 import * as vue from "vue"
 import {Ref, ref} from 'vue'
 import { useStore } from 'vuex'
-import Splitter from 'primevue/splitter';
-import SplitterPanel from "primevue/splitterpanel"
+import * as d3 from 'd3'
+
+/**
+ * types
+ */
+import { Article, SentimentType, Sentiment2D, Constraint } from "../types"
+
+/**
+ * vue components
+ */
 import ArticleView from "../components/ArticleView.vue";
-import { Article } from "../types"
+import EntityInfoView from "../components/EntityInfoView.vue";
+import HexCooccurrence from "../components/HexCooccurrence.vue"
 
 const store = useStore()
 
@@ -17,14 +38,62 @@ const data_fetched: Ref<boolean> = ref(false)
 const selected_entity = vue.computed(() => store.state.selected_entity)
 const selected_cooccurr_entity = vue.computed(() => store.state.selected_cooccurr_entity)
 const segmentation = vue.computed(() => store.state.segmentation)
+const setSegmentation = (segmentation) => store.commit("setSegmentation", segmentation) 
+const outlet_weight_dict = vue.computed(() => store.state.outlet_weight_dict)
+const clicked_hexview = vue.computed(() => store.state.clicked_hexview)
+const constraint_dict = vue.computed(() => store.state.constraints)
+const addConstraint = (constraint: Constraint) => store.commit("addConstraint", constraint)
+const removeConstraint = (constraint_target: string) => store.commit("removeConstraint", constraint_target)
 
 const target_articles: Ref<Article[]> = ref([])
 vue.onMounted(() => {
     const article_ids = selected_cooccurr_entity.value.cooccurr_article_ids
     fetch_articles(article_ids)
 })
+
+const sentiment_options = [
+    {type: SentimentType.neu, value: "neu"}, 
+    {type: SentimentType.neg, value: "neg"}, 
+    {type: SentimentType.pos, value: "pos"}, 
+    {type: SentimentType.mix, value: "mix"}, 
+]
+const intensity: Ref<number> = ref(0.5)
+const selectedCategory: Ref<any> = ref({})
+vue.watch(selectedCategory, (new_value, old_value) => {
+    const adjust_target: Sentiment2D = selected_entity.value.sst_ratio || {pos: 0.5, neg: 0.5}
+    // const offset = 0.05
+    const offset = d3.scaleLinear()
+        .domain([0, 1])
+        .range([0.05, Math.min(adjust_target.pos, adjust_target.neg)])
+        (intensity.value)
+    if(new_value.type === SentimentType.neu) {
+        setSegmentation({pos: adjust_target.pos + offset, neg: adjust_target.neg + offset})
+    }
+    if(new_value.type === SentimentType.neg) {
+        setSegmentation({pos: adjust_target.pos + offset, neg: adjust_target.neg - offset})
+    }
+    if(new_value.type === SentimentType.pos) {
+        setSegmentation({pos: adjust_target.pos - offset, neg: adjust_target.neg + offset})
+    }
+    if(new_value.type === SentimentType.mix) {
+        setSegmentation({pos: adjust_target.pos - offset, neg: adjust_target.neg - offset})
+    }
+    console.log(segmentation.value)
+    const new_constraint: Constraint = {
+        target: selected_entity.value.name,
+        outlet: selected_entity.value.outlet,
+        sentiment: new_value.type,
+    }
+    addConstraint(new_constraint)
+    checkConflict(constraint_dict.value)
+})
+
+function checkConflict(constraint_dict) {
+    // TODO: check if constraints conflict with each other
+    return
+}
+
 async function fetch_articles(article_ids) {
-    console.log("🚀 ~ file: InspectionView.vue ~ line 27 ~ fetch_articles ~ article_ids", article_ids)
     await fetch(`${server_address}/processed_data/ids_to_articles`,{
       method: "POST",
       headers: {
@@ -33,12 +102,12 @@ async function fetch_articles(article_ids) {
       },
       body: JSON.stringify(article_ids)
     })
-      .then(res => res.json())
-      .then(json => {
+    .then(res => res.json())
+    .then(json => {
         target_articles.value = json
         console.log("articles fetched")
         data_fetched.value = true
-      })
+    })
 
 }
 </script>
@@ -63,26 +132,70 @@ async function fetch_articles(article_ids) {
         <SplitterPanel id="entity_info_section" class="entity-info-section flex align-items-center justify-content-center" :size="right_section_size" >
             <div class="entity-info-container">
                 <div class="target-cooccurr-container">
-                <EntityInfoView
-                    v-if="selected_entity"
-                    title="Target Entity"
-                    :entity_info="selected_entity"
-                    v-model:segmentation="segmentation"
-                >
-                </EntityInfoView>
-                <Divider v-if="selected_cooccurr_entity" layout="vertical"></Divider>
-                <EntityInfoView
-                    v-if="selected_cooccurr_entity"
-                    title="Co-occurr Entity"
-                    :entity_info="selected_cooccurr_entity"
-                >
-                </EntityInfoView>
+                    <EntityInfoView
+                        v-if="selected_entity"
+                        title="Target Entity"
+                        :entity_info="selected_entity">
+                    </EntityInfoView>
+                    <!-- <Divider v-if="selected_cooccurr_entity" layout="vertical"></Divider> -->
+                    <EntityInfoView
+                        v-if="selected_cooccurr_entity"
+                        title="Co-occurr Entity"
+                        :entity_info="selected_cooccurr_entity" >
+                    </EntityInfoView>
+                    <!-- <Divider v-if="selected_cooccurr_entity" layout="vertical"></Divider> -->
+                    <div class="journal-info-container" style="font-size:small">
+                        <div> Journal </div>
+                        <div> {{selected_entity.outlet}} </div>
+                    </div>
                 </div>
             </div>
             <div class="outlet-weight-container">
-
+                <span class="slider-label" style="font-size:small">{{selected_entity.outlet}}</span>
+                <Slider 
+                    :modelValue="outlet_weight_dict[selected_entity.outlet]"
+                    :step="0.01"
+                    :min="0"
+                    :max="1">
+                </Slider> 
             </div>
-
+            <div class="select-category-container">
+                <span> How would you describe the coverage of {{selected_entity.outlet}} on {{selected_entity.name}}? </span>
+                <div class="selection-container">
+                    <SelectButton
+                        v-model="selectedCategory"
+                        :options="sentiment_options"
+                        option-label="value"
+                        data-key="type" >
+                    </SelectButton>
+                    <Slider
+                        v-model="intensity"
+                        :step="0.01"
+                        :min="0"
+                        :max="1" >
+                    </Slider>
+                </div>
+            </div>
+            <div class="hexview-container"> 
+                <HexCooccurrence
+                  v-if="data_fetched"
+                    class="compare-co-hexview"
+                    :title="clicked_hexview.title"
+                    :id="`compare-co-hex-inpection`"
+                    :entity_cooccurrences="clicked_hexview.data"
+                    :segmentation="segmentation">
+                </HexCooccurrence>
+            </div>
+            <div class="constraints-view">
+                <ol>
+                    <li v-for="outlet in Object.keys(constraint_dict[selected_entity.name])"> 
+                        {{outlet}} - {{constraint_dict[selected_entity.name][outlet]}}
+                    </li>
+                </ol> 
+            </div>
+            <div class='navigation-container'>
+                <router-link v-if="data_fetched" :to="{ name: 'compare', params: { entity: selected_entity.name }}">Back</router-link>
+            </div>
         </SplitterPanel>
     </Splitter>
 
@@ -92,6 +205,38 @@ async function fetch_articles(article_ids) {
   width: 97vw;
   height: 95vh;
   display: flex;
+}
+:deep(.p-divider.p-divider-vertical::before) {
+  border-left: 1px solid #dee2e6 !important;
+}
+.target-cooccurr-container {
+  display: flex;
+  justify-content: space-between;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+.entity-info-view-container {
+  display: flex;
+  flex-direction: column;
+  align-content: center;
+  width: 100%;
+  justify-content: center;
+}
+.outlet-weight-container {
+  display: flex;
+  align-items: center;
+}
+:deep(.p-slider.p-component.p-slider-horizontal) {
+  width: 50%;
+  margin-left: 15px;
+}
+.journal-info-container {
+  white-space: nowrap;
+}
+
+.selection-container {
+    display: flex;
+    align-items: center;
 }
 
 </style>

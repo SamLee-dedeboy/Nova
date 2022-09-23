@@ -89,7 +89,10 @@ export class EntityScatter {
             .domain([0, 1])
             .range([this.margin.top + this.vbHeight, this.margin.top]);
         
-        this.zoom = d3.zoom().scaleExtent([1, 3]).on("zoom", this.handleZoom)
+        var self = this
+        this.zoom = d3.zoom().scaleExtent([1, 3]).on("zoom", function(e) {
+            self.handleZoom(e, self.svg)
+        })
     }
 
     draw(emit) : void {
@@ -218,8 +221,8 @@ export class EntityScatter {
     }
 
 
-    handleZoom(e) {
-        const svg = d3.select(`#${this.props.id}`).select("svg")
+    handleZoom(e, svg) {
+        // const svg = d3.select(`#${props.id}`).select("svg")
         const outlet_group = svg.selectAll("g.outlet")
             .attr("transform", e.transform)
         

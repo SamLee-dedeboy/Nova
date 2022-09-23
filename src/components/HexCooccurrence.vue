@@ -28,7 +28,6 @@ const props = defineProps({
 })
 const emit = defineEmits(["hex-clicked"])
 
-const isOverall = vue.computed(() => props.title?.split("-").length === 2)
 // const viewBox = [1000, 1000/(2*Math.sin(Math.PI/3))*3]
 const viewBox = [640, 580]
 const margin = {top: 0, bottom: 0, right:0, left: 0} 
@@ -43,8 +42,9 @@ const max_height = viewBox_width/hex_width*hex_height
 
 const sorted_cooccurrence_list = vue.computed(() => {
     const raw_data = props.entity_cooccurrences?.sorted_cooccurrences_list!
-    const entity: string = props.entity_cooccurrences?.entity!
-    let res: any[] = [{entity: entity, sst: undefined, x:0,y:0, index:0, exists:true}]
+    const center_hex_entity: HexEntity = props.entity_cooccurrences?.target! 
+    let res: any[] = [{entity: center_hex_entity.entity, sst: center_hex_entity.sst, x:0,y:0, index:0, exists:true}]
+    // let res:any[] = []
     raw_data.forEach((hex_entity, index) => {
         const {x, y} = generate_hex_coord(index, hex_radius) 
         res.push({
@@ -97,6 +97,7 @@ function updateHexBins() {
 
     // prepare data
     const inputForHexbin: any[] = []
+    console.log(sorted_cooccurrence_list.value)
     sorted_cooccurrence_list.value.forEach((d: any) => {
         inputForHexbin.push( [x(d.x), y(d.y)] )  
     })

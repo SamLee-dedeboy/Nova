@@ -23,11 +23,6 @@ class EntityScatterData:
 #     mentions_groupby_outlet_dict: dict
 
 @dataclass
-class EntityCooccurrences:
-    entity: str
-    sorted_cooccurrences_list: list
-
-@dataclass
 class Sentiment2D:
     pos: float
     neg: float
@@ -37,7 +32,13 @@ class HexEntity:
     entity: str
     article_ids: list
     sst: Sentiment2D
-    mask: bool
+
+@dataclass
+class EntityCooccurrences:
+    target: HexEntity
+    sorted_cooccurrences_list: list
+
+
 @dataclass
 class SentimentScatterMetaData:
     max_articles: int

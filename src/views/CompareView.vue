@@ -37,6 +37,10 @@ const selected_entity = vue.computed(() => store.state.selected_entity)
 const setEntity = (entity) => store.commit("setEntity", entity) 
 const selected_cooccurr_entity = vue.computed(() => store.state.selected_cooccurr_entity)
 const setCooccurrEntity = (cooccurr_entity) => store.commit("setCooccurrEntity", cooccurr_entity) 
+const clicked_hexview = vue.computed(() => store.state.clicked_hexview)
+const setClickedHexView = (hexview) => store.commit("setClickedHexView", hexview)
+
+const outlet_weight_dict = vue.computed(() => store.state.outlet_weight_dict)
 
 /**
  * left & right section width (percentage)
@@ -66,7 +70,7 @@ vue.onMounted(async () => {
             data_list.forEach(hex_data => {
                 const hex_view: typeUtils.CooccurrHexView = {
                     title: `co-${hex_data.entity}-${hex_data.outlet}`,
-                    data: hex_data
+                    data: hex_data.cooccurrences_data
                 }
                 hexview_grid.value.push(hex_view)
             })
@@ -80,9 +84,11 @@ vue.onMounted(async () => {
         })
 })
 
-async function handleHexClicked({target, co_occurr_entity}: {target: string, co_occurr_entity: string}) {
+async function handleHexClicked({target, co_occurr_entity}, view) {
     const entity = target.split("-")[0]
     const outlet = target.split("-")[1] 
+    console.log(view)
+    setClickedHexView(view)
     await fetch(`${server_address}/processed_data/cooccurr_info/grouped/${outlet}/${entity}/${co_occurr_entity}`)
         .then(res => res.json())
         .then(json => {
@@ -92,6 +98,7 @@ async function handleHexClicked({target, co_occurr_entity}: {target: string, co_
                 outlet: outlet,
                 num_of_mentions: json.target_num,
                 articles_topic_dict: json.target_articles_topic_dict, 
+                sst_ratio: view.data.target.sst
             }
             setEntity(target_entity)
             const cooccurr_entity = {
@@ -104,6 +111,7 @@ async function handleHexClicked({target, co_occurr_entity}: {target: string, co_
                 cooccurr_article_ids: json.cooccurr_article_ids
             }
             setCooccurrEntity(cooccurr_entity)
+
         })
 }
 </script>
@@ -119,7 +127,7 @@ async function handleHexClicked({target, co_occurr_entity}: {target: string, co_
                     :id="`compare-co-hex-${index}`"
                     :entity_cooccurrences="view.data"
                     :segmentation="segmentation"
-                    v-on:hex-clicked="handleHexClicked">
+                    v-on:hex-clicked="handleHexClicked($event, view)">
                 </HexCooccurrence>
             </div>
         </SplitterPanel>    
@@ -129,16 +137,13 @@ async function handleHexClicked({target, co_occurr_entity}: {target: string, co_
                 <EntityInfoView
                     v-if="selected_entity"
                     title="Target Entity"
-                    :entity_info="selected_entity"
-                    v-model:segmentation="segmentation"
-                >
+                    :entity_info="selected_entity">
                 </EntityInfoView>
                 <Divider v-if="selected_cooccurr_entity" layout="vertical"></Divider>
                 <EntityInfoView
                     v-if="selected_cooccurr_entity"
                     title="Co-occurr Entity"
-                    :entity_info="selected_cooccurr_entity"
-                >
+                    :entity_info="selected_cooccurr_entity">
                 </EntityInfoView>
                 </div>
                 <div class="topic-bar-container">
