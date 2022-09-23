@@ -37,6 +37,8 @@ const selected_entity = vue.computed(() => store.state.selected_entity)
 const setEntity = (entity) => store.commit("setEntity", entity) 
 const selected_cooccurr_entity = vue.computed(() => store.state.selected_cooccurr_entity)
 const setCooccurrEntity = (cooccurr_entity) => store.commit("setCooccurrEntity", cooccurr_entity) 
+const clicked_hexview = vue.computed(() => store.state.clicked_hexview)
+const setClickedHexView = (hexview) => store.commit("setClickedHexView", hexview)
 
 const outlet_weight_dict = vue.computed(() => store.state.outlet_weight_dict)
 
@@ -82,9 +84,11 @@ vue.onMounted(async () => {
         })
 })
 
-async function handleHexClicked({target, co_occurr_entity}: {target: string, co_occurr_entity: string}) {
+async function handleHexClicked({target, co_occurr_entity}, view) {
     const entity = target.split("-")[0]
     const outlet = target.split("-")[1] 
+    console.log(view)
+    setClickedHexView(view)
     await fetch(`${server_address}/processed_data/cooccurr_info/grouped/${outlet}/${entity}/${co_occurr_entity}`)
         .then(res => res.json())
         .then(json => {
@@ -94,6 +98,7 @@ async function handleHexClicked({target, co_occurr_entity}: {target: string, co_
                 outlet: outlet,
                 num_of_mentions: json.target_num,
                 articles_topic_dict: json.target_articles_topic_dict, 
+                sst_ratio: view.data.target.sst
             }
             setEntity(target_entity)
             const cooccurr_entity = {
@@ -105,7 +110,6 @@ async function handleHexClicked({target, co_occurr_entity}: {target: string, co_
                 articles_topic_dict: json.cooccurr_articles_topic_dict,
                 cooccurr_article_ids: json.cooccurr_article_ids
             }
-            console.log("🚀 ~ file: CompareView.vue ~ line 105 ~ handleHexClicked ~ json", json)
             setCooccurrEntity(cooccurr_entity)
 
         })
@@ -123,7 +127,7 @@ async function handleHexClicked({target, co_occurr_entity}: {target: string, co_
                     :id="`compare-co-hex-${index}`"
                     :entity_cooccurrences="view.data"
                     :segmentation="segmentation"
-                    v-on:hex-clicked="handleHexClicked">
+                    v-on:hex-clicked="handleHexClicked($event, view)">
                 </HexCooccurrence>
             </div>
         </SplitterPanel>    

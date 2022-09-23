@@ -25,6 +25,7 @@ import { Article, SentimentType, Sentiment2D } from "../types"
  */
 import ArticleView from "../components/ArticleView.vue";
 import EntityInfoView from "../components/EntityInfoView.vue";
+import HexCooccurrence from "../components/HexCooccurrence.vue"
 
 const store = useStore()
 
@@ -38,6 +39,7 @@ const selected_cooccurr_entity = vue.computed(() => store.state.selected_cooccur
 const segmentation = vue.computed(() => store.state.segmentation)
 const setSegmentation = (segmentation) => store.commit("setSegmentation", segmentation) 
 const outlet_weight_dict = vue.computed(() => store.state.outlet_weight_dict)
+const clicked_hexview = vue.computed(() => store.state.clicked_hexview)
 
 const target_articles: Ref<Article[]> = ref([])
 vue.onMounted(() => {
@@ -67,10 +69,10 @@ vue.watch(selectedCategory, (new_value, old_value) => {
     if(new_value.type === SentimentType.mix) {
         setSegmentation({pos: adjust_target.pos - offset, neg: adjust_target.neg - offset})
     }
+    console.log(segmentation.value, selected_entity.value.sst_ratio)
 })
 
 async function fetch_articles(article_ids) {
-    console.log("🚀 ~ file: InspectionView.vue ~ line 71 ~ fetch_articles ~ article_ids", article_ids)
     await fetch(`${server_address}/processed_data/ids_to_articles`,{
       method: "POST",
       headers: {
@@ -85,7 +87,6 @@ async function fetch_articles(article_ids) {
         console.log("articles fetched")
         data_fetched.value = true
       })
-      console.log(outlet_weight_dict.value[selected_entity.value.outlet])
 
 }
 </script>
@@ -145,6 +146,16 @@ async function fetch_articles(article_ids) {
                     option-label="value"
                     data-key="type" >
                 </SelectButton>
+            </div>
+            <div class="hexview-container"> 
+                <HexCooccurrence
+                  v-if="data_fetched"
+                    class="compare-co-hexview"
+                    :title="clicked_hexview.title"
+                    :id="`compare-co-hex-inpection`"
+                    :entity_cooccurrences="clicked_hexview.data"
+                    :segmentation="segmentation">
+                </HexCooccurrence>
             </div>
 
         </SplitterPanel>
