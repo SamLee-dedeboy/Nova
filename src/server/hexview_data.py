@@ -1,13 +1,14 @@
 import scatter_data
 import sentiment_processor
 from data_types import *
-def constructHexData(target_entity, cooccurrences, entity_data_dict, top_k=36):
+def constructHexData(target_entity, cooccurrences, entity_data_dict, top_k=37):
     hex_data = EntityCooccurrences(target=None, sorted_cooccurrences_list=[])
     target_cooccurrences = []
     for entity2, cooccurr_ids in cooccurrences.items():
         if entity2 == target_entity: 
             sst = Sentiment2D(entity_data_dict[entity2].pos_sst, entity_data_dict[entity2].neg_sst)
             hex_data.target = HexEntity( entity=entity2, article_ids=cooccurr_ids, sst=sst)
+            continue
 
         sst = Sentiment2D(entity_data_dict[entity2].pos_sst, entity_data_dict[entity2].neg_sst)
         target_cooccurrences.append(HexEntity(
