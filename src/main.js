@@ -13,8 +13,9 @@ const store = createStore({
     return {
       selected_entity: undefined,
       selected_cooccurr_entity: undefined,
-      outlet_weight_dict: {"CNN": 1, "Washington Post": 1, "Fox News": 1, "New York Times": 1, "Breitbart": 1, "ABC News": 1},
+      outlet_weight_dict: {"CNN": 1, "Washington Post": 1, "FoxNews": 1, "New York Times": 1, "Breitbart": 1, "ABC News": 1},
       segmentation: {pos: 0.5, neg: 0.5},
+      clicked_hexview: undefined,
     }
   },
   mutations: {
@@ -32,7 +33,11 @@ const store = createStore({
     },
     setSegmentation(state, segmentation) {
       state.segmentation = segmentation
+    },
+    setClickedHexView(state, hexview) {
+      state.clicked_hexview = hexview
     }
+
   }
 })
 
