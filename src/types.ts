@@ -1,3 +1,8 @@
+export class Constraint {
+    target: string
+    outlet: string
+    sentiment: SentimentType
+}
 export class CooccurrHexView {
     title: string
     data: EntityCooccurrences
@@ -90,11 +95,11 @@ export class Sentiment2D {
 }
 
 export enum SentimentType {
-    neu,
-    pos,
-    neg,
-    mix,
-    unknown,
+    neu = "neurtral",
+    pos = "positive",
+    neg = "negative",
+    mix = "mixed",
+    unknown = "unknown",
 }
 export class Sentiment {
     label: string

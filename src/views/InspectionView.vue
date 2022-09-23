@@ -14,11 +14,12 @@ import Slider from "primevue/slider"
 import * as vue from "vue"
 import {Ref, ref} from 'vue'
 import { useStore } from 'vuex'
+import * as d3 from 'd3'
 
 /**
  * types
  */
-import { Article, SentimentType, Sentiment2D } from "../types"
+import { Article, SentimentType, Sentiment2D, Constraint } from "../types"
 
 /**
  * vue components
@@ -40,6 +41,9 @@ const segmentation = vue.computed(() => store.state.segmentation)
 const setSegmentation = (segmentation) => store.commit("setSegmentation", segmentation) 
 const outlet_weight_dict = vue.computed(() => store.state.outlet_weight_dict)
 const clicked_hexview = vue.computed(() => store.state.clicked_hexview)
+const constraint_dict = vue.computed(() => store.state.constraints)
+const addConstraint = (constraint: Constraint) => store.commit("addConstraint", constraint)
+const removeConstraint = (constraint_target: string) => store.commit("removeConstraint", constraint_target)
 
 const target_articles: Ref<Article[]> = ref([])
 vue.onMounted(() => {
@@ -53,10 +57,15 @@ const sentiment_options = [
     {type: SentimentType.pos, value: "pos"}, 
     {type: SentimentType.mix, value: "mix"}, 
 ]
+const intensity: Ref<number> = ref(0.5)
 const selectedCategory: Ref<any> = ref({})
 vue.watch(selectedCategory, (new_value, old_value) => {
     const adjust_target: Sentiment2D = selected_entity.value.sst_ratio || {pos: 0.5, neg: 0.5}
-    const offset = 0.05
+    // const offset = 0.05
+    const offset = d3.scaleLinear()
+        .domain([0, 1])
+        .range([0.05, Math.min(adjust_target.pos, adjust_target.neg)])
+        (intensity.value)
     if(new_value.type === SentimentType.neu) {
         setSegmentation({pos: adjust_target.pos + offset, neg: adjust_target.neg + offset})
     }
@@ -69,8 +78,20 @@ vue.watch(selectedCategory, (new_value, old_value) => {
     if(new_value.type === SentimentType.mix) {
         setSegmentation({pos: adjust_target.pos - offset, neg: adjust_target.neg - offset})
     }
-    console.log(segmentation.value, selected_entity.value.sst_ratio)
+    console.log(segmentation.value)
+    const new_constraint: Constraint = {
+        target: selected_entity.value.name,
+        outlet: selected_entity.value.outlet,
+        sentiment: new_value.type,
+    }
+    addConstraint(new_constraint)
+    checkConflict(constraint_dict.value)
 })
+
+function checkConflict(constraint_dict) {
+    // TODO: check if constraints conflict with each other
+    return
+}
 
 async function fetch_articles(article_ids) {
     await fetch(`${server_address}/processed_data/ids_to_articles`,{
@@ -81,12 +102,12 @@ async function fetch_articles(article_ids) {
       },
       body: JSON.stringify(article_ids)
     })
-      .then(res => res.json())
-      .then(json => {
+    .then(res => res.json())
+    .then(json => {
         target_articles.value = json
         console.log("articles fetched")
         data_fetched.value = true
-      })
+    })
 
 }
 </script>
@@ -140,12 +161,20 @@ async function fetch_articles(article_ids) {
             </div>
             <div class="select-category-container">
                 <span> How would you describe the coverage of {{selected_entity.outlet}} on {{selected_entity.name}}? </span>
-                <SelectButton
-                    v-model="selectedCategory"
-                    :options="sentiment_options"
-                    option-label="value"
-                    data-key="type" >
-                </SelectButton>
+                <div class="selection-container">
+                    <SelectButton
+                        v-model="selectedCategory"
+                        :options="sentiment_options"
+                        option-label="value"
+                        data-key="type" >
+                    </SelectButton>
+                    <Slider
+                        v-model="intensity"
+                        :step="0.01"
+                        :min="0"
+                        :max="1" >
+                    </Slider>
+                </div>
             </div>
             <div class="hexview-container"> 
                 <HexCooccurrence
@@ -157,7 +186,16 @@ async function fetch_articles(article_ids) {
                     :segmentation="segmentation">
                 </HexCooccurrence>
             </div>
-
+            <div class="constraints-view">
+                <ol>
+                    <li v-for="outlet in Object.keys(constraint_dict[selected_entity.name])"> 
+                        {{outlet}} - {{constraint_dict[selected_entity.name][outlet]}}
+                    </li>
+                </ol> 
+            </div>
+            <div class='navigation-container'>
+                <router-link v-if="data_fetched" :to="{ name: 'compare', params: { entity: selected_entity.name }}">Back</router-link>
+            </div>
         </SplitterPanel>
     </Splitter>
 
@@ -196,5 +234,9 @@ async function fetch_articles(article_ids) {
   white-space: nowrap;
 }
 
+.selection-container {
+    display: flex;
+    align-items: center;
+}
 
 </style>
