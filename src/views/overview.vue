@@ -149,14 +149,14 @@ const highlight_nodes: Ref<string[]> = ref([])
 /**
  * layout constants in percentage
  */
-const left_section_size = 50
-const right_section_size = vue.computed(() => 100 - left_section_size)
+const left_section_panel_size = 40
+const right_section_panel_size = vue.computed(() => 100 - left_section_panel_size)
 
-const entity_scatter_size = 70
-const utilities_size = vue.computed(() => 100 - entity_scatter_size)
+const entity_scatter_panel_size = 77
+const utilities_panel_size = vue.computed(() => 100 - entity_scatter_panel_size)
 
-const entity_info_size = 30
-const hex_view_size = vue.computed(() => 100 - entity_info_size)
+const entity_info_panel_size = 30
+const hex_view_panel_size = vue.computed(() => 100 - entity_info_panel_size)
 
 function updateThreshold(new_value) {
   setSegmentation(new_value)
@@ -428,9 +428,9 @@ function updateSegmentation(){
 <template>
   <main>
     <Splitter class="overview-container">
-      <SplitterPanel class="left-section" :size="left_section_size">
+      <SplitterPanel class="left-section-panel" :size="left_section_panel_size">
         <Splitter layout="vertical">
-          <SplitterPanel class="entity-scatter-panel" :size="entity_scatter_size">
+          <SplitterPanel class="entity-scatter-panel" :size="entity_scatter_panel_size">
             <div class="overview-scatter-container">
               <!-- load icon -->
                 <i v-if="overall_scatter_data_loading" class="pi pi-spin pi-spinner" 
@@ -448,14 +448,13 @@ function updateSegmentation(){
                 :article_num_threshold="article_num_threshold"
                 :segment_mode="segment_mode"
                 :segmentation="segment_sst"
-                :expanded="true"
                 @update:segmentation="updateSegmentation"
                 @node_clicked="handleEntityClicked"
                 @update-weight-ended="$emit('update-weight-ended')"
               ></EntitySelection>
             </div>
           </SplitterPanel>
-          <SplitterPanel class="utilities-panel" :size="utilities_size" >
+          <SplitterPanel class="utilities-panel" :size="utilities_panel_size" >
             <!-- Utilities -->
             <div class="utilities-container">
               <!-- segment & search -->
@@ -475,26 +474,26 @@ function updateSegmentation(){
                 :min_articles="overview_overall_scatter_metadata.min_articles"
                 ></ThresholdController>
               </div>
+              <!-- Legend -->
+              <Legend v-if="overview_constructed" 
+                id="segment_legend"
+                class="segment-legend"
+                :color_dict="SstColors.key_color_dict" 
+                :filter="true">
+              </Legend>
               <!-- outlet weight slider -->
               <OutletWeightSlider
                   v-if="overview_constructed"
                   :outlet_weight_dict="outlet_weight_dict"
                   @update_outlet_weight="handleUpdateOutletWeight">
               </OutletWeightSlider>
-              <!-- Legend -->
-              <Legend v-if="overview_constructed" 
-              id="segment_legend"
-              class="segment-legend"
-              :color_dict="SstColors.key_color_dict" 
-              :filter="true">
-              </Legend>
             </div>
           </SplitterPanel>
         </Splitter>
       </SplitterPanel>
-      <SplitterPanel class="right-section" :size="right_section_size">
+      <SplitterPanel class="right-section-panel" :size="right_section_panel_size">
         <Splitter layout="vertical">
-          <SplitterPanel class="overview-hex-panel" :size="hex_view_size">
+          <SplitterPanel class="overview-hex-panel" :size="hex_view_panel_size">
             <!-- Hex view -->
             <div class="overview-hex-container"  v-if="overview_constructed">
                     <!-- load icon -->
@@ -519,7 +518,7 @@ function updateSegmentation(){
                 </HexCooccurrence>
               </div>
           </SplitterPanel>
-          <SplitterPanel class="entity-info-panel" :size="entity_info_size">
+          <SplitterPanel class="entity-info-panel" :size="entity_info_panel_size">
             <!-- Entity Info -->
             <div class="entity-info-container">
               <div class="target-cooccurr-container">
@@ -595,19 +594,30 @@ main {
 //
 
 // ---------------------
+// entity scatter section
+// ---------------------
+
+.left-section-panel, .entity-scatter-panel { // This attribute is for node info to show 
+  overflow: visible;
+}
+// ---------------------
 // utitlies section
 // ---------------------
 .toolbar-container {
   display: flex;
+  height: max-content;
 }
 .slider-container {
   width: 200px;
+  height: max-content;
 }
 
 .utilities-container {
   display: flex;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 50px auto;
+  flex-wrap: wrap;
+  justify-content: space-between;
 }
 
 // ---------------------

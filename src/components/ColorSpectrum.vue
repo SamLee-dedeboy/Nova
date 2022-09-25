@@ -7,11 +7,12 @@ const props = defineProps({
     colorScale: Object as () => Function,
 })
 
-const viewBox = [300, 50]
+const viewBox = [300, 25]
 const steps = 11
 const interpolation = [...Array(steps).keys()].map(p => p/(steps-1))
 onMounted(() => {
     const svg = d3.select("svg.spectrum-container")
+        .attr("viewBox", `0 0 ${viewBox[0]} ${viewBox[1]}`)
     const grad = svg.append("defs").append("linearGradient")
         .attr("id", "grad")
         .attr("x1", "0%")
@@ -29,7 +30,7 @@ onMounted(() => {
         .attr("x", 0)
         .attr("y", 0)
         .attr("width", viewBox[0])
-        .attr("height", viewBox[1]/2)
+        .attr("height", viewBox[1])
         .style("fill", "url(#grad)")
 
 }) 
@@ -43,7 +44,7 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .spectrum-container {
-    width: inherit;
-    height: inherit;
+    width: 100%;
+    height: 100%;
 }
 </style>

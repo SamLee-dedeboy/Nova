@@ -53,6 +53,7 @@ function handleDecrease() {
 }
 .color-spectrum {
   height: 25px;
+  width: 100%;
 }
 .indicator-container {
   display: flex;
@@ -66,5 +67,8 @@ function handleDecrease() {
     position: absolute;
     width: 100%;
     height: 0.1rem !important;
+}
+.threshold-slider-container {
+  width: inherit;
 }
 </style>

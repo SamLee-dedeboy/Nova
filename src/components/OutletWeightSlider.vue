@@ -35,13 +35,18 @@ function handleChange(outlet) {
 </template>
 <style scoped>
 .slider-label {
-    position: absolute;
-    left: 31px;
-    right: 0;
     margin-left: auto;
     margin-right: auto;
-    width: 100px;
-    top: 11px;
 }
-
+.outlet-weight-grid-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, auto);
+  grid-column-gap: 22px;
+  height: max-content;
+}
+.outlet-weight-grid-cell {
+  display: flex;
+  flex-direction: column;
+}
 </style>
