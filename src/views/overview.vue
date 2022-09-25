@@ -30,13 +30,13 @@ import * as tutorial from "../components/utils/TutorialUtils"
  */
 import OutletWeightSlider from "../components/OutletWeightSlider.vue";
 import Legend from "../components/Legend.vue";
-import ColorSpectrum from '../components/ColorSpectrum.vue'
 import Tooltip from "../components/Tooltip.vue";
 import SearchBar from "../components/SearchBar.vue";
 import EntityInfoView from "../components/EntityInfoView.vue"
 import HexCooccurrence from "../components/HexCooccurrence.vue";
 import TopicBars from "../components/TopicBars.vue"
 import EntitySelection from "../components/overviewComponents/entitySelection.vue"
+import ThresholdController from "../components/ThresholdController.vue";
 
 
 const store = useStore()
@@ -469,21 +469,11 @@ function updateSegmentation(){
               </div>
               <!-- filter slider -->
               <div v-if="overview_constructed" class="slider-container">
-                  <div class="threshold-input-container">
-                    <InputText class="threshold-input" v-model="article_num_threshold"></InputText>
-                    <Button class="increment-button p-button-secondary" label="+"  @click="() => article_num_threshold=Math.min(article_num_threshold+=10, overview_grouped_scatter_metadata.max_articles||100)"></Button>
-                    <Button class="decrease-button p-button-secondary " label="-"  @click="() => article_num_threshold=Math.max(article_num_threshold-10, 0)"></Button>
-                  </div>
-                  <div class="threshold-slider">
-                    <Slider v-model="article_num_threshold" :step="10" :min="0" :max="overview_grouped_scatter_metadata.max_articles ||100"></Slider>
-                    <ColorSpectrum class="color-spectrum" v-if="overview_constructed" 
-                    :color-scale="SstColors.article_num_color_scale"
-                    ></ColorSpectrum>
-                    <div class="indicator-container">
-                      <div class="min_indicator">0</div>
-                      <div class="max_indicator">{{overview_grouped_scatter_metadata.max_articles || 100}}</div>
-                    </div>
-                  </div>
+                <ThresholdController
+                v-model:article_num_threshold="article_num_threshold"
+                :max_articles="overview_overall_scatter_metadata.max_articles"
+                :min_articles="overview_overall_scatter_metadata.min_articles"
+                ></ThresholdController>
               </div>
               <!-- outlet weight slider -->
               <OutletWeightSlider
@@ -610,11 +600,8 @@ main {
 .toolbar-container {
   display: flex;
 }
-
 .slider-container {
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: auto;
+  width: 200px;
 }
 
 .utilities-container {
