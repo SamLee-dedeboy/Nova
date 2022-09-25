@@ -1,7 +1,7 @@
 import scatter_data
 import sentiment_processor
 from data_types import *
-def constructHexData(target_entity, cooccurrences, entity_data_dict, top_k=37):
+def constructHexData(target_entity, cooccurrences, entity_data_dict, top_k=36):
     hex_data = EntityCooccurrences(target=None, sorted_cooccurrences_list=[])
     target_cooccurrences = []
     for entity2, cooccurr_ids in cooccurrences.items():

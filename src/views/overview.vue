@@ -1,29 +1,42 @@
 <script setup lang="ts">
-import OutletWeightSlider from "../components/OutletWeightSlider.vue";
+/**
+ * primevue comopnents
+ */
 import Slider from "primevue/slider"
 import InputText from "primevue/inputtext"
-import Splitter from 'primevue/splitter';
-import SplitterPanel from 'primevue/splitterpanel';
 import ToggleButton from 'primevue/togglebutton';
+import Divider from 'primevue/divider';
+import Splitter from 'primevue/splitter';
+import SplitterPanel from "primevue/splitterpanel"
+
+/**
+ * libraries
+ */
 import { watch, computed, onMounted, PropType, ref, Ref, nextTick, } from 'vue'
 import * as vue from 'vue'
-import * as typeUtils from "../types"
-import Legend from "../components/Legend.vue";
-import Divider from 'primevue/divider';
-import ColorSpectrum from '../components/ColorSpectrum.vue'
-import * as SstColors from "../components/utils/ColorUtils"
 import * as _ from "lodash"
-import SentimentScatter from "../components/SentimentScatter.vue";
+import { useStore } from 'vuex'
+
+/**
+ * types & utils
+ */
+import * as typeUtils from "../types"
+import * as SstColors from "../components/utils/ColorUtils"
+import tutorial_intro_json from "../assets/tutorial/tutorial_intro.json"
+import * as tutorial from "../components/utils/TutorialUtils"
+
+/**
+ * vue components
+ */
+import OutletWeightSlider from "../components/OutletWeightSlider.vue";
+import Legend from "../components/Legend.vue";
+import ColorSpectrum from '../components/ColorSpectrum.vue'
 import Tooltip from "../components/Tooltip.vue";
 import SearchBar from "../components/SearchBar.vue";
 import EntityInfoView from "../components/EntityInfoView.vue"
 import HexCooccurrence from "../components/HexCooccurrence.vue";
 import TopicBars from "../components/TopicBars.vue"
-import tutorial_intro_json from "../assets/tutorial/tutorial_intro.json"
 import EntitySelection from "../components/overviewComponents/entitySelection.vue"
-import * as tutorial from "../components/utils/TutorialUtils"
-import { useRouter, useRoute } from 'vue-router'
-import { useStore } from 'vuex'
 
 
 const store = useStore()
@@ -132,6 +145,18 @@ const tutorial_intro: Ref<string[]> = ref(tutorial_intro_json.map(step => _.sum(
  * Used in search feature.
  */
 const highlight_nodes: Ref<string[]> = ref([])
+
+/**
+ * layout constants in percentage
+ */
+const left_section_size = 50
+const right_section_size = vue.computed(() => 100 - left_section_size)
+
+const entity_scatter_size = 70
+const utilities_size = vue.computed(() => 100 - entity_scatter_size)
+
+const entity_info_size = 30
+const hex_view_size = vue.computed(() => 100 - entity_info_size)
 
 function updateThreshold(new_value) {
   setSegmentation(new_value)
@@ -370,7 +395,7 @@ async function fetch_topic_bins(target, callback) {
 
 
 async function handleHexClicked({target, co_occurr_entity}: {target: string, co_occurr_entity: string}) {
-  await fetch(`${server_address}/processed_data/cooccurr_info/${target}/${co_occurr_entity}`)
+  await fetch(`${server_address}/processed_data/cooccurr_info/overall/${target}/${co_occurr_entity}`)
     .then(res => res.json())
     .then(json => {
       console.log("cooccurr_info fetched", json)
@@ -402,129 +427,213 @@ function updateSegmentation(){
 
 <template>
   <main>
-    <div class="overview-container">
-      <div class="overview-scatter-container">
-           <!-- load icon -->
-            <i v-if="overall_scatter_data_loading" class="pi pi-spin pi-spinner" 
-            style="
-            position:absolute;
-            left: 45%;
-            top: 30%;
-            font-size: 3rem;
-            z-index: 1000
-            "></i> 
-        <EntitySelection
-            v-if="overall_scatter_view"
-            :view="overall_scatter_view"
-            id="overview-scatter"
-            :article_num_threshold="article_num_threshold"
-            :segment_mode="segment_mode"
-            :segmentation="segment_sst"
-            :expanded="true"
-            @update:segmentation="updateSegmentation"
-            @node_clicked="handleEntityClicked"
-            @update-weight-ended="$emit('update-weight-ended')"
-        ></EntitySelection>
-    </div>
-    <div class="overview-hex-container"  v-if="overview_constructed">
-            <!-- load icon -->
-            <i v-if="!overview_constructed" class="pi pi-spin pi-spinner" 
-            style="
-            position:absolute;
-            left: 45%;
-            top: 30%;
-            font-size: 3rem;
-            z-index: 1000
-            "></i> 
-        <HexCooccurrence
-            ref="overall_co_hexview"
-            v-if="overall_selected_hexview"
-            class="overall-co-hexview"
-            :title="overall_selected_hexview.title"
-            :id="`overall-co-hex`"
-            :entity_cooccurrences="overall_selected_hexview.data"
-            :segmentation="segment_sst"
-            :overall_entity_dict="overall_entity_dict"
-            v-on:hex-clicked="handleHexClicked">
-        </HexCooccurrence>
-    </div>
-    <!-- Utilities -->
-    <div class="utilities-container">
-        <!-- segment & search -->
-        <div  class="toolbar-container">
-            <div v-if="overview_constructed" class="segment-toggler-container">
-                <ToggleButton class='segment-toggler p-primary' v-model="segment_mode" onLabel="Segment" offLabel="Segment"></ToggleButton>
+    <Splitter class="overview-container">
+      <SplitterPanel class="left-section" :size="left_section_size">
+        <Splitter layout="vertical">
+          <SplitterPanel class="entity-scatter-panel" :size="entity_scatter_size">
+            <div class="overview-scatter-container">
+              <!-- load icon -->
+                <i v-if="overall_scatter_data_loading" class="pi pi-spin pi-spinner" 
+                style="
+                position:absolute;
+                left: 45%;
+                top: 30%;
+                font-size: 3rem;
+                z-index: 1000
+                "></i> 
+              <EntitySelection
+                v-if="overall_scatter_view"
+                :view="overall_scatter_view"
+                id="overview-scatter"
+                :article_num_threshold="article_num_threshold"
+                :segment_mode="segment_mode"
+                :segmentation="segment_sst"
+                :expanded="true"
+                @update:segmentation="updateSegmentation"
+                @node_clicked="handleEntityClicked"
+                @update-weight-ended="$emit('update-weight-ended')"
+              ></EntitySelection>
             </div>
-            <div v-if="overview_constructed" class="search-bar">
-                <SearchBar :search_terms="entity_list" @entity_searched="handleSearch"></SearchBar>
+          </SplitterPanel>
+          <SplitterPanel class="utilities-panel" :size="utilities_size" >
+            <!-- Utilities -->
+            <div class="utilities-container">
+              <!-- segment & search -->
+              <div  class="toolbar-container">
+                  <div v-if="overview_constructed" class="segment-toggler-container">
+                      <ToggleButton class='segment-toggler p-primary' v-model="segment_mode" onLabel="Segment" offLabel="Segment"></ToggleButton>
+                  </div>
+                  <div v-if="overview_constructed" class="search-bar">
+                      <SearchBar :search_terms="entity_list" @entity_searched="handleSearch"></SearchBar>
+                  </div>
+              </div>
+              <!-- filter slider -->
+              <div v-if="overview_constructed" class="slider-container">
+                  <div class="threshold-input-container">
+                    <InputText class="threshold-input" v-model="article_num_threshold"></InputText>
+                    <Button class="increment-button p-button-secondary" label="+"  @click="() => article_num_threshold=Math.min(article_num_threshold+=10, overview_grouped_scatter_metadata.max_articles||100)"></Button>
+                    <Button class="decrease-button p-button-secondary " label="-"  @click="() => article_num_threshold=Math.max(article_num_threshold-10, 0)"></Button>
+                  </div>
+                  <div class="threshold-slider">
+                    <Slider v-model="article_num_threshold" :step="10" :min="0" :max="overview_grouped_scatter_metadata.max_articles ||100"></Slider>
+                    <ColorSpectrum class="color-spectrum" v-if="overview_constructed" 
+                    :color-scale="SstColors.article_num_color_scale"
+                    ></ColorSpectrum>
+                    <div class="indicator-container">
+                      <div class="min_indicator">0</div>
+                      <div class="max_indicator">{{overview_grouped_scatter_metadata.max_articles || 100}}</div>
+                    </div>
+                  </div>
+              </div>
+              <!-- outlet weight slider -->
+              <OutletWeightSlider
+                  v-if="overview_constructed"
+                  :outlet_weight_dict="outlet_weight_dict"
+                  @update_outlet_weight="handleUpdateOutletWeight">
+              </OutletWeightSlider>
+              <!-- Legend -->
+              <Legend v-if="overview_constructed" 
+              id="segment_legend"
+              class="segment-legend"
+              :color_dict="SstColors.key_color_dict" 
+              :filter="true">
+              </Legend>
             </div>
-        </div>
-        <!-- filter slider -->
-        <div v-if="overview_constructed" class="slider-container">
-            <InputText class="threshold-input" v-model="article_num_threshold"></InputText>
-            <Button class="increment-button p-button-secondary" label="+"  @click="() => article_num_threshold=Math.min(article_num_threshold+=10, overview_grouped_scatter_metadata.max_articles||100)"></Button>
-            <Button class="decrease-button p-button-secondary " label="-"  @click="() => article_num_threshold=Math.max(article_num_threshold-10, 0)"></Button>
-            <Slider v-model="article_num_threshold" :step="10" :min="0" :max="overview_grouped_scatter_metadata.max_articles ||100"></Slider>
-            <ColorSpectrum class="color-spectrum" v-if="overview_constructed" 
-            :color-scale="SstColors.article_num_color_scale"
-            ></ColorSpectrum>
-            <div class="indicator-container">
-            <div class="min_indicator">0</div>
-            <div class="max_indicator">{{overview_grouped_scatter_metadata.max_articles || 100}}</div>
+          </SplitterPanel>
+        </Splitter>
+      </SplitterPanel>
+      <SplitterPanel class="right-section" :size="right_section_size">
+        <Splitter layout="vertical">
+          <SplitterPanel class="overview-hex-panel" :size="hex_view_size">
+            <!-- Hex view -->
+            <div class="overview-hex-container"  v-if="overview_constructed">
+                    <!-- load icon -->
+                    <i v-if="!overview_constructed" class="pi pi-spin pi-spinner" 
+                    style="
+                    position:absolute;
+                    left: 45%;
+                    top: 30%;
+                    font-size: 3rem;
+                    z-index: 1000
+                    "></i> 
+                <HexCooccurrence
+                    ref="overall_co_hexview"
+                    v-if="overall_selected_hexview"
+                    class="overall-co-hexview"
+                    :title="overall_selected_hexview.title"
+                    :id="`overall-co-hex`"
+                    :entity_cooccurrences="overall_selected_hexview.data"
+                    :segmentation="segment_sst"
+                    :overall_entity_dict="overall_entity_dict"
+                    v-on:hex-clicked="handleHexClicked">
+                </HexCooccurrence>
+              </div>
+          </SplitterPanel>
+          <SplitterPanel class="entity-info-panel" :size="entity_info_size">
+            <!-- Entity Info -->
+            <div class="entity-info-container">
+              <div class="target-cooccurr-container">
+                <EntityInfoView v-if="selected_entity"
+                    title="Target Entity"
+                    :entity_info="selected_entity">
+                </EntityInfoView>
+                <Divider v-if="selected_cooccurr_entity" layout="vertical"></Divider>
+                <EntityInfoView v-if="selected_cooccurr_entity"
+                    title="Co-occurr Entity"
+                    :entity_info="selected_cooccurr_entity">
+                </EntityInfoView>
+              </div>
+              <div class="topic-bar-container">
+                <TopicBars v-if="selected_entity"
+                    id="cooccurr_topic_bars"
+                    :targetTopicBins="selected_entity?.articles_topic_dict"
+                    :cooccurrTopicBins="selected_cooccurr_entity?.articles_topic_dict" >
+                </TopicBars>
+              </div>
             </div>
-        </div>
-        <!-- outlet weight slider -->
-        <OutletWeightSlider
-            v-if="overview_constructed"
-            :outlet_weight_dict="outlet_weight_dict"
-            @update_outlet_weight="handleUpdateOutletWeight">
-        </OutletWeightSlider>
-        <!-- Legend -->
-        <Legend v-if="overview_constructed" 
-        id="segment_legend"
-        class="segment-legend"
-        :color_dict="SstColors.key_color_dict" 
-        :filter="true">
-        </Legend>
-    </div>
-    <!-- Entity Info -->
-    <div class="entity-info-container">
-        <div class="target-cooccurr-container">
-            <EntityInfoView v-if="selected_entity"
-                title="Target Entity"
-                :entity_info="selected_entity">
-            </EntityInfoView>
-            <Divider v-if="selected_cooccurr_entity" layout="vertical"></Divider>
-            <EntityInfoView v-if="selected_cooccurr_entity"
-                title="Co-occurr Entity"
-                :entity_info="selected_cooccurr_entity">
-            </EntityInfoView>
-        </div>
-        <div class="topic-bar-container">
-            <TopicBars v-if="selected_entity"
-                id="cooccurr_topic_bars"
-                :targetTopicBins="selected_entity?.articles_topic_dict"
-                :cooccurrTopicBins="selected_cooccurr_entity?.articles_topic_dict" >
-            </TopicBars>
-        </div>
-    </div>
-    <!-- Next Stage -->
-    <router-link v-if="selected_entity" :to="{ name: 'compare', params: { entity: selected_entity.name }}">Next Stage</router-link>
+              <!-- Next Stage -->
+              <router-link v-if="selected_entity" :to="{ name: 'compare', params: { entity: selected_entity.name }}">Next Stage</router-link>
+          </SplitterPanel>
+        </Splitter>
+      </SplitterPanel>
+    </Splitter>
+    <!-- Tooltip for tutorial -->
     <Tooltip v-if="tutorial_mode" class="tutorial_tooltip" :content="tutorial_intro[tutorial_step]"></Tooltip>
     "<span v-if="tutorial_mode" class="skip-button" 
     style='text-decoration:underline;'
-    @click="tutorial_mode=false">Skip</span>", 
-  </div>
-</main>
+    @click="tutorial_mode=false">Skip</span>"
+  </main>
 </template>
 
 <style scoped lang="scss">
 * {
   --margin_left: 10px;
 }
-.overview-scatter-container {
-    width: 800px;
-    height: 600px;
+
+main {
+  display: flex;
+  justify-content: center;
+  width: 95vw;
+  height: 95vh;
 }
+
+// ---------------------
+// css for split-panel layout
+// ---------------------
+.overview-scatter-container, .overview-hex-container, .overall-co-hexview {
+  width: inherit;
+  height: inherit;
+}
+
+:deep(.p-splitter) {
+  width: inherit;
+  height: inherit;
+}
+:deep(.p-splitter-panel) {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+// divider style 
+:deep(.p-divider.p-divider-vertical::before) {
+  border-left: 1px solid #dee2e6 !important;
+}
+
+//
+// general layouts
+//
+
+// ---------------------
+// utitlies section
+// ---------------------
+.toolbar-container {
+  display: flex;
+}
+
+.slider-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto;
+}
+
+.utilities-container {
+  display: flex;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 50px auto;
+}
+
+// ---------------------
+// entity info section
+// ---------------------
+.topic-bar-container {
+  width: 50%;
+}
+
+.target-cooccurr-container {
+  display: flex;
+}
+
+
  </style>
 
