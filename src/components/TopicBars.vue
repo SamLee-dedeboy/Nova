@@ -122,7 +122,7 @@ function updateBars() {
 </template>
 <style scoped>
 .topic-barchart-container {
-    height: 58%
+    height: 100%
 }
 .topic-barchart {
     height: 100%

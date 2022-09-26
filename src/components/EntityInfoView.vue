@@ -22,7 +22,7 @@ div {
     white-space: nowrap;
 }
 .entity-info-view-container {
-    /* max-width: 100px; */
+    max-width: 134px;
 }
 .entity-name {
     overflow:hidden;

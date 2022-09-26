@@ -4,7 +4,6 @@
  */
 import Splitter from 'primevue/splitter';
 import SplitterPanel from "primevue/splitterpanel"
-import Divider from 'primevue/divider'
 import SelectButton from "primevue/selectbutton"
 import Slider from "primevue/slider"
 
@@ -114,7 +113,7 @@ async function fetch_articles(article_ids) {
 
 <template>
     <Splitter class="splitter-outmost">
-        <SplitterPanel id="article_view_section" class="articleview-section flex align-items-center justify-content-center" :size="left_section_size" :min-size="left_section_size" >
+        <SplitterPanel id="article_view_section" class="articleview-section flex align-items-center justify-content-center" :size="left_section_size">
             <i v-if="!data_fetched" class="pi pi-spin pi-spinner" 
             style="
             position:absolute;
@@ -187,7 +186,7 @@ async function fetch_articles(article_ids) {
                 </HexCooccurrence>
             </div>
             <div class="constraints-view">
-                <ol>
+                <ol v-if="constraint_dict[selected_entity.name]">
                     <li v-for="outlet in Object.keys(constraint_dict[selected_entity.name])"> 
                         {{outlet}} - {{constraint_dict[selected_entity.name][outlet]}}
                     </li>
@@ -200,15 +199,26 @@ async function fetch_articles(article_ids) {
     </Splitter>
 
 </template>
-<style scoped>
+<style scoped lang="scss">
+
+// ---------------------
+// css for split-panel layout
+// ---------------------
 .splitter-outmost {
   width: 97vw;
   height: 95vh;
   display: flex;
 }
+
+// divider style 
 :deep(.p-divider.p-divider-vertical::before) {
   border-left: 1px solid #dee2e6 !important;
 }
+
+
+// ---------------------
+// entity info section
+// ---------------------
 .target-cooccurr-container {
   display: flex;
   justify-content: space-between;
@@ -222,6 +232,7 @@ async function fetch_articles(article_ids) {
   width: 100%;
   justify-content: center;
 }
+
 .outlet-weight-container {
   display: flex;
   align-items: center;
@@ -234,9 +245,20 @@ async function fetch_articles(article_ids) {
   white-space: nowrap;
 }
 
+// ---------------------
+// Sentiment category selection section
+// ---------------------
 .selection-container {
     display: flex;
     align-items: center;
+}
+
+
+// ---------------------
+//  Hexview section
+// ---------------------
+.hexview-container {
+  height: 59%;
 }
 
 </style>

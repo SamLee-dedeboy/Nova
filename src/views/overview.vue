@@ -30,13 +30,13 @@ import * as tutorial from "../components/utils/TutorialUtils"
  */
 import OutletWeightSlider from "../components/OutletWeightSlider.vue";
 import Legend from "../components/Legend.vue";
-import ColorSpectrum from '../components/ColorSpectrum.vue'
 import Tooltip from "../components/Tooltip.vue";
 import SearchBar from "../components/SearchBar.vue";
 import EntityInfoView from "../components/EntityInfoView.vue"
 import HexCooccurrence from "../components/HexCooccurrence.vue";
 import TopicBars from "../components/TopicBars.vue"
 import EntitySelection from "../components/overviewComponents/entitySelection.vue"
+import ThresholdController from "../components/ThresholdController.vue";
 
 
 const store = useStore()
@@ -149,14 +149,14 @@ const highlight_nodes: Ref<string[]> = ref([])
 /**
  * layout constants in percentage
  */
-const left_section_size = 50
-const right_section_size = vue.computed(() => 100 - left_section_size)
+const left_section_panel_size = 40
+const right_section_panel_size = vue.computed(() => 100 - left_section_panel_size)
 
-const entity_scatter_size = 70
-const utilities_size = vue.computed(() => 100 - entity_scatter_size)
+const entity_scatter_panel_size = 77
+const utilities_panel_size = vue.computed(() => 100 - entity_scatter_panel_size)
 
-const entity_info_size = 30
-const hex_view_size = vue.computed(() => 100 - entity_info_size)
+const entity_info_panel_size = 30
+const hex_view_panel_size = vue.computed(() => 100 - entity_info_panel_size)
 
 function updateThreshold(new_value) {
   setSegmentation(new_value)
@@ -297,6 +297,7 @@ vue.onMounted(async() => {
         resolve("success")
       })
     }))
+    handleEntityClicked(selected_entity.value.name)
 
   }
   await Promise.all(promiseArray)
@@ -311,44 +312,53 @@ vue.watch(tutorial_step, (new_value, old_value) => {
 })
 
 // handlers
-  // send data
-async function handleEntityClicked({title, d}: {title: string, d: typeUtils.ScatterNode}) {
-    const entity = d.text.split("-")[0]
-    const outlet = d.text.split("-")[1]
-    const overall_flag = title === "Overall"
-    const path_overall_or_grouped = (overall_flag? "overall":"grouped")
+// send data
+async function handleEntityClicked(entity: string) {
     const metadata = overview_overall_scatter_metadata.value
-    const store_entity: typeUtils.EntityInfo = {
-      name: d.text,
-      outlet: "Overall",
-      num_of_mentions:d.article_ids.length,
-      sst_ratio: {
-        pos_artcs: d.pos_article_ids.length,
-        neg_artcs: d.neg_article_ids.length,
-        pos: d.pos_sst,
-        neg: d.neg_sst,
-        pos_max: metadata.pos_max,
-        pos_min: metadata.pos_min,
-        neg_max: metadata.neg_max,
-        neg_min: metadata.neg_min,
-      },
-      articles_topic_dict: d.topicBins
-    }
-    setEntity(store_entity)
     selected_cooccurr_entity.value = undefined
-
-    await fetch(`${server_address}/hexview/${path_overall_or_grouped}/${d.text}`)
+    const promiseArray: any[] = []
+    promiseArray.push(new Promise((resolve) => {
+      fetch(`${server_address}/overview/scatter/overall/node/${entity}`)
+      .then(res => res.json())
+      .then(json => {
+        const store_entity: typeUtils.EntityInfo = {
+          name: entity,
+          outlet: "Overall",
+          num_of_mentions:json.article_ids.length,
+          sst_ratio: {
+            pos_artcs: json.pos_article_ids.length,
+            neg_artcs: json.neg_article_ids.length,
+            pos: json.pos_sst,
+            neg: json.neg_sst,
+            pos_max: metadata.pos_max,
+            pos_min: metadata.pos_min,
+            neg_max: metadata.neg_max,
+            neg_min: metadata.neg_min,
+          },
+          articles_topic_dict: json.topicBins
+        }
+        setEntity(store_entity)
+        resolve("success")
+      })
+    }))
+    promiseArray.push(new Promise((resolve) => {
+      fetch(`${server_address}/hexview/overall/${entity}`)
       .then(res => res.json())
       .then(json => {
         const hex_view: typeUtils.CooccurrHexView = {
-          title: `co-${d.text}`,
+          title: `co-${entity}`,
           data: json,
         }
         overall_selected_hexview.value = hex_view
         console.log("cooccurr hex fetched")
+        resolve("success")
       })
-    return
+    }))
 
+    await Promise.all(promiseArray)
+      .then(res => {
+        // do nothing
+      })
 }
 
 function highlightChanged(new_value) {
@@ -428,9 +438,9 @@ function updateSegmentation(){
 <template>
   <main>
     <Splitter class="overview-container">
-      <SplitterPanel class="left-section" :size="left_section_size">
+      <SplitterPanel class="left-section-panel" :size="left_section_panel_size">
         <Splitter layout="vertical">
-          <SplitterPanel class="entity-scatter-panel" :size="entity_scatter_size">
+          <SplitterPanel class="entity-scatter-panel" :size="entity_scatter_panel_size">
             <div class="overview-scatter-container">
               <!-- load icon -->
                 <i v-if="overall_scatter_data_loading" class="pi pi-spin pi-spinner" 
@@ -448,14 +458,13 @@ function updateSegmentation(){
                 :article_num_threshold="article_num_threshold"
                 :segment_mode="segment_mode"
                 :segmentation="segment_sst"
-                :expanded="true"
                 @update:segmentation="updateSegmentation"
                 @node_clicked="handleEntityClicked"
                 @update-weight-ended="$emit('update-weight-ended')"
               ></EntitySelection>
             </div>
           </SplitterPanel>
-          <SplitterPanel class="utilities-panel" :size="utilities_size" >
+          <SplitterPanel class="utilities-panel" :size="utilities_panel_size" >
             <!-- Utilities -->
             <div class="utilities-container">
               <!-- segment & search -->
@@ -469,42 +478,32 @@ function updateSegmentation(){
               </div>
               <!-- filter slider -->
               <div v-if="overview_constructed" class="slider-container">
-                  <div class="threshold-input-container">
-                    <InputText class="threshold-input" v-model="article_num_threshold"></InputText>
-                    <Button class="increment-button p-button-secondary" label="+"  @click="() => article_num_threshold=Math.min(article_num_threshold+=10, overview_grouped_scatter_metadata.max_articles||100)"></Button>
-                    <Button class="decrease-button p-button-secondary " label="-"  @click="() => article_num_threshold=Math.max(article_num_threshold-10, 0)"></Button>
-                  </div>
-                  <div class="threshold-slider">
-                    <Slider v-model="article_num_threshold" :step="10" :min="0" :max="overview_grouped_scatter_metadata.max_articles ||100"></Slider>
-                    <ColorSpectrum class="color-spectrum" v-if="overview_constructed" 
-                    :color-scale="SstColors.article_num_color_scale"
-                    ></ColorSpectrum>
-                    <div class="indicator-container">
-                      <div class="min_indicator">0</div>
-                      <div class="max_indicator">{{overview_grouped_scatter_metadata.max_articles || 100}}</div>
-                    </div>
-                  </div>
+                <ThresholdController
+                v-model:article_num_threshold="article_num_threshold"
+                :max_articles="overview_overall_scatter_metadata.max_articles"
+                :min_articles="overview_overall_scatter_metadata.min_articles"
+                ></ThresholdController>
               </div>
+              <!-- Legend -->
+              <Legend v-if="overview_constructed" 
+                id="segment_legend"
+                class="segment-legend"
+                :color_dict="SstColors.key_color_dict" 
+                :filter="true">
+              </Legend>
               <!-- outlet weight slider -->
               <OutletWeightSlider
                   v-if="overview_constructed"
                   :outlet_weight_dict="outlet_weight_dict"
                   @update_outlet_weight="handleUpdateOutletWeight">
               </OutletWeightSlider>
-              <!-- Legend -->
-              <Legend v-if="overview_constructed" 
-              id="segment_legend"
-              class="segment-legend"
-              :color_dict="SstColors.key_color_dict" 
-              :filter="true">
-              </Legend>
             </div>
           </SplitterPanel>
         </Splitter>
       </SplitterPanel>
-      <SplitterPanel class="right-section" :size="right_section_size">
+      <SplitterPanel class="right-section-panel" :size="right_section_panel_size">
         <Splitter layout="vertical">
-          <SplitterPanel class="overview-hex-panel" :size="hex_view_size">
+          <SplitterPanel class="overview-hex-panel" :size="hex_view_panel_size">
             <!-- Hex view -->
             <div class="overview-hex-container"  v-if="overview_constructed">
                     <!-- load icon -->
@@ -529,11 +528,11 @@ function updateSegmentation(){
                 </HexCooccurrence>
               </div>
           </SplitterPanel>
-          <SplitterPanel class="entity-info-panel" :size="entity_info_size">
+          <SplitterPanel class="entity-info-panel" :size="entity_info_panel_size">
             <!-- Entity Info -->
             <div class="entity-info-container">
               <div class="target-cooccurr-container">
-                <EntityInfoView v-if="selected_entity"
+                <EntityInfoView v-if="selected_entity?.outlet === 'Overall'"
                     title="Target Entity"
                     :entity_info="selected_entity">
                 </EntityInfoView>
@@ -544,15 +543,17 @@ function updateSegmentation(){
                 </EntityInfoView>
               </div>
               <div class="topic-bar-container">
-                <TopicBars v-if="selected_entity"
+                <TopicBars v-if="selected_entity?.outlet === 'Overall'"
                     id="cooccurr_topic_bars"
                     :targetTopicBins="selected_entity?.articles_topic_dict"
                     :cooccurrTopicBins="selected_cooccurr_entity?.articles_topic_dict" >
                 </TopicBars>
               </div>
-            </div>
               <!-- Next Stage -->
-              <router-link v-if="selected_entity" :to="{ name: 'compare', params: { entity: selected_entity.name }}">Next Stage</router-link>
+              <div class="navigate-container">
+                <router-link v-if="selected_entity?.outlet === 'Overall'" :to="{ name: 'compare', params: { entity: selected_entity.name }}">Next Stage</router-link>
+              </div>
+            </div>
           </SplitterPanel>
         </Splitter>
       </SplitterPanel>
@@ -605,33 +606,47 @@ main {
 //
 
 // ---------------------
+// entity scatter section
+// ---------------------
+
+.left-section-panel, .entity-scatter-panel { // This attribute is for node info to show 
+  overflow: visible;
+}
+// ---------------------
 // utitlies section
 // ---------------------
 .toolbar-container {
   display: flex;
+  height: max-content;
 }
-
 .slider-container {
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: auto;
+  width: 200px;
+  height: max-content;
 }
 
 .utilities-container {
   display: flex;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 50px auto;
+  flex-wrap: wrap;
+  justify-content: space-between;
 }
 
 // ---------------------
 // entity info section
 // ---------------------
+.entity-info-container {
+  display: flex;
+  height: 100%;
+  justify-content: space-evenly;
+}
 .topic-bar-container {
   width: 50%;
 }
 
 .target-cooccurr-container {
   display: flex;
+  height: max-content;
 }
 
 

@@ -265,4 +265,8 @@ defineExpose({
     width: 100%;
     height: 100%;
 }
+.hex-container {
+    width: 100%;
+    height: 100%;
+}
 </style>

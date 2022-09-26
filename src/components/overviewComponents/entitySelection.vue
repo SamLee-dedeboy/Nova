@@ -4,30 +4,28 @@
         <div class="button-set">
             <Button class="reset-zoom p-button-secondary" @click="resetZoom">reset</Button>
         </div>
-        <TooltipVue class='tooltip' 
-        :id="`${id}-tooltip`" 
-        :content="tooltip_content" 
-        :hasWordCloud="false" 
-        :words_freq="nodes_freq"
-        style="z-index: 1000;"></TooltipVue>
         <NodeInfo class='nodeinfo' :node="hovered_node_info" :total_articles="total_articles" style="position:absolute; z-index:1000;pointer-events: none;"></NodeInfo>
-        <Menu id="overlay_menu" ref="menu" :model="menu_items" :popup="true" 
-        style="position: absolute; width: fit-content;"></Menu>
     
     </div>
 </template>
 
 <script setup lang="ts">
+    /**
+     * libraries
+     */
     import * as vue from 'vue'
     import { onMounted, computed, Ref, ref, defineEmits} from 'vue'
     import * as d3 from "d3"
     import * as _ from "lodash"
-    import Menu from "primevue/menu"
+    /**
+     * utils & types
+     */
     import { ScatterNode, Sentiment2D, OutletNodeInfo, EntityScatterView } from '../../types'
-
     import * as SstColors from "../utils/ColorUtils"
 
-    import TooltipVue from "../Tooltip.vue"
+    /**
+     * components
+     */
     import NodeInfo from '../NodeInfo.vue'
     import {EntityScatter} from "./scatterPlot"
 
@@ -56,21 +54,10 @@
     })
 
     const filtered_data: Ref<ScatterNode[]> = computed( () => props.view?.data.nodes.filter((node: ScatterNode) => node.article_ids.length > (props.article_num_threshold || 0)))
-    const nodes_freq = computed(() => filtered_data.value?.map(node => {return {title: node.text, freq: node.article_ids.length}}))
     const clicked_node: Ref<ScatterNode> = ref(new ScatterNode())
     const clicked_node_element: Ref<any> = ref(undefined)
-    const menu = ref()
-    const menu_items = ref([
-        {
-            label: "Show co-occurrence",
-            command: () => {
-                emit("node_clicked", {title: props.view?.title,  d: clicked_node.value})
-            }
-        },
-    ])
     const viewBox: [number, number] = [1000, 1000]
     const margin = {top: 60, bottom: 60, right:40, left: 80} 
-
     const entityScatterPlot = new EntityScatter(props,margin,viewBox,filtered_data,tooltip_content,total_articles,min_articles,max_articles,clicked_node,clicked_node_element,hovered_node_info);
     
     vue.watch(() => props.segmentation, (new_value, old_value) => {
@@ -116,7 +103,7 @@
     // height: inherit;
     max-height: 100%;
     aspect-ratio: 1;
-    overflow: hidden;
+    // overflow: hidden;
     // height: auto;
     // width: inherit;
     // aspect-ratio: 1;

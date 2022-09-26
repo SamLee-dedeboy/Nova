@@ -260,6 +260,10 @@ export class EntityScatter {
 
     drawSegementation(emit){
         this.svg.call(this.zoom)
+            .on("mousedown.zoom", null)
+            .on("touchstart.zoom", null)
+            .on("touchmove.zoom", null)
+            .on("touchend.zoom", null);
         const drag = d3.drag()
             .on("start", (e, d)=>{ 
                 this.segment_controller_start.x = e.x
@@ -415,7 +419,6 @@ export class EntityScatter {
     
         let bind_data: ScatterNode[] = this.filtered_data.value
     
-        console.log(bind_data)
         const node_group = svg.select("g.node_group")
         node_group.selectAll("g.outlet")
         .data(bind_data, function(d: any) {return d.text})
@@ -521,7 +524,7 @@ export class EntityScatter {
                 }
                 cvThis.clicked_node_element.value = this
                 cvThis.clicked_node.value = d as ScatterNode
-                emit("node_clicked", {title: cvThis.props.view?.title, d: cvThis.clicked_node.value})
+                emit("node_clicked", cvThis.clicked_node.value.text)
             })
     
         // add images if comparing across outlets
