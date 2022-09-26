@@ -179,7 +179,7 @@ const overall_selected_hexview: Ref<typeUtils.CooccurrHexView | undefined> = ref
  */
 const outlet_weight_dict = vue.computed(() => store.state.outlet_weight_dict) 
 const resetOutletWeight = (outlet_weight_dict) => store.commit("resetOutletWeight", outlet_weight_dict) 
-const setOutletWeight = (outlet, weight) => store.commit("setOutletWeight", outlet, weight) 
+const setOutletWeight = ({outlet, weight}) => store.commit("setOutletWeight", {outlet, weight}) 
 /**
  * segmentation threshold of sentiment value.
  */
@@ -370,7 +370,7 @@ function handleSearch(item) {
 }
 
 function handleUpdateOutletWeight({outlet, value}) {
-  setOutletWeight(outlet, value)
+  setOutletWeight({outlet: outlet, weight: value})
   updateOverallEntityNode({outlet, value})
 }
 
@@ -479,9 +479,9 @@ function updateSegmentation(){
               <!-- filter slider -->
               <div v-if="overview_constructed" class="slider-container">
                 <ThresholdController
-                v-model:article_num_threshold="article_num_threshold"
-                :max_articles="overview_overall_scatter_metadata.max_articles"
-                :min_articles="overview_overall_scatter_metadata.min_articles"
+                  v-model:article_num_threshold="article_num_threshold"
+                  :max_articles="overview_overall_scatter_metadata.max_articles"
+                  :min_articles="overview_overall_scatter_metadata.min_articles"
                 ></ThresholdController>
               </div>
               <!-- Legend -->
@@ -631,6 +631,7 @@ main {
   flex-wrap: wrap;
   justify-content: space-between;
 }
+
 
 // ---------------------
 // entity info section

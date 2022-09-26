@@ -22,6 +22,7 @@ function autocompleteMatch(input) {
 }
 
 function showSearchResults(e) {
+    console.log("🚀 ~ file: SearchBar.vue ~ line 25 ~ showSearchResults ~ e", e)
     const list_container = document.querySelector('.list-container') as HTMLElement
     list_container.style.display = "block"
     const scroll_container = document.querySelector('.scroll-panel-container') as HTMLElement
@@ -37,7 +38,6 @@ function handleSearchClicked(item) {
         list_container.style.display = "none"
         const scroll_container = document.querySelector('.scroll-panel-container') as HTMLElement
         scroll_container.style.display = "none"
-
     })
 }
 
@@ -75,6 +75,7 @@ function handleLoseFocus() {
     background: white;
     border: 1px dotted #ccc;
     padding: 3px;
+    font-size: small;
 }
 .search-result >>> ul {
     list-style-type: none;
@@ -90,9 +91,11 @@ function handleLoseFocus() {
 }
 
 .scroll-panel-container {
-    height: 200px;
+    height: 100px;
     display: none;
-    top:30%;
+    top:82%;
+    position: absolute;
+    width: 100%;
 }
 .search-bar-container {
     height:100%;

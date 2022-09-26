@@ -71,11 +71,12 @@
     
     vue.watch(() => props.article_num_threshold, () => {
         entityScatterPlot.updateCanvas(emit)
-        entityScatterPlot.updateOverviewTooltipContent()
+        // entityScatterPlot.updateOverviewTooltipContent()
     })
     
     vue.watch(() => props.segment_mode, (new_value) => {
-        entityScatterPlot.updateSegmentation(0.5,0.5)
+        let segment_point = {x: entityScatterPlot.xScale(props.segmentation?.pos || 0.5), y: entityScatterPlot.yScale(props.segmentation?.neg || 0.5)}
+        entityScatterPlot.updateSegmentation(segment_point.x, segment_point.y)
         const svg = d3.select(`#${props.id}`).select("svg")
         svg.select("rect.segment-controller").style("opacity", new_value?1:0).raise()
     })

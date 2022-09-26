@@ -15,6 +15,10 @@ const emit = defineEmits(["update:article_num_threshold"])
 vue.onMounted(() => {
     console.log(props.max_articles, props.min_articles)
 })
+
+vue.watch(() => props.article_num_threshold, (new_value, old_value) => {
+    emit("update:article_num_threshold", props.article_num_threshold)
+})
 function handleIncrement() {
     const tmp = Math.min(props.article_num_threshold!+10, props.max_articles||100)
     emit("update:article_num_threshold", tmp)
@@ -33,8 +37,8 @@ function handleDecrease() {
     </div>
     <div class="threshold-slider-container">
         <div class="slider-spectrum-container">
-            <ColorSpectrum class="color-spectrum" :color-scale="SstColors.article_num_color_scale"></ColorSpectrum>
             <Slider class="threshold-slider" v-model="article_num_threshold" :step="10" :min="props.min_articles" :max="props.max_articles"></Slider>
+            <ColorSpectrum class="color-spectrum" :color-scale="SstColors.article_num_color_scale"></ColorSpectrum>
         </div>
         <div class="indicator-container">
             <div class="min_indicator">{{props.min_articles}}</div>
@@ -71,4 +75,18 @@ function handleDecrease() {
 .threshold-slider-container {
   width: inherit;
 }
+:deep(.p-slider-handle) {
+    border-radius: 10px !important; 
+    background: white !important;
+    z-index: 100;
+    height: 1.3rem !important;
+    width: 0.4rem !important;
+    border: 2px solid black !important;
+}
+:deep(.p-slider.p-slider-horizontal .p-slider-handle) {
+  margin-left: unset !important;
+}
+:deep(.p-slider-handle:hover) {
+    background: #007bff !important;
+} 
 </style>
