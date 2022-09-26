@@ -29,8 +29,8 @@ export class EntityScatter {
     viewBox: [number, number];
     vbWidth: number;
     vbHeight: number;
-    outlet_min_radius: number;
-    outlet_max_radius: number;
+    entity_min_radius: number;
+    entity_max_radius: number;
     margin: Margin;
     segment_controller_width: number;
     node_circle_radius: number;
@@ -63,8 +63,8 @@ export class EntityScatter {
         this.viewBox = viewBox;
         this.vbWidth = this.viewBox[0] - this.margin.left - this.margin.right;
         this.vbHeight = this.viewBox[1] - this.margin.top - this.margin.bottom;
-        this.outlet_min_radius = 10;
-        this.outlet_max_radius = 150;
+        this.entity_min_radius = 10;
+        this.entity_max_radius = 150;
         this.segment_controller_width = 12;
         this.node_circle_radius = 10;
         this.segment_point = {x: 0, y: 0};
@@ -109,7 +109,7 @@ export class EntityScatter {
             .call(this.zoom.transform, d3.zoomIdentity)
         svg.selectAll("g.axis_y")
             .call(this.zoom.transform, d3.zoomIdentity)
-        svg.selectAll("g.outlet")
+        svg.selectAll("g.entity")
             .call(this.zoom.transform, d3.zoomIdentity)
         this.current_zoom = d3.zoomIdentity
     }
@@ -131,6 +131,7 @@ export class EntityScatter {
             .lower()
     
         // neg
+        console.log(this.segment_point)
         const neg_rect: any = segment_group.selectAll("rect.neg")
         segment_group.enter().select("g.segmentation").append("rect")
                     .attr("class", "neg")
@@ -223,10 +224,10 @@ export class EntityScatter {
 
     handleZoom(e, svg) {
         // const svg = d3.select(`#${props.id}`).select("svg")
-        const outlet_group = svg.selectAll("g.outlet")
+        const entity_group = svg.selectAll("g.entity")
             .attr("transform", e.transform)
         
-        outlet_group.selectAll("circle")
+        entity_group.selectAll("circle")
             .attr("r", this.node_circle_radius/e.transform.k)
     
         svg.selectAll("g.axis_x")
@@ -386,55 +387,56 @@ export class EntityScatter {
             })
     }           
 
-    updateOverviewTooltipContent() {
-        const nodes = this.filtered_data.value! 
-        const title = this.props.view?.title
-        const entity_num = nodes.length || 0
-        const avg_pos_sst = _.mean(nodes.map(node => node.pos_sst))
-        const avg_neg_sst = _.mean(nodes.map(node => node.neg_sst))
-        nodes.sort((node_a, node_b) => -(node_a.article_ids.length - node_b.article_ids.length))
-        this.tooltip_content.value = 
-        `${title}: <br>` + 
-        `&nbsp #entities: ${entity_num} <br>` +
-        `&nbsp top entities:<ol>` 
-        for(let i = 0; i < Math.min(3, nodes.length); ++i) {
-            this.tooltip_content.value +=
-            `<li>${nodes[i].text.split("-")[0]}</li>`
-        }
-        this.tooltip_content.value += "</ol>" +
-        `&nbsp avg_sst: (${avg_pos_sst.toFixed(2)}, ${avg_neg_sst.toFixed(2)}) <br>` 
-        // if(this.props.view?.type === ViewType.EntityScatter) {
-        //     this.tooltip_content.value += `&nbsp total_articles: ${this.total_articles.value} <br>`
-        // }
-        // tooltip_content.value += `<svg id='${props.id}-wordcloud' class='tooltip_canvas' width='250px' height='100px'></svg>`
+    // updateOverviewTooltipContent() {
+    //     const nodes = this.filtered_data.value! 
+    //     const title = this.props.view?.title
+    //     const entity_num = nodes.length || 0
+    //     const avg_pos_sst = _.mean(nodes.map(node => node.pos_sst))
+    //     const avg_neg_sst = _.mean(nodes.map(node => node.neg_sst))
+    //     nodes.sort((node_a, node_b) => -(node_a.article_ids.length - node_b.article_ids.length))
+    //     this.tooltip_content.value = 
+    //     `${title}: <br>` + 
+    //     `&nbsp #entities: ${entity_num} <br>` +
+    //     `&nbsp top entities:<ol>` 
+    //     for(let i = 0; i < Math.min(3, nodes.length); ++i) {
+    //         this.tooltip_content.value +=
+    //         `<li>${nodes[i].text.split("-")[0]}</li>`
+    //     }
+    //     this.tooltip_content.value += "</ol>" +
+    //     `&nbsp avg_sst: (${avg_pos_sst.toFixed(2)}, ${avg_neg_sst.toFixed(2)}) <br>` 
+    //     // if(this.props.view?.type === ViewType.EntityScatter) {
+    //     //     this.tooltip_content.value += `&nbsp total_articles: ${this.total_articles.value} <br>`
+    //     // }
+    //     // tooltip_content.value += `<svg id='${props.id}-wordcloud' class='tooltip_canvas' width='250px' height='100px'></svg>`
         
-    }
+    // }
 
     updateOverviewScatter(emit:any) {
         const svg = d3.select(`#${this.props.id}`).select("svg")
         const article_radius_scale = d3.scalePow()
         .exponent(1)
         .domain([ this.min_articles.value, this.max_articles.value ])
-        .range([ this.outlet_min_radius, this.outlet_max_radius ]);
+        .range([ this.entity_min_radius, this.entity_max_radius ]);
     
         let bind_data: ScatterNode[] = this.filtered_data.value
     
         const node_group = svg.select("g.node_group")
-        node_group.selectAll("g.outlet")
+        node_group.selectAll("g.entity")
         .data(bind_data, function(d: any) {return d.text})
         .join( 
             enter => { 
-                enter.append("g").attr("class", "outlet").append("circle")
-                    .attr("class", "outlet_circle")
+                const group = enter.append("g").attr("class", "entity")
+                group.append("circle")
+                    .attr("class", "entity_circle")
                     .attr("r", this.node_circle_radius/(this.current_zoom?.k || 1))
                     .attr("cx", (d) => this.xScale(d.pos_sst))
                     .attr("cy", (d) => this.yScale(Math.abs(d.neg_sst)))
                     // .attr("fill", (d) => SstColors.outlet_color_dict[d.text])
                     .attr("fill", (d) => d.article_ids.length === 0? "white" :SstColors.article_num_color_scale(d.article_ids.length/this.max_articles.value))
                     .attr("opacity", 0.8)
-                    .raise();
+                    // .raise();
 
-                enter.append("g").attr("class", "outlet").append("circle")
+                group.append("circle")
                     .attr("class", "expand_circle")
                     .attr("r", this.node_circle_radius/(this.current_zoom?.k || 1))
                     .attr("cx", (d) => this.xScale(d.pos_sst))
@@ -444,11 +446,11 @@ export class EntityScatter {
                     .attr("stroke-dasharray", (d) => d.article_ids.length === 0? 2.5 : 0)
                     .lower();
 
-                enter.append("g").attr("class", "outlet").append("image")
-                    .attr("class", "outlet_image")
+                // enter.append("g").attr("class", "outlet").append("image")
+                //     .attr("class", "outlet_image")
             },
             update => {
-                update.select("circle.outlet_circle")
+                update.select("circle.entity_circle")
                     .transition().duration(1000)
                     // .attr("r", node_circle_radius/(current_zoom?.k || 1))
                     .attr("cx", (d: any) => this.xScale(d.pos_sst))
@@ -462,11 +464,11 @@ export class EntityScatter {
                 .on("end", function() {
                     emit("update-weight-ended")
                 })
-                update.selectAll("circle.outlet_circle")
+                update.selectAll("circle.entity_circle")
                 .attr("fill", (d: any) => SstColors.article_num_color_scale(d.article_ids.length/this.max_articles.value))
             }
         ) 
-        const dots = svg.selectAll("g.outlet")
+        const dots = svg.selectAll("g.entity")
         dots.sort((da: any, db: any) => (da.article_ids.length - db.article_ids.length))
         if(this.current_zoom) {
             dots.attr("transform", this.current_zoom)
@@ -487,7 +489,7 @@ export class EntityScatter {
         // const svg = d3.select(`#${this.props.id}`).select("svg")
     
         // add events
-        this.svg.selectAll("circle.outlet_circle")
+        this.svg.selectAll("circle.entity_circle")
             .style("cursor", "pointer")
             .on("mousemove", (e, d) => {
                 let align_image_offset = 0
@@ -549,9 +551,9 @@ export class EntityScatter {
         // apply hover effect
         container.selectAll("circle.expand_circle")
             .transition().duration(100)
-            .attr("r", (d) => (parseFloat(container.select("circle.outlet_circle").attr("r"))*1.5 ))
+            .attr("r", (d) => (parseFloat(container.select("circle.entity_circle").attr("r"))*1.5 ))
         const target_node_text = container.data()[0].text
-        const other_nodes_container = d3.select(`#${cvThis.props.id}`).selectAll("g.outlet").filter((d: any) => d.text != target_node_text)
+        const other_nodes_container = d3.select(`#${cvThis.props.id}`).selectAll("g.entity").filter((d: any) => d.text != target_node_text)
         other_nodes_container.selectAll("image")
             .attr("opacity", 0)
         container.selectAll("image")
@@ -564,9 +566,9 @@ export class EntityScatter {
         container.style("filter", "brightness(100%)")
         container.selectAll("circle.expand_circle")
             .transition().duration(100)
-            .attr("r", (d) => (parseFloat(container.select("circle.outlet_circle").attr("r"))))
+            .attr("r", (d) => (parseFloat(container.select("circle.entity_circle").attr("r"))))
         const target_node_text = container.data()[0].text
-        const other_nodes_container = d3.select(`#${cvThis.props.id}`).selectAll("g.outlet").filter((d: any) => d.text != target_node_text)
+        const other_nodes_container = d3.select(`#${cvThis.props.id}`).selectAll("g.entity").filter((d: any) => d.text != target_node_text)
         other_nodes_container.selectAll("image")
             .attr("opacity", 0.3)
         container.selectAll("image")
