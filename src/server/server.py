@@ -24,6 +24,11 @@ overview_scatter_grouped_data, sentiment_processor.grouped_metadata, grouped_nod
 def get_overall_scatter_data():
     return json.dumps(overview_scatter_overall_data, default=vars)
 
+@app.route("/overview/scatter/overall/node/<entity>")
+def get_overall_scatter_node(entity):
+    node = next(node for node in overview_scatter_overall_data.nodes if node.text == entity)
+    return json.dumps(node, default=vars)
+
 @app.route("/overview/scatter/grouped/data")
 def get_grouped_scatter_data():
     return json.dumps(overview_scatter_grouped_data, default=vars)
@@ -113,20 +118,16 @@ def get_scatter_node(node_text):
 
 @app.route("/processed_data/cooccurr_info/overall/<target>/<co_occurr_entity>")
 def get_cooccurr_info(target, co_occurr_entity):
-    split = target.split("-")
-
-    if len(split) == 1: # overall
-        entity = split[0]
-        cooccurr_article_ids = raw_data.entity_cooccurrences[entity][co_occurr_entity]
-        cooccurr_articles = processed_data.idsToArticles(cooccurr_article_ids)
-        articles_topic_dict = processed_data.binArticlesByTopic(cooccurr_articles)
-        response = {
-            "target": target,
-            "cooccurr_entity": co_occurr_entity,
-            "cooccurr_num": len(cooccurr_articles),
-            "articles_topic_dict": articles_topic_dict
-        }
-        return json.dumps(response)
+    cooccurr_article_ids = raw_data.entity_cooccurrences[target][co_occurr_entity]
+    cooccurr_articles = processed_data.idsToArticles(cooccurr_article_ids)
+    articles_topic_dict = processed_data.binArticlesByTopic(cooccurr_articles)
+    response = {
+        "target": target,
+        "cooccurr_entity": co_occurr_entity,
+        "cooccurr_num": len(cooccurr_articles),
+        "articles_topic_dict": articles_topic_dict
+    }
+    return json.dumps(response)
 
 @app.route("/processed_data/cooccurr_info/grouped/<outlet>/<target>/<co_occurr_entity>")
 def get_cooccurr_info_grouped(outlet, target, co_occurr_entity):

@@ -297,6 +297,7 @@ vue.onMounted(async() => {
         resolve("success")
       })
     }))
+    handleEntityClicked(selected_entity.value.name)
 
   }
   await Promise.all(promiseArray)
@@ -311,44 +312,53 @@ vue.watch(tutorial_step, (new_value, old_value) => {
 })
 
 // handlers
-  // send data
-async function handleEntityClicked({title, d}: {title: string, d: typeUtils.ScatterNode}) {
-    const entity = d.text.split("-")[0]
-    const outlet = d.text.split("-")[1]
-    const overall_flag = title === "Overall"
-    const path_overall_or_grouped = (overall_flag? "overall":"grouped")
+// send data
+async function handleEntityClicked(entity: string) {
     const metadata = overview_overall_scatter_metadata.value
-    const store_entity: typeUtils.EntityInfo = {
-      name: d.text,
-      outlet: "Overall",
-      num_of_mentions:d.article_ids.length,
-      sst_ratio: {
-        pos_artcs: d.pos_article_ids.length,
-        neg_artcs: d.neg_article_ids.length,
-        pos: d.pos_sst,
-        neg: d.neg_sst,
-        pos_max: metadata.pos_max,
-        pos_min: metadata.pos_min,
-        neg_max: metadata.neg_max,
-        neg_min: metadata.neg_min,
-      },
-      articles_topic_dict: d.topicBins
-    }
-    setEntity(store_entity)
     selected_cooccurr_entity.value = undefined
-
-    await fetch(`${server_address}/hexview/${path_overall_or_grouped}/${d.text}`)
+    const promiseArray: any[] = []
+    promiseArray.push(new Promise((resolve) => {
+      fetch(`${server_address}/overview/scatter/overall/node/${entity}`)
+      .then(res => res.json())
+      .then(json => {
+        const store_entity: typeUtils.EntityInfo = {
+          name: entity,
+          outlet: "Overall",
+          num_of_mentions:json.article_ids.length,
+          sst_ratio: {
+            pos_artcs: json.pos_article_ids.length,
+            neg_artcs: json.neg_article_ids.length,
+            pos: json.pos_sst,
+            neg: json.neg_sst,
+            pos_max: metadata.pos_max,
+            pos_min: metadata.pos_min,
+            neg_max: metadata.neg_max,
+            neg_min: metadata.neg_min,
+          },
+          articles_topic_dict: json.topicBins
+        }
+        setEntity(store_entity)
+        resolve("success")
+      })
+    }))
+    promiseArray.push(new Promise((resolve) => {
+      fetch(`${server_address}/hexview/overall/${entity}`)
       .then(res => res.json())
       .then(json => {
         const hex_view: typeUtils.CooccurrHexView = {
-          title: `co-${d.text}`,
+          title: `co-${entity}`,
           data: json,
         }
         overall_selected_hexview.value = hex_view
         console.log("cooccurr hex fetched")
+        resolve("success")
       })
-    return
+    }))
 
+    await Promise.all(promiseArray)
+      .then(res => {
+        // do nothing
+      })
 }
 
 function highlightChanged(new_value) {
@@ -522,7 +532,7 @@ function updateSegmentation(){
             <!-- Entity Info -->
             <div class="entity-info-container">
               <div class="target-cooccurr-container">
-                <EntityInfoView v-if="selected_entity"
+                <EntityInfoView v-if="selected_entity?.outlet === 'Overall'"
                     title="Target Entity"
                     :entity_info="selected_entity">
                 </EntityInfoView>
@@ -533,7 +543,7 @@ function updateSegmentation(){
                 </EntityInfoView>
               </div>
               <div class="topic-bar-container">
-                <TopicBars v-if="selected_entity"
+                <TopicBars v-if="selected_entity?.outlet === 'Overall'"
                     id="cooccurr_topic_bars"
                     :targetTopicBins="selected_entity?.articles_topic_dict"
                     :cooccurrTopicBins="selected_cooccurr_entity?.articles_topic_dict" >
@@ -541,7 +551,7 @@ function updateSegmentation(){
               </div>
               <!-- Next Stage -->
               <div class="navigate-container">
-                <router-link v-if="selected_entity" :to="{ name: 'compare', params: { entity: selected_entity.name }}">Next Stage</router-link>
+                <router-link v-if="selected_entity?.outlet === 'Overall'" :to="{ name: 'compare', params: { entity: selected_entity.name }}">Next Stage</router-link>
               </div>
             </div>
           </SplitterPanel>

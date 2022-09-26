@@ -524,7 +524,7 @@ export class EntityScatter {
                 }
                 cvThis.clicked_node_element.value = this
                 cvThis.clicked_node.value = d as ScatterNode
-                emit("node_clicked", {title: cvThis.props.view?.title, d: cvThis.clicked_node.value})
+                emit("node_clicked", cvThis.clicked_node.value.text)
             })
     
         // add images if comparing across outlets
