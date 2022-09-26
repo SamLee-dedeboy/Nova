@@ -113,7 +113,7 @@ async function fetch_articles(article_ids) {
 
 <template>
     <Splitter class="splitter-outmost">
-        <SplitterPanel id="article_view_section" class="articleview-section flex align-items-center justify-content-center" :size="left_section_size" :min-size="left_section_size" >
+        <SplitterPanel id="article_view_section" class="articleview-section flex align-items-center justify-content-center" :size="left_section_size">
             <i v-if="!data_fetched" class="pi pi-spin pi-spinner" 
             style="
             position:absolute;
