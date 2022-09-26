@@ -539,9 +539,11 @@ function updateSegmentation(){
                     :cooccurrTopicBins="selected_cooccurr_entity?.articles_topic_dict" >
                 </TopicBars>
               </div>
-            </div>
               <!-- Next Stage -->
-              <router-link v-if="selected_entity" :to="{ name: 'compare', params: { entity: selected_entity.name }}">Next Stage</router-link>
+              <div class="navigate-container">
+                <router-link v-if="selected_entity" :to="{ name: 'compare', params: { entity: selected_entity.name }}">Next Stage</router-link>
+              </div>
+            </div>
           </SplitterPanel>
         </Splitter>
       </SplitterPanel>
@@ -623,12 +625,18 @@ main {
 // ---------------------
 // entity info section
 // ---------------------
+.entity-info-container {
+  display: flex;
+  height: 100%;
+  justify-content: space-evenly;
+}
 .topic-bar-container {
   width: 50%;
 }
 
 .target-cooccurr-container {
   display: flex;
+  height: max-content;
 }
 
 
