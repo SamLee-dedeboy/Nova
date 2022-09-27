@@ -1,14 +1,6 @@
 <template>
 <div :id="id" class="hex-container">
-    <svg class="hex-svg">
-        <filter :id="`${id}-brightness`">
-            <feComponentTransfer>
-            <feFuncR type="linear" slope="2.4" />
-            <feFuncG type="linear" slope="2.4" />
-            <feFuncB type="linear" slope="2.4" />
-            </feComponentTransfer>
-        </filter>
-    </svg>
+    <svg class="hex-svg"> </svg>
 </div>
 </template>
 <script setup lang="ts">
@@ -95,100 +87,88 @@ function updateHexBins() {
     const svg = d3.select(`#${props.id}`).select("svg")
     const hex_group = svg.select("g.hex-group")
 
-    // prepare data
-    const inputForHexbin: any[] = []
-    console.log(sorted_cooccurrence_list.value)
-    sorted_cooccurrence_list.value.forEach((d: any) => {
-        inputForHexbin.push( [x(d.x), y(d.y)] )  
-    })
-    const hex_bins: any = hex_group.selectAll("g.hex-bin")
-        .data(sorted_cooccurrence_list.value)
-    hex_bins.enter().append("g").attr("class", "hex-bin")
-        .style("cursor", "pointer")
+    const hexbin_ = d3_hexbin.hexbin()
+    .x(d => x(d.x))
+    .y(d => y(d.y))
+    .radius(radius) // size of the bin in px
+    .extent([[0, 0], [viewBox_width, max_height]])
+
+    const hex_data = hexbin_(sorted_cooccurrence_list.value)
+
+
+    hex_group.append("g")
+    .attr("id","hex-paths")
+    .attr("stroke","white")
+    .selectAll("path")
+    .data(hex_data)
+    .join("path")
+        .attr("d", hexbin_.hexagon())
+        .attr("transform", d => `translate(${d.x},${d.y})`)
+        .attr("fill", d => {
+            const sst = d[0].sst;
+            return  SstColors.enum_color_dict[categorizeHex(sst, props.segmentation!)]
+        })
         .on("click", function(e, d) {
             const target = props.title?.split("-").slice(1).join("-")
-            
-            emit("hex-clicked", {target: target, co_occurr_entity: d.entity})
+            emit("hex-clicked", {target: target, co_occurr_entity: d[0].entity})
         })
-        .append("path")
-        .attr("class", "hex-path")
 
-    const hex_path: any = hex_group.selectAll("g.hex-bin").selectAll("path.hex-path")
-        .data((d: any) => {
-            return hexbin([[x(d.x), y(d.y)]])
-        })
-    hex_path.attr("d", (d:any) => `M${d.x},${d.y}${hexbin.hexagon()}`)
-        .attr("stroke", "black")
-        .attr("stroke-width", function(d, i) {
-            const parentNode: any = (this as HTMLElement).parentNode
-            const container: any = d3.select(parentNode)
-            const parent_data: any = container.data()[0]
-            if(parent_data.x === 0 && parent_data.y === 0) return 5.5
-            const index = parent_data.index
-            const level = index === 0? 0: find_level(index-1).level
-            const level_stroke_width = [3.2, 2, 1, 1, 1, 1]
-            return level_stroke_width[level]
-
-        })
-        .attr("filter", `url(#${props.id}-brightness)`)
-        .attr("opacity", function(d) {
-            const parentNode: any = (this as HTMLElement).parentNode
-            const container: any = d3.select(parentNode)
-            const parent_data: any = container.data()[0]
-            if(parent_data.exists) return 1
-            else return 0.5
-
-            const index = parent_data.index
-            const level = index === 0? 0: find_level(index-1).level
-            const level_opacity = [0.88, 0.8, 0.8, 0.8, 0.8, 0.8]
-            const opacity = level_opacity[level]
-            if(!applyMask.value) return opacity
-            if(sorted_cooccurrence_list.value[index].mask === false) return 0
-            else return opacity
-        })
-    hex_path.exit().remove()
-    const hex_label: any = hex_group.selectAll("g.hex-bin").selectAll("text.hex-label")
-        .data((d) => [d])
-    hex_label.enter().append("text")
-        .merge(hex_label)
-        .attr("class", "hex-label")
-        .attr("x", d => x(d.x))
-        .attr("y", d => y(d.y) - 35 - (Math.min(d.entity.split("_").length,4)+0.5)/2*15 )
-        .attr("opacity", function(d) {
-            const parentNode: any = (this as HTMLElement).parentNode
-            const container: any = d3.select(parentNode)
-            const parent_data: any = container.data()[0]
-            if(parent_data.exists) return 1
-            else return 0.5
-
-            const index = parent_data.index
-            const level = index === 0? 0: find_level(index-1).level 
-            const level_opacity = [0.95, 0.6, 0.55, 0.5, 0.7, 0.7]
-            const opacity = level_opacity[level]
-            if(!applyMask.value) return opacity
-            if(sorted_cooccurrence_list.value[index].mask === false) return 0
-            else return opacity
-        })
-    updateHexColor()
-    const tspan:any = hex_group.selectAll("g.hex-bin").selectAll("text.hex-label").selectAll("tspan")
-        .data((d: any) => {
-            const words = d.entity.split("_")
+    hex_group.append("g")
+        .attr("id", "labels")
+        .selectAll("text")
+        .data(hex_data)
+        .join("text")
+        .attr("x", d => d.x)
+        .attr("y", d => d.y) //compute from num words and subtract from the y 
+        .attr("text-anchor", "middle")
+        .attr("fill", "white")
+        .attr("font-size", "0.5em")
+        .text(d => {
+            const words = d[0].entity.split("_")
+            let phrase = d[0].entity.replaceAll("_", " ")
             if(words.length > 4) {
                 words[3] = "..."
                 words.length = 4
             }
-            return words
+            return phrase
         })
-    tspan.enter().append("tspan")
-        .merge(tspan)
-        .text((d:any) => d)
-        .attr("x", function(d) { return parseFloat(d3.select((this.parentNode) as any).attr("x") ) })
-        .attr("dy", 15)
-        .attr("font-size", "small")
-        .attr("text-anchor", "middle")
-        .attr("dominant-baseline", "middle")
-    tspan.exit().remove()
-}        
+        .call(wrap, 30)
+
+}
+
+function wrap(text, width) {
+    text.each(function () {
+        var text = d3.select(this),
+            words = text.text().split(/\s+/).reverse(),
+            word,
+            line = [],
+            lineNumber = 0,
+            lineHeight = 1.1, // ems
+            x = text.attr("x"),
+            y = text.attr("y"),
+            dy = 0, //parseFloat(text.attr("dy")),
+            tspan = text.text(null)
+                        .append("tspan")
+                        .attr("x", x)
+                        .attr("y", y)
+                        .attr("dy", dy + "em");
+        while (word = words.pop()) {
+            line.push(word);
+            tspan.text(line.join(" "));
+            if (tspan.node().getComputedTextLength() > width) {
+                line.pop();
+                tspan.text(line.join(" "));
+                line = [word];
+                tspan = text.append("tspan")
+                            .attr("x", x)
+                            .attr("y", y)
+                            .attr("dy", ++lineNumber * lineHeight + dy + "em")
+                            .text(word);
+            }
+        }
+    });
+}
+
 
 function updateHexColor(overall_entity_dict:any=undefined) {
     const svg = d3.select(`#${props.id}`).select("svg")
