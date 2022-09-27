@@ -122,6 +122,10 @@ function updateHexBins() {
             const sst = d[0].sst;
             return  SstColors.enum_color_dict[categorizeHex(sst, props.segmentation!)]
         })
+        .attr("opacity", (d: any) => {
+            if(d[0].exists) return 1
+            else return 0.2
+        })
         .on("click", function(e, d: any) {
             const target = props.title?.split("-").slice(1).join("-")
             emit("hex-clicked", {target: target, co_occurr_entity: d[0].entity})
@@ -138,6 +142,10 @@ function updateHexBins() {
         .attr("dominant-baseline", "central")
         .attr("fill", "black")
         .attr("font-size", "0.5em")
+        .attr("opacity", (d: any) => {
+            if(d[0].exists) return 1
+            else return 0.5
+        })
         .text((d: any) => {
             const words = d[0].entity.split("_")
             // if(words.length > 4) {
