@@ -11,6 +11,7 @@ import { updateOverviewGrid } from "./utils/TutorialUtils";
 import * as SstColors from "./utils/ColorUtils"
 import { SentimentType, Sentiment2D, EntityCooccurrences, HexEntity, ScatterNode } from "../types"
 import { Ref, ref } from "vue"
+import { schemeBrBG } from "d3";
 const props = defineProps({
     title: String,
     id: String,
@@ -94,8 +95,17 @@ function updateHexBins() {
     .extent([[0, 0], [viewBox_width, max_height]])
 
     const hex_data = hexbin_(sorted_cooccurrence_list.value)
+    // const centers = hexbin_.centers()
+    // svg.selectAll("circle.center")
+    //     .data(centers)
+    //     .join("circle")
+    //     .attr("class", "center")
+    //     .attr("cx", (d:any) => d[0])
+    //     .attr("cy", (d:any) => d[1])
+    //     .attr("r", 3)
+    //     .attr("fill", "blue")
 
-
+    const centers_indexed: any[] = []
     hex_group.append("g")
     .attr("id","hex-paths")
     .attr("stroke","white")
@@ -103,12 +113,15 @@ function updateHexBins() {
     .data(hex_data)
     .join("path")
         .attr("d", hexbin_.hexagon())
-        .attr("transform", d => `translate(${d.x},${d.y})`)
-        .attr("fill", d => {
+        .attr("transform", function (d: any, index) {
+            centers_indexed.push(d)
+            return `translate(${d.x},${d.y})`
+        })
+        .attr("fill", (d: any) => {
             const sst = d[0].sst;
             return  SstColors.enum_color_dict[categorizeHex(sst, props.segmentation!)]
         })
-        .on("click", function(e, d) {
+        .on("click", function(e, d: any) {
             const target = props.title?.split("-").slice(1).join("-")
             emit("hex-clicked", {target: target, co_occurr_entity: d[0].entity})
         })
@@ -118,30 +131,31 @@ function updateHexBins() {
         .selectAll("text")
         .data(hex_data)
         .join("text")
-        .attr("x", d => d.x)
-        .attr("y", d => d.y) //compute from num words and subtract from the y 
+        .attr("x", (d, i) => centers_indexed[i].x)
+        .attr("y", (d, i) => centers_indexed[i].y) //compute from num words and subtract from the y 
         .attr("text-anchor", "middle")
-        .attr("fill", "white")
+        .attr("dominant-baseline", "central")
+        .attr("fill", "black")
         .attr("font-size", "0.5em")
-        .text(d => {
+        .text((d: any) => {
             const words = d[0].entity.split("_")
-            let phrase = d[0].entity.replaceAll("_", " ")
-            if(words.length > 4) {
-                words[3] = "..."
-                words.length = 4
-            }
-            return phrase
+            // if(words.length > 4) {
+            //     words[3] = "..."
+            //     words.length = 4
+            // }
+            // console.log(words.join(" "))
+            return words.join(" ")
         })
         .call(wrap, 30)
 
 }
 
 function wrap(text, width) {
-    text.each(function () {
+    text.each(function (d, i) {
         var text = d3.select(this),
             words = text.text().split(/\s+/).reverse(),
             word,
-            line = [],
+            line: any[] = [],
             lineNumber = 0,
             lineHeight = 1.1, // ems
             x = text.attr("x"),
@@ -151,11 +165,13 @@ function wrap(text, width) {
                         .append("tspan")
                         .attr("x", x)
                         .attr("y", y)
-                        .attr("dy", dy + "em");
+                        .attr("dy", dy + "em")
+                        .attr("text-anchor", "bottom")
+                        .attr("dominant-baseline", "central")
         while (word = words.pop()) {
             line.push(word);
             tspan.text(line.join(" "));
-            if (tspan.node().getComputedTextLength() > width) {
+            if (tspan.node()!.getComputedTextLength() > width && line.length > 1) {
                 line.pop();
                 tspan.text(line.join(" "));
                 line = [word];
@@ -163,9 +179,13 @@ function wrap(text, width) {
                             .attr("x", x)
                             .attr("y", y)
                             .attr("dy", ++lineNumber * lineHeight + dy + "em")
+                            .attr("dominant-baseline", "central")
                             .text(word);
-            }
-        }
+            }        
+         }
+        const line_num = text.selectAll("tspan").nodes().length
+        const em_to_px = 16
+        text.selectAll("tspan").attr("y", parseFloat(y) - em_to_px/2*lineHeight*(line_num-1)/2)
     });
 }
 
