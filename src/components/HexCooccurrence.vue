@@ -87,6 +87,7 @@ vue.onMounted(() => {
 function updateHexBins() {
     const svg = d3.select(`#${props.id}`).select("svg")
     const hex_group = svg.select("g.hex-group")
+        .style("cursor", "pointer")
 
     const hexbin_ = d3_hexbin.hexbin()
     .x(d => x(d.x))
