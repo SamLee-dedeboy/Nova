@@ -194,16 +194,8 @@ function updateHexColor(overall_entity_dict:any=undefined) {
     const svg = d3.select(`#${props.id}`).select("svg")
     const hex_path_group = svg.select("g.hex-group")
     const hex_bins: any = hex_path_group.selectAll("path")
-        .attr("fill", function (d) {
-            const parentNode: any = (this as HTMLElement).parentNode
-            const container: any = d3.select(parentNode)
-            const parent_data: any = container.data()[0]
-            const sst: Sentiment2D|undefined = (overall_entity_dict !== undefined && parent_data.sst !== undefined)? 
-            { 
-                pos: overall_entity_dict?.[parent_data.entity].pos_sst,
-                neg: overall_entity_dict?.[parent_data.entity].neg_sst,
-            }:
-            parent_data.sst
+        .attr("fill", function (d: any) {
+            const sst = d[0].sst
             return SstColors.enum_color_dict[categorizeHex(sst, props.segmentation!)]
         })
 

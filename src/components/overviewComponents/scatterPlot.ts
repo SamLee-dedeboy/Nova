@@ -3,8 +3,6 @@ import {ComputedRef, Ref} from "vue"
 import * as d3 from "d3"
 import * as _ from "lodash"
 import * as SstColors from "../utils/ColorUtils"
-import * as NodeUtils from "../utils/NodeUtils"
-import { randomIrwinHall } from "d3"
 
 interface Margin {
     top: number,
@@ -131,7 +129,6 @@ export class EntityScatter {
             .lower()
     
         // neg
-        console.log(this.segment_point)
         const neg_rect: any = segment_group.selectAll("rect.neg")
         segment_group.enter().select("g.segmentation").append("rect")
                     .attr("class", "neg")
@@ -562,7 +559,6 @@ export class EntityScatter {
     }
     
     removeExpandedStyle(container: any, cvThis) {
-        console.log("THIS EXAPND", cvThis);
         container.style("filter", "brightness(100%)")
         container.selectAll("circle.expand_circle")
             .transition().duration(100)
