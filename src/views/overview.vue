@@ -556,9 +556,9 @@ function updateSegmentation({pos, neg}) {
     </Splitter>
     <!-- Tooltip for tutorial -->
     <Tooltip v-if="tutorial_mode" class="tutorial_tooltip" :content="tutorial_intro[tutorial_step]"></Tooltip>
-    "<span v-if="tutorial_mode" class="skip-button" 
+    <span v-if="tutorial_mode" class="skip-button" 
     style='text-decoration:underline;'
-    @click="tutorial_mode=false">Skip</span>"
+    @click="tutorial_mode=false">Skip</span>
   </main>
 </template>
 
@@ -570,8 +570,9 @@ function updateSegmentation({pos, neg}) {
 main {
   display: flex;
   justify-content: center;
-  width: 95vw;
-  height: 95vh;
+  align-items: center;
+  width: 99vw;
+  height: 98vh;
 }
 
 // ---------------------

@@ -205,8 +205,8 @@ async function fetch_articles(article_ids) {
 // css for split-panel layout
 // ---------------------
 .splitter-outmost {
-  width: 97vw;
-  height: 95vh;
+  width: 99vw;
+  height: 98vh;
   display: flex;
 }
 
