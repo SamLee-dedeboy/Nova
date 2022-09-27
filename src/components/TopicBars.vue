@@ -104,7 +104,7 @@ function updateBars() {
                 .transition().duration(1000)
                 .attr("y", (d) => y(d.num))
                 .attr("height", (d) => viewBox_height-y(d.num))
-                .attr("fill", SstColors.pos_color)
+                .attr("fill", "blue")
                 .style("filter", `brightness(${SstColors.brightness}%)`)
     } else {
         bars_group.selectAll("g.topic").selectAll("rect.cooccurr").remove()
