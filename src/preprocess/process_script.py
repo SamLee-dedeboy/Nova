@@ -6,8 +6,8 @@ subset_index = None
 def main():
     start_time = time.time()
     entity_link.add_entity(
-        src_dataset_path="data/processed_articles_hugFace.json",
-        dst_dataset_path="data/processed_articles_rel_hugFace.json",
+        src_dataset_path="data/processed_articles_with_summary_100.json",
+        dst_dataset_path="data/processed_articles_headline_entities.json",
         entity_list_path="data/rel_entities_ner.json",
         subset=subset_index
         )
