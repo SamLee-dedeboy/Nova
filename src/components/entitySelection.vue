@@ -1,6 +1,6 @@
 <template>
     <div :id="id" class="scatter-container" >
-        <svg id="entitySVG" class="outlet-scatterplot" ></svg>
+        <svg :id="svgId" class="entity-scatterplot" ></svg>
         <div class="button-set">
             <Button class="reset-zoom p-button-secondary" @click="resetZoom">reset</Button>
         </div>
@@ -20,13 +20,13 @@
     /**
      * utils & types
      */
-    import { ScatterNode, Sentiment2D, OutletNodeInfo, EntityScatterView } from '../../types'
-    import * as SstColors from "../utils/ColorUtils"
+    import { ScatterNode, Sentiment2D, OutletNodeInfo, EntityScatterView } from '../types'
+    import * as SstColors from "./utils/ColorUtils"
 
     /**
      * components
      */
-    import NodeInfo from '../NodeInfo.vue'
+    import NodeInfo from './NodeInfo.vue'
     import {EntityScatter} from "./scatterPlot"
 
 
@@ -59,12 +59,18 @@
     const clicked_node_element: Ref<any> = ref(undefined)
     const viewBox: [number, number] = [1000, 1000]
     const margin = {top: 60, bottom: 60, right:40, left: 80} 
-    const entityScatterPlot = new EntityScatter(props,margin,viewBox,filtered_data,tooltip_content,total_articles,min_articles,max_articles,clicked_node,clicked_node_element,hovered_node_info);
+    const svgId = "entitySvg"
+    const entityScatterPlot = new EntityScatter(
+        props, 
+        svgId,
+        margin, viewBox, 
+        filtered_data, 
+        tooltip_content, 
+        total_articles, min_articles, max_articles, 
+        clicked_node, clicked_node_element, 
+        hovered_node_info
+    );
     
-    // vue.watch(() => props.segmentation, (new_value, old_value) => {
-    //     let segment_point = {x: entityScatterPlot.xScale(new_value?.pos || 0.5), y: entityScatterPlot.yScale(new_value?.neg || 0.5)}
-    //     entityScatterPlot.updateSegmentation(segment_point.x,segment_point.y)
-    // }, {deep: true}) 
     
     vue.watch(() => props.view, (new_view, old_view) => {
         entityScatterPlot.updateCanvas(emit) 
@@ -100,7 +106,7 @@
 .scatter-container {
     background-color: white;
 }
-.outlet-scatterplot {
+.entity-scatterplot {
     // overflow: hidden;
     // height: inherit;
     max-height: 100%;

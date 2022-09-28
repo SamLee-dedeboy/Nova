@@ -1,8 +1,8 @@
-import { ScatterNode, OutletNodeInfo } from "../../types"
+import { ScatterNode, OutletNodeInfo } from "../types"
 import {ComputedRef, Ref} from "vue"
 import * as d3 from "d3"
 import * as _ from "lodash"
-import * as SstColors from "../utils/ColorUtils"
+import * as SstColors from "./utils/ColorUtils"
 
 interface Margin {
     top: number,
@@ -24,6 +24,7 @@ interface SegmentPoint {
 
 export class EntityScatter {
     props: any;
+    svgId: string;
     viewBox: [number, number];
     vbWidth: number;
     vbHeight: number;
@@ -53,10 +54,11 @@ export class EntityScatter {
     clicked_node_element: Ref<any>
     hovered_node_info: Ref<OutletNodeInfo>
 
-    public constructor(props:any, margin:Margin, viewBox:[number,number], filtered_data:Ref<ScatterNode[]>, tooltip_content: Ref<string>, 
+    public constructor(props:any, svgId: string, margin:Margin, viewBox:[number,number], filtered_data:Ref<ScatterNode[]>, tooltip_content: Ref<string>, 
         total_articles: ComputedRef<any>, min_articles: ComputedRef<any>, max_articles: ComputedRef<any>, clicked_node: Ref<ScatterNode>, clicked_node_element: Ref<any>,
         hovered_node_info: Ref<OutletNodeInfo>){
         this.props = props
+        this.svgId = svgId
         this.margin = margin;
         this.viewBox = viewBox;
         this.vbWidth = this.viewBox[0] - this.margin.left - this.margin.right;
@@ -94,7 +96,7 @@ export class EntityScatter {
     }
 
     draw(emit) : void {
-        this.initScatterSvg("entitySVG")
+        this.initScatterSvg(this.svgId)
         this.drawSegementation(emit)
         this.drawAxis(emit)
     }
