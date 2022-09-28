@@ -13,6 +13,7 @@
     import { onMounted, computed, Ref, ref, defineEmits} from 'vue'
     import * as d3 from "d3"
     import * as _ from "lodash"
+    import { useStore } from 'vuex'
     /**
      * utils & types
      */
@@ -66,25 +67,41 @@
         tooltip_content, 
         total_articles, min_articles, max_articles, 
         clicked_node, clicked_node_element, 
-        hovered_node_info
+        hovered_node_info,
     );
 
     vue.watch(() => props.view, (new_view, old_view) => {
         entityScatterPlot.updateCanvas(emit) 
     }, {deep: true})
 
-    vue.watch(() => props.segmentation, (new_value, old_value) => {
-        let segment_point = {x: entityScatterPlot.xScale(new_value?.pos || 0.5), y: entityScatterPlot.yScale(new_value?.neg || 0.5)}
-        entityScatterPlot.updateSegmentation(segment_point.x,segment_point.y)
-    }, {deep: true}) 
+    // vue.watch(() => props.segmentation, (new_value, old_value) => {
+    //     let segment_point = {x: entityScatterPlot.xScale(new_value?.pos || 0.5), y: entityScatterPlot.yScale(new_value?.neg || 0.5)}
+    //     entityScatterPlot.updateSegmentation(segment_point.x,segment_point.y, true)
+    // }, {deep: true}) 
+    // vue.watch(() => segmentation.value, (new_value, old_value) => {
+    //     if(new_value.pos !== old_value.pos && new_value.neg !== old_value.neg) {
+    //         console.log(new_value.pos, old_value.pos, new_value.neg, old_value.neg)
+    //         let segment_point = {x: entityScatterPlot.xScale(new_value.pos), y: entityScatterPlot.yScale(new_value.neg)}
+    //         entityScatterPlot.updateSegmentation(segment_point.x,segment_point.y, true)
+    //     }
+    // }, {deep: true}) 
     
     onMounted(() => {
         // Render Scatter
         entityScatterPlot.draw(emit);
     })
+
+    function updateSegmentation(segmentation) {
+        let segment_point = {x: entityScatterPlot.xScale(segmentation.pos), y: entityScatterPlot.yScale(segmentation.neg)}
+        entityScatterPlot.updateSegmentation(segment_point.x,segment_point.y, true)
+    }
+
     function resetZoom() {
         entityScatterPlot.resetView()
     }
+    defineExpose({
+        updateSegmentation
+    })
     
 </script>
 

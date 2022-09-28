@@ -47,6 +47,7 @@ const removeConstraint = (constraint_target: string) => store.commit("removeCons
 
 const entity_grouped_view: Ref<any> = ref(undefined)
 const target_articles: Ref<Article[]> = ref([])
+const outlet_scatter: Ref<any> = ref(null)
 vue.onMounted(() => {
     const article_ids = selected_cooccurr_entity.value.cooccurr_article_ids
     const promiseArray: any[] = []
@@ -88,6 +89,7 @@ vue.watch(selectedCategory, (new_value, old_value) => {
     if(new_value.type === SentimentType.mix) {
         setSegmentation({pos: adjust_target.pos - offset, neg: adjust_target.neg - offset})
     }
+    outlet_scatter.value.updateSegmentation(segmentation.value)
     const new_constraint: Constraint = {
         target: selected_entity.value.name,
         outlet: selected_entity.value.outlet,
@@ -226,6 +228,7 @@ function updateSegmentation({pos, neg}) {
                     </ol> 
                 </div>
                 <OutletScatterplot
+                    ref="outlet_scatter"
                     v-if="entity_grouped_view"
                     :view="entity_grouped_view"
                     id="outlet-scatter"
@@ -233,9 +236,9 @@ function updateSegmentation({pos, neg}) {
                     :segmentation="segmentation"
                     @update:segmentation="updateSegmentation" >
                 </OutletScatterplot>
-            </div>
-            <div class='navigation-container'>
-                <router-link v-if="data_fetched" :to="{ name: 'compare', params: { entity: selected_entity.name }}">Back</router-link>
+                <div class='navigation-container'>
+                    <router-link v-if="data_fetched" :to="{ name: 'compare', params: { entity: selected_entity.name }}">Back</router-link>
+                </div>
             </div>
         </SplitterPanel>
     </Splitter>
