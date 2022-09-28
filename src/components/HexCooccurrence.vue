@@ -130,7 +130,6 @@ function updateHexBins() {
             const target = props.title?.split("-").slice(1).join("-")
             emit("hex-clicked", {target: target, co_occurr_entity: d[0].entity})
         })
-
     hex_group.append("g")
         .attr("id", "labels")
         .selectAll("text")
@@ -156,6 +155,10 @@ function updateHexBins() {
             return words.join(" ")
         })
         .call(wrap, 30)
+        .on("click", function(e, d: any) {
+            const target = props.title?.split("-").slice(1).join("-")
+            emit("hex-clicked", {target: target, co_occurr_entity: d[0].entity})
+        })
 
 }
 
