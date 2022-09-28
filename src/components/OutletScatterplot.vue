@@ -52,11 +52,16 @@
     const clicked_node_element: Ref<any> = ref(undefined)
     const viewBox: [number, number] = [1000, 1000]
     const margin = {top: 60, bottom: 60, right:40, left: 80} 
+    const node_radius = 30
+    const segment_controller_width = 52
+    const show_axes = false
     const svgId = "outletSvg"
     const entityScatterPlot = new EntityScatter(
         props, 
         svgId,
         margin, viewBox, 
+        node_radius, segment_controller_width,
+        show_axes, 
         filtered_data, 
         tooltip_content, 
         total_articles, min_articles, max_articles, 
@@ -67,6 +72,7 @@
     vue.watch(() => props.view, (new_view, old_view) => {
         entityScatterPlot.updateCanvas(emit) 
     }, {deep: true})
+
     vue.watch(() => props.segmentation, (new_value, old_value) => {
         let segment_point = {x: entityScatterPlot.xScale(new_value?.pos || 0.5), y: entityScatterPlot.yScale(new_value?.neg || 0.5)}
         entityScatterPlot.updateSegmentation(segment_point.x,segment_point.y)

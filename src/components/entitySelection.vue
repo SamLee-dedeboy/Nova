@@ -59,11 +59,16 @@
     const clicked_node_element: Ref<any> = ref(undefined)
     const viewBox: [number, number] = [1000, 1000]
     const margin = {top: 60, bottom: 60, right:40, left: 80} 
+    const node_radius = 10
+    const segment_controller_width = 12
+    const show_axes = true
     const svgId = "entitySvg"
     const entityScatterPlot = new EntityScatter(
         props, 
         svgId,
         margin, viewBox, 
+        node_radius, segment_controller_width,
+        show_axes,
         filtered_data, 
         tooltip_content, 
         total_articles, min_articles, max_articles, 
