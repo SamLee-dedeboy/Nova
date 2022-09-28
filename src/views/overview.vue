@@ -35,7 +35,7 @@ import SearchBar from "../components/SearchBar.vue";
 import EntityInfoView from "../components/EntityInfoView.vue"
 import HexCooccurrence from "../components/HexCooccurrence.vue";
 import TopicBars from "../components/TopicBars.vue"
-import EntitySelection from "../components/overviewComponents/entitySelection.vue"
+import EntitySelection from "../components/entitySelection.vue"
 import ThresholdController from "../components/ThresholdController.vue";
 
 
