@@ -1,10 +1,8 @@
-import { ScatterNode, OutletNodeInfo } from "../../types"
+import { ScatterNode, OutletNodeInfo } from "../types"
 import {ComputedRef, Ref} from "vue"
 import * as d3 from "d3"
 import * as _ from "lodash"
-import * as SstColors from "../utils/ColorUtils"
-import * as NodeUtils from "../utils/NodeUtils"
-import { randomIrwinHall } from "d3"
+import * as SstColors from "./utils/ColorUtils"
 
 interface Margin {
     top: number,
@@ -17,6 +15,10 @@ interface SegmentPoint {
     x: number,
     y: number
 }
+d3.selection.prototype.conditionalTransition =
+    function(flag, duration, delay) {
+        return flag? this.transition().duration(duration).delay(delay): this;
+    };
 
 
 
@@ -26,6 +28,7 @@ interface SegmentPoint {
 
 export class EntityScatter {
     props: any;
+    svgId: string;
     viewBox: [number, number];
     vbWidth: number;
     vbHeight: number;
@@ -40,6 +43,7 @@ export class EntityScatter {
     segment_controller_start: SegmentPoint;
 
 
+    show_axes: boolean;
     xScale: d3.ScalePower<number,number,never>;
     yScale: d3.ScalePower<number,number,never>;
     
@@ -55,21 +59,31 @@ export class EntityScatter {
     clicked_node_element: Ref<any>
     hovered_node_info: Ref<OutletNodeInfo>
 
-    public constructor(props:any, margin:Margin, viewBox:[number,number], filtered_data:Ref<ScatterNode[]>, tooltip_content: Ref<string>, 
-        total_articles: ComputedRef<any>, min_articles: ComputedRef<any>, max_articles: ComputedRef<any>, clicked_node: Ref<ScatterNode>, clicked_node_element: Ref<any>,
-        hovered_node_info: Ref<OutletNodeInfo>){
+    public constructor(
+        props:any, svgId: string, 
+        margin:Margin, viewBox:[number,number], 
+        node_radius: number, segment_controller_width: number, 
+        show_axes: boolean,
+        filtered_data:Ref<ScatterNode[]>, 
+        tooltip_content: Ref<string>, 
+        total_articles: ComputedRef<any>, 
+        min_articles: ComputedRef<any>, max_articles: ComputedRef<any>, 
+        clicked_node: Ref<ScatterNode>, clicked_node_element: Ref<any>,
+        hovered_node_info: Ref<OutletNodeInfo>,
+        ){
         this.props = props
+        this.svgId = svgId
         this.margin = margin;
         this.viewBox = viewBox;
         this.vbWidth = this.viewBox[0] - this.margin.left - this.margin.right;
         this.vbHeight = this.viewBox[1] - this.margin.top - this.margin.bottom;
-        this.entity_min_radius = 10;
-        this.entity_max_radius = 150;
-        this.segment_controller_width = 12;
-        this.node_circle_radius = 10;
+        this.segment_controller_width = segment_controller_width;
+        this.node_circle_radius = node_radius;
         this.segment_point = {x: 0, y: 0};
         this.segment_controller_start = {x:0, y:0};
         this.current_zoom = undefined;
+
+        this.show_axes = show_axes
 
         this.filtered_data = filtered_data;
         this.tooltip_content = tooltip_content;
@@ -96,9 +110,11 @@ export class EntityScatter {
     }
 
     draw(emit) : void {
-        this.initScatterSvg("entitySVG")
+        this.initScatterSvg(this.svgId)
         this.drawSegementation(emit)
-        this.drawAxis(emit)
+        this.updateCanvas(emit)
+        if(this.show_axes)
+            this.drawAxis(emit)
     }
 
     /* Exposed for event handling */
@@ -118,7 +134,7 @@ export class EntityScatter {
         this.updateExpandedScatter(emit)
     } 
 
-    updateSegmentation(x:number, y:number) : void{
+    updateSegmentation(x:number, y:number, animation = false) : void{
         this.segment_point.x = x;
         this.segment_point.y = y;
 
@@ -131,18 +147,18 @@ export class EntityScatter {
             .lower()
     
         // neg
-        console.log(this.segment_point)
         const neg_rect: any = segment_group.selectAll("rect.neg")
         segment_group.enter().select("g.segmentation").append("rect")
                     .attr("class", "neg")
                     .attr("fill", SstColors.neg_color)
                     .style("filter", `brightness(${SstColors.brightness}%)`)
                     .merge(neg_rect)
+                    .conditionalTransition(animation, 1000, 0)
                     .attr("x", this.margin.left)
                     .attr("y", this.margin.top)
-                    .attr("width", (d) => this.segment_point.x+this.margin.left)
-                    .attr("height", (d) => this.segment_point.y+this.margin.top)
-                    .lower()
+                    .attr("width", (d) => this.segment_point.x-this.margin.left)
+                    .attr("height", (d) => this.segment_point.y-this.margin.top)
+                    // .lower()
         // neu
         const neu_rect: any = segment_group.selectAll("rect.neu")
         segment_group.enter().select("g.segmentation").append("rect")
@@ -150,6 +166,7 @@ export class EntityScatter {
                     .attr("fill", SstColors.neu_color)
                     .style("filter", `brightness(${SstColors.brightness}%)`)
                     .merge(neu_rect)
+                    .conditionalTransition(animation, 1000, 0)
                     .attr("x", this.margin.left)
                     .attr("y", (d) =>  this.segment_point.y)
                     .attr("width", (d) => this.segment_point.x-this.margin.left)
@@ -162,6 +179,7 @@ export class EntityScatter {
                     .attr("fill", SstColors.pos_color)
                     .style("filter", `brightness(${SstColors.brightness}%)`)
                     .merge(pos_rect)
+                    .conditionalTransition(animation, 1000, 0)
                     .attr("x", (d) => this.segment_point.x)
                     .attr("y", (d) => this.segment_point.y)
                     .attr("width", (d) => this.vbWidth-this.segment_point.x+this.margin.left)
@@ -173,6 +191,7 @@ export class EntityScatter {
                     .attr("fill", SstColors.mixed_color)
                     .style("filter", `brightness(${SstColors.brightness}%)`)
                     .merge(mixed_rect)
+                    .conditionalTransition(animation, 1000, 0)
                     .attr("x", (d) => this.segment_point.x)
                     .attr("y", this.margin.top)
                     .attr("width", (d) => this.vbWidth-this.segment_point.x+this.margin.left)
@@ -182,6 +201,7 @@ export class EntityScatter {
             .style("pointer-events", "none")
         svg.selectAll("rect.segment-controller")
             .data([{x: this.segment_point.x-this.segment_controller_width/2, y:this.segment_point.y-this.segment_controller_width/2}])
+            .conditionalTransition(animation, 1000, 0)
             .attr("x", (d) => d.x)
             .attr("y", (d) => d.y)
             // .attr("x", () => (segment_point.x-segment_controller_width/2))
@@ -260,20 +280,23 @@ export class EntityScatter {
     }
 
     drawSegementation(emit){
-        this.svg.call(this.zoom)
+        var svg = this.svg
+        var self = this
+        svg.call(this.zoom)
             .on("mousedown.zoom", null)
             .on("touchstart.zoom", null)
             .on("touchmove.zoom", null)
             .on("touchend.zoom", null);
         const drag = d3.drag()
             .on("start", (e, d)=>{ 
-                this.segment_controller_start.x = e.x
-                this.segment_controller_start.y = e.y
-                d3.select('rect.segment-controller').attr("stroke", "black")
+                console.log("start")
+                self.segment_controller_start.x = e.x
+                self.segment_controller_start.y = e.y
+                svg.select('rect.segment-controller').attr("stroke", "black")
             })
             .on("drag", (e:any, d:any) => { 
                 let current_scale;
-                const segmentRect = d3.select('rect.segment-controller');
+                const segmentRect = svg.select('rect.segment-controller');
                 //select element by id
                 if (segmentRect.attr("transform") === null){
                     current_scale = 1; 
@@ -283,18 +306,19 @@ export class EntityScatter {
                     const current_scale_string = segmentRect.attr("transform")?.split(' ')[1] || "";
                     current_scale = +current_scale_string.substring(6,current_scale_string.length-1);
                 }
-                const end_x = this.segment_controller_start.x + ((e.x - this.segment_controller_start.x) / current_scale) 
-                const end_y = this.segment_controller_start.y + ((e.y - this.segment_controller_start.y) / current_scale) 
+                const end_x = self.segment_controller_start.x + ((e.x - self.segment_controller_start.x) / current_scale) 
+                const end_y = self.segment_controller_start.y + ((e.y - self.segment_controller_start.y) / current_scale) 
                 segmentRect
                     // .attr("x", d.x=(end_x-segment_controller_width/2) + (segment_controller_width-segment_controller_width/(current_zoom?.k || 1))/2)
                     // .attr("y", d.y=(end_y-segment_controller_width/2) + (segment_controller_width-segment_controller_width/(current_zoom?.k || 1))/2)
-                    .attr("x", d.x=(end_x-(this.segment_controller_width/(this.current_zoom?.k || 1))/2))
-                    .attr("y", d.y=(end_y-(this.segment_controller_width/(this.current_zoom?.k || 1))/2))
+                    .attr("x", d.x=(end_x-(self.segment_controller_width/(self.current_zoom?.k || 1))/2))
+                    .attr("y", d.y=(end_y-(self.segment_controller_width/(self.current_zoom?.k || 1))/2))
                     .raise();
 
-                let segment_point = {x: Math.max(this.margin.left, Math.min(end_x, this.vbWidth)), y: Math.max(this.margin.top, Math.min(end_y, this.vbHeight))} 
-                emit("update:segmentation", {pos: this.xScale.invert(this.segment_point.x), neg: this.yScale.invert(this.segment_point.y)})
-                this.updateSegmentation(segment_point.x,segment_point.y)
+                let segment_point = {x: Math.max(self.margin.left, Math.min(end_x, self.vbWidth)), y: Math.max(self.margin.top, Math.min(end_y, self.vbHeight))} 
+                self.updateSegmentation(segment_point.x,segment_point.y)
+                emit("update:segmentation", {pos: self.xScale.invert(self.segment_point.x), neg: self.yScale.invert(self.segment_point.y)})
+                // self.setSegmentation({pos: self.xScale.invert(self.segment_point.x), neg: self.yScale.invert(self.segment_point.y)})
             })
             .on("end", function(e, d) { d3.select(this).attr("stroke", null)})
 
@@ -320,8 +344,6 @@ export class EntityScatter {
     }
 
     drawAxis(emit:any){
-        this.updateCanvas(emit)
-        this.updateExpandedScatter(emit) // if(tutorial_mode.value && tutorial_step.value === 0) {}
 
         this.svg.append("g")
             .attr("class", "axis_x")
@@ -413,10 +435,6 @@ export class EntityScatter {
 
     updateOverviewScatter(emit:any) {
         const svg = d3.select(`#${this.props.id}`).select("svg")
-        const article_radius_scale = d3.scalePow()
-        .exponent(1)
-        .domain([ this.min_articles.value, this.max_articles.value ])
-        .range([ this.entity_min_radius, this.entity_max_radius ]);
     
         let bind_data: ScatterNode[] = this.filtered_data.value
     
@@ -562,7 +580,6 @@ export class EntityScatter {
     }
     
     removeExpandedStyle(container: any, cvThis) {
-        console.log("THIS EXAPND", cvThis);
         container.style("filter", "brightness(100%)")
         container.selectAll("circle.expand_circle")
             .transition().duration(100)

@@ -1,15 +1,15 @@
 import * as d3 from "d3"
 import { SentimentType } from "../../types"
-const brightness = 140
+const brightness = 100
 const offset = 0.15
 const sst_range = d3.interpolateBrBG
-const neg_color = sst_range(0+offset)
-const pos_color = sst_range(1-offset)
-const neu_color = "grey"
-const mixed_color = "#125f3b"
+const neg_color = '#f4c49c' //sst_range(0+offset)
+const pos_color = '#baf0f5' //sst_range(1-offset)
+const neu_color = "#c4c3c3"
+const mixed_color = "#a54dd9"
 const entity_selected_color = "#007bff"
 const key_color_dict = {
-                "positive": pos_color,
+                "positive": pos_color, //pos_color,
                 "negative": neg_color,
                 "neutral": neu_color,
                 "mixed": mixed_color, 

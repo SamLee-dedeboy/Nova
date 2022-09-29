@@ -26,6 +26,7 @@ import { Article, SentimentType, Sentiment2D, Constraint } from "../types"
 import ArticleView from "../components/ArticleView.vue";
 import EntityInfoView from "../components/EntityInfoView.vue";
 import HexCooccurrence from "../components/HexCooccurrence.vue"
+import OutletScatterplot from '../components/OutletScatterplot.vue';
 
 const store = useStore()
 
@@ -44,10 +45,21 @@ const constraint_dict = vue.computed(() => store.state.constraints)
 const addConstraint = (constraint: Constraint) => store.commit("addConstraint", constraint)
 const removeConstraint = (constraint_target: string) => store.commit("removeConstraint", constraint_target)
 
+const entity_grouped_view: Ref<any> = ref(undefined)
 const target_articles: Ref<Article[]> = ref([])
+const outlet_scatter: Ref<any> = ref(null)
 vue.onMounted(() => {
     const article_ids = selected_cooccurr_entity.value.cooccurr_article_ids
-    fetch_articles(article_ids)
+    const promiseArray: any[] = []
+    promiseArray.push(new Promise(async (resolve) => {
+        await fetch_articles(article_ids)
+        resolve("success")
+    }))
+    promiseArray.push(new Promise(async (resolve) => {
+        await fetch_entity_grouped_node(selected_entity.value.name)
+        resolve("success")
+    }))
+    Promise.all(promiseArray)
 })
 
 const sentiment_options = [
@@ -77,7 +89,7 @@ vue.watch(selectedCategory, (new_value, old_value) => {
     if(new_value.type === SentimentType.mix) {
         setSegmentation({pos: adjust_target.pos - offset, neg: adjust_target.neg - offset})
     }
-    console.log(segmentation.value)
+    outlet_scatter.value.updateSegmentation(segmentation.value)
     const new_constraint: Constraint = {
         target: selected_entity.value.name,
         outlet: selected_entity.value.outlet,
@@ -107,8 +119,30 @@ async function fetch_articles(article_ids) {
         console.log("articles fetched")
         data_fetched.value = true
     })
-
 }
+
+async function fetch_entity_grouped_node(entity) {
+    await fetch(`${server_address}/processed_data/scatter_node/grouped/${entity}`)
+    .then(res => res.json())
+    .then(json => {
+        entity_grouped_view.value = {
+            title: entity,
+            data: {
+                nodes: json,
+                max_articles: Math.max(...json.map(node => node.article_ids.length)),
+                min_articles: Math.min(...json.map(node => node.article_ids.length)),
+            }
+            
+        }
+        console.log("🚀 ~ file: InspectionView.vue ~ line 126 ~ fetch_entity_grouped_node ~ entity_grouped_view", entity_grouped_view.value)
+    })
+}
+
+
+function updateSegmentation({pos, neg}) {
+  setSegmentation({pos, neg})
+}
+
 </script>
 
 <template>
@@ -185,15 +219,26 @@ async function fetch_articles(article_ids) {
                     :segmentation="segmentation">
                 </HexCooccurrence>
             </div>
-            <div class="constraints-view">
-                <ol v-if="constraint_dict[selected_entity.name]">
-                    <li v-for="outlet in Object.keys(constraint_dict[selected_entity.name])"> 
-                        {{outlet}} - {{constraint_dict[selected_entity.name][outlet]}}
-                    </li>
-                </ol> 
-            </div>
-            <div class='navigation-container'>
-                <router-link v-if="data_fetched" :to="{ name: 'compare', params: { entity: selected_entity.name }}">Back</router-link>
+            <div class="constaints-outlet-scatter-container">
+                <div class="constraints-view">
+                    <ol v-if="constraint_dict[selected_entity.name]">
+                        <li v-for="outlet in Object.keys(constraint_dict[selected_entity.name])"> 
+                            {{outlet}} - {{constraint_dict[selected_entity.name][outlet]}}
+                        </li>
+                    </ol> 
+                </div>
+                <OutletScatterplot
+                    ref="outlet_scatter"
+                    v-if="entity_grouped_view"
+                    :view="entity_grouped_view"
+                    id="outlet-scatter"
+                    :segment_mode="true"
+                    :segmentation="segmentation"
+                    @update:segmentation="updateSegmentation" >
+                </OutletScatterplot>
+                <div class='navigation-container'>
+                    <router-link v-if="data_fetched" :to="{ name: 'compare', params: { entity: selected_entity.name }}">Back</router-link>
+                </div>
             </div>
         </SplitterPanel>
     </Splitter>
@@ -205,8 +250,8 @@ async function fetch_articles(article_ids) {
 // css for split-panel layout
 // ---------------------
 .splitter-outmost {
-  width: 97vw;
-  height: 95vh;
+  width: 99vw;
+  height: 98vh;
   display: flex;
 }
 
@@ -259,6 +304,20 @@ async function fetch_articles(article_ids) {
 // ---------------------
 .hexview-container {
   height: 59%;
+}
+
+// ---------------------
+// Constaints & Outlet Scatterplot Section
+// ---------------------
+.constaints-outlet-scatter-container {
+  display: flex;
+}
+.constraints-view {
+  width: fit-content;
+}
+
+#outlet-scatter {
+  width: 21%;
 }
 
 </style>

@@ -35,7 +35,7 @@ import SearchBar from "../components/SearchBar.vue";
 import EntityInfoView from "../components/EntityInfoView.vue"
 import HexCooccurrence from "../components/HexCooccurrence.vue";
 import TopicBars from "../components/TopicBars.vue"
-import EntitySelection from "../components/overviewComponents/entitySelection.vue"
+import EntitySelection from "../components/entitySelection.vue"
 import ThresholdController from "../components/ThresholdController.vue";
 
 
@@ -158,9 +158,6 @@ const utilities_panel_size = vue.computed(() => 100 - entity_scatter_panel_size)
 const entity_info_panel_size = 30
 const hex_view_panel_size = vue.computed(() => 100 - entity_info_panel_size)
 
-function updateThreshold(new_value) {
-  setSegmentation(new_value)
-}
 
 /**
  * Array of selected articles. \
@@ -183,10 +180,9 @@ const setOutletWeight = ({outlet, weight}) => store.commit("setOutletWeight", {o
 /**
  * segmentation threshold of sentiment value.
  */
-const segment_sst: Ref<typeUtils.Sentiment2D> = vue.computed(() => store.state.segmentation)
+const segmentation = vue.computed(() => store.state.segmentation)
 const setSegmentation = (segmentation) => store.commit("setSegmentation", segmentation) 
 
-vue.provide('segment_sst', {segment_sst, updateThreshold})
 
 
 vue.watch(overview_constructed, (new_value, old_value) => {
@@ -426,8 +422,8 @@ function handleUpdateWeightEnded() {
   overall_co_hexview.value.updateHexColor(overall_entity_dict.value)
 }
 
-function updateSegmentation(){
-
+function updateSegmentation({pos, neg}) {
+  setSegmentation({pos, neg})
 }
 
 
@@ -457,7 +453,7 @@ function updateSegmentation(){
                 id="overview-scatter"
                 :article_num_threshold="article_num_threshold"
                 :segment_mode="segment_mode"
-                :segmentation="segment_sst"
+                :segmentation="segmentation"
                 @update:segmentation="updateSegmentation"
                 @node_clicked="handleEntityClicked"
                 @update-weight-ended="$emit('update-weight-ended')"
@@ -522,7 +518,7 @@ function updateSegmentation(){
                     :title="overall_selected_hexview.title"
                     :id="`overall-co-hex`"
                     :entity_cooccurrences="overall_selected_hexview.data"
-                    :segmentation="segment_sst"
+                    :segmentation="segmentation"
                     :overall_entity_dict="overall_entity_dict"
                     v-on:hex-clicked="handleHexClicked">
                 </HexCooccurrence>
@@ -560,9 +556,9 @@ function updateSegmentation(){
     </Splitter>
     <!-- Tooltip for tutorial -->
     <Tooltip v-if="tutorial_mode" class="tutorial_tooltip" :content="tutorial_intro[tutorial_step]"></Tooltip>
-    "<span v-if="tutorial_mode" class="skip-button" 
+    <span v-if="tutorial_mode" class="skip-button" 
     style='text-decoration:underline;'
-    @click="tutorial_mode=false">Skip</span>"
+    @click="tutorial_mode=false">Skip</span>
   </main>
 </template>
 
@@ -574,8 +570,9 @@ function updateSegmentation(){
 main {
   display: flex;
   justify-content: center;
-  width: 95vw;
-  height: 95vh;
+  align-items: center;
+  width: 99vw;
+  height: 98vh;
 }
 
 // ---------------------
