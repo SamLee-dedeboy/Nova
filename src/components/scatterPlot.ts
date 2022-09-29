@@ -126,6 +126,8 @@ export class EntityScatter {
 
     draw(emit) : void {
         this.initScatterSvg(this.svgId)
+        let segment_point = {x: this.xScale(this.props.segmentation?.pos || 0.5), y: this.yScale(this.props.segmentation?.neg || 0.5)}
+        this.updateSegmentation(segment_point.x,segment_point.y)
         this.drawSegementationController(emit)
         this.updateCanvas(emit)
         if(this.show_axes)
@@ -316,8 +318,6 @@ export class EntityScatter {
         this.svg.append("g").attr("class", "node_group");
 
         // this.updateOverviewTooltipContent();
-        let segment_point = {x: this.xScale(this.props.segmentation?.pos || 0.5), y: this.yScale(this.props.segmentation?.neg || 0.5)}
-        this.updateSegmentation(segment_point.x,segment_point.y)
     }
 
     drawSegementationController(emit){
@@ -477,6 +477,8 @@ export class EntityScatter {
         if(this.show_highlight) {
             const highlight_outlet = this.highlight_node_text
             const highlight_node = svg.selectAll("g.entity").filter((d: any) => highlight_outlet === d.text)
+            svg.select("g.node_group").raise()
+            // svg.selectAll("rect.segment-controller").lower()
             this.applyExpandStyle(highlight_node, this)
         }
         // if(this.props.view?.type === ViewType.EntityScatter) {

@@ -12,6 +12,8 @@ class ProcessedDataManager:
         self.outlet_article_classified_num_dict \
         = processArticleDict(raw_data.outlet_article_dict)
         self.entity_list = list(raw_data.candidate_entity.keys())
+        self.headline_entities_dict = object_to_dict(raw_data.headline_entities, "id", "headline_entities")
+        self.summary_entities_dict = object_to_dict(raw_data.summary_entities, "id", "summary_entities")
 
     def idsToArticles(self, id_list):
         return [self.article_dict[id] for id in id_list]
@@ -68,6 +70,13 @@ def group_by_month(article):
     if(month[0] == "0"): return month[1]
     return month
 
+def object_to_dict(list_of_objects, key_key, key_value):
+    res = {}
+    for item in list_of_objects:
+        key = item[key_key]
+        value = item[key_value]
+        res[key] = value
+    return res
 
 
 

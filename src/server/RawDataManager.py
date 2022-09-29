@@ -6,6 +6,8 @@ class RawDataManager():
         self.candidate_entity_grouped = load_candidate_entities_grouped()
         self.entity_cooccurrences = load_entity_cooccurrences()
         self.entity_cooccurrences_grouped = load_entity_cooccurrences_grouped()
+        self.headline_entities = load_headline_entities()
+        self.summary_entities = load_summary_entities()
 
 
 def load_articles(filepath="data/outlet_article_dict.json"):
@@ -23,6 +25,11 @@ def load_entity_cooccurrences(filepath="data/entity_cooccurrences.json"):
 def load_entity_cooccurrences_grouped(filepath="data/entity_cooccurrences_groupby_outlet.json"):
     return json.load((open(filepath)))
 
+def load_headline_entities(filepath="data/processed_articles_headline_entities.json"):
+    return json.load((open(filepath)))
+
+def load_summary_entities(filepath="data/processed_articles_summary_entities.json"):
+    return json.load((open(filepath)))
 
 
 
