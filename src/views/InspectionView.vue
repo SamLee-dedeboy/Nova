@@ -44,12 +44,18 @@ const clicked_hexview = vue.computed(() => store.state.clicked_hexview)
 const constraint_dict = vue.computed(() => store.state.constraints)
 const addConstraint = (constraint: Constraint) => store.commit("addConstraint", constraint)
 const removeConstraint = (constraint_target: string) => store.commit("removeConstraint", constraint_target)
-
+const offsetScale = vue.computed(() => {
+    const adjust_target: Sentiment2D = selected_entity.value.sst_ratio || {pos: 0.5, neg: 0.5}
+    return d3.scaleLinear()
+        .domain([0, 1])
+        .range([0.05, Math.min(adjust_target.pos, adjust_target.neg)])
+})
 const entity_grouped_view: Ref<any> = ref(undefined)
 const target_articles: Ref<Article[]> = ref([])
 const outlet_scatter: Ref<any> = ref(null)
 vue.onMounted(() => {
     const article_ids = selected_cooccurr_entity.value.cooccurr_article_ids
+    setSegmentation(selected_entity.value.sst_ratio)
     const promiseArray: any[] = []
     promiseArray.push(new Promise(async (resolve) => {
         await fetch_articles(article_ids)
@@ -69,27 +75,26 @@ const sentiment_options = [
     {type: SentimentType.mix, value: "mix"}, 
 ]
 const intensity: Ref<number> = ref(0.5)
+const adjust_offset = vue.computed(() => offsetScale.value(intensity.value))
 const selectedCategory: Ref<any> = ref({})
 vue.watch(selectedCategory, (new_value, old_value) => {
     const adjust_target: Sentiment2D = selected_entity.value.sst_ratio || {pos: 0.5, neg: 0.5}
+    console.log("offset:", adjust_offset.value, adjust_target.pos, adjust_target.neg)
     // const offset = 0.05
-    const offset = d3.scaleLinear()
-        .domain([0, 1])
-        .range([0.05, Math.min(adjust_target.pos, adjust_target.neg)])
-        (intensity.value)
     if(new_value.type === SentimentType.neu) {
-        setSegmentation({pos: adjust_target.pos + offset, neg: adjust_target.neg + offset})
+        setSegmentation({pos: adjust_target.pos + adjust_offset.value, neg: adjust_target.neg + adjust_offset.value})
     }
     if(new_value.type === SentimentType.neg) {
-        setSegmentation({pos: adjust_target.pos + offset, neg: adjust_target.neg - offset})
+        setSegmentation({pos: adjust_target.pos + adjust_offset.value, neg: adjust_target.neg - adjust_offset.value})
     }
     if(new_value.type === SentimentType.pos) {
-        setSegmentation({pos: adjust_target.pos - offset, neg: adjust_target.neg + offset})
+        setSegmentation({pos: adjust_target.pos - adjust_offset.value, neg: adjust_target.neg + adjust_offset.value})
     }
     if(new_value.type === SentimentType.mix) {
-        setSegmentation({pos: adjust_target.pos - offset, neg: adjust_target.neg - offset})
+        setSegmentation({pos: adjust_target.pos - adjust_offset.value, neg: adjust_target.neg - adjust_offset.value})
     }
     outlet_scatter.value.updateSegmentation(segmentation.value)
+    console.log(segmentation.value.pos, segmentation.value.neg)
     const new_constraint: Constraint = {
         target: selected_entity.value.name,
         outlet: selected_entity.value.outlet,
@@ -134,7 +139,6 @@ async function fetch_entity_grouped_node(entity) {
             }
             
         }
-        console.log("🚀 ~ file: InspectionView.vue ~ line 126 ~ fetch_entity_grouped_node ~ entity_grouped_view", entity_grouped_view.value)
     })
 }
 
@@ -231,14 +235,16 @@ function updateSegmentation({pos, neg}) {
                     ref="outlet_scatter"
                     v-if="entity_grouped_view"
                     :view="entity_grouped_view"
+                    :highlight_outlet="selected_entity.outlet"
+                    :adjust_offset="adjust_offset"
                     id="outlet-scatter"
                     :segment_mode="true"
                     :segmentation="segmentation"
                     @update:segmentation="updateSegmentation" >
                 </OutletScatterplot>
-                <div class='navigation-container'>
-                    <router-link v-if="data_fetched" :to="{ name: 'compare', params: { entity: selected_entity.name }}">Back</router-link>
-                </div>
+            </div>
+            <div class='navigation-container'>
+                <router-link v-if="data_fetched" :to="{ name: 'compare', params: { entity: selected_entity.name }}">Back</router-link>
             </div>
         </SplitterPanel>
     </Splitter>
@@ -303,7 +309,7 @@ function updateSegmentation({pos, neg}) {
 //  Hexview section
 // ---------------------
 .hexview-container {
-  height: 59%;
+  height: 54%;
 }
 
 // ---------------------
@@ -311,13 +317,14 @@ function updateSegmentation({pos, neg}) {
 // ---------------------
 .constaints-outlet-scatter-container {
   display: flex;
+  justify-content: space-between;
 }
 .constraints-view {
   width: fit-content;
 }
 
 #outlet-scatter {
-  width: 21%;
+  width: 31%;
 }
 
 </style>

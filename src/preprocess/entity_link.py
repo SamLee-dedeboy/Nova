@@ -23,17 +23,29 @@ def add_entity(src_dataset_path, dst_dataset_path, entity_list_path, subset=None
     batch_size = 100
     article_batches = np.array_split(articles, int(len(articles)/batch_size))
 
+    res = []
     for (batch_index,batch) in enumerate(article_batches):
         # process entities
-        article_entity_dict = rel_analyzer.analyze_entity(batch, lambda content: " ".join(preprocess.article_to_sentences(content)))
+        # article_entity_dict = rel_analyzer.analyze_entity(batch, lambda content: " ".join(preprocess.article_to_sentences(content)))
+        article_entity_dict = rel_analyzer.analyze_entity(batch)
+        print(article_entity_dict)
         print("-------------------------------")
         print("Batch {} Analyze Done! Post-processing...".format(batch_index))
         print("-------------------------------")
         for article in batch:
-            entity_list = article_entity_dict[article["id"]]
-            article["entities"] = entity_list
-            for entity in [result[3] for result in entity_list]:
-                entitiesToArticle_dict[entity].add(article["id"])
+            if article["id"] in article_entity_dict.keys():
+                entity_list = article_entity_dict[article["id"]]
+            else:
+                entity_list = []
+            new_attribute_name = "summary_entities"
+            article[new_attribute_name] = entity_list
+            res.append({
+                "id": article["id"],
+                new_attribute_name: entity_list,
+            })
+            # for entity in [result[3] for result in entity_list]:
+            #     entitiesToArticle_dict[entity].add(article["id"])
+
             # google entities
             # google_entities = google_sa.analyze_entity(sentences)
             # for entity in google_entities:
@@ -59,6 +71,7 @@ def add_entity(src_dataset_path, dst_dataset_path, entity_list_path, subset=None
     print("-------------------------------")
     print("Entity Processing Done! Saving....")
     print("-------------------------------")
-    preprocess.dict_to_json(entitiesToArticle_dict, filepath=entity_list_path)
-    preprocess.dict_to_json(articles, filepath=dst_dataset_path)
+    # preprocess.dict_to_json(entitiesToArticle_dict, filepath=entity_list_path)
+    # preprocess.dict_to_json(articles, filepath=dst_dataset_path)
+    preprocess.dict_to_json(res, filepath=dst_dataset_path)
     # preprocess.dict_to_json(urlToName_dict, filepath="data/WikiIDToEntityName.json")

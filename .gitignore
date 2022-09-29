@@ -27,6 +27,7 @@ env
 *.njsproj
 *.sln
 *.sw?
+*.pyc
 
 src/preprocess/data/*
 src/preprocess/__pycache__/
