@@ -50,7 +50,7 @@ function removeTags(content) {
 }
 
 function add_highlights(raw_text: string, highlights: any[]) {
-    if(highlights.length === 0) return raw_text
+    if(!highlights || highlights?.length === 0) return raw_text
     let non_highlight_start = 0
     let divided_text = []
     let divided_marks = []

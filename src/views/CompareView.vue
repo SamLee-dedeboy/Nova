@@ -87,7 +87,6 @@ vue.onMounted(async () => {
 async function handleHexClicked({target, co_occurr_entity}, view) {
     const entity = target.split("-")[0]
     const outlet = target.split("-")[1] 
-    console.log(view)
     setClickedHexView(view)
     await fetch(`${server_address}/processed_data/cooccurr_info/grouped/${outlet}/${entity}/${co_occurr_entity}`)
         .then(res => res.json())

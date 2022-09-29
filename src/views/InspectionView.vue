@@ -87,7 +87,6 @@ const adjust_offset = vue.computed(() => offsetScale.value(intensity.value))
 const selectedCategory: Ref<any> = ref({})
 vue.watch(selectedCategory, (new_value, old_value) => {
     const adjust_target: Sentiment2D = selected_entity.value.sst_ratio || {pos: 0.5, neg: 0.5}
-    console.log("offset:", adjust_offset.value, adjust_target.pos, adjust_target.neg)
     // const offset = 0.05
     if(new_value.type === SentimentType.neu) {
         setSegmentation({pos: adjust_target.pos + adjust_offset.value, neg: adjust_target.neg + adjust_offset.value})
@@ -102,7 +101,6 @@ vue.watch(selectedCategory, (new_value, old_value) => {
         setSegmentation({pos: adjust_target.pos - adjust_offset.value, neg: adjust_target.neg - adjust_offset.value})
     }
     outlet_scatter.value.updateSegmentation(segmentation.value)
-    console.log(segmentation.value.pos, segmentation.value.neg)
     const new_constraint: Constraint = {
         target: selected_entity.value.name,
         outlet: selected_entity.value.outlet,
@@ -144,7 +142,7 @@ async function fetch_article_highlights(article_ids) {
     })
     .then(res => res.json())
     .then(json => {
-        console.log("highlights:", json)
+        console.log("highlights fetched")
         target_article_highlights.value = json
     })
 }

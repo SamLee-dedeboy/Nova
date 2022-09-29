@@ -486,7 +486,6 @@ export class EntityScatter {
 
     updateExpandedScatter(emit:any) {
         this.updateOverviewScatter(emit)
-        console.log(this.node_interactable)
         if(!this.node_interactable) return
         const applyExpandStyle = this.applyExpandStyle;
         const updateNodeInfo = this.updateNodeInfo;
