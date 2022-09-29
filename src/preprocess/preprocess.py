@@ -1,5 +1,4 @@
 from code import InteractiveInterpreter
-from email.policy import default
 import json
 import pprint
 # import nltk
@@ -260,4 +259,4 @@ def extract_candidate_entities(filepath='data/processed_articles_with_summary.js
 
 
     
-gen_entity_cooccurrence_groupby_outlet()
+# gen_entity_cooccurrence_groupby_outlet()

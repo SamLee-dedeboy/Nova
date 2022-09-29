@@ -1,13 +1,16 @@
 import time
 import entity_link
-import sentiment
+# import sentiment
 
 subset_index = None
 def main():
     start_time = time.time()
+    print("--------------------------")
+    print("entity extraction begin!")
+    print("--------------------------")
     entity_link.add_entity(
-        src_dataset_path="data/processed_articles_with_summary_100.json",
-        dst_dataset_path="data/processed_articles_headline_entities.json",
+        src_dataset_path="data/processed_articles_with_summary.json",
+        dst_dataset_path="data/processed_articles_summary_entities.json",
         entity_list_path="data/rel_entities_ner.json",
         subset=subset_index
         )

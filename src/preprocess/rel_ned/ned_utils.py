@@ -49,7 +49,7 @@ class REL_NedAnalyzer:
 def format_dataset(dataset, preprocess_func=None):
     # dataset should have format [article], article = {"id":xxx, "content":xxx}
     processed = {}
-    attribute_name = "headline"
+    attribute_name = "summary"
     # user does some stuff, which results in the format below.
     for article in dataset:
         processed[article["id"]] = [article[attribute_name] if preprocess_func == None else preprocess_func(article[attribute_name]), []]
