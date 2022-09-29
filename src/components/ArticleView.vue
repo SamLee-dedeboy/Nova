@@ -9,6 +9,7 @@ import { Article } from "../types"
 
 const props = defineProps({
     articles: Object as () => Article[],
+    article_highlights: Object as () => Any,
 })
 
 
@@ -47,6 +48,42 @@ function removeTags(content) {
     const res = content.replaceAll("<n>", "\n")
     return res
 }
+
+function add_highlights(raw_text: string, highlights: any[]) {
+    if(highlights.length === 0) return raw_text
+    let non_highlight_start = 0
+    let divided_text = []
+    let divided_marks = []
+    highlights.forEach(highlight => {
+        const highlight_start = highlight[0]
+        const highlight_end = highlight_start + highlight[1]
+        if(non_highlight_start !== highlight_start) {
+            divided_text.push(raw_text.substring(non_highlight_start, highlight_start))
+            divided_marks.push(0)
+        }
+        divided_text.push(raw_text.substring(highlight_start, highlight_end))
+        divided_marks.push(1)
+        non_highlight_start = highlight_end 
+    })
+    if(non_highlight_start < raw_text.length) {
+        divided_text.push(raw_text.substring(non_highlight_start))
+        divided_marks.push(0)
+    }
+    let res = ""
+    divided_text.forEach((sub_text, index) => {
+        if(divided_marks[index] === 0)
+            res += sub_text
+        else
+            res += highlight_element(sub_text)
+    })
+    return res
+
+}
+
+function highlight_element(text) {
+    const highlight_color = "rgb(165, 106, 29)"
+    return `<span style='background-color:${highlight_color};filter:brightness(140%)'>${text}</span>`
+}
 </script>
 
 <template>
@@ -60,12 +97,17 @@ function removeTags(content) {
     :style="{ 'background-color': SstColors.pos_color, 'filter': `brightness(${SstColors.brightness}%)`, }">
     <template #header>
         <span class="headline">
-            {{index+1 + '. ' + article.headline}}
+            <span v-html="index+'. ' + add_highlights(article.headline, props.article_highlights?.headline_entities?.[article.id])">
+            </span>
         </span>
     </template>
     <ScrollPanel style="width: 100%; height: 200px">
-        <span class="summary">
+        <!-- <span class="summary">
             {{removeTags(article.summary)}}
+        </span> -->
+        <span class="summary">
+            <span v-html="removeTags(add_highlights(article.summary, props.article_highlights?.summary_entities?.[article.id]))">
+            </span>
         </span>
     </ScrollPanel>
     </Panel>
@@ -81,7 +123,8 @@ function removeTags(content) {
     :style="{ 'background-color': SstColors.neg_color, 'filter': `brightness(${SstColors.brightness}%)`, }">
     <template #header>
         <span class="headline">
-            {{index+1 + '. ' + article.headline}}
+            <span v-html="index+'. ' + add_highlights(article.headline, props.article_highlights?.headline_entities?.[article.id])">
+            </span>
         </span>
         <!-- <Chip >
             {{article.sentiment.score.toFixed(2)}}
@@ -89,7 +132,8 @@ function removeTags(content) {
     </template>
     <ScrollPanel style="width: 100%; height: 200px">
         <span class="summary">
-            {{removeTags(article.summary)}}
+            <span v-html="removeTags(add_highlights(article.summary, props.article_highlights?.summary_entities?.[article.id]))">
+            </span>
         </span>
     </ScrollPanel>
     </Panel>
