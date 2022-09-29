@@ -163,8 +163,8 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
 
 <style scoped>
 .splitter-outmost {
-  width: 97vw;
-  height: 95vh;
+  width: 99vw;
+  height: 98vh;
   display: flex;
 }
 :deep(.p-divider.p-divider-vertical::before) {
@@ -174,7 +174,6 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
 .hexview-grid-container {
     display: grid;
     aspect-ratio: 3/2;
-    max-height: 50%;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(2, 1fr);  
     gap: 0;

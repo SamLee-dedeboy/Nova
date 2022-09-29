@@ -1,6 +1,6 @@
 <template>
     <div :id="id" class="scatter-container" >
-        <svg id="entitySVG" class="outlet-scatterplot" ></svg>
+        <svg :id="svgId" class="entity-scatterplot" ></svg>
         <div class="button-set">
             <Button class="reset-zoom p-button-secondary" @click="resetZoom">reset</Button>
         </div>
@@ -20,13 +20,13 @@
     /**
      * utils & types
      */
-    import { ScatterNode, Sentiment2D, OutletNodeInfo, EntityScatterView } from '../../types'
-    import * as SstColors from "../utils/ColorUtils"
+    import { ScatterNode, Sentiment2D, OutletNodeInfo, EntityScatterView } from '../types'
+    import * as SstColors from "./utils/ColorUtils"
 
     /**
      * components
      */
-    import NodeInfo from '../NodeInfo.vue'
+    import NodeInfo from './NodeInfo.vue'
     import {EntityScatter} from "./scatterPlot"
 
 
@@ -37,11 +37,12 @@
         id: String,
         article_num_threshold: Number,
         segment_mode: Boolean,
-        segmentation: Sentiment2D, 
+        segmentation: Sentiment2D
     })
     const emit = defineEmits(['node_clicked', 'update:segmentation', 'show_temporal', 'update-weight-ended'])
     const tooltip_content: Ref<string> = ref("") 
     const hovered_node_info: Ref<OutletNodeInfo> = ref(new OutletNodeInfo())
+
 
     const max_articles = vue.computed(() => props.view?.data.max_articles)
     const min_articles = vue.computed(() => props.view?.data.min_articles)
@@ -58,12 +59,32 @@
     const clicked_node_element: Ref<any> = ref(undefined)
     const viewBox: [number, number] = [1000, 1000]
     const margin = {top: 60, bottom: 60, right:40, left: 80} 
-    const entityScatterPlot = new EntityScatter(props,margin,viewBox,filtered_data,tooltip_content,total_articles,min_articles,max_articles,clicked_node,clicked_node_element,hovered_node_info);
+    const node_radius = 10
+    const segment_controller_width = 12
+    const show_axes = true
+    const show_offset = false
+    const show_highlight = false
+    const zoomable = true
+    const node_interactable = true
+    const svgId = "entitySvg"
+    const entityScatterPlot = new EntityScatter(
+        props, 
+        svgId,
+        margin, viewBox, 
+        node_radius, segment_controller_width,
+        show_axes,
+        zoomable,
+        node_interactable,
+        show_offset,
+        show_highlight,
+        filtered_data, 
+        undefined,
+        tooltip_content, 
+        total_articles, min_articles, max_articles, 
+        clicked_node, clicked_node_element, 
+        hovered_node_info
+    );
     
-    vue.watch(() => props.segmentation, (new_value, old_value) => {
-        let segment_point = {x: entityScatterPlot.xScale(new_value?.pos || 0.5), y: entityScatterPlot.yScale(new_value?.neg || 0.5)}
-        entityScatterPlot.updateSegmentation(segment_point.x,segment_point.y)
-    }, {deep: true}) 
     
     vue.watch(() => props.view, (new_view, old_view) => {
         entityScatterPlot.updateCanvas(emit) 
@@ -99,7 +120,7 @@
 .scatter-container {
     background-color: white;
 }
-.outlet-scatterplot {
+.entity-scatterplot {
     // overflow: hidden;
     // height: inherit;
     max-height: 100%;

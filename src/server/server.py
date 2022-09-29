@@ -116,6 +116,15 @@ def get_scatter_node(node_text):
     else:
         return json.dumps(grouped_node_dict[split[1]][split[0]], default=vars)
 
+@app.route("/processed_data/scatter_node/grouped/<node_text>")
+def get_scatter_node_grouped(node_text):
+    res = []
+    for outlet, outlet_dict in grouped_node_dict.items():
+        node = outlet_dict[node_text]
+        node.text = outlet
+        res.append(node)
+    return json.dumps(res, default=vars)
+
 @app.route("/processed_data/cooccurr_info/overall/<target>/<co_occurr_entity>")
 def get_cooccurr_info(target, co_occurr_entity):
     cooccurr_article_ids = raw_data.entity_cooccurrences[target][co_occurr_entity]
