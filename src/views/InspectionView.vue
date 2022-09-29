@@ -52,6 +52,7 @@ const offsetScale = vue.computed(() => {
 })
 const entity_grouped_view: Ref<any> = ref(undefined)
 const target_articles: Ref<Article[]> = ref([])
+const target_article_highlights: Ref<Any> = ref({})
 const outlet_scatter: Ref<any> = ref(null)
 vue.onMounted(() => {
     const article_ids = selected_cooccurr_entity.value.cooccurr_article_ids
@@ -62,10 +63,17 @@ vue.onMounted(() => {
         resolve("success")
     }))
     promiseArray.push(new Promise(async (resolve) => {
+        await fetch_article_highlights(article_ids)
+        resolve("success")
+    }))
+    promiseArray.push(new Promise(async (resolve) => {
         await fetch_entity_grouped_node(selected_entity.value.name)
         resolve("success")
     }))
     Promise.all(promiseArray)
+    .then(() => {
+        data_fetched.value = true
+    })
 })
 
 const sentiment_options = [
@@ -122,7 +130,22 @@ async function fetch_articles(article_ids) {
     .then(json => {
         target_articles.value = json
         console.log("articles fetched")
-        data_fetched.value = true
+    })
+}
+
+async function fetch_article_highlights(article_ids) {
+    await fetch(`${server_address}/processed_data/ids_to_articles_highlights`,{
+      method: "POST",
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(article_ids)
+    })
+    .then(res => res.json())
+    .then(json => {
+        console.log("highlights:", json)
+        target_article_highlights.value = json
     })
 }
 
@@ -163,7 +186,8 @@ function updateSegmentation({pos, neg}) {
             <ArticleView
             v-if="data_fetched"
             v-model:sst_threshold="segmentation"
-            :articles="target_articles">
+            :articles="target_articles"
+            :article_highlights="target_article_highlights">
             </ArticleView>
         </SplitterPanel>    
         <SplitterPanel id="entity_info_section" class="entity-info-section flex align-items-center justify-content-center" :size="right_section_size" >
