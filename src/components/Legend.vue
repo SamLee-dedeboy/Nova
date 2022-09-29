@@ -12,11 +12,12 @@ const props = defineProps({
 
 vue.onMounted(()=> {
     const len = Object.keys(props.color_dict!).length
-    const margin = {top: 5, bottom: 10, left: 10, right: 5, vertical: 5}
-    const row_height = 5 
-    const viewBox = [70, margin.top + margin.bottom + len*(margin.vertical + row_height)]
+    const margin = {top: 6, bottom: 10, left: 5, right: 5, vertical: 5}
+    const row_height = 4 
+    const viewBox = [150, margin.top + margin.bottom + len*(margin.vertical + row_height)]
     var svg = d3.select(`#${props.id}`)
-        .attr("viewBox", `0 0 ${viewBox[0]} ${viewBox[1]}`)
+        .attr("viewBox", `0 0 125 125`)
+        .attr("height", '100%')
     var index = 0
     for(const [title, color] of Object.entries(props.color_dict!)) {
         const circle = svg.append("circle")
@@ -25,6 +26,9 @@ vue.onMounted(()=> {
             .attr("r", row_height)
             // .style("filter", `brightness(${SstColors.brightness}%)`)
             .style("fill", color)
+            .style("stroke", 'black')
+            .style("stroke-opacity", '15%');
+
         if(props.filter) circle.style("filter", `brightness(${SstColors.brightness}%)`)
         if(title === "no mention") {
             circle.attr("stroke", "black")
@@ -37,6 +41,9 @@ vue.onMounted(()=> {
             .text(title)
             .attr("font-size", "0.6rem")
             .attr("dominant-baseline", "middle")
+            .style("font-family", 'Roboto')
+            .style("font-weight", '100')
+            .style("font-size", '0.5em')
         // index is used for vertical offset calculation
         index += 1
     }
@@ -46,19 +53,20 @@ vue.onMounted(()=> {
 
 <template>
     <div class="legend-container">
-        <svg  class="legend-svg" viewBox="0 0 150 175" :id="id">
+        <svg  class="legend-svg" viewBox="0 0 125 125" :id="id">
         </svg>
     </div>
 </template>
 
 <style scoped>
 .legend-container {
-    width: 110px;
-    background-color: #eee3cd;
+    width: 100%;
+    height: 100%;
+    /* background-color: #eee3cd;
     border: solid;
     border-width: 2px;
-    border-radius: 5px;
-    padding: 5px;
+    border-radius: 5px; */
+    /* padding: 5px; */
     /* pointer-events: none; */
     transform-origin: top left;
 }

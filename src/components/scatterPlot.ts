@@ -394,10 +394,12 @@ export class EntityScatter {
 
         this.svg.append("text")
             .attr("class", "axis_x_label")
-            .attr("transform", `translate(${this.margin.left+this.vbWidth-15}, ${this.margin.top+this.vbHeight+5})`)
+            .attr("transform", `translate(${this.margin.left+this.vbWidth-60}, ${this.margin.top+this.vbHeight-30})`)
             .attr("text-anchor", "middle")
-            .text("positive score")
-            .attr("fill", SstColors.pos_color);
+            .text("+ Sentiment")
+            .attr("fill", '#2c8c94')
+            .style("font-weight", "bold");
+            
 
         this.svg.append("g")
             .attr("class", "axis_y")
@@ -407,10 +409,11 @@ export class EntityScatter {
 
         this.svg.append("text")
             .attr("class", "axis_y_label")
-            .attr("transform", `translate(${this.margin.left}, ${this.margin.top-10})`)
+            .attr("transform", `translate(${this.margin.left + 60}, ${this.margin.top+30})`)
             .attr("text-anchor", "middle")
-            .text("negative score")
-            .attr("fill", SstColors.neg_color)
+            .text("- Sentiment")
+            .attr("fill", "#e37213")
+            .style("font-weight", "bold")
     }
 
     updateOverviewScatter(emit:any) {
