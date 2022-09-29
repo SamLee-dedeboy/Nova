@@ -44,6 +44,7 @@ export class EntityScatter {
 
 
     show_axes: boolean;
+    show_offset: boolean;
     xScale: d3.ScalePower<number,number,never>;
     yScale: d3.ScalePower<number,number,never>;
     
@@ -57,14 +58,23 @@ export class EntityScatter {
     max_articles: ComputedRef<any>
     clicked_node: Ref<ScatterNode>
     clicked_node_element: Ref<any>
+    highlight_node_text: String | undefined
     hovered_node_info: Ref<OutletNodeInfo>
+    zoomable: boolean
+    node_interactable: boolean
+    show_highlight: boolean
 
     public constructor(
         props:any, svgId: string, 
         margin:Margin, viewBox:[number,number], 
         node_radius: number, segment_controller_width: number, 
         show_axes: boolean,
+        zoomable: boolean,
+        node_interactable: boolean,
+        show_offset: boolean,
+        show_highlight: boolean,
         filtered_data:Ref<ScatterNode[]>, 
+        highlight_node_text: string|undefined,
         tooltip_content: Ref<string>, 
         total_articles: ComputedRef<any>, 
         min_articles: ComputedRef<any>, max_articles: ComputedRef<any>, 
@@ -84,6 +94,10 @@ export class EntityScatter {
         this.current_zoom = undefined;
 
         this.show_axes = show_axes
+        this.zoomable = zoomable
+        this.node_interactable = node_interactable
+        this.show_offset = show_offset
+        this.show_highlight = show_highlight
 
         this.filtered_data = filtered_data;
         this.tooltip_content = tooltip_content;
@@ -93,6 +107,7 @@ export class EntityScatter {
         this.clicked_node = clicked_node;
         this.clicked_node_element = clicked_node_element;
         this.hovered_node_info = hovered_node_info;
+        this.highlight_node_text = highlight_node_text 
 
         this.xScale = d3.scalePow()
             .exponent(1)
@@ -111,10 +126,12 @@ export class EntityScatter {
 
     draw(emit) : void {
         this.initScatterSvg(this.svgId)
-        this.drawSegementation(emit)
+        this.drawSegementationController(emit)
         this.updateCanvas(emit)
         if(this.show_axes)
             this.drawAxis(emit)
+        if(this.show_offset)
+            this.updateSegmentationOffset(this.props.adjust_offset)
     }
 
     /* Exposed for event handling */
@@ -210,6 +227,30 @@ export class EntityScatter {
         //     this.updateCategorization()
     }
 
+    updateSegmentationOffset(offset: number) {
+        const target_node: ScatterNode = this.props.view.data.nodes.find(node => node.text === this.props.highlight_outlet)
+        if(target_node !== undefined) {
+            const top_left = {pos: target_node.pos_sst - offset, neg: target_node.neg_sst + offset}
+            const top_right = {pos: target_node.pos_sst + offset, neg: target_node.neg_sst + offset}
+            const lower_left = {pos: target_node.pos_sst - offset, neg: target_node.neg_sst - offset}
+            const lower_right = {pos: target_node.pos_sst + offset, neg: target_node.neg_sst - offset}
+            const svg = d3.select(`#${this.props.id}`).select("svg")
+            const offset_indicator = svg.selectAll("rect.offset_rect")
+                .data([0])
+                .join("rect")
+                    .attr("class", "offset_rect")
+                    .attr("x", this.xScale(top_left.pos))
+                    .attr("y", this.yScale(top_left.neg))
+                    .attr("width", this.xScale(top_right.pos) - this.xScale(top_left.pos))
+                    .attr("height", this.yScale(lower_left.neg) - this.yScale(top_left.neg))
+                    .attr("fill-opacity", 0)
+                    .attr("stroke", "black")
+                    .attr("stroke-dasharray", "1")
+                    .style("pointer-events", "none")
+        }
+
+    }
+
     updateCategorization() :void {
         let bind_data: ScatterNode[] = this.filtered_data.value
         // if(props.graph?.type === ViewType.CooccurrScatter) bind_data = props.graph.nodes
@@ -279,14 +320,16 @@ export class EntityScatter {
         this.updateSegmentation(segment_point.x,segment_point.y)
     }
 
-    drawSegementation(emit){
+    drawSegementationController(emit){
         var svg = this.svg
         var self = this
-        svg.call(this.zoom)
-            .on("mousedown.zoom", null)
-            .on("touchstart.zoom", null)
-            .on("touchmove.zoom", null)
-            .on("touchend.zoom", null);
+        if(this.zoomable) {
+            svg.call(this.zoom)
+                .on("mousedown.zoom", null)
+                .on("touchstart.zoom", null)
+                .on("touchmove.zoom", null)
+                .on("touchend.zoom", null);
+        }
         const drag = d3.drag()
             .on("start", (e, d)=>{ 
                 console.log("start")
@@ -344,7 +387,6 @@ export class EntityScatter {
     }
 
     drawAxis(emit:any){
-
         this.svg.append("g")
             .attr("class", "axis_x")
             .attr("transform", `translate(0, ${this.margin.top+this.vbHeight})`)
@@ -370,68 +412,6 @@ export class EntityScatter {
             .text("negative score")
             .attr("fill", SstColors.neg_color)
     }
-
-    drawDefault(){
-        let break_text = this.props.view?.title.split('_') || "known"
-        var break_num = break_text.length
-        if(break_num >= 4) {
-            break_text = [break_text[0], break_text[1], break_text[2], '...']
-            break_num = 4
-        }
-        this.svg.append("text")
-            .selectAll("tspan")
-            .data(break_text)
-            .join("tspan")
-            .text(d => d)
-            .attr("x", this.viewBox[0]/2.1)
-            .attr("y", 0)
-            .attr("text-anchor", "middle")
-            .attr("font-size", "4em")
-            .attr("dominant-baseline", "hanging");
-
-        this.svg.on("mousemove", (e, d) => {
-            d3.select(`#${this.props.id}`).select("div.tooltip")
-            .style("left", e.offsetX + 15 + "px")
-            .style("top", e.offsetY - 5 + "px")
-            })
-            .on("mouseover", (e, d) => {
-                // if(tutorial_mode.value && tutorial_step.value === 0) return
-                this.svg.style("filter", "brightness(80%)")
-                .style("background-color", "rgb(191,189,189)")
-                d3.select(`#${this.props.id}`).select("div.tooltip")
-                .style("opacity", 1)
-            })
-            .on("mouseout", (e, d) => {
-                this.svg.style("filter", "brightness(100%)")
-                .style("background-color", "white")
-                d3.select(`#${this.props.id}`).select("div.tooltip")
-                .style("opacity", 0)
-            })
-    }           
-
-    // updateOverviewTooltipContent() {
-    //     const nodes = this.filtered_data.value! 
-    //     const title = this.props.view?.title
-    //     const entity_num = nodes.length || 0
-    //     const avg_pos_sst = _.mean(nodes.map(node => node.pos_sst))
-    //     const avg_neg_sst = _.mean(nodes.map(node => node.neg_sst))
-    //     nodes.sort((node_a, node_b) => -(node_a.article_ids.length - node_b.article_ids.length))
-    //     this.tooltip_content.value = 
-    //     `${title}: <br>` + 
-    //     `&nbsp #entities: ${entity_num} <br>` +
-    //     `&nbsp top entities:<ol>` 
-    //     for(let i = 0; i < Math.min(3, nodes.length); ++i) {
-    //         this.tooltip_content.value +=
-    //         `<li>${nodes[i].text.split("-")[0]}</li>`
-    //     }
-    //     this.tooltip_content.value += "</ol>" +
-    //     `&nbsp avg_sst: (${avg_pos_sst.toFixed(2)}, ${avg_neg_sst.toFixed(2)}) <br>` 
-    //     // if(this.props.view?.type === ViewType.EntityScatter) {
-    //     //     this.tooltip_content.value += `&nbsp total_articles: ${this.total_articles.value} <br>`
-    //     // }
-    //     // tooltip_content.value += `<svg id='${props.id}-wordcloud' class='tooltip_canvas' width='250px' height='100px'></svg>`
-        
-    // }
 
     updateOverviewScatter(emit:any) {
         const svg = d3.select(`#${this.props.id}`).select("svg")
@@ -491,6 +471,11 @@ export class EntityScatter {
         if(this.current_zoom) {
             dots.attr("transform", this.current_zoom)
         }
+        if(this.show_highlight) {
+            const highlight_outlet = this.highlight_node_text
+            const highlight_node = svg.selectAll("g.entity").filter((d: any) => highlight_outlet === d.text)
+            this.applyExpandStyle(highlight_node, this)
+        }
         // if(this.props.view?.type === ViewType.EntityScatter) {
         //     const highlight_circle = svg.selectAll("circle.outlet_circle").filter((d: any) => (this.props.highlight_nodes!.includes(d.text.split("-")[0])))
         //     highlight_circle.attr("fill", "blue")
@@ -499,6 +484,7 @@ export class EntityScatter {
 
     updateExpandedScatter(emit:any) {
         this.updateOverviewScatter(emit)
+        if(!this.node_interactable) return
         const applyExpandStyle = this.applyExpandStyle;
         const updateNodeInfo = this.updateNodeInfo;
         const removeExpandedStyle = this.removeExpandedStyle;

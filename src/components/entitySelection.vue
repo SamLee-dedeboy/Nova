@@ -62,6 +62,10 @@
     const node_radius = 10
     const segment_controller_width = 12
     const show_axes = true
+    const show_offset = false
+    const show_highlight = false
+    const zoomable = true
+    const node_interactable = true
     const svgId = "entitySvg"
     const entityScatterPlot = new EntityScatter(
         props, 
@@ -69,7 +73,12 @@
         margin, viewBox, 
         node_radius, segment_controller_width,
         show_axes,
+        zoomable,
+        node_interactable,
+        show_offset,
+        show_highlight,
         filtered_data, 
+        undefined,
         tooltip_content, 
         total_articles, min_articles, max_articles, 
         clicked_node, clicked_node_element, 
