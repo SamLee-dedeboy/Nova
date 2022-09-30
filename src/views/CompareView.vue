@@ -39,7 +39,8 @@ const selected_cooccurr_entity = vue.computed(() => store.state.selected_cooccur
 const setCooccurrEntity = (cooccurr_entity) => store.commit("setCooccurrEntity", cooccurr_entity) 
 const clicked_hexview = vue.computed(() => store.state.clicked_hexview)
 const setClickedHexView = (hexview) => store.commit("setClickedHexView", hexview)
-
+const hexview_grid = vue.computed(() => store.state.hexview_grid)
+const setHexViewGrid = (grid) => store.commit("setHexViewGrid", grid)
 const outlet_weight_dict = vue.computed(() => store.state.outlet_weight_dict)
 
 /**
@@ -54,7 +55,6 @@ const server_address = vue.inject("server_address")
 /**
  * data
  */
-const hexview_grid: Ref<any[]> = ref([])
 const data_fetched: Ref<boolean> = ref(false)
 
 
@@ -67,13 +67,15 @@ vue.onMounted(async () => {
         .then(res => res.json())
         .then(json => {
             const data_list = json
+            let hexview_grid_data = []
             data_list.forEach(hex_data => {
                 const hex_view: typeUtils.CooccurrHexView = {
                     title: `co-${hex_data.entity}-${hex_data.outlet}`,
                     data: hex_data.cooccurrences_data
                 }
-                hexview_grid.value.push(hex_view)
+                hexview_grid_data.push(hex_view)
             })
+            setHexViewGrid(hexview_grid_data)
             resolve("success")
         })
     }))
