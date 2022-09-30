@@ -9,7 +9,7 @@ import { Article } from "../types"
 
 const props = defineProps({
     articles: Object as () => Article[],
-    article_highlights: Object as () => Any,
+    article_highlights: Object as () => any,
 })
 
 
@@ -47,10 +47,21 @@ const pos_articles = vue.computed(() => {
     return props.articles?.filter(article => article.sentiment.label === "POSITIVE")
 })
 const pos_panel_articles: Ref<Article[]> = ref(pos_articles.value?.slice(0,10) || []) 
+
 const neg_articles = vue.computed(() => {
     return props.articles?.filter(article => article.sentiment.label === "NEGATIVE")
 })
 const neg_panel_articles: Ref<Article[]> = ref(neg_articles.value?.slice(0,10) || []) 
+
+vue.watch(pos_articles, (new_value, old_value) => {
+    pos_panel_articles.value.length = 0
+    pos_panel_articles.value = pos_articles.value?.slice(0, 10) || []
+})
+
+vue.watch(neg_articles, (new_value, old_value) => {
+    neg_panel_articles.value.length = 0
+    neg_panel_articles.value = neg_articles.value?.slice(0, 10) || []
+})
 
 function removeTags(content) {
     const res = content.replaceAll("<n>", "\n")
@@ -60,8 +71,8 @@ function removeTags(content) {
 function add_highlights(raw_text: string, highlights: any[]) {
     if(!highlights || highlights?.length === 0) return raw_text
     let non_highlight_start = 0
-    let divided_text = []
-    let divided_marks = []
+    let divided_text: any[] = []
+    let divided_marks: any[] = []
     highlights.forEach(highlight => {
         const highlight_start = highlight[0]
         const highlight_end = highlight_start + highlight[1]
@@ -92,6 +103,8 @@ function highlight_element(text) {
     const highlight_color = "rgb(242, 247, 99)"
     return `<span style='background-color:${highlight_color};'>${text}</span>`
 }
+
+
 </script>
 
 <template>

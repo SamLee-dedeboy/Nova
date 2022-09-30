@@ -60,7 +60,7 @@ const offsetScale = vue.computed(() => {
 })
 const entity_grouped_view: Ref<any> = ref(undefined)
 const target_articles: Ref<Article[]> = ref([])
-const target_article_highlights: Ref<Any> = ref({})
+const target_article_highlights: Ref<any> = ref({})
 const outlet_scatter: Ref<any> = ref(null)
 vue.onMounted(() => {
     prepare_data()
@@ -129,7 +129,7 @@ function prepare_data() {
     Promise.all(promiseArray)
     .then(() => {
         data_fetched.value = true
-        console.log('fetched new articles', article_ids)
+        console.log('fetched new articles')
     })
 
 }
@@ -217,7 +217,7 @@ async function handleChangeJournal(e) {
             }
             setCooccurrEntity(cooccurr_entity)
         })
-    // prepare_data()
+    prepare_data()
 }
 
 function updateSegmentation({pos, neg}) {
