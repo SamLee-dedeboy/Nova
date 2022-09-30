@@ -56,11 +56,19 @@ const neg_panel_articles: Ref<Article[]> = ref(neg_articles.value?.slice(0,10) |
 vue.watch(pos_articles, (new_value, old_value) => {
     pos_panel_articles.value.length = 0
     pos_panel_articles.value = pos_articles.value?.slice(0, 10) || []
+    vue.nextTick(() => {
+        const pos_panel_togglers = document.querySelectorAll(".pos-article-list > .p-scrollpanel-wrapper > .p-scrollpanel-content > .p-panel-toggleable > .p-panel-header > .p-panel-icons > .p-panel-toggler")
+        pos_panel_togglers.forEach(toggler => toggler.classList.add("pos-toggler"))
+    })
 })
 
 vue.watch(neg_articles, (new_value, old_value) => {
     neg_panel_articles.value.length = 0
     neg_panel_articles.value = neg_articles.value?.slice(0, 10) || []
+    vue.nextTick(() => {
+        const neg_panel_togglers = document.querySelectorAll(".neg-article-list > .p-scrollpanel-wrapper > .p-scrollpanel-content > .p-panel-toggleable > .p-panel-header > .p-panel-icons > .p-panel-toggler")
+        neg_panel_togglers.forEach(toggler => toggler.classList.add("neg-toggler"))
+    })
 })
 
 function removeTags(content) {
