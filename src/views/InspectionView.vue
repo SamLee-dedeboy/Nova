@@ -6,6 +6,8 @@ import Splitter from 'primevue/splitter';
 import SplitterPanel from "primevue/splitterpanel"
 import SelectButton from "primevue/selectbutton"
 import Slider from "primevue/slider"
+import Dropdown from 'primevue/dropdown';
+
 
 /**
  * libraries
@@ -36,14 +38,20 @@ const server_address = vue.inject("server_address")
 const data_fetched: Ref<boolean> = ref(false)
 
 const selected_entity = vue.computed(() => store.state.selected_entity)
+const setEntity = (entity) => store.commit("setEntity", entity) 
 const selected_cooccurr_entity = vue.computed(() => store.state.selected_cooccurr_entity)
+const setCooccurrEntity = (cooccurr_entity) => store.commit("setCooccurrEntity", cooccurr_entity) 
 const segmentation = vue.computed(() => store.state.segmentation)
 const setSegmentation = (segmentation) => store.commit("setSegmentation", segmentation) 
 const outlet_weight_dict = vue.computed(() => store.state.outlet_weight_dict)
 const clicked_hexview = vue.computed(() => store.state.clicked_hexview)
+const setClickedHexView = (hexview) => store.commit("setClickedHexView", hexview)
+const hexview_grid = vue.computed(() => store.state.hexview_grid)
 const constraint_dict = vue.computed(() => store.state.constraints)
 const addConstraint = (constraint: Constraint) => store.commit("addConstraint", constraint)
 const removeConstraint = (constraint_target: string) => store.commit("removeConstraint", constraint_target)
+
+const selected_outlet: Ref<string> = ref("")
 const offsetScale = vue.computed(() => {
     const adjust_target: Sentiment2D = selected_entity.value.sst_ratio || {pos: 0.5, neg: 0.5}
     return d3.scaleLinear()
@@ -55,25 +63,7 @@ const target_articles: Ref<Article[]> = ref([])
 const target_article_highlights: Ref<Any> = ref({})
 const outlet_scatter: Ref<any> = ref(null)
 vue.onMounted(() => {
-    const article_ids = selected_cooccurr_entity.value.cooccurr_article_ids
-    setSegmentation(selected_entity.value.sst_ratio)
-    const promiseArray: any[] = []
-    promiseArray.push(new Promise(async (resolve) => {
-        await fetch_articles(article_ids)
-        resolve("success")
-    }))
-    promiseArray.push(new Promise(async (resolve) => {
-        await fetch_article_highlights(article_ids)
-        resolve("success")
-    }))
-    promiseArray.push(new Promise(async (resolve) => {
-        await fetch_entity_grouped_node(selected_entity.value.name)
-        resolve("success")
-    }))
-    Promise.all(promiseArray)
-    .then(() => {
-        data_fetched.value = true
-    })
+    prepare_data()
 })
 
 const sentiment_options = [
@@ -81,6 +71,15 @@ const sentiment_options = [
     {type: SentimentType.neg, value: "neg"}, 
     {type: SentimentType.pos, value: "pos"}, 
     {type: SentimentType.mix, value: "mix"}, 
+]
+
+const journal_options = [
+    "CNN",
+    "FoxNews",
+    "Breitbart",
+    "ABC News",
+    "New York Times",
+    "Washington Post"
 ]
 const intensity: Ref<number> = ref(0.5)
 const adjust_offset = vue.computed(() => offsetScale.value(intensity.value))
@@ -109,6 +108,31 @@ vue.watch(selectedCategory, (new_value, old_value) => {
     addConstraint(new_constraint)
     checkConflict(constraint_dict.value)
 })
+
+function prepare_data() {
+    const article_ids = selected_cooccurr_entity.value.cooccurr_article_ids
+    setSegmentation(selected_entity.value.sst_ratio)
+    selected_outlet.value = selected_entity.value.outlet
+    const promiseArray: any[] = []
+    promiseArray.push(new Promise(async (resolve) => {
+        await fetch_articles(article_ids)
+        resolve("success")
+    }))
+    promiseArray.push(new Promise(async (resolve) => {
+        await fetch_article_highlights(article_ids)
+        resolve("success")
+    }))
+    promiseArray.push(new Promise(async (resolve) => {
+        await fetch_entity_grouped_node(selected_entity.value.name)
+        resolve("success")
+    }))
+    Promise.all(promiseArray)
+    .then(() => {
+        data_fetched.value = true
+        console.log('fetched new articles', article_ids)
+    })
+
+}
 
 function checkConflict(constraint_dict) {
     // TODO: check if constraints conflict with each other
@@ -163,6 +187,38 @@ async function fetch_entity_grouped_node(entity) {
     })
 }
 
+async function handleChangeJournal(e) {
+    const outlet = e.value
+    selected_outlet.value = outlet
+    const entity = selected_entity.value.name
+    const co_occurr_entity = selected_cooccurr_entity.value.name
+    const view = hexview_grid.value.find(view => view.title.split("-")[2] === outlet)
+    setClickedHexView(view)
+    await fetch(`${server_address}/processed_data/cooccurr_info/grouped/${outlet}/${entity}/${co_occurr_entity}`)
+        .then(res => res.json())
+        .then(json => {
+            console.log("cooccurr_info fetched")
+            const target_entity = {
+                name: json.target,
+                outlet: outlet,
+                num_of_mentions: json.target_num,
+                articles_topic_dict: json.target_articles_topic_dict, 
+                sst_ratio: view.data.target.sst
+            }
+            setEntity(target_entity)
+            const cooccurr_entity = {
+                target: json.target,
+                name: json.cooccurr_entity,
+                outlet: outlet,
+                num_of_mentions: json.cooccurr_num,
+                target_num_of_mentions: json.target_num_of_mentions,
+                articles_topic_dict: json.cooccurr_articles_topic_dict,
+                cooccurr_article_ids: json.cooccurr_article_ids
+            }
+            setCooccurrEntity(cooccurr_entity)
+        })
+    // prepare_data()
+}
 
 function updateSegmentation({pos, neg}) {
   setSegmentation({pos, neg})
@@ -204,8 +260,11 @@ function updateSegmentation({pos, neg}) {
                     </EntityInfoView>
                     <!-- <Divider v-if="selected_cooccurr_entity" layout="vertical"></Divider> -->
                     <div class="journal-info-container" style="font-size:small">
-                        <div> Journal </div>
-                        <div> {{selected_entity.outlet}} </div>
+                        <Dropdown :modelValue="selected_outlet"
+                         :options="journal_options" 
+                         placeholder="Select an journal"
+                         @change="handleChangeJournal" />
+                        <!-- <div> {{selected_entity.outlet}} </div> -->
                     </div>
                 </div>
             </div>

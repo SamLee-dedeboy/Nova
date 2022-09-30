@@ -23,6 +23,8 @@ vue.onMounted(() => {
             const next_ten_articles: Article[] | undefined = pos_articles.value?.slice(old_len, old_len+10)
             if(next_ten_articles)
                 pos_panel_articles.value = pos_panel_articles.value.concat(next_ten_articles)
+            const pos_panel_togglers = document.querySelectorAll(".pos-article-list > .p-scrollpanel-wrapper > .p-scrollpanel-content > .p-panel-toggleable > .p-panel-header > .p-panel-icons > .p-panel-toggler")
+            pos_panel_togglers.forEach(toggler => toggler.classList.add("pos-toggler"))
         }
     })
     neg_scroll_panel?.addEventListener("scroll", function(event) {
@@ -32,8 +34,14 @@ vue.onMounted(() => {
             const next_ten_articles: Article[] | undefined = neg_articles.value?.slice(old_len, old_len+10)
             if(next_ten_articles)
                 neg_panel_articles.value = neg_panel_articles.value.concat(next_ten_articles)
+            const neg_panel_togglers = document.querySelectorAll(".neg-article-list > .p-scrollpanel-wrapper > .p-scrollpanel-content > .p-panel-toggleable > .p-panel-header > .p-panel-icons > .p-panel-toggler")
+            neg_panel_togglers.forEach(toggler => toggler.classList.add("neg-toggler"))
         }
     })
+    const pos_panel_togglers = document.querySelectorAll(".pos-article-list > .p-scrollpanel-wrapper > .p-scrollpanel-content > .p-panel-toggleable > .p-panel-header > .p-panel-icons > .p-panel-toggler")
+    pos_panel_togglers.forEach(toggler => toggler.classList.add("pos-toggler"))
+    const neg_panel_togglers = document.querySelectorAll(".neg-article-list > .p-scrollpanel-wrapper > .p-scrollpanel-content > .p-panel-toggleable > .p-panel-header > .p-panel-icons > .p-panel-toggler")
+    neg_panel_togglers.forEach(toggler => toggler.classList.add("neg-toggler"))
 })
 const pos_articles = vue.computed(() => {
     return props.articles?.filter(article => article.sentiment.label === "POSITIVE")
@@ -81,8 +89,8 @@ function add_highlights(raw_text: string, highlights: any[]) {
 }
 
 function highlight_element(text) {
-    const highlight_color = "rgb(165, 106, 29)"
-    return `<span style='background-color:${highlight_color};filter:brightness(140%)'>${text}</span>`
+    const highlight_color = "rgb(242, 247, 99)"
+    return `<span style='background-color:${highlight_color};'>${text}</span>`
 }
 </script>
 
@@ -93,8 +101,7 @@ function highlight_element(text) {
     :header="index+1 + '. ' + article.headline"
     :key="article.id"
     :toggleable=true
-    :collapsed=true 
-    :style="{ 'background-color': SstColors.pos_color, 'filter': `brightness(${SstColors.brightness}%)`, }">
+    :collapsed="true">
     <template #header>
         <span class="headline">
             <span v-html="index+'. ' + add_highlights(article.headline, props.article_highlights?.headline_entities?.[article.id])">
@@ -118,9 +125,8 @@ function highlight_element(text) {
     <Panel v-for="(article, index) in neg_panel_articles"
     :header="index+1 + '. ' + article.headline"
     :key="article.id"
-    :toggleable=true
-    :collapsed=true 
-    :style="{ 'background-color': SstColors.neg_color, 'filter': `brightness(${SstColors.brightness}%)`, }">
+    :toggleable="true"
+    :collapsed="true">
     <template #header>
         <span class="headline">
             <span v-html="index+'. ' + add_highlights(article.headline, props.article_highlights?.headline_entities?.[article.id])">
@@ -148,7 +154,12 @@ function highlight_element(text) {
 :deep(.p-panel .p-panel-header .p-panel-header-icon) {
   color: #25272a !important;
 } 
-
+:deep(.pos-toggler) {
+    background: #baf0f5 !important;
+}
+:deep(.neg-toggler) {
+    background: #f4c49c !important;
+}
 .pos-article-list, .neg-article-list {
     max-height:50%;
     /* height:50%; */
