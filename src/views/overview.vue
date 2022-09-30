@@ -481,9 +481,9 @@ function updateSegmentation({ pos, neg }) {
               <div id="entity-utility-container" class="entity-utils">
                 <h2 class="util-header"> Entity </h2>
                 <!-- Entity Search -->
-                <div id="entity-search" v-if="overview_constructed" class="search-bar">
+                <!-- <div id="entity-search" v-if="overview_constructed" class="search-bar">
                     <SearchBar :search_terms="entity_list" @entity_searched="handleSearch"/>
-                </div>
+                </div> -->
                 <!-- filter slider -->
                 <div v-if="overview_constructed" class="slider-container">
                   <ThresholdController v-model:article_num_threshold="article_num_threshold"
