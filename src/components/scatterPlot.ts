@@ -496,7 +496,8 @@ export class EntityScatter {
         // const svg = d3.select(`#${this.props.id}`).select("svg")
     
         // add events
-        this.svg.selectAll("circle.entity_circle")
+        var svg = this.svg
+        svg.selectAll("circle.entity_circle")
             .style("cursor", "pointer")
             .on("mousemove", (e, d) => {
                 let align_image_offset = 0
@@ -514,6 +515,15 @@ export class EntityScatter {
                 updateNodeInfo(d as ScatterNode, cvThis)
                 d3.select(`#${cvThis.props.id}`).select(".nodeinfo")
                     .style("opacity", 1)
+                if(cvThis.show_highlight) {
+                    const highlight_node_text = cvThis.props.highlight_node_text
+                    if(d.text !== highlight_node_text) {
+                        const highlight_node = svg.selectAll("g.entity").filter((d: any) => highlight_node_text === d.text)
+                        cvThis.removeNodeLabel(highlight_node, cvThis)
+                        removeExpandedStyle(highlight_node, cvThis)
+                    }
+                    cvThis.addNodeLabel(container, cvThis)
+                }
             })
             .on("mouseout", function(e, d) {
                 d3.select(`#${cvThis.props.id}`).select(".nodeinfo")
@@ -524,6 +534,13 @@ export class EntityScatter {
 
                 if(!cvThis.show_highlight || d.text !== cvThis.props.highlight_node_text) {
                     removeExpandedStyle(container, cvThis)
+                }
+                if(cvThis.show_highlight) {
+                    cvThis.removeNodeLabel(container, cvThis)
+                    const highlight_node = svg.selectAll("g.entity").filter((d: any) => cvThis.props.highlight_node_text === d.text)
+                        .raise()
+                    cvThis.applyExpandStyle(highlight_node, cvThis)
+                    cvThis.addNodeLabel(highlight_node, cvThis)
                 }
             })
             .on("click", function (e, d) {

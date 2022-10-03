@@ -1,7 +1,7 @@
 <template>
     <div :id="id" class="outlet-scatter" >
         <svg :id="svgId" class="outlet-scatterplot" ></svg>
-        <NodeInfo class='nodeinfo' :node="hovered_node_info" :total_articles="total_articles" style="position:absolute; z-index:1000;pointer-events: none;"></NodeInfo>
+        <!-- <NodeInfo class='nodeinfo' :node="hovered_node_info" :total_articles="total_articles" style="position:absolute; z-index:1000;pointer-events: none;"></NodeInfo> -->
     </div>
 </template>
 
