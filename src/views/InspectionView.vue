@@ -54,9 +54,10 @@ const removeConstraint = (constraint_target: string) => store.commit("removeCons
 const selected_outlet: Ref<string> = ref("")
 const offsetScale = vue.computed(() => {
     const adjust_target: Sentiment2D = selected_entity.value.sst_ratio || {pos: 0.5, neg: 0.5}
+    console.log(adjust_target)
     return d3.scaleLinear()
         .domain([0, 1])
-        .range([0.05, Math.min(adjust_target.pos, adjust_target.neg)])
+        .range([0.05, Math.min(1-adjust_target.pos, 1-adjust_target.neg)])
 })
 const entity_grouped_view: Ref<any> = ref(undefined)
 const target_articles: Ref<Article[]> = ref([])
@@ -182,18 +183,30 @@ async function fetch_entity_grouped_node(entity) {
                 max_articles: Math.max(...json.map(node => node.article_ids.length)),
                 min_articles: Math.min(...json.map(node => node.article_ids.length)),
             }
-            
         }
+        console.log("entity grouped view fetched")
     })
 }
 
 async function handleChangeJournal(e) {
-    const outlet = e.value
+    const outlet = e.target.value
     selected_outlet.value = outlet
     const entity = selected_entity.value.name
     const co_occurr_entity = selected_cooccurr_entity.value.name
     const view = hexview_grid.value.find(view => view.title.split("-")[2] === outlet)
     setClickedHexView(view)
+    await fetch_cooccurr_into(outlet, entity, co_occurr_entity)
+    prepare_data()
+}
+
+async function handleHexClicked({target, co_occurr_entity}, view) {
+    const entity = target.split("-")[0]
+    const outlet = target.split("-")[1] 
+    await fetch_cooccurr_into(outlet, entity, co_occurr_entity)
+    prepare_data()
+}
+
+async function fetch_cooccurr_into(outlet, entity, co_occurr_entity) {
     await fetch(`${server_address}/processed_data/cooccurr_info/grouped/${outlet}/${entity}/${co_occurr_entity}`)
         .then(res => res.json())
         .then(json => {
@@ -203,7 +216,7 @@ async function handleChangeJournal(e) {
                 outlet: outlet,
                 num_of_mentions: json.target_num,
                 articles_topic_dict: json.target_articles_topic_dict, 
-                sst_ratio: view.data.target.sst
+                sst_ratio: clicked_hexview.value.data.target.sst
             }
             setEntity(target_entity)
             const cooccurr_entity = {
@@ -217,7 +230,6 @@ async function handleChangeJournal(e) {
             }
             setCooccurrEntity(cooccurr_entity)
         })
-    prepare_data()
 }
 
 function updateSegmentation({pos, neg}) {
@@ -260,11 +272,17 @@ function updateSegmentation({pos, neg}) {
                     </EntityInfoView>
                     <!-- <Divider v-if="selected_cooccurr_entity" layout="vertical"></Divider> -->
                     <div class="journal-info-container" style="font-size:small">
-                        <Dropdown :modelValue="selected_outlet"
+                        <!-- <Dropdown :modelValue="selected_outlet"
                          :options="journal_options" 
                          placeholder="Select an journal"
-                         @change="handleChangeJournal" />
-                        <!-- <div> {{selected_entity.outlet}} </div> -->
+                         @change="handleChangeJournal" /> -->
+                         <label for="journals"> Journal </label>
+                         <select name="journals" id="journals"
+                         @change="handleChangeJournal">
+                            <option v-for="journal in journal_options" 
+                                :value="journal"
+                                :selected="journal == selected_outlet">{{journal}}</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -301,7 +319,8 @@ function updateSegmentation({pos, neg}) {
                     :title="clicked_hexview.title"
                     :id="`compare-co-hex-inpection`"
                     :entity_cooccurrences="clicked_hexview.data"
-                    :segmentation="segmentation">
+                    :segmentation="segmentation"
+                    @hex-clicked="handleHexClicked">
                 </HexCooccurrence>
             </div>
             <div class="constaints-outlet-scatter-container">
@@ -316,7 +335,7 @@ function updateSegmentation({pos, neg}) {
                     ref="outlet_scatter"
                     v-if="entity_grouped_view"
                     :view="entity_grouped_view"
-                    :highlight_outlet="selected_entity.outlet"
+                    :highlight_node_text="selected_entity.outlet"
                     :adjust_offset="adjust_offset"
                     id="outlet-scatter"
                     :segment_mode="true"
@@ -375,6 +394,9 @@ function updateSegmentation({pos, neg}) {
 }
 .journal-info-container {
   white-space: nowrap;
+}
+:deep(.p-dropdown-panel.p-component){
+    position: absolute !important;
 }
 
 // ---------------------
