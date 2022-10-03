@@ -1,7 +1,7 @@
 export class Constraint {
     target: string
     outlet: string
-    sentiment: SentimentType
+    sentiment?: SentimentType
 }
 export class CooccurrHexView {
     title: string

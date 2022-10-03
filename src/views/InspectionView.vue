@@ -49,7 +49,8 @@ const setClickedHexView = (hexview) => store.commit("setClickedHexView", hexview
 const hexview_grid = vue.computed(() => store.state.hexview_grid)
 const constraint_dict = vue.computed(() => store.state.constraints)
 const addConstraint = (constraint: Constraint) => store.commit("addConstraint", constraint)
-const removeConstraint = (constraint_target: string) => store.commit("removeConstraint", constraint_target)
+const removeConstraint = (constraint: Constraint) => store.commit("removeConstraint", constraint)
+const constraint_statisfaction = ref({})
 
 const selected_outlet: Ref<string> = ref("")
 const offsetScale = vue.computed(() => {
@@ -107,7 +108,10 @@ vue.watch(selectedCategory, (new_value, old_value) => {
         sentiment: new_value.type,
     }
     addConstraint(new_constraint)
-    checkConflict(constraint_dict.value)
+})
+
+vue.watch(segmentation, (new_value, old_value) => {
+    checkConflict(constraint_dict.value[selected_entity.value.name], entity_grouped_view.value.data.nodes)
 })
 
 function prepare_data() {
@@ -135,9 +139,32 @@ function prepare_data() {
 
 }
 
-function checkConflict(constraint_dict) {
-    // TODO: check if constraints conflict with each other
-    return
+function checkConflict(constraint_dict, outlet_nodes) {
+    Object.keys(constraint_dict).forEach(outlet => {
+        console.log(outlet)
+        const target_node = outlet_nodes.find(node => node.text === outlet)
+        constraint_statisfaction.value[outlet] = checkConstraint(
+            constraint_dict[outlet], 
+            {pos: target_node.pos_sst, neg: target_node.neg_sst},
+            segmentation.value
+        )
+    })    
+}
+
+function checkConstraint(type: SentimentType, target: Sentiment2D, segmentation: Sentiment2D): boolean {
+    if(type === SentimentType.neu) {
+        return target.pos <= segmentation.pos && target.neg <= segmentation.neg 
+    }
+    if(type === SentimentType.neg) {
+        return target.pos <= segmentation.pos && target.neg >= segmentation.neg 
+    }
+    if(type === SentimentType.pos) {
+        return target.pos >= segmentation.pos && target.neg <= segmentation.neg 
+    }
+    if(type === SentimentType.mix) {
+        return target.pos >= segmentation.pos && target.neg >= segmentation.neg 
+    }
+    return true
 }
 
 async function fetch_articles(article_ids) {
@@ -326,8 +353,11 @@ function updateSegmentation({pos, neg}) {
             <div class="constaints-outlet-scatter-container">
                 <div class="constraints-view">
                     <ol v-if="constraint_dict[selected_entity.name]">
-                        <li v-for="outlet in Object.keys(constraint_dict[selected_entity.name])"> 
+                        <li v-for="outlet in Object.keys(constraint_dict[selected_entity.name])"
+                            :class="{not_satisfied: !constraint_statisfaction[outlet] }"> 
                             {{outlet}} - {{constraint_dict[selected_entity.name][outlet]}}
+                            <i class="pi pi-times-circle" style="cursor:pointer" 
+                            @click="removeConstraint({target: selected_entity.name, outlet: outlet})"></i> 
                         </li>
                     </ol> 
                 </div>
@@ -428,6 +458,9 @@ function updateSegmentation({pos, neg}) {
 
 #outlet-scatter {
   width: 31%;
+}
+.not_satisfied {
+    background: #f88e8e;
 }
 
 </style>
