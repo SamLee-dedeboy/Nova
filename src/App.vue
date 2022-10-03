@@ -16,6 +16,15 @@ import { RouterLink, RouterView } from "vue-router";
   font-weight: normal;
 }
 
+.app-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+body {
+  overflow: hidden;
+}
 header {
   line-height: 1.5;
   max-height: 100vh;

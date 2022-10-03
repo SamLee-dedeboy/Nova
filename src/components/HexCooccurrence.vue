@@ -65,9 +65,6 @@ vue.watch(() => props.segmentation, (new_value, old_value) => {
     updateHexColor()
 }, {deep: true}) 
 
-// vue.watch(() => props.overall_entity_dict, (new_value, old_value) => {
-//     // updateHexColor(1000)
-// }, {deep:true})
 
 vue.watch(() => props.entity_cooccurrences, (new_value, old_value) => {
     updateHexBins()
@@ -79,7 +76,8 @@ vue.onMounted(() => {
         const svg = d3.select(`#${props.id}`).select("svg")
         // const svg = d3.select(`#test-id`).select("svg")
         .attr("viewBox", `0 0 ${viewBox[0]} ${viewBox[1]}`)
-        svg.append("g").attr("class", "hex-group")
+        const hex_group = svg.append("g").attr("class", "hex-group")
+        const hex_paths = hex_group.append("g").attr("class", "hex-paths")
         updateHexBins()
     })
 })
@@ -107,9 +105,7 @@ function updateHexBins() {
     //     .attr("fill", "blue")
 
     const centers_indexed: any[] = []
-    hex_group.append("g")
-    .attr("id","hex-paths")
-    .attr("stroke","white")
+    hex_group.select("g.hex-paths")
     .selectAll("path")
     .data(hex_data)
     .join("path")
@@ -118,23 +114,37 @@ function updateHexBins() {
             centers_indexed.push(d)
             return `translate(${d.x},${d.y})`
         })
-        .attr("fill", (d: any) => {
-            const sst = d[0].sst;
-            return  SstColors.enum_color_dict[categorizeHex(sst, props.segmentation!)]
+        .attr("stroke", "white")
+        .attr("stroke-width", (d, i) => i === 0? 20 : 1)
+        .on("click", function(e, d: any) {
+            const target = props.title?.split("-").slice(1).join("-")
+            emit("hex-clicked", {target: target, co_occurr_entity: d[0].entity})
+        })
+        .on("mouseover", function(e, d: any) {
+            d3.select(this)
+                .transition().duration(100)
+                .attr("stroke-width", d[0].index === 0? 25 : 8)
+        })
+        .on("mouseout", function(e, d:any) {
+            d3.select(this)
+                .transition().duration(500)
+                .attr("stroke-width", d[0].index === 0? 20 : 1)
         })
         .attr("opacity", (d: any) => {
             if(d[0].exists) return 1
             else return 0.2
         })
-        .on("click", function(e, d: any) {
-            const target = props.title?.split("-").slice(1).join("-")
-            emit("hex-clicked", {target: target, co_occurr_entity: d[0].entity})
+        .attr("fill", (d: any) => {
+            const sst = d[0].sst;
+            return  SstColors.enum_color_dict[categorizeHex(sst, props.segmentation!)]
         })
+
     hex_group.append("g")
         .attr("id", "labels")
         .selectAll("text")
         .data(hex_data)
         .join("text")
+        .attr("pointer-events", "none")
         .attr("x", (d, i) => centers_indexed[i].x)
         .attr("y", (d, i) => centers_indexed[i].y) //compute from num words and subtract from the y 
         .attr("text-anchor", "middle")
@@ -202,7 +212,7 @@ function wrap(text, width) {
 }
 
 
-function updateHexColor(overall_entity_dict:any=undefined) {
+function updateHexColor(animation = true) {
     const svg = d3.select(`#${props.id}`).select("svg")
     const hex_path_group = svg.select("g.hex-group")
     const hex_bins: any = hex_path_group.selectAll("path")

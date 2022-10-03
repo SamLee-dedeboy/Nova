@@ -47,8 +47,8 @@ const store = createStore({
         state.constraints[constraint.target] = {}
       state.constraints[constraint.target][constraint.outlet] = constraint.sentiment
     },
-    removeConstraint(state, constraint_target) {
-      delete state.constraints[constraint_target]
+    removeConstraint(state, constraint) {
+      delete state.constraints[constraint.target][constraint.outlet]
     }
 
   }
