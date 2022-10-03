@@ -130,7 +130,6 @@ function updateHexBins() {
                 .transition().duration(500)
                 .attr("stroke-width", d[0].index === 0? 20 : 1)
         })
-        .transition().duration(500)
         .attr("opacity", (d: any) => {
             if(d[0].exists) return 1
             else return 0.2
@@ -217,7 +216,6 @@ function updateHexColor(animation = true) {
     const svg = d3.select(`#${props.id}`).select("svg")
     const hex_path_group = svg.select("g.hex-group")
     const hex_bins: any = hex_path_group.selectAll("path")
-        .transition().duration(500)
         .attr("fill", function (d: any) {
             const sst = d[0].sst
             return SstColors.enum_color_dict[categorizeHex(sst, props.segmentation!)]
