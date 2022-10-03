@@ -95,7 +95,7 @@ export class Sentiment2D {
 }
 
 export enum SentimentType {
-    neu = "neurtral",
+    neu = "neutral",
     pos = "positive",
     neg = "negative",
     mix = "mixed",

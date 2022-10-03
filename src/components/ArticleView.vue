@@ -125,7 +125,7 @@ function highlight_element(text) {
     :collapsed="true">
     <template #header>
         <span class="headline">
-            <span v-html="index+'. ' + add_highlights(article.headline, props.article_highlights?.headline_entities?.[article.id])">
+            <span v-html="index+1+'. ' + add_highlights(article.headline, props.article_highlights?.headline_entities?.[article.id])">
             </span>
         </span>
     </template>
@@ -150,7 +150,7 @@ function highlight_element(text) {
     :collapsed="true">
     <template #header>
         <span class="headline">
-            <span v-html="index+'. ' + add_highlights(article.headline, props.article_highlights?.headline_entities?.[article.id])">
+            <span v-html="index+1+'. ' + add_highlights(article.headline, props.article_highlights?.headline_entities?.[article.id])">
             </span>
         </span>
         <!-- <Chip >
