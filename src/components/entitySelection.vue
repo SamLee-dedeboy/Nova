@@ -65,7 +65,7 @@
     const show_offset = false
     const show_highlight = false
     const zoomable = true
-    const node_interactable = true
+    const node_clickable = true
     const svgId = "entitySvg"
     const entityScatterPlot = new EntityScatter(
         props, 
@@ -74,11 +74,10 @@
         node_radius, segment_controller_width,
         show_axes,
         zoomable,
-        node_interactable,
+        node_clickable,
         show_offset,
         show_highlight,
         filtered_data, 
-        undefined,
         tooltip_content, 
         total_articles, min_articles, max_articles, 
         clicked_node, clicked_node_element, 

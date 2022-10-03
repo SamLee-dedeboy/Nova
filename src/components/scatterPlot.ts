@@ -58,10 +58,9 @@ export class EntityScatter {
     max_articles: ComputedRef<any>
     clicked_node: Ref<ScatterNode>
     clicked_node_element: Ref<any>
-    highlight_node_text: String | undefined
     hovered_node_info: Ref<OutletNodeInfo>
     zoomable: boolean
-    node_interactable: boolean
+    node_clickable: boolean
     show_highlight: boolean
 
     public constructor(
@@ -70,11 +69,10 @@ export class EntityScatter {
         node_radius: number, segment_controller_width: number, 
         show_axes: boolean,
         zoomable: boolean,
-        node_interactable: boolean,
+        node_clickable: boolean,
         show_offset: boolean,
         show_highlight: boolean,
         filtered_data:Ref<ScatterNode[]>, 
-        highlight_node_text: string|undefined,
         tooltip_content: Ref<string>, 
         total_articles: ComputedRef<any>, 
         min_articles: ComputedRef<any>, max_articles: ComputedRef<any>, 
@@ -95,7 +93,7 @@ export class EntityScatter {
 
         this.show_axes = show_axes
         this.zoomable = zoomable
-        this.node_interactable = node_interactable
+        this.node_clickable = node_clickable
         this.show_offset = show_offset
         this.show_highlight = show_highlight
 
@@ -107,7 +105,6 @@ export class EntityScatter {
         this.clicked_node = clicked_node;
         this.clicked_node_element = clicked_node_element;
         this.hovered_node_info = hovered_node_info;
-        this.highlight_node_text = highlight_node_text 
 
         this.xScale = d3.scalePow()
             .exponent(1)
@@ -230,7 +227,7 @@ export class EntityScatter {
     }
 
     updateSegmentationOffset(offset: number) {
-        const target_node: ScatterNode = this.props.view.data.nodes.find(node => node.text === this.props.highlight_outlet)
+        const target_node: ScatterNode = this.props.view.data.nodes.find(node => node.text === this.props.highlight_node_text)
         if(target_node !== undefined) {
             const top_left = {pos: target_node.pos_sst - offset, neg: target_node.neg_sst + offset}
             const top_right = {pos: target_node.pos_sst + offset, neg: target_node.neg_sst + offset}
@@ -475,21 +472,22 @@ export class EntityScatter {
             dots.attr("transform", this.current_zoom)
         }
         if(this.show_highlight) {
-            const highlight_outlet = this.highlight_node_text
+            const highlight_outlet = this.props.highlight_node_text
             const highlight_node = svg.selectAll("g.entity").filter((d: any) => highlight_outlet === d.text)
+                .raise()
+            const other_nodes = svg.selectAll("g.entity").filter((d: any) => highlight_outlet !== d.text)
             svg.select("g.node_group").raise()
             // svg.selectAll("rect.segment-controller").lower()
             this.applyExpandStyle(highlight_node, this)
+            this.addNodeLabel(highlight_node, this)
+
+            this.removeExpandedStyle(other_nodes, this)
+            this.removeNodeLabel(other_nodes, this)
         }
-        // if(this.props.view?.type === ViewType.EntityScatter) {
-        //     const highlight_circle = svg.selectAll("circle.outlet_circle").filter((d: any) => (this.props.highlight_nodes!.includes(d.text.split("-")[0])))
-        //     highlight_circle.attr("fill", "blue")
-        // }
     }
 
     updateExpandedScatter(emit:any) {
         this.updateOverviewScatter(emit)
-        if(!this.node_interactable) return
         const applyExpandStyle = this.applyExpandStyle;
         const updateNodeInfo = this.updateNodeInfo;
         const removeExpandedStyle = this.removeExpandedStyle;
@@ -523,10 +521,13 @@ export class EntityScatter {
                 if((d as ScatterNode).text === cvThis.clicked_node.value.text) return
                 const parentNode: any = (this as HTMLElement).parentNode
                 const container: any = d3.select(parentNode)
-                removeExpandedStyle(container,cvThis)
-    
+
+                if(!cvThis.show_highlight || d.text !== cvThis.props.highlight_node_text) {
+                    removeExpandedStyle(container, cvThis)
+                }
             })
             .on("click", function (e, d) {
+                if(!cvThis.node_clickable) return
                 // if(tutorial_mode.value && tutorial_step.value < 7) { return }
                 if(cvThis.clicked_node_element.value !== undefined) {
                     const parentNode: any = (cvThis.clicked_node_element.value as HTMLElement).parentNode
@@ -593,5 +594,21 @@ export class EntityScatter {
             neg_score: node_data.neg_sst,
         }
     }
-
+    
+    addNodeLabel(container: any, cvThis) {
+        container.selectAll("text.node_label")
+        .data((d) => [d])
+        .join("text")
+        .attr("class", "node_label")
+        .attr("x", (d: any) => cvThis.xScale(d.pos_sst))
+        .attr("y", (d: any) => cvThis.yScale(Math.abs(d.neg_sst)))
+        .text((d) => d.text)
+        .attr("font-size", "3.5rem")
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "hanging")
+        .attr("pointer-events", "none")
+    }
+    removeNodeLabel(container: any, cvThis) {
+        container.selectAll("text.node_label").remove()
+    }
 }
