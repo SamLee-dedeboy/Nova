@@ -114,9 +114,21 @@ function updateHexBins() {
             centers_indexed.push(d)
             return `translate(${d.x},${d.y})`
         })
+        .attr("stroke", "white")
+        .attr("stroke-width", (d, i) => i === 0? 20 : 1)
         .on("click", function(e, d: any) {
             const target = props.title?.split("-").slice(1).join("-")
             emit("hex-clicked", {target: target, co_occurr_entity: d[0].entity})
+        })
+        .on("mouseover", function(e, d: any) {
+            d3.select(this)
+                .transition().duration(100)
+                .attr("stroke-width", d[0].index === 0? 25 : 8)
+        })
+        .on("mouseout", function(e, d:any) {
+            d3.select(this)
+                .transition().duration(500)
+                .attr("stroke-width", d[0].index === 0? 20 : 1)
         })
         .transition().duration(500)
         .attr("opacity", (d: any) => {
@@ -127,13 +139,13 @@ function updateHexBins() {
             const sst = d[0].sst;
             return  SstColors.enum_color_dict[categorizeHex(sst, props.segmentation!)]
         })
-        .attr("stroke", "white")
 
     hex_group.append("g")
         .attr("id", "labels")
         .selectAll("text")
         .data(hex_data)
         .join("text")
+        .attr("pointer-events", "none")
         .attr("x", (d, i) => centers_indexed[i].x)
         .attr("y", (d, i) => centers_indexed[i].y) //compute from num words and subtract from the y 
         .attr("text-anchor", "middle")
