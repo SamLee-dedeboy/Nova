@@ -112,7 +112,7 @@ vue.watch(selectedCategory, (new_value, old_value) => {
 
 function prepare_data() {
     const article_ids = selected_cooccurr_entity.value.cooccurr_article_ids
-    setSegmentation(selected_entity.value.sst_ratio)
+    // setSegmentation(selected_entity.value.sst_ratio)
     selected_outlet.value = selected_entity.value.outlet
     const promiseArray: any[] = []
     promiseArray.push(new Promise(async (resolve) => {
