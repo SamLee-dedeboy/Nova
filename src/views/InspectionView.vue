@@ -298,22 +298,9 @@ function updateSegmentation({pos, neg}) {
                         :entity_info="selected_cooccurr_entity" >
                     </EntityInfoView>
                     <!-- <Divider v-if="selected_cooccurr_entity" layout="vertical"></Divider> -->
-                    <div class="journal-info-container" style="font-size:small">
-                        <!-- <Dropdown :modelValue="selected_outlet"
-                         :options="journal_options" 
-                         placeholder="Select an journal"
-                         @change="handleChangeJournal" /> -->
-                         <label for="journals"> Journal </label>
-                         <select name="journals" id="journals"
-                         @change="handleChangeJournal">
-                            <option v-for="journal in journal_options" 
-                                :value="journal"
-                                :selected="journal == selected_outlet">{{journal}}</option>
-                        </select>
-                    </div>
                 </div>
             </div>
-            <div class="outlet-weight-container">
+            <!-- <div class="outlet-weight-container">
                 <span class="slider-label" style="font-size:small">{{selected_entity.outlet}}</span>
                 <Slider 
                     :modelValue="outlet_weight_dict[selected_entity.outlet]"
@@ -321,9 +308,35 @@ function updateSegmentation({pos, neg}) {
                     :min="0"
                     :max="1">
                 </Slider> 
+            </div> -->
+            <div class="hexview-container"> 
+                <HexCooccurrence
+                  v-if="data_fetched"
+                    class="compare-co-hexview"
+                    :title="clicked_hexview.title"
+                    :id="`compare-co-hex-inpection`"
+                    :entity_cooccurrences="clicked_hexview.data"
+                    :segmentation="segmentation"
+                    @hex-clicked="handleHexClicked">
+                </HexCooccurrence>
             </div>
             <div class="select-category-container">
-                <span> How would you describe the coverage of {{selected_entity.outlet}} on {{selected_entity.name}}? </span>
+                <div class="question-container">
+                    <span> How would you describe the coverage on {{selected_entity.name}} by &nbsp </span>
+                    <div class="journal-info-container" style="font-size:small">
+                        <Dropdown :modelValue="selected_outlet"
+                            :options="journal_options" 
+                            placeholder="Select an journal"
+                            @change="handleChangeJournal" />
+                            <!-- <label for="journals"> Journal </label> -->
+                            <!-- <select name="journals" id="journals"
+                            @change="handleChangeJournal">
+                            <option v-for="journal in journal_options" 
+                                :value="journal"
+                                :selected="journal == selected_outlet">{{journal}}</option>
+                        </select> -->
+                    </div>
+                </div>
                 <div class="selection-container">
                     <SelectButton
                         v-model="selectedCategory"
@@ -338,17 +351,6 @@ function updateSegmentation({pos, neg}) {
                         :max="1" >
                     </Slider>
                 </div>
-            </div>
-            <div class="hexview-container"> 
-                <HexCooccurrence
-                  v-if="data_fetched"
-                    class="compare-co-hexview"
-                    :title="clicked_hexview.title"
-                    :id="`compare-co-hex-inpection`"
-                    :entity_cooccurrences="clicked_hexview.data"
-                    :segmentation="segmentation"
-                    @hex-clicked="handleHexClicked">
-                </HexCooccurrence>
             </div>
             <div class="constaints-outlet-scatter-container">
                 <div class="constraints-view">
@@ -401,17 +403,21 @@ function updateSegmentation({pos, neg}) {
 // entity info section
 // ---------------------
 .target-cooccurr-container {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  /*! justify-content: space-between; */
+  grid-template-columns: repeat(2, 1fr);
+//   display: flex;
+//   justify-content: space-between;
   padding-left: 10px;
   padding-right: 10px;
 }
-.entity-info-view-container {
+:deep(.entity-info-view-container) {
   display: flex;
   flex-direction: column;
   align-content: center;
   width: 100%;
   justify-content: center;
+  max-width: unset !important;
 }
 
 .outlet-weight-container {
@@ -421,12 +427,6 @@ function updateSegmentation({pos, neg}) {
 :deep(.p-slider.p-component.p-slider-horizontal) {
   width: 50%;
   margin-left: 15px;
-}
-.journal-info-container {
-  white-space: nowrap;
-}
-:deep(.p-dropdown-panel.p-component){
-    position: absolute !important;
 }
 
 // ---------------------
@@ -461,6 +461,13 @@ function updateSegmentation({pos, neg}) {
 }
 .not_satisfied {
     background: #f88e8e;
+}
+.question-container {
+  display: flex;
+  align-items: center;
+}
+.journal-info-container {
+  white-space: nowrap;
 }
 
 </style>
