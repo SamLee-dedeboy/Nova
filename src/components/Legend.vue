@@ -2,6 +2,7 @@
 import * as d3 from "d3";
 import * as SstColors from "./utils/ColorUtils"
 import * as vue from "vue"
+import { Legend } from "./Legend";
 
 const props = defineProps({
     id: String,
@@ -10,43 +11,19 @@ const props = defineProps({
     interactable: Boolean,
 })
 
+const margin = {top: 25, bottom: 10, left: 15, right: 15, vertical: 15}
+const len = Object.keys(props.color_dict!).length
+const row_height = 5 
+const viewBox: [number, number] = [150, margin.top + margin.bottom + len*(margin.vertical + row_height)]
+const legend = new Legend(
+    props,
+    props.id!,
+    margin,
+    viewBox,
+    row_height,
+)
 vue.onMounted(()=> {
-    const len = Object.keys(props.color_dict!).length
-    const margin = {top: 6, bottom: 10, left: 5, right: 5, vertical: 5}
-    const row_height = 4 
-    const viewBox = [150, margin.top + margin.bottom + len*(margin.vertical + row_height)]
-    var svg = d3.select(`#${props.id}`)
-        .attr("viewBox", `0 0 125 125`)
-        .attr("height", '100%')
-    var index = 0
-    for(const [title, color] of Object.entries(props.color_dict!)) {
-        const circle = svg.append("circle")
-            .attr("cx", margin.left)
-            .attr("cy", margin.top + index*(2*row_height + margin.vertical))
-            .attr("r", row_height)
-            // .style("filter", `brightness(${SstColors.brightness}%)`)
-            .style("fill", color)
-            .style("stroke", 'black')
-            .style("stroke-opacity", '15%');
-
-        if(props.filter) circle.style("filter", `brightness(${SstColors.brightness}%)`)
-        if(title === "no mention") {
-            circle.attr("stroke", "black")
-                .attr("stroke-dasharray", 1.5)
-        }
-
-        svg.append("text")
-            .attr("x", margin.left + 2*row_height)
-            .attr("y", margin.top + index*(2*row_height + margin.vertical))
-            .text(title)
-            .attr("font-size", "0.6rem")
-            .attr("dominant-baseline", "middle")
-            .style("font-family", 'Roboto')
-            .style("font-weight", '100')
-            .style("font-size", '0.5em')
-        // index is used for vertical offset calculation
-        index += 1
-    }
+    legend.draw()
 })
 
 </script>
