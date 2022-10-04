@@ -154,10 +154,10 @@ const highlight_nodes: Ref<string[]> = ref([])
 /**
  * layout constants in percentage
  */
-const left_section_panel_size = 40
+const left_section_panel_size = 33
 const right_section_panel_size = vue.computed(() => 100 - left_section_panel_size)
 
-const entity_scatter_panel_size = 77
+const entity_scatter_panel_size = 50 
 const utilities_panel_size = vue.computed(() => 100 - entity_scatter_panel_size)
 
 const entity_info_panel_size = 30
