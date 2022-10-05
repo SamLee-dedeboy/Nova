@@ -47,6 +47,10 @@ export class EntityScatter {
     show_offset: boolean;
     xScale: d3.ScalePower<number,number,never>;
     yScale: d3.ScalePower<number,number,never>;
+    xMax: number;
+    xMin: number
+    yMax: number;
+    yMin: number
     
     zoom: any;
     current_zoom: any;
@@ -62,6 +66,7 @@ export class EntityScatter {
     zoomable: boolean
     node_clickable: boolean
     show_highlight: boolean
+    showRegionLabel: boolean
 
     public constructor(
         props:any, svgId: string, 
@@ -72,6 +77,7 @@ export class EntityScatter {
         node_clickable: boolean,
         show_offset: boolean,
         show_highlight: boolean,
+        showRegionLabel: boolean,
         filtered_data:Ref<ScatterNode[]>, 
         tooltip_content: Ref<string>, 
         total_articles: ComputedRef<any>, 
@@ -96,7 +102,7 @@ export class EntityScatter {
         this.node_clickable = node_clickable
         this.show_offset = show_offset
         this.show_highlight = show_highlight
-
+        this.showRegionLabel = showRegionLabel
         this.filtered_data = filtered_data;
         this.tooltip_content = tooltip_content;
         this.total_articles = total_articles;
@@ -105,17 +111,23 @@ export class EntityScatter {
         this.clicked_node = clicked_node;
         this.clicked_node_element = clicked_node_element;
         this.hovered_node_info = hovered_node_info;
-
+        
+        this.xMin = this.margin.left
+        this.xMax = this.vbWidth+this.margin.left
         this.xScale = d3.scalePow()
             .exponent(1)
             .domain([0, 1])
-            .range([this.margin.left, this.vbWidth + this.margin.left])
+            .range([this.xMin, this.xMax])
             .clamp(true)
+
+        this.yMin = this.margin.top + this.vbHeight
+        this.yMax = this.margin.top
         this.yScale =  d3.scalePow()
             .exponent(1)
             .domain([0, 1])
-            .range([this.margin.top + this.vbHeight, this.margin.top])
+            .range([this.yMin, this.yMax])
             .clamp(true)
+        
         
         var self = this
         this.zoom = d3.zoom().scaleExtent([1, 3]).on("zoom", function(e) {
@@ -226,6 +238,66 @@ export class EntityScatter {
             // .attr("y", () => (segment_point.y-segment_controller_width/2))
         // if(this.props.expanded)
         //     this.updateCategorization()
+        if(this.showRegionLabel)
+            this.updateRegionLabel(this.segment_point)
+    }
+    
+    updateRegionLabel(segment_point: SegmentPoint) {
+        const svg = d3.select(`#${this.props.id}`).select("svg")
+
+        //
+        // set each label individually for positions & colors
+        //
+
+        // positive
+        svg.selectAll("text.pos-region-label")
+            .data(["Positive"])
+            .join("text")
+            .attr("class", " region-label pos-region-label")
+            .attr("x", (segment_point.x + this.xMax)/2)
+            .attr("y", (segment_point.y + this.yMin)/2)
+            .attr("fill", SstColors.pos_color)
+            .text(d=>d)
+
+        // negative
+        svg.selectAll("text.neg-region-label")
+            .data(["Negative"])
+            .join("text")
+            .attr("class", " region-label neg-region-label")
+            .attr("x", (segment_point.x + this.xMin)/2)
+            .attr("y", (segment_point.y + this.yMax)/2)
+            .attr("fill", SstColors.neg_color)
+            .text(d=>d)
+
+        // neutral
+        svg.selectAll("text.neu-region-label")
+            .data(["Neutral"])
+            .join("text")
+            .attr("class", " region-label neu-region-label")
+            .attr("x", (segment_point.x + this.xMin)/2)
+            .attr("y", (segment_point.y + this.yMin)/2)
+            .attr("fill", SstColors.neu_color)
+            .text(d=>d)
+
+        // mixed
+        svg.selectAll("text.mix-region-label")
+            .data(["Mixed"])
+            .join("text")
+            .attr("class", " region-label mix-region-label")
+            .attr("x", (segment_point.x + this.xMax)/2)
+            .attr("y", (segment_point.y + this.yMax)/2)
+            .attr("fill", SstColors.mixed_color)
+            .text(d=>d)
+
+        //
+        // set all label styles together
+        //
+        svg.selectAll("text.region-label")
+            .attr("text-anchor", "middle")
+            .attr("font-size", "4rem")
+            .attr("opacity", "0.5")
+            .attr("filter", "brightness(50%)")
+            .attr("font-family", "Gill Sans")
     }
 
     updateSegmentationOffset(offset: number) {

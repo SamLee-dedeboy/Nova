@@ -71,6 +71,7 @@
     const show_highlight = false
     const zoomable = true
     const node_clickable = true
+    const show_region_label = true
     const svgId = "entitySvg"
     const entityScatterPlot = new EntityScatter(
         props, 
@@ -82,6 +83,7 @@
         node_clickable,
         show_offset,
         show_highlight,
+        show_region_label,
         filtered_data, 
         tooltip_content, 
         total_articles, min_articles, max_articles, 

@@ -119,7 +119,7 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
 <template>
     <Splitter class="splitter-outmost">
         <SplitterPanel id="hexview_section" class="hexview-section flex align-items-center justify-content-center" :size="left_section_size" :min-size="left_section_size" >
-            <h2 class="component-header hexview-grid-header"> Topic Co-occurrences Grid of {{ route.params.entity }}</h2>
+            <h2 class="component-header hexview-grid-header"> Topic Co-occurrences of {{ route.params.entity }}</h2>
             <div class="hexview-grid-container">
                 <div class="hexview-grid-cell-container"
                     v-if="data_fetched"
