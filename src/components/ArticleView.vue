@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import ScrollPanel from 'primevue/scrollpanel'
 import Panel from 'primevue/panel'
+import ToggleButton from 'primevue/togglebutton'
 import * as vue from "vue"
+import * as _ from "lodash"
 import * as SstColors from "./utils/ColorUtils"
 import { Ref, ref } from "vue"
 import { Article } from "../types"
@@ -10,6 +12,7 @@ import { Article } from "../types"
 const props = defineProps({
     articles: Object as () => Article[],
     article_highlights: Object as () => any,
+    entity_pair: Object as () => String[],
 })
 
 
@@ -44,14 +47,23 @@ vue.onMounted(() => {
     neg_panel_togglers.forEach(toggler => toggler.classList.add("neg-toggler"))
 })
 const pos_articles = vue.computed(() => {
-    return props.articles?.filter(article => article.sentiment.label === "POSITIVE")
+    return props.articles?.filter(article => article.sentiment.label === "POSITIVE").sort(sortByRelevance)
 })
 const pos_panel_articles: Ref<Article[]> = ref(pos_articles.value?.slice(0,10) || []) 
 
 const neg_articles = vue.computed(() => {
-    return props.articles?.filter(article => article.sentiment.label === "NEGATIVE")
+    return props.articles?.filter(article => article.sentiment.label === "NEGATIVE").sort(sortByRelevance)
 })
 const neg_panel_articles: Ref<Article[]> = ref(neg_articles.value?.slice(0,10) || []) 
+
+function sortByRelevance(a1, a2): number {
+    const r1 = a1.entity_candidates.filter(pair => pair[0] === props.entity_pair![0] || pair[0] === props.entity_pair![1])
+    const r2 = a2.entity_candidates.filter(pair => pair[0] === props.entity_pair![0] || pair[0] === props.entity_pair![1])
+    const scaler = 5
+    const r1_score = _.sumBy(r1, (pair) => pair[0] === props.entity_pair![0]? scaler*pair[1] : pair[1])
+    const r2_score = _.sumBy(r2, (pair) => pair[0] === props.entity_pair![0]? scaler*pair[1] : pair[1])
+    return -(r1_score - r2_score)
+}
 
 vue.watch(pos_articles, (new_value, old_value) => {
     pos_panel_articles.value.length = 0
@@ -116,8 +128,8 @@ function highlight_element(text) {
 </script>
 
 <template>
+<div class="pos-panel-header"> Positive: {{pos_articles?.length || ""}}</div>
 <ScrollPanel class="pos-article-list">
-    <div class="pos-panel-header"> Positive </div>
     <Panel v-for="(article, index) in pos_panel_articles"
     :header="index+1 + '. ' + article.headline"
     :key="article.id"
@@ -133,16 +145,17 @@ function highlight_element(text) {
         <!-- <span class="summary">
             {{removeTags(article.summary)}}
         </span> -->
-        <span class="summary">
+        <div class="summary">
             <span v-html="removeTags(add_highlights(article.summary, props.article_highlights?.summary_entities?.[article.id]))">
             </span>
-        </span>
+        </div>
+        <ToggleButton class='mark_toggle' :model-value="false" onLabel="Mark" off-label="Mark"></ToggleButton>
     </ScrollPanel>
     </Panel>
 </ScrollPanel>
 
+<div class="neg-panel-header"> Negative: {{neg_articles?.length || ""}} </div>
 <ScrollPanel class="neg-article-list">
-    <div class="neg-panel-header"> Negative </div>
     <Panel v-for="(article, index) in neg_panel_articles"
     :header="index+1 + '. ' + article.headline"
     :key="article.id"
@@ -150,7 +163,7 @@ function highlight_element(text) {
     :collapsed="true">
     <template #header>
         <span class="headline">
-            <span v-html="index+1+'. ' + add_highlights(article.headline, props.article_highlights?.headline_entities?.[article.id])">
+            <span v-html="index+1+'. '  + add_highlights(article.headline, props.article_highlights?.headline_entities?.[article.id])">
             </span>
         </span>
         <!-- <Chip >
@@ -158,10 +171,11 @@ function highlight_element(text) {
         </Chip> -->
     </template>
     <ScrollPanel style="width: 100%; height: 200px">
-        <span class="summary">
+        <div class="summary">
             <span v-html="removeTags(add_highlights(article.summary, props.article_highlights?.summary_entities?.[article.id]))">
             </span>
-        </span>
+        </div>
+        <ToggleButton class='mark_toggle' :model-value="false" onLabel="Mark" off-label="Mark"></ToggleButton>
     </ScrollPanel>
     </Panel>
 </ScrollPanel>
@@ -182,9 +196,23 @@ function highlight_element(text) {
     background: #f4c49c !important;
 }
 .pos-article-list, .neg-article-list {
-    max-height:50%;
-    /* height:50%; */
+    /* max-height:50%; */
+    height:44%;
 }
+.pos-panel-header, .neg-panel-header {
+    background: #f7f7f7;
+    padding: 1%;
+    font-family: "Lato";
+    font-weight: bold;
+    border-bottom: solid 2px #b7b7b7;
+    border-top: solid 1px #b7b7b7;
+}
+/* .pos-panel-header {
+    color:#baf0f5 
+}
+.neg-panel-header {
+    color:#f4c49c
+} */
 
 .summary {
     white-space: pre-line;
