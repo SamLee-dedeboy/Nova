@@ -42,6 +42,7 @@ const setEntity = (entity) => store.commit("setEntity", entity)
 const selected_cooccurr_entity = vue.computed(() => store.state.selected_cooccurr_entity)
 const setCooccurrEntity = (cooccurr_entity) => store.commit("setCooccurrEntity", cooccurr_entity) 
 const segmentation = vue.computed(() => store.state.segmentation)
+const original_segmentation = segmentation.value
 const setSegmentation = (segmentation) => store.commit("setSegmentation", segmentation) 
 const outlet_weight_dict = vue.computed(() => store.state.outlet_weight_dict)
 const clicked_hexview = vue.computed(() => store.state.clicked_hexview)
@@ -58,7 +59,8 @@ const offsetScale = vue.computed(() => {
     console.log(adjust_target)
     return d3.scaleLinear()
         .domain([0, 1])
-        .range([0.05, Math.min(1-adjust_target.pos, 1-adjust_target.neg)])
+        // .range([0.05, Math.min(1-adjust_target.pos, 1-adjust_target.neg)])
+        .range([0.05, 1])
 })
 const entity_grouped_view: Ref<any> = ref(undefined)
 const target_articles: Ref<Article[]> = ref([])
@@ -87,6 +89,7 @@ const intensity: Ref<number> = ref(0.5)
 const adjust_offset = vue.computed(() => offsetScale.value(intensity.value))
 const selectedCategory: Ref<any> = ref({})
 vue.watch(selectedCategory, (new_value, old_value) => {
+    if(selectedCategory.value === undefined) return
     const adjust_target: Sentiment2D = selected_entity.value.sst_ratio || {pos: 0.5, neg: 0.5}
     // const offset = 0.05
     if(new_value.type === SentimentType.neu) {
@@ -141,7 +144,6 @@ function prepare_data() {
 
 function checkConflict(constraint_dict, outlet_nodes) {
     Object.keys(constraint_dict).forEach(outlet => {
-        console.log(outlet)
         const target_node = outlet_nodes.find(node => node.text === outlet)
         constraint_statisfaction.value[outlet] = checkConstraint(
             constraint_dict[outlet], 
@@ -179,6 +181,7 @@ async function fetch_articles(article_ids) {
     .then(res => res.json())
     .then(json => {
         target_articles.value = json
+        console.log(target_articles.value)
         console.log("articles fetched")
     })
 }
@@ -216,7 +219,8 @@ async function fetch_entity_grouped_node(entity) {
 }
 
 async function handleChangeJournal(e) {
-    const outlet = e.target.value
+    // const outlet = e.target.value
+    const outlet = e.value
     selected_outlet.value = outlet
     const entity = selected_entity.value.name
     const co_occurr_entity = selected_cooccurr_entity.value.name
@@ -224,6 +228,7 @@ async function handleChangeJournal(e) {
     setClickedHexView(view)
     await fetch_cooccurr_into(outlet, entity, co_occurr_entity)
     prepare_data()
+    selectedCategory.value = undefined
 }
 
 async function handleHexClicked({target, co_occurr_entity}, view) {
@@ -280,7 +285,8 @@ function updateSegmentation({pos, neg}) {
             v-if="data_fetched"
             v-model:sst_threshold="segmentation"
             :articles="target_articles"
-            :article_highlights="target_article_highlights">
+            :article_highlights="target_article_highlights"
+            :entity_pair="[selected_entity.name as string, selected_cooccurr_entity.name as string]">
             </ArticleView>
         </SplitterPanel>    
         <SplitterPanel id="entity_info_section" class="entity-info-section flex align-items-center justify-content-center" :size="right_section_size" >
@@ -316,7 +322,7 @@ function updateSegmentation({pos, neg}) {
                     :title="clicked_hexview.title"
                     :id="`compare-co-hex-inpection`"
                     :entity_cooccurrences="clicked_hexview.data"
-                    :segmentation="segmentation"
+                    :segmentation="original_segmentation"
                     @hex-clicked="handleHexClicked">
                 </HexCooccurrence>
             </div>
@@ -461,6 +467,7 @@ function updateSegmentation({pos, neg}) {
 }
 .not_satisfied {
     background: #f88e8e;
+    transition: background 1s;
 }
 .question-container {
   display: flex;
