@@ -42,6 +42,7 @@ const setEntity = (entity) => store.commit("setEntity", entity)
 const selected_cooccurr_entity = vue.computed(() => store.state.selected_cooccurr_entity)
 const setCooccurrEntity = (cooccurr_entity) => store.commit("setCooccurrEntity", cooccurr_entity) 
 const segmentation = vue.computed(() => store.state.segmentation)
+const original_segmentation = segmentation.value
 const setSegmentation = (segmentation) => store.commit("setSegmentation", segmentation) 
 const outlet_weight_dict = vue.computed(() => store.state.outlet_weight_dict)
 const clicked_hexview = vue.computed(() => store.state.clicked_hexview)
@@ -49,18 +50,21 @@ const setClickedHexView = (hexview) => store.commit("setClickedHexView", hexview
 const hexview_grid = vue.computed(() => store.state.hexview_grid)
 const constraint_dict = vue.computed(() => store.state.constraints)
 const addConstraint = (constraint: Constraint) => store.commit("addConstraint", constraint)
-const removeConstraint = (constraint_target: string) => store.commit("removeConstraint", constraint_target)
+const removeConstraint = (constraint: Constraint) => store.commit("removeConstraint", constraint)
+const constraint_statisfaction = ref({})
 
 const selected_outlet: Ref<string> = ref("")
 const offsetScale = vue.computed(() => {
     const adjust_target: Sentiment2D = selected_entity.value.sst_ratio || {pos: 0.5, neg: 0.5}
+    console.log(adjust_target)
     return d3.scaleLinear()
         .domain([0, 1])
-        .range([0.05, Math.min(adjust_target.pos, adjust_target.neg)])
+        // .range([0.05, Math.min(1-adjust_target.pos, 1-adjust_target.neg)])
+        .range([0.05, 1])
 })
 const entity_grouped_view: Ref<any> = ref(undefined)
 const target_articles: Ref<Article[]> = ref([])
-const target_article_highlights: Ref<Any> = ref({})
+const target_article_highlights: Ref<any> = ref({})
 const outlet_scatter: Ref<any> = ref(null)
 vue.onMounted(() => {
     prepare_data()
@@ -85,6 +89,7 @@ const intensity: Ref<number> = ref(0.5)
 const adjust_offset = vue.computed(() => offsetScale.value(intensity.value))
 const selectedCategory: Ref<any> = ref({})
 vue.watch(selectedCategory, (new_value, old_value) => {
+    if(selectedCategory.value === undefined) return
     const adjust_target: Sentiment2D = selected_entity.value.sst_ratio || {pos: 0.5, neg: 0.5}
     // const offset = 0.05
     if(new_value.type === SentimentType.neu) {
@@ -106,12 +111,15 @@ vue.watch(selectedCategory, (new_value, old_value) => {
         sentiment: new_value.type,
     }
     addConstraint(new_constraint)
-    checkConflict(constraint_dict.value)
+})
+
+vue.watch(segmentation, (new_value, old_value) => {
+    checkConflict(constraint_dict.value[selected_entity.value.name], entity_grouped_view.value.data.nodes)
 })
 
 function prepare_data() {
     const article_ids = selected_cooccurr_entity.value.cooccurr_article_ids
-    setSegmentation(selected_entity.value.sst_ratio)
+    // setSegmentation(selected_entity.value.sst_ratio)
     selected_outlet.value = selected_entity.value.outlet
     const promiseArray: any[] = []
     promiseArray.push(new Promise(async (resolve) => {
@@ -129,7 +137,7 @@ function prepare_data() {
     Promise.all(promiseArray)
     .then(() => {
         data_fetched.value = true
-        console.log('fetched new articles', article_ids)
+        console.log('fetched new articles')
     })
 
 }
@@ -174,6 +182,7 @@ async function fetch_articles(article_ids) {
     .then(res => res.json())
     .then(json => {
         target_articles.value = json
+        console.log(target_articles.value)
         console.log("articles fetched")
     })
 }
@@ -205,18 +214,32 @@ async function fetch_entity_grouped_node(entity) {
                 max_articles: Math.max(...json.map(node => node.article_ids.length)),
                 min_articles: Math.min(...json.map(node => node.article_ids.length)),
             }
-            
         }
+        console.log("entity grouped view fetched")
     })
 }
 
 async function handleChangeJournal(e) {
+    // const outlet = e.target.value
     const outlet = e.value
     selected_outlet.value = outlet
     const entity = selected_entity.value.name
     const co_occurr_entity = selected_cooccurr_entity.value.name
     const view = hexview_grid.value.find(view => view.title.split("-")[2] === outlet)
     setClickedHexView(view)
+    await fetch_cooccurr_into(outlet, entity, co_occurr_entity)
+    prepare_data()
+    selectedCategory.value = undefined
+}
+
+async function handleHexClicked({target, co_occurr_entity}, view) {
+    const entity = target.split("-")[0]
+    const outlet = target.split("-")[1] 
+    await fetch_cooccurr_into(outlet, entity, co_occurr_entity)
+    prepare_data()
+}
+
+async function fetch_cooccurr_into(outlet, entity, co_occurr_entity) {
     await fetch(`${server_address}/processed_data/cooccurr_info/grouped/${outlet}/${entity}/${co_occurr_entity}`)
         .then(res => res.json())
         .then(json => {
@@ -226,7 +249,7 @@ async function handleChangeJournal(e) {
                 outlet: outlet,
                 num_of_mentions: json.target_num,
                 articles_topic_dict: json.target_articles_topic_dict, 
-                sst_ratio: view.data.target.sst
+                sst_ratio: clicked_hexview.value.data.target.sst
             }
             setEntity(target_entity)
             const cooccurr_entity = {
@@ -240,7 +263,6 @@ async function handleChangeJournal(e) {
             }
             setCooccurrEntity(cooccurr_entity)
         })
-    // prepare_data()
 }
 
 function updateSegmentation({pos, neg}) {
@@ -265,7 +287,8 @@ function updateSegmentation({pos, neg}) {
             v-if="data_fetched"
             v-model:sst_threshold="segmentation"
             :articles="target_articles"
-            :article_highlights="target_article_highlights">
+            :article_highlights="target_article_highlights"
+            :entity_pair="[selected_entity.name as string, selected_cooccurr_entity.name as string]">
             </ArticleView>
         </SplitterPanel>    
         <SplitterPanel id="entity_info_section" class="entity-info-section flex align-items-center justify-content-center" :size="right_section_size" >
@@ -283,16 +306,9 @@ function updateSegmentation({pos, neg}) {
                         :entity_info="selected_cooccurr_entity" >
                     </EntityInfoView>
                     <!-- <Divider v-if="selected_cooccurr_entity" layout="vertical"></Divider> -->
-                    <div class="journal-info-container" style="font-size:small">
-                        <Dropdown :modelValue="selected_outlet"
-                         :options="journal_options" 
-                         placeholder="Select an journal"
-                         @change="handleChangeJournal" />
-                        <!-- <div> {{selected_entity.outlet}} </div> -->
-                    </div>
                 </div>
             </div>
-            <div class="outlet-weight-container">
+            <!-- <div class="outlet-weight-container">
                 <span class="slider-label" style="font-size:small">{{selected_entity.outlet}}</span>
                 <Slider 
                     :modelValue="outlet_weight_dict[selected_entity.outlet]"
@@ -300,9 +316,35 @@ function updateSegmentation({pos, neg}) {
                     :min="0"
                     :max="1">
                 </Slider> 
+            </div> -->
+            <div class="hexview-container"> 
+                <HexCooccurrence
+                  v-if="data_fetched"
+                    class="compare-co-hexview"
+                    :title="clicked_hexview.title"
+                    :id="`compare-co-hex-inpection`"
+                    :entity_cooccurrences="clicked_hexview.data"
+                    :segmentation="original_segmentation"
+                    @hex-clicked="handleHexClicked">
+                </HexCooccurrence>
             </div>
             <div class="select-category-container">
-                <span> How would you describe the coverage of {{selected_entity.outlet}} on {{selected_entity.name}}? </span>
+                <div class="question-container">
+                    <span> How would you describe the coverage on {{selected_entity.name}} by &nbsp </span>
+                    <div class="journal-info-container" style="font-size:small">
+                        <Dropdown :modelValue="selected_outlet"
+                            :options="journal_options" 
+                            placeholder="Select an journal"
+                            @change="handleChangeJournal" />
+                            <!-- <label for="journals"> Journal </label> -->
+                            <!-- <select name="journals" id="journals"
+                            @change="handleChangeJournal">
+                            <option v-for="journal in journal_options" 
+                                :value="journal"
+                                :selected="journal == selected_outlet">{{journal}}</option>
+                        </select> -->
+                    </div>
+                </div>
                 <div class="selection-container">
                     <SelectButton
                         v-model="selectedCategory"
@@ -318,21 +360,14 @@ function updateSegmentation({pos, neg}) {
                     </Slider>
                 </div>
             </div>
-            <div class="hexview-container"> 
-                <HexCooccurrence
-                  v-if="data_fetched"
-                    class="compare-co-hexview"
-                    :title="clicked_hexview.title"
-                    :id="`compare-co-hex-inpection`"
-                    :entity_cooccurrences="clicked_hexview.data"
-                    :segmentation="segmentation">
-                </HexCooccurrence>
-            </div>
             <div class="constaints-outlet-scatter-container">
                 <div class="constraints-view">
                     <ol v-if="constraint_dict[selected_entity.name]">
-                        <li v-for="outlet in Object.keys(constraint_dict[selected_entity.name])"> 
+                        <li v-for="outlet in Object.keys(constraint_dict[selected_entity.name])"
+                            :class="{not_satisfied: !constraint_statisfaction[outlet] }"> 
                             {{outlet}} - {{constraint_dict[selected_entity.name][outlet]}}
+                            <i class="pi pi-times-circle" style="cursor:pointer" 
+                            @click="removeConstraint({target: selected_entity.name, outlet: outlet})"></i> 
                         </li>
                     </ol> 
                 </div>
@@ -340,7 +375,7 @@ function updateSegmentation({pos, neg}) {
                     ref="outlet_scatter"
                     v-if="entity_grouped_view"
                     :view="entity_grouped_view"
-                    :highlight_outlet="selected_entity.outlet"
+                    :highlight_node_text="selected_entity.outlet"
                     :adjust_offset="adjust_offset"
                     id="outlet-scatter"
                     :segment_mode="true"
@@ -391,17 +426,21 @@ function updateSegmentation({pos, neg}) {
 // entity info section
 // ---------------------
 .target-cooccurr-container {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  /*! justify-content: space-between; */
+  grid-template-columns: repeat(2, 1fr);
+//   display: flex;
+//   justify-content: space-between;
   padding-left: 10px;
   padding-right: 10px;
 }
-.entity-info-view-container {
+:deep(.entity-info-view-container) {
   display: flex;
   flex-direction: column;
   align-content: center;
   width: 100%;
   justify-content: center;
+  max-width: unset !important;
 }
 
 .outlet-weight-container {
@@ -411,9 +450,6 @@ function updateSegmentation({pos, neg}) {
 :deep(.p-slider.p-component.p-slider-horizontal) {
   width: 50%;
   margin-left: 15px;
-}
-.journal-info-container {
-  white-space: nowrap;
 }
 
 // ---------------------
@@ -445,6 +481,17 @@ function updateSegmentation({pos, neg}) {
 
 #outlet-scatter {
   width: 31%;
+}
+.not_satisfied {
+    background: #f88e8e;
+    transition: background 1s;
+}
+.question-container {
+  display: flex;
+  align-items: center;
+}
+.journal-info-container {
+  white-space: nowrap;
 }
 
 </style>

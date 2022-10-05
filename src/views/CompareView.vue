@@ -67,7 +67,7 @@ vue.onMounted(async () => {
         .then(res => res.json())
         .then(json => {
             const data_list = json
-            let hexview_grid_data = []
+            let hexview_grid_data: typeUtils.CooccurrHexView[] = []
             data_list.forEach(hex_data => {
                 const hex_view: typeUtils.CooccurrHexView = {
                     title: `co-${hex_data.entity}-${hex_data.outlet}`,
@@ -121,16 +121,20 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
         <SplitterPanel id="hexview_section" class="hexview-section flex align-items-center justify-content-center" :size="left_section_size" :min-size="left_section_size" >
             <h2 class="component-header hexview-grid-header"> Topic Co-occurrences Grid of {{ route.params.entity }}</h2>
             <div class="hexview-grid-container">
-                <HexCooccurrence
-                  v-if="data_fetched"
-                  v-for="view, index in hexview_grid"
-                    class="compare-co-hexview"
-                    :title="view.title"
-                    :id="`compare-co-hex-${index}`"
-                    :entity_cooccurrences="view.data"
-                    :segmentation="segmentation"
-                    v-on:hex-clicked="handleHexClicked($event, view)">
-                </HexCooccurrence>
+                <div class="hexview-grid-cell-container"
+                    v-if="data_fetched"
+                    v-for="view, index in hexview_grid">
+                    <HexCooccurrence
+                        class="compare-co-hexview"
+                        :title="view.title"
+                        :id="`compare-co-hex-${index}`"
+                        :entity_cooccurrences="view.data"
+                        :segmentation="segmentation"
+                        v-on:hex-clicked="handleHexClicked($event, view)">
+                    </HexCooccurrence>
+                    <img :src="`../src/assets/${view.title.split('-')[2]}.png`"
+                        class="journal-image" />
+                </div>
             </div>
         </SplitterPanel>    
         <SplitterPanel id="entity_info_section" class="entity-info-section flex align-items-center justify-content-center" :size="right_section_size" >
@@ -195,6 +199,9 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
     width: 100%;
     height: 91%;
 }
+.hexview-grid-cell-container {
+  overflow: hidden;
+}
 .target-cooccurr-container {
   display: flex;
 }
@@ -204,5 +211,13 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
 }
 .entity-info-container {
     margin-left: 10px
+}
+.compare-co-hexview {
+    z-index:1
+}
+.journal-image {
+    position:absolute;
+    width: 100px;
+    bottom: 0px;
 }
 </style>

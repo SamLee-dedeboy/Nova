@@ -58,10 +58,9 @@ export class EntityScatter {
     max_articles: ComputedRef<any>
     clicked_node: Ref<ScatterNode>
     clicked_node_element: Ref<any>
-    highlight_node_text: String | undefined
     hovered_node_info: Ref<OutletNodeInfo>
     zoomable: boolean
-    node_interactable: boolean
+    node_clickable: boolean
     show_highlight: boolean
 
     public constructor(
@@ -70,11 +69,10 @@ export class EntityScatter {
         node_radius: number, segment_controller_width: number, 
         show_axes: boolean,
         zoomable: boolean,
-        node_interactable: boolean,
+        node_clickable: boolean,
         show_offset: boolean,
         show_highlight: boolean,
         filtered_data:Ref<ScatterNode[]>, 
-        highlight_node_text: string|undefined,
         tooltip_content: Ref<string>, 
         total_articles: ComputedRef<any>, 
         min_articles: ComputedRef<any>, max_articles: ComputedRef<any>, 
@@ -95,7 +93,7 @@ export class EntityScatter {
 
         this.show_axes = show_axes
         this.zoomable = zoomable
-        this.node_interactable = node_interactable
+        this.node_clickable = node_clickable
         this.show_offset = show_offset
         this.show_highlight = show_highlight
 
@@ -107,16 +105,17 @@ export class EntityScatter {
         this.clicked_node = clicked_node;
         this.clicked_node_element = clicked_node_element;
         this.hovered_node_info = hovered_node_info;
-        this.highlight_node_text = highlight_node_text 
 
         this.xScale = d3.scalePow()
             .exponent(1)
             .domain([0, 1])
-            .range([this.margin.left, this.vbWidth + this.margin.left]);
+            .range([this.margin.left, this.vbWidth + this.margin.left])
+            .clamp(true)
         this.yScale =  d3.scalePow()
             .exponent(1)
             .domain([0, 1])
-            .range([this.margin.top + this.vbHeight, this.margin.top]);
+            .range([this.margin.top + this.vbHeight, this.margin.top])
+            .clamp(true)
         
         var self = this
         this.zoom = d3.zoom().scaleExtent([1, 3]).on("zoom", function(e) {
@@ -230,7 +229,7 @@ export class EntityScatter {
     }
 
     updateSegmentationOffset(offset: number) {
-        const target_node: ScatterNode = this.props.view.data.nodes.find(node => node.text === this.props.highlight_outlet)
+        const target_node: ScatterNode = this.props.view.data.nodes.find(node => node.text === this.props.highlight_node_text)
         if(target_node !== undefined) {
             const top_left = {pos: target_node.pos_sst - offset, neg: target_node.neg_sst + offset}
             const top_right = {pos: target_node.pos_sst + offset, neg: target_node.neg_sst + offset}
@@ -332,7 +331,6 @@ export class EntityScatter {
         }
         const drag = d3.drag()
             .on("start", (e, d)=>{ 
-                console.log("start")
                 self.segment_controller_start.x = e.x
                 self.segment_controller_start.y = e.y
                 svg.select('rect.segment-controller').attr("stroke", "black")
@@ -358,12 +356,16 @@ export class EntityScatter {
                     .attr("y", d.y=(end_y-(self.segment_controller_width/(self.current_zoom?.k || 1))/2))
                     .raise();
 
-                let segment_point = {x: Math.max(self.margin.left, Math.min(end_x, self.vbWidth)), y: Math.max(self.margin.top, Math.min(end_y, self.vbHeight))} 
+                let segment_point = {x: Math.max(self.margin.left, Math.min(end_x, self.vbWidth+self.margin.left)), y: Math.max(self.margin.top, Math.min(end_y, self.vbHeight))} 
+                // let segment_point = {x: end_x, y: end_y}
                 self.updateSegmentation(segment_point.x,segment_point.y)
-                emit("update:segmentation", {pos: self.xScale.invert(self.segment_point.x), neg: self.yScale.invert(self.segment_point.y)})
+                // console.log({pos: self.xScale.invert(self.segment_point.x), neg: self.yScale.invert(self.segment_point.y)})
                 // self.setSegmentation({pos: self.xScale.invert(self.segment_point.x), neg: self.yScale.invert(self.segment_point.y)})
             })
-            .on("end", function(e, d) { d3.select(this).attr("stroke", null)})
+            .on("end", function(e, d) { 
+                d3.select(this).attr("stroke", null)
+                emit("update:segmentation", {pos: self.xScale.invert(self.segment_point.x), neg: self.yScale.invert(self.segment_point.y)})
+            })
 
         //Segment Controller Rect
         this.svg.append("rect")
@@ -394,10 +396,12 @@ export class EntityScatter {
 
         this.svg.append("text")
             .attr("class", "axis_x_label")
-            .attr("transform", `translate(${this.margin.left+this.vbWidth-15}, ${this.margin.top+this.vbHeight+5})`)
+            .attr("transform", `translate(${this.margin.left+this.vbWidth-60}, ${this.margin.top+this.vbHeight-30})`)
             .attr("text-anchor", "middle")
-            .text("positive score")
-            .attr("fill", SstColors.pos_color);
+            .text("+ Sentiment")
+            .attr("fill", '#2c8c94')
+            .style("font-weight", "bold");
+            
 
         this.svg.append("g")
             .attr("class", "axis_y")
@@ -407,10 +411,11 @@ export class EntityScatter {
 
         this.svg.append("text")
             .attr("class", "axis_y_label")
-            .attr("transform", `translate(${this.margin.left}, ${this.margin.top-10})`)
+            .attr("transform", `translate(${this.margin.left + 60}, ${this.margin.top+30})`)
             .attr("text-anchor", "middle")
-            .text("negative score")
-            .attr("fill", SstColors.neg_color)
+            .text("- Sentiment")
+            .attr("fill", "#e37213")
+            .style("font-weight", "bold")
     }
 
     updateOverviewScatter(emit:any) {
@@ -472,21 +477,22 @@ export class EntityScatter {
             dots.attr("transform", this.current_zoom)
         }
         if(this.show_highlight) {
-            const highlight_outlet = this.highlight_node_text
+            const highlight_outlet = this.props.highlight_node_text
             const highlight_node = svg.selectAll("g.entity").filter((d: any) => highlight_outlet === d.text)
+                .raise()
+            const other_nodes = svg.selectAll("g.entity").filter((d: any) => highlight_outlet !== d.text)
             svg.select("g.node_group").raise()
             // svg.selectAll("rect.segment-controller").lower()
             this.applyExpandStyle(highlight_node, this)
+            this.addNodeLabel(highlight_node, this)
+
+            this.removeExpandedStyle(other_nodes, this)
+            this.removeNodeLabel(other_nodes, this)
         }
-        // if(this.props.view?.type === ViewType.EntityScatter) {
-        //     const highlight_circle = svg.selectAll("circle.outlet_circle").filter((d: any) => (this.props.highlight_nodes!.includes(d.text.split("-")[0])))
-        //     highlight_circle.attr("fill", "blue")
-        // }
     }
 
     updateExpandedScatter(emit:any) {
         this.updateOverviewScatter(emit)
-        if(!this.node_interactable) return
         const applyExpandStyle = this.applyExpandStyle;
         const updateNodeInfo = this.updateNodeInfo;
         const removeExpandedStyle = this.removeExpandedStyle;
@@ -495,7 +501,8 @@ export class EntityScatter {
         // const svg = d3.select(`#${this.props.id}`).select("svg")
     
         // add events
-        this.svg.selectAll("circle.entity_circle")
+        var svg = this.svg
+        svg.selectAll("circle.entity_circle")
             .style("cursor", "pointer")
             .on("mousemove", (e, d) => {
                 let align_image_offset = 0
@@ -513,6 +520,15 @@ export class EntityScatter {
                 updateNodeInfo(d as ScatterNode, cvThis)
                 d3.select(`#${cvThis.props.id}`).select(".nodeinfo")
                     .style("opacity", 1)
+                if(cvThis.show_highlight) {
+                    const highlight_node_text = cvThis.props.highlight_node_text
+                    if(d.text !== highlight_node_text) {
+                        const highlight_node = svg.selectAll("g.entity").filter((d: any) => highlight_node_text === d.text)
+                        cvThis.removeNodeLabel(highlight_node, cvThis)
+                        removeExpandedStyle(highlight_node, cvThis)
+                    }
+                    cvThis.addNodeLabel(container, cvThis)
+                }
             })
             .on("mouseout", function(e, d) {
                 d3.select(`#${cvThis.props.id}`).select(".nodeinfo")
@@ -520,10 +536,20 @@ export class EntityScatter {
                 if((d as ScatterNode).text === cvThis.clicked_node.value.text) return
                 const parentNode: any = (this as HTMLElement).parentNode
                 const container: any = d3.select(parentNode)
-                removeExpandedStyle(container,cvThis)
-    
+
+                if(!cvThis.show_highlight || d.text !== cvThis.props.highlight_node_text) {
+                    removeExpandedStyle(container, cvThis)
+                }
+                if(cvThis.show_highlight) {
+                    cvThis.removeNodeLabel(container, cvThis)
+                    const highlight_node = svg.selectAll("g.entity").filter((d: any) => cvThis.props.highlight_node_text === d.text)
+                        .raise()
+                    cvThis.applyExpandStyle(highlight_node, cvThis)
+                    cvThis.addNodeLabel(highlight_node, cvThis)
+                }
             })
             .on("click", function (e, d) {
+                if(!cvThis.node_clickable) return
                 // if(tutorial_mode.value && tutorial_step.value < 7) { return }
                 if(cvThis.clicked_node_element.value !== undefined) {
                     const parentNode: any = (cvThis.clicked_node_element.value as HTMLElement).parentNode
@@ -590,5 +616,21 @@ export class EntityScatter {
             neg_score: node_data.neg_sst,
         }
     }
-
+    
+    addNodeLabel(container: any, cvThis) {
+        container.selectAll("text.node_label")
+        .data((d) => [d])
+        .join("text")
+        .attr("class", "node_label")
+        .attr("x", (d: any) => cvThis.xScale(d.pos_sst))
+        .attr("y", (d: any) => cvThis.yScale(Math.abs(d.neg_sst)))
+        .text((d) => d.text)
+        .attr("font-size", "3.5rem")
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "hanging")
+        .attr("pointer-events", "none")
+    }
+    removeNodeLabel(container: any, cvThis) {
+        container.selectAll("text.node_label").remove()
+    }
 }

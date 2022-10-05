@@ -54,10 +54,12 @@ def get_entity_list():
 def get_outlet_set():
     return json.dumps(list(processed_data.outlet_set))
 
-@app.route("/hexview/overall/<title>")
+@app.route("/hexview/overall/<title>", methods=['POST'])
 def get_overall_hexview(title):
+    outlet_weight_dict = request.json
+    updated_node_dict = scatter_data.updateOutletWeight(overview_scatter_overall_data, sentiment_processor.overall_metadata, processed_data, outlet_weight_dict, return_format="dict")
     cooccurrences = raw_data.entity_cooccurrences[title]
-    request_data = hexview_data.constructHexData(title, cooccurrences, overall_node_dict)
+    request_data = hexview_data.constructHexData(title, cooccurrences, updated_node_dict)
     return json.dumps(request_data, default=vars)
 
 @app.route("/hexview/grouped/<title>")
@@ -66,7 +68,7 @@ def get_grouped_hexview(title):
     merged_entities = []
     for outlet, cooccurrences_dict in raw_data.entity_cooccurrences_grouped.items():
         cooccurrences = cooccurrences_dict[title]
-        hex_data = hexview_data.constructHexData(title, cooccurrences, grouped_node_dict[outlet])
+        hex_data = hexview_data.constructGroupedHexData(title, cooccurrences, grouped_node_dict[outlet], processed_data, sentiment_processor.grouped_metadata)
         res.append({"entity": title, "outlet": outlet, "cooccurrences_data": hex_data})
         entities = list(map(lambda hex_entity: hex_entity.entity, hex_data.sorted_cooccurrences_list))
         merged_entities = list(set(merged_entities + entities))
@@ -103,7 +105,6 @@ def ids_to_articles():
 
 @app.route("/processed_data/updateOutletWeight", methods=['POST'])
 def updateOutletWeight():
-    print(request.json)
     outlet_weight_dict = request.json
     response = scatter_data.updateOutletWeight(overview_scatter_overall_data, sentiment_processor.overall_metadata, processed_data, outlet_weight_dict)
     return json.dumps(response, default=vars)

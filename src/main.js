@@ -30,7 +30,7 @@ const store = createStore({
     resetOutletWeight(state, weight_dict) {
       state.outlet_weight_dict = weight_dict
     },
-    setOutletWeight(state, outlet, weight) {
+    setOutletWeight(state, {outlet, weight}) {
       state.outlet_weight_dict[outlet] = weight
     },
     setSegmentation(state, segmentation) {
@@ -47,8 +47,8 @@ const store = createStore({
         state.constraints[constraint.target] = {}
       state.constraints[constraint.target][constraint.outlet] = constraint.sentiment
     },
-    removeConstraint(state, constraint_target) {
-      delete state.constraints[constraint_target]
+    removeConstraint(state, constraint) {
+      delete state.constraints[constraint.target][constraint.outlet]
     }
 
   }

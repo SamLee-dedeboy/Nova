@@ -24,12 +24,13 @@
      * components
      */
     import { EntityScatter } from "./scatterPlot"
+    import NodeInfo from './NodeInfo.vue'
 
 
     // initialization
     const props = defineProps({
         view: EntityScatterView,
-        highlight_outlet: String,
+        highlight_node_text: String,
         adjust_offset: Number,
         id: String,
         segment_mode: Boolean,
@@ -61,9 +62,8 @@
     const zoomable = false
     const show_offset = true
     const show_highlight = true
-    const node_interactable = false
+    const node_clickable = false
     const svgId = "outletSvg"
-    const highlight_node_text = props.highlight_outlet
     const entityScatterPlot = new EntityScatter(
         props, 
         svgId,
@@ -71,11 +71,10 @@
         node_radius, segment_controller_width,
         show_axes, 
         zoomable,
-        node_interactable,
+        node_clickable,
         show_offset,
         show_highlight,
         filtered_data, 
-        highlight_node_text,
         tooltip_content, 
         total_articles, min_articles, max_articles, 
         clicked_node, clicked_node_element, 
@@ -85,6 +84,9 @@
     vue.watch(() => props.view, (new_view, old_view) => {
         entityScatterPlot.updateCanvas(emit) 
     }, {deep: true})
+    vue.watch(() => props.highlight_node_text, (new_value, old_value) => {
+        entityScatterPlot.updateCanvas(emit) 
+    })
     vue.watch(() => props.adjust_offset, (new_value, old_value) => {
         entityScatterPlot.updateSegmentationOffset(new_value || 0.5)
     })
