@@ -109,11 +109,13 @@ export class EntityScatter {
         this.xScale = d3.scalePow()
             .exponent(1)
             .domain([0, 1])
-            .range([this.margin.left, this.vbWidth + this.margin.left]);
+            .range([this.margin.left, this.vbWidth + this.margin.left])
+            .clamp(true)
         this.yScale =  d3.scalePow()
             .exponent(1)
             .domain([0, 1])
-            .range([this.margin.top + this.vbHeight, this.margin.top]);
+            .range([this.margin.top + this.vbHeight, this.margin.top])
+            .clamp(true)
         
         var self = this
         this.zoom = d3.zoom().scaleExtent([1, 3]).on("zoom", function(e) {
@@ -329,7 +331,6 @@ export class EntityScatter {
         }
         const drag = d3.drag()
             .on("start", (e, d)=>{ 
-                console.log("start")
                 self.segment_controller_start.x = e.x
                 self.segment_controller_start.y = e.y
                 svg.select('rect.segment-controller').attr("stroke", "black")
@@ -355,12 +356,16 @@ export class EntityScatter {
                     .attr("y", d.y=(end_y-(self.segment_controller_width/(self.current_zoom?.k || 1))/2))
                     .raise();
 
-                let segment_point = {x: Math.max(self.margin.left, Math.min(end_x, self.vbWidth)), y: Math.max(self.margin.top, Math.min(end_y, self.vbHeight))} 
+                let segment_point = {x: Math.max(self.margin.left, Math.min(end_x, self.vbWidth+self.margin.left)), y: Math.max(self.margin.top, Math.min(end_y, self.vbHeight))} 
+                // let segment_point = {x: end_x, y: end_y}
                 self.updateSegmentation(segment_point.x,segment_point.y)
-                emit("update:segmentation", {pos: self.xScale.invert(self.segment_point.x), neg: self.yScale.invert(self.segment_point.y)})
+                // console.log({pos: self.xScale.invert(self.segment_point.x), neg: self.yScale.invert(self.segment_point.y)})
                 // self.setSegmentation({pos: self.xScale.invert(self.segment_point.x), neg: self.yScale.invert(self.segment_point.y)})
             })
-            .on("end", function(e, d) { d3.select(this).attr("stroke", null)})
+            .on("end", function(e, d) { 
+                d3.select(this).attr("stroke", null)
+                emit("update:segmentation", {pos: self.xScale.invert(self.segment_point.x), neg: self.yScale.invert(self.segment_point.y)})
+            })
 
         //Segment Controller Rect
         this.svg.append("rect")

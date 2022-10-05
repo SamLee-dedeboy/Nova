@@ -108,7 +108,7 @@ vue.provide("outlet_article_num_dict", outlet_article_num_dict)
  * Flag for segment mode. \
  * Display segmentation on all scatters when segment mode is on.
  */
-const segment_mode: Ref<boolean> = ref(false)
+const segment_mode: Ref<boolean> = ref(true)
 const segment_options = [
   {status: 'On', value: true},
   {status: 'Off', value: false}
@@ -286,7 +286,14 @@ vue.onMounted(async () => {
   }))
   if (selected_entity.value) {
     promiseArray.push(new Promise((resolve) => {
-      fetch(`${server_address}/hexview/overall/${selected_entity.value.name}`)
+      fetch(`${server_address}/hexview/overall/${selected_entity.value.name}`, {
+        method: "POST",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(outlet_weight_dict.value)
+      })
         .then(res => res.json())
         .then(json => {
           const cooccurrences = json
@@ -343,19 +350,26 @@ async function handleEntityClicked(entity: string) {
       })
   }))
   promiseArray.push(new Promise((resolve) => {
-    fetch(`${server_address}/hexview/overall/${entity}`)
-      .then(res => res.json())
-      .then(json => {
-        const hex_view: typeUtils.CooccurrHexView = {
-          title: `co-${entity}`,
-          data: json,
-        }
-        overall_selected_hexview.value = hex_view
-        console.log("cooccurr hex fetched")
-        resolve("success")
+      fetch(`${server_address}/hexview/overall/${entity}`, {
+        method: "POST",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(outlet_weight_dict.value)
       })
+        .then(res => res.json())
+        .then(json => {
+          const cooccurrences = json
+          const hex_view: typeUtils.CooccurrHexView = {
+            title: `co-${entity}`,
+            data: cooccurrences,
+          }
+          overall_selected_hexview.value = hex_view
+          console.log("cooccurr hex fetched")
+          resolve("success")
+        })
   }))
-
   await Promise.all(promiseArray)
     .then(res => {
       // do nothing
@@ -371,8 +385,10 @@ function handleSearch(item) {
 }
 
 function handleUpdateOutletWeight({ outlet, value }) {
+  console.log(outlet_weight_dict.value)
   setOutletWeight({ outlet: outlet, weight: value })
   updateOverallEntityNode({ outlet, value })
+  updateHexViewData()
 }
 
 async function updateOverallEntityNode({ outlet, value }) {
@@ -392,11 +408,30 @@ async function updateOverallEntityNode({ outlet, value }) {
       overall_scatter_view.value?.data.nodes.forEach(node => {
         overall_entity_dict.value[node.text] = node
       })
-      console.log(overall_entity_dict.value)
+      // console.log(overall_entity_dict.value)
       overall_scatter_data_loading.value = false
     })
 }
 
+async function updateHexViewData() {
+    await fetch(`${server_address}/hexview/overall/${selected_entity.value.name}`, {
+      method: "POST",
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(outlet_weight_dict.value)
+    })
+      .then(res => res.json())
+      .then(json => {
+        const cooccurrences = json
+        const hex_view: typeUtils.CooccurrHexView = {
+          title: `co-${selected_entity.value.name}`,
+          data: cooccurrences,
+        }
+        overall_selected_hexview.value = hex_view
+      })
+}
 
 async function fetch_topic_bins(target, callback) {
   await fetch(`${server_address}/processed_data/topic_bins/${target}`)

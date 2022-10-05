@@ -77,6 +77,7 @@ export class Article {
     top_level_topic: string
     second_level_topic: string
     entities: EntityMention[]
+    entity_candidates: any[]
     sentiment: Sentiment
 }
 
