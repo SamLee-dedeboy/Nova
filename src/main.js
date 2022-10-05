@@ -30,7 +30,7 @@ const store = createStore({
     resetOutletWeight(state, weight_dict) {
       state.outlet_weight_dict = weight_dict
     },
-    setOutletWeight(state, outlet, weight) {
+    setOutletWeight(state, {outlet, weight}) {
       state.outlet_weight_dict[outlet] = weight
     },
     setSegmentation(state, segmentation) {
