@@ -1,6 +1,11 @@
 <template>
     <div :id="id" class="scatter-container" >
-        <svg :id="svgId" class="entity-scatterplot" ></svg>
+        <svg :id="svgId" class="entity-scatterplot" >
+            <pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+                <rect x="0" y="0" width="10" height="10" style="fill:#baf0f5"/>
+                <line x1="0" y1="0" x2="0" y2="10" style="stroke:#f4c49c; stroke-width:8" />
+            </pattern>
+        </svg>
         <div class="button-set">
             <Button class="reset-zoom p-button-secondary" @click="resetZoom">reset</Button>
         </div>
