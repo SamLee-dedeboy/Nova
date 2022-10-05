@@ -160,7 +160,8 @@ def updateOutletWeight(
     overall_scatter_data: EntityScatterData, 
     overall_scatter_metadata: OverallSentimentScatterMetaData, 
     processed_data_manager: ProcessedDataManager,
-    outlet_weight_dict: dict):
+    outlet_weight_dict: dict,
+    return_format="list"):
     # new_pos_max = dict_weighted_sum(overall_scatter_metadata.pos_max_grouped, outlet_weight_dict)
     # new_pos_min = dict_weighted_sum(overall_scatter_metadata.pos_min_grouped, outlet_weight_dict)
     # new_neg_max = dict_weighted_sum(overall_scatter_metadata.neg_max_grouped, outlet_weight_dict)
@@ -194,6 +195,11 @@ def updateOutletWeight(
             neg_sst,
             node.topicBins)
         )
+    if(return_format == "dict"):
+        res = {}
+        for node in weighted_nodes:
+            res[node.text] = node
+        return res
 
     return EntityScatterData(weighted_nodes, overall_scatter_data.max_articles, overall_scatter_data.min_articles)
 

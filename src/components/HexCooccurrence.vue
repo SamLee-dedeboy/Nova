@@ -78,6 +78,7 @@ vue.onMounted(() => {
         .attr("viewBox", `0 0 ${viewBox[0]} ${viewBox[1]}`)
         const hex_group = svg.append("g").attr("class", "hex-group")
         const hex_paths = hex_group.append("g").attr("class", "hex-paths")
+        const hex_labels = hex_group.append("g").attr("class", "hex-labels")
         updateHexBins()
     })
 })
@@ -139,8 +140,7 @@ function updateHexBins() {
             return  SstColors.enum_color_dict[categorizeHex(sst, props.segmentation!)]
         })
 
-    hex_group.append("g")
-        .attr("id", "labels")
+    hex_group.select("g.hex-labels")
         .selectAll("text")
         .data(hex_data)
         .join("text")
@@ -150,17 +150,17 @@ function updateHexBins() {
         .attr("text-anchor", "middle")
         .attr("dominant-baseline", "central")
         .attr("fill", "black")
-        .attr("font-size", "0.5em")
+        .attr("font-size", "0.8em")
         .attr("opacity", (d: any) => {
             if(d[0].exists) return 1
             else return 0.5
         })
         .text((d: any) => {
             const words = d[0].entity.split("_")
-            // if(words.length > 4) {
-            //     words[3] = "..."
-            //     words.length = 4
-            // }
+            if(words.length > 4) {
+                words[3] = "..."
+                words.length = 4
+            }
             // console.log(words.join(" "))
             return words.join(" ")
         })
