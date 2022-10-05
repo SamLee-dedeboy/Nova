@@ -134,9 +134,32 @@ function prepare_data() {
 
 }
 
-function checkConflict(constraint_dict) {
-    // TODO: check if constraints conflict with each other
-    return
+function checkConflict(constraint_dict, outlet_nodes) {
+    if(!constraint_dict) return
+    Object.keys(constraint_dict).forEach(outlet => {
+        const target_node = outlet_nodes.find(node => node.text === outlet)
+        constraint_statisfaction.value[outlet] = checkConstraint(
+            constraint_dict[outlet], 
+            {pos: target_node.pos_sst, neg: target_node.neg_sst},
+            segmentation.value
+        )
+    })    
+}
+
+function checkConstraint(type: SentimentType, target: Sentiment2D, segmentation: Sentiment2D): boolean {
+    if(type === SentimentType.neu) {
+        return target.pos <= segmentation.pos && target.neg <= segmentation.neg 
+    }
+    if(type === SentimentType.neg) {
+        return target.pos <= segmentation.pos && target.neg >= segmentation.neg 
+    }
+    if(type === SentimentType.pos) {
+        return target.pos >= segmentation.pos && target.neg <= segmentation.neg 
+    }
+    if(type === SentimentType.mix) {
+        return target.pos >= segmentation.pos && target.neg >= segmentation.neg 
+    }
+    return true
 }
 
 async function fetch_articles(article_ids) {
@@ -237,6 +260,7 @@ function updateSegmentation({pos, neg}) {
             font-size: 3rem;
             z-index: 1000
             "></i> 
+            <h2 class="component-header article-view-header"> Articles of {{selected_entity.name}} and {{selected_cooccurr_entity.name}} </h2>
             <ArticleView
             v-if="data_fetched"
             v-model:sst_threshold="segmentation"
@@ -325,7 +349,7 @@ function updateSegmentation({pos, neg}) {
                 </OutletScatterplot>
             </div>
             <div class='navigation-container'>
-                <router-link v-if="data_fetched" :to="{ name: 'compare', params: { entity: selected_entity.name }}">Back</router-link>
+                <!-- <router-link v-if="data_fetched" :to="{ name: 'compare', params: { entity: selected_entity.name }}">Back</router-link> -->
             </div>
         </SplitterPanel>
     </Splitter>
@@ -347,6 +371,21 @@ function updateSegmentation({pos, neg}) {
   border-left: 1px solid #dee2e6 !important;
 }
 
+// ---------------------
+// headers
+// ---------------------
+.component-header{
+  margin: 2%;
+  border-bottom: solid 1px #b7b7b7;
+  font-family: 'Lato';
+  font-weight: bold;
+}
+
+.article-view-header {
+  background: #f7f7f7;
+  margin:0%;
+  padding:0.5%;
+}
 
 // ---------------------
 // entity info section

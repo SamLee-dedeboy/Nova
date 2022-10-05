@@ -119,6 +119,7 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
 <template>
     <Splitter class="splitter-outmost">
         <SplitterPanel id="hexview_section" class="hexview-section flex align-items-center justify-content-center" :size="left_section_size" :min-size="left_section_size" >
+            <h2 class="component-header hexview-grid-header"> Topic Co-occurrences Grid of {{ route.params.entity }}</h2>
             <div class="hexview-grid-container">
                 <HexCooccurrence
                   v-if="data_fetched"
@@ -163,6 +164,19 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
 </template>
 
 <style scoped>
+
+.component-header{
+  margin: 2%;
+  border-bottom: solid 1px #b7b7b7;
+  font-family: 'Lato';
+  font-weight: bold;
+}
+
+.hexview-grid-header {
+  background: #f7f7f7;
+  margin:0.5%;
+  padding:0.5%;
+}
 .splitter-outmost {
   width: 99vw;
   height: 98vh;
@@ -179,7 +193,7 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
     grid-template-rows: repeat(2, 1fr);  
     gap: 0;
     width: 100%;
-    height: 100%;
+    height: 91%;
 }
 .target-cooccurr-container {
   display: flex;

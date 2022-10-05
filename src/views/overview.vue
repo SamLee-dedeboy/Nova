@@ -437,6 +437,7 @@ function updateSegmentation({pos, neg}) {
       <SplitterPanel class="left-section-panel" :size="left_section_panel_size">
         <Splitter layout="vertical">
           <SplitterPanel class="entity-scatter-panel" :size="entity_scatter_panel_size">
+            <h2 class="component-header scatter-header"> Topic Scatterplot </h2>
             <div class="overview-scatter-container">
               <!-- load icon -->
                 <i v-if="overall_scatter_data_loading" class="pi pi-spin pi-spinner" 
@@ -463,8 +464,10 @@ function updateSegmentation({pos, neg}) {
           <SplitterPanel class="utilities-panel" :size="utilities_panel_size" >
             <!-- Utilities -->
             <div class="utilities-container">
-              <!-- segment & search -->
-              <div  class="toolbar-container">
+              <div id="segment-utility-container" class="segment-utils">
+                <h2 class="component-header util-header"> Segment </h2>
+                <!-- segment & search -->
+                <div class="toolbar-container">
                   <div v-if="overview_constructed" class="segment-toggler-container">
                       <ToggleButton class='segment-toggler p-primary' v-model="segment_mode" onLabel="Segment" offLabel="Segment"></ToggleButton>
                   </div>
@@ -472,13 +475,24 @@ function updateSegmentation({pos, neg}) {
                       <SearchBar :search_terms="entity_list" @entity_searched="handleSearch"></SearchBar>
                   </div>
               </div>
-              <!-- filter slider -->
-              <div v-if="overview_constructed" class="slider-container">
-                <ThresholdController
-                  v-model:article_num_threshold="article_num_threshold"
-                  :max_articles="overview_overall_scatter_metadata.max_articles"
-                  :min_articles="overview_overall_scatter_metadata.min_articles"
-                ></ThresholdController>
+
+              <div id="entity-utility-container" class="entity-utils">
+                <h2 class="component-header util-header"> Topics Filter </h2>
+                <!-- Entity Search -->
+                <!-- <div id="entity-search" v-if="overview_constructed" class="search-bar">
+                    <SearchBar :search_terms="entity_list" @entity_searched="handleSearch"/>
+                </div> -->
+                <!-- filter slider -->
+                <div v-if="overview_constructed" class="slider-container">
+                  <ThresholdController v-model:article_num_threshold="article_num_threshold"
+                    :max_articles="overview_overall_scatter_metadata.max_articles"
+                    :min_articles="overview_overall_scatter_metadata.min_articles"></ThresholdController>
+                </div>
+              
+                <!-- outlet weight slider -->
+                <OutletWeightSlider v-if="overview_constructed" :outlet_weight_dict="outlet_weight_dict"
+                  @update_outlet_weight="handleUpdateOutletWeight">
+                </OutletWeightSlider>
               </div>
               <!-- Legend -->
               <Legend v-if="overview_constructed" 
@@ -501,10 +515,10 @@ function updateSegmentation({pos, neg}) {
         <Splitter layout="vertical">
           <SplitterPanel class="overview-hex-panel" :size="hex_view_panel_size">
             <!-- Hex view -->
-            <div class="overview-hex-container"  v-if="overview_constructed">
-                    <!-- load icon -->
-                    <i v-if="!overview_constructed" class="pi pi-spin pi-spinner" 
-                    style="
+            <h2 class="component-header hexview-header">Topic Co-occurrences</h2>
+            <div class="overview-hex-container" v-if="overview_constructed">
+              <!-- load icon -->
+              <i v-if="!overview_constructed" class="pi pi-spin pi-spinner" style="
                     position:absolute;
                     left: 45%;
                     top: 30%;
@@ -578,9 +592,11 @@ main {
 // ---------------------
 // css for split-panel layout
 // ---------------------
-.overview-scatter-container, .overview-hex-container, .overall-co-hexview {
-  width: inherit;
-  height: inherit;
+.overview-scatter-container,
+.overview-hex-container,
+.overall-co-hexview {
+  width: 100%;
+  height: 95%;
 }
 
 :deep(.p-splitter) {
@@ -602,6 +618,12 @@ main {
 // general layouts
 //
 
+.component-header{
+  margin: 2%;
+  border-bottom: solid 1px #b7b7b7;
+  font-family: 'Lato';
+  font-weight: bold;
+}
 // ---------------------
 // entity scatter section
 // ---------------------
@@ -612,6 +634,29 @@ main {
 // ---------------------
 // utitlies section
 // ---------------------
+
+.legend-utils {
+    margin-top: 5%;
+}
+
+.segment-utils{
+  margin: 1%;
+    padding: 2%;
+    width: 30%;
+    height: 100%;
+    background: #f7f7f7;
+}
+
+.segment-toggler-container {
+    width: 100%;
+}
+
+.scatter-header {
+  background: #f7f7f7;
+  margin:2%;
+  padding:1%;
+}
+
 .toolbar-container {
   display: flex;
   height: max-content;
@@ -629,10 +674,28 @@ main {
   justify-content: space-between;
 }
 
+// ---------------------
+// hexview section
+// ---------------------
+.hexview-header {
+  background: #f7f7f7;
+  margin:1%;
+  padding:0.45%;
+}
+
 
 // ---------------------
 // entity info section
 // ---------------------
+
+.entity-utils{
+  margin: 0.4%;
+  padding: 2%;
+  height: 100%;
+  width: 65%;
+  background: #f7f7f7;
+}
+
 .entity-info-container {
   display: flex;
   height: 100%;
