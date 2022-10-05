@@ -30,8 +30,7 @@ vue.onMounted(()=> {
 
 <template>
     <div class="legend-container">
-        <svg  class="legend-svg" viewBox="0 0 125 125" :id="id">
-        </svg>
+        <svg  class="legend-svg" viewBox="0 0 125 125" :id="id"></svg>
     </div>
 </template>
 

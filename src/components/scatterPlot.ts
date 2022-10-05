@@ -204,7 +204,7 @@ export class EntityScatter {
         const mixed_rect: any = segment_group.selectAll("rect.mixed")
         segment_group.enter().select("g.segmentation").append("rect")
                     .attr("class", "mixed")
-                    .attr("fill", SstColors.mixed_color)
+                    .attr("fill", "url(#diagonalHatch)" )//SstColors.mixed_color)
                     .style("filter", `brightness(${SstColors.brightness}%)`)
                     .merge(mixed_rect)
                     .conditionalTransition(animation, 1000, 0)
