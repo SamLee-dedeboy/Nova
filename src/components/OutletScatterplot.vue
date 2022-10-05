@@ -64,6 +64,7 @@
     const show_highlight = true
     const node_clickable = false
     const show_region_label = false
+    const emit_at_end = true
     const svgId = "outletSvg"
     const entityScatterPlot = new EntityScatter(
         props, 
@@ -76,6 +77,7 @@
         show_offset,
         show_highlight,
         show_region_label,
+        emit_at_end,
         filtered_data, 
         tooltip_content, 
         total_articles, min_articles, max_articles, 

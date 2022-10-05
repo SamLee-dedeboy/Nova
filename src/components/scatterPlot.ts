@@ -67,6 +67,7 @@ export class EntityScatter {
     node_clickable: boolean
     show_highlight: boolean
     showRegionLabel: boolean
+    emit_at_end: boolean
 
     public constructor(
         props:any, svgId: string, 
@@ -78,6 +79,7 @@ export class EntityScatter {
         show_offset: boolean,
         show_highlight: boolean,
         showRegionLabel: boolean,
+        emit_at_end: boolean,
         filtered_data:Ref<ScatterNode[]>, 
         tooltip_content: Ref<string>, 
         total_articles: ComputedRef<any>, 
@@ -103,6 +105,7 @@ export class EntityScatter {
         this.show_offset = show_offset
         this.show_highlight = show_highlight
         this.showRegionLabel = showRegionLabel
+        this.emit_at_end = emit_at_end
         this.filtered_data = filtered_data;
         this.tooltip_content = tooltip_content;
         this.total_articles = total_articles;
@@ -433,10 +436,13 @@ export class EntityScatter {
                 self.updateSegmentation(segment_point.x,segment_point.y)
                 // console.log({pos: self.xScale.invert(self.segment_point.x), neg: self.yScale.invert(self.segment_point.y)})
                 // self.setSegmentation({pos: self.xScale.invert(self.segment_point.x), neg: self.yScale.invert(self.segment_point.y)})
+                if(!self.emit_at_end) 
+                    emit("update:segmentation", {pos: self.xScale.invert(self.segment_point.x), neg: self.yScale.invert(self.segment_point.y)})
             })
             .on("end", function(e, d) { 
                 d3.select(this).attr("stroke", null)
-                emit("update:segmentation", {pos: self.xScale.invert(self.segment_point.x), neg: self.yScale.invert(self.segment_point.y)})
+                if(self.emit_at_end)
+                    emit("update:segmentation", {pos: self.xScale.invert(self.segment_point.x), neg: self.yScale.invert(self.segment_point.y)})
             })
 
         //Segment Controller Rect
