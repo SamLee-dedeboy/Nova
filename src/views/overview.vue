@@ -509,7 +509,7 @@ function updateSegmentation({ pos, neg }) {
                   <!-- Legend -->
                 <div class="legend-utils">
                   <Legend v-if="overview_constructed" id="segment_legend" class="segment-legend"
-                  :color_dict="SstColors.key_color_dict" :filter="true"/>
+                  :color_dict="SstColors.key_color_dict" :filter="true"></Legend>
                 </div>
 
               </div>
@@ -527,22 +527,9 @@ function updateSegmentation({ pos, neg }) {
                     :min_articles="overview_overall_scatter_metadata.min_articles"></ThresholdController>
                 </div>
               
+              </div>
                 <!-- outlet weight slider -->
                 <OutletWeightSlider v-if="overview_constructed" :outlet_weight_dict="outlet_weight_dict"
-                  @update_outlet_weight="handleUpdateOutletWeight">
-                </OutletWeightSlider>
-              </div>
-              <!-- Legend -->
-              <Legend v-if="overview_constructed" 
-                id="segment_legend"
-                class="segment-legend"
-                :color_dict="SstColors.key_color_dict" 
-                :filter="true">
-              </Legend>
-              <!-- outlet weight slider -->
-              <OutletWeightSlider
-                  v-if="overview_constructed"
-                  :outlet_weight_dict="outlet_weight_dict"
                   @update_outlet_weight="handleUpdateOutletWeight">
                 </OutletWeightSlider>
               </div>
