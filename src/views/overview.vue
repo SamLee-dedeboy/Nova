@@ -511,7 +511,6 @@ function updateSegmentation({ pos, neg }) {
                   <Legend v-if="overview_constructed" id="segment_legend" class="segment-legend"
                   :color_dict="SstColors.key_color_dict" :filter="true"></Legend>
                 </div>
-
               </div>
 
               <div id="entity-utility-container" class="entity-utils">
@@ -526,8 +525,6 @@ function updateSegmentation({ pos, neg }) {
                     :max_articles="overview_overall_scatter_metadata.max_articles"
                     :min_articles="overview_overall_scatter_metadata.min_articles"></ThresholdController>
                 </div>
-              
-              </div>
                 <!-- outlet weight slider -->
                 <OutletWeightSlider v-if="overview_constructed" :outlet_weight_dict="outlet_weight_dict"
                   @update_outlet_weight="handleUpdateOutletWeight">
