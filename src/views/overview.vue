@@ -160,7 +160,7 @@ const right_section_panel_size = vue.computed(() => 100 - left_section_panel_siz
 const entity_scatter_panel_size = 50 
 const utilities_panel_size = vue.computed(() => 100 - entity_scatter_panel_size)
 
-const entity_info_panel_size = 30
+const entity_info_panel_size = 32
 const hex_view_panel_size = vue.computed(() => 100 - entity_info_panel_size)
 
 
@@ -477,7 +477,15 @@ function updateSegmentation({ pos, neg }) {
       <SplitterPanel class="left-section-panel" :size="left_section_panel_size">
         <Splitter layout="vertical">
           <SplitterPanel class="entity-scatter-panel" :size="entity_scatter_panel_size">
-            <h2 class="component-header scatter-header"> Topic Scatterplot </h2>
+            <h2 class="component-header scatter-header"> 
+              Topic Scatterplot 
+              <i class='pi pi-info-circle tooltip'>
+                <span class="tooltiptext">
+                  Some explanation a lot of explanation 
+                </span>
+              </i>
+            </h2>
+
             <div class="overview-scatter-container">
               <!-- load icon -->
               <i v-if="overall_scatter_data_loading" class="pi pi-spin pi-spinner" style="
@@ -497,7 +505,14 @@ function updateSegmentation({ pos, neg }) {
             <!-- Utilities -->
             <div class="utilities-container">
               <div id="segment-utility-container" class="segment-utils">
-                <h2 class="component-header util-header"> Segment </h2>
+                <h2 class="component-header util-header"> 
+                  Segment 
+                  <i class='pi pi-info-circle tooltip'>
+                    <span class="tooltiptext">
+                      Some explanation a lot of explanation 
+                    </span>
+                  </i>
+                </h2>
                 <!-- segment & search -->
                 <div class="toolbar-container">
                   <div v-if="overview_constructed" class="segment-toggler-container">
@@ -514,7 +529,14 @@ function updateSegmentation({ pos, neg }) {
               </div>
 
               <div id="entity-utility-container" class="entity-utils">
-                <h2 class="component-header util-header"> Topics Filter </h2>
+                <h2 class="component-header util-header"> 
+                  Topics Filter
+                  <i class='pi pi-info-circle tooltip'>
+                    <span class="tooltiptext">
+                      Some explanation a lot of explanation 
+                    </span>
+                  </i>
+                </h2>
                 <!-- Entity Search -->
                 <!-- <div id="entity-search" v-if="overview_constructed" class="search-bar">
                     <SearchBar :search_terms="entity_list" @entity_searched="handleSearch"/>
@@ -538,7 +560,14 @@ function updateSegmentation({ pos, neg }) {
         <Splitter layout="vertical">
           <SplitterPanel class="overview-hex-panel" :size="hex_view_panel_size">
             <!-- Hex view -->
-            <h2 class="component-header hexview-header">Topic Co-occurrences</h2>
+            <h2 class="component-header hexview-header">
+              Topic Co-occurrences
+              <i class='pi pi-info-circle tooltip'>
+                <span class="tooltiptext">
+                  Some explanation a lot of explanation 
+                </span>
+              </i>
+            </h2>
             <div class="overview-hex-container" v-if="overview_constructed">
               <!-- load icon -->
               <i v-if="!overview_constructed" class="pi pi-spin pi-spinner" style="
@@ -558,14 +587,34 @@ function updateSegmentation({ pos, neg }) {
           <SplitterPanel class="entity-info-panel" :size="entity_info_panel_size">
             <!-- Entity Info -->
             <div class="entity-info-container">
-              <div class="target-cooccurr-container">
-                <EntityInfoView v-if="selected_entity?.outlet === 'Overall'" title="Target Entity"
+              <div class="target-cooccurr-container" v-if="selected_entity">
+                <h2 class="component-header cooccurr-info-header">
+                  Topic Info
+                  <i class='pi pi-info-circle tooltip'>
+                    <span class="tooltiptext">
+                      Some explanation a lot of explanation 
+                    </span>
+                  </i>
+                </h2>
+                <div class="cooccurr-info-content">
+                  <div class="num_of_articles">
+                    #articles about {{selected_entity.name}}
+                    <span v-if="selected_cooccurr_entity"> and {{selected_cooccurr_entity.name}} </span>
+                    is {{ selected_cooccurr_entity? selected_cooccurr_entity.num_of_mentions : selected_entity.num_of_mentions }}
+                  </div>
+                  <Divider layout="vertical"></Divider>
+                  <div class="entity-info-section">
+                    <div> Main topic: {{ selected_entity.name }} </div>
+                    <div v-if='selected_cooccurr_entity'> Co-occur topic: {{ selected_cooccurr_entity.name }} </div>
+                  </div>
+                </div>
+                <!-- <EntityInfoView v-if="selected_entity?.outlet === 'Overall'" title="Target Entity"
                   :entity_info="selected_entity">
                 </EntityInfoView>
                 <Divider v-if="selected_cooccurr_entity" layout="vertical"></Divider>
                 <EntityInfoView v-if="selected_cooccurr_entity" title="Co-occurr Entity"
                   :entity_info="selected_cooccurr_entity">
-                </EntityInfoView>
+                </EntityInfoView> -->
               </div>
               <div class="topic-bar-container">
                 <TopicBars v-if="selected_entity?.outlet === 'Overall'" id="cooccurr_topic_bars"
@@ -638,6 +687,42 @@ main {
   border-bottom: solid 1px #b7b7b7;
   font-family: 'Lato';
   font-weight: bold;
+}
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 120px;
+  background-color: white;
+  text-align: center;
+  padding: 5px 0;
+  border-radius: 6px;
+  border: solid 1px black;
+
+  /* Position the tooltip text */
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -60px;
+
+  /* Fade in tooltip */
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.tooltip .tooltiptext::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #555 transparent transparent transparent;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
 }
 // ---------------------
 // entity scatter section
@@ -732,9 +817,21 @@ main {
   width: 50%;
 }
 
-.target-cooccurr-container {
+.cooccurr-info-content {
   display: flex;
-  height: max-content;
+  height: 100%;
+}
+
+.target-cooccurr-container {
+  margin: 0.2%;
+  padding: 0.75%;
+  height: 100%;
+  width: 65%;
+  background: #f7f7f7;
+}
+
+.num_of_articles {
+  width: 40%
 }
 </style>
 
