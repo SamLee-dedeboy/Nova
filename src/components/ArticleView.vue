@@ -135,8 +135,8 @@ function handleMark(mark, index: number, type: string) {
 </script>
 
 <template>
+<div class="pos-panel-header"> positive-leaning articles: ({{pos_articles?.length || "0"}})</div>
 <ScrollPanel class="pos-article-list">
-    <div class="pos-panel-header"> positive-leaning articles: ({{pos_articles?.length || "0"}})</div>
     <Panel v-for="(article, index) in pos_panel_articles"
     :header="index+1 + '. ' + article.headline"
     :key="article.id"
@@ -161,8 +161,8 @@ function handleMark(mark, index: number, type: string) {
     </Panel>
 </ScrollPanel>
 
+<div class="neg-panel-header"> negative-leaning articles: ({{neg_articles?.length || "0"}}) </div>
 <ScrollPanel class="neg-article-list">
-    <div class="neg-panel-header"> negative-leaning articles: ({{neg_articles?.length || "0"}}) </div>
     <Panel v-for="(article, index) in neg_panel_articles"
     :header="index+1 + '. ' + article.headline"
     :key="article.id"
@@ -204,7 +204,7 @@ function handleMark(mark, index: number, type: string) {
 }
 .pos-article-list, .neg-article-list {
     /* max-height:50%; */
-    height:44%;
+    height:40.8%;
 }
 .pos-panel-header, .neg-panel-header {
     background: #f7f7f7;

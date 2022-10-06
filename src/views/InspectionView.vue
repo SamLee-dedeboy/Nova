@@ -284,7 +284,7 @@ function updateSegmentation({pos, neg}) {
             z-index: 1000
             "></i> 
             <h2 class="component-header article-view-header"> 
-                Articles of 
+                Articles on 
                 <span> {{selected_entity.name}} </span> 
                 and 
                 <span> {{selected_cooccurr_entity.name}} </span> 
