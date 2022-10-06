@@ -553,6 +553,15 @@ li {
   flex: 1 1 0;
   margin-right: 1%;
 }
+:deep(.p-button) {
+    padding: 0.1rem 1rem;
+}
+:deep(.p-buttonset, .p-button) {
+    margin: 0.3rem 0rem;
+}
+:deep(.p-inputtext) {
+    padding: 0.2rem 0.5rem;
+}
 
 #outlet-scatter {
   width: 31%;
@@ -571,11 +580,13 @@ li {
 }
 .journal-info-container {
   white-space: nowrap;
+  margin: 0.3rem 0rem;
 }
+
 :deep(.outlet-scatter) {
     top: -5%;
     flex: 1 1 auto;
-    width: 24% !important;
+    width: 26% !important;
 }
 .outlet-scatter-container {
   display: flex;
