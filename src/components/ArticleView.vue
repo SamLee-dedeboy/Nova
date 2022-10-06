@@ -50,11 +50,13 @@ const pos_articles = vue.computed(() => {
     return props.articles?.filter(article => article.sentiment.label === "POSITIVE").sort(sortByRelevance)
 })
 const pos_panel_articles: Ref<Article[]> = ref(pos_articles.value?.slice(0,10) || []) 
+const pos_marks: Ref<boolean[]> = ref(Array(pos_articles.value?.length || 0).fill(false))
 
 const neg_articles = vue.computed(() => {
     return props.articles?.filter(article => article.sentiment.label === "NEGATIVE").sort(sortByRelevance)
 })
 const neg_panel_articles: Ref<Article[]> = ref(neg_articles.value?.slice(0,10) || []) 
+const neg_marks: Ref<boolean[]> = ref(Array(neg_articles.value?.length || 0).fill(false))
 
 function sortByRelevance(a1, a2): number {
     const r1 = a1.entity_candidates.filter(pair => pair[0] === props.entity_pair![0] || pair[0] === props.entity_pair![1])
@@ -124,6 +126,11 @@ function highlight_element(text) {
     return `<span style='background-color:${highlight_color};'>${text}</span>`
 }
 
+function handleMark(mark, index: number, type: string) {
+    if(type === "pos") pos_marks.value[index] = mark
+    if(type === "neg") neg_marks.value[index] = mark
+}
+
 
 </script>
 
@@ -149,7 +156,7 @@ function highlight_element(text) {
             <span v-html="removeTags(add_highlights(article.summary, props.article_highlights?.summary_entities?.[article.id]))">
             </span>
         </div>
-        <ToggleButton class='mark_toggle' :model-value="false" onLabel="Mark" off-label="Mark"></ToggleButton>
+        <ToggleButton class='mark_toggle' :model-value="pos_marks[index]" onLabel="Unmark" off-label="Mark" @update:model-value="handleMark($event, index, 'pos')"></ToggleButton>
     </ScrollPanel>
     </Panel>
 </ScrollPanel>
@@ -175,7 +182,7 @@ function highlight_element(text) {
             <span v-html="removeTags(add_highlights(article.summary, props.article_highlights?.summary_entities?.[article.id]))">
             </span>
         </div>
-        <ToggleButton class='mark_toggle' :model-value="false" onLabel="Mark" off-label="Mark"></ToggleButton>
+        <ToggleButton class='mark_toggle' :model-value="neg_marks[index]" onLabel="Unmark" off-label="Mark" @update:model-value="handleMark($event, index, 'neg')"></ToggleButton>
     </ScrollPanel>
     </Panel>
 </ScrollPanel>
