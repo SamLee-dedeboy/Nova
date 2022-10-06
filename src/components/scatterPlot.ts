@@ -321,7 +321,8 @@ export class EntityScatter {
                     .attr("height", this.yScale(lower_left.neg) - this.yScale(top_left.neg))
                     .attr("fill-opacity", 0)
                     .attr("stroke", "black")
-                    .attr("stroke-dasharray", "1")
+                    .attr("stroke-width", "10")
+                    .attr("stroke-dasharray", "10")
                     .style("pointer-events", "none")
         }
 
