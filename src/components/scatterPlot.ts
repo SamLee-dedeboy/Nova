@@ -304,6 +304,7 @@ export class EntityScatter {
             // .attr("font-family", "Segoe Script")
             .attr("font-family", "MV Boli")
             .attr("font-weight", "bold")
+            .attr("pointer-events","none")
     }
 
     updateSegmentationOffset(offset: number) {

@@ -637,7 +637,7 @@ function updateSegmentation({ pos, neg }) {
                   </i>
                   <br/>
                   <span style="font-size: small; width:max-content;"> 
-                    Some explanation here a lot of explanation here more explanation here
+                    <!-- Some explanation here a lot of explanation here more explanation here -->
                   </span>
                 </h2>
                 <HorizontalTopicBars  id="cooccurr_topic_bars"
