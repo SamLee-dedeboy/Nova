@@ -7,6 +7,7 @@ import SplitterPanel from "primevue/splitterpanel"
 import SelectButton from "primevue/selectbutton"
 import Slider from "primevue/slider"
 import Dropdown from 'primevue/dropdown';
+import Divider from 'primevue/divider';
 
 
 /**
@@ -282,8 +283,20 @@ function updateSegmentation({pos, neg}) {
             font-size: 3rem;
             z-index: 1000
             "></i> 
-            <h2 class="component-header article-view-header"> Articles of {{selected_entity.name}} and {{selected_cooccurr_entity.name}} </h2>
+            <h2 class="component-header article-view-header"> 
+                Articles of 
+                <span> {{selected_entity.name}} </span> 
+                and 
+                <span> {{selected_cooccurr_entity.name}} </span> 
+                &nbsp
+                <i class='pi pi-info-circle tooltip'>
+                    <span class="tooltiptext right-tooltiptext">
+                        Some explanation a lot of explanation 
+                    </span>
+                </i>
+            </h2>
             <ArticleView
+            class="article-view-container"
             v-if="data_fetched"
             v-model:sst_threshold="segmentation"
             :articles="target_articles"
@@ -291,100 +304,129 @@ function updateSegmentation({pos, neg}) {
             :entity_pair="[selected_entity.name as string, selected_cooccurr_entity.name as string]">
             </ArticleView>
         </SplitterPanel>    
-        <SplitterPanel id="entity_info_section" class="entity-info-section flex align-items-center justify-content-center" :size="right_section_size" >
+        <SplitterPanel id="entity_info_section" class="entity-info-panel flex align-items-center justify-content-center" :size="right_section_size" >
             <div class="entity-info-container">
                 <div class="target-cooccurr-container">
-                    <EntityInfoView
-                        v-if="selected_entity"
-                        title="Target Entity"
-                        :entity_info="selected_entity">
-                    </EntityInfoView>
-                    <!-- <Divider v-if="selected_cooccurr_entity" layout="vertical"></Divider> -->
-                    <EntityInfoView
-                        v-if="selected_cooccurr_entity"
-                        title="Co-occurr Entity"
-                        :entity_info="selected_cooccurr_entity" >
-                    </EntityInfoView>
-                    <!-- <Divider v-if="selected_cooccurr_entity" layout="vertical"></Divider> -->
-                </div>
-            </div>
-            <!-- <div class="outlet-weight-container">
-                <span class="slider-label" style="font-size:small">{{selected_entity.outlet}}</span>
-                <Slider 
-                    :modelValue="outlet_weight_dict[selected_entity.outlet]"
-                    :step="0.01"
-                    :min="0"
-                    :max="1">
-                </Slider> 
-            </div> -->
-            <div class="hexview-container"> 
-                <HexCooccurrence
-                  v-if="data_fetched"
-                    class="compare-co-hexview"
-                    :title="clicked_hexview.title"
-                    :id="`compare-co-hex-inpection`"
-                    :entity_cooccurrences="clicked_hexview.data"
-                    :segmentation="original_segmentation"
-                    @hex-clicked="handleHexClicked">
-                </HexCooccurrence>
-            </div>
-            <div class="select-category-container">
-                <div class="question-container">
-                    <span> How would you describe the coverage on {{selected_entity.name}} by &nbsp </span>
-                    <div class="journal-info-container" style="font-size:small">
-                        <Dropdown :modelValue="selected_outlet"
-                            :options="journal_options" 
-                            placeholder="Select an journal"
-                            @change="handleChangeJournal" />
-                            <!-- <label for="journals"> Journal </label> -->
-                            <!-- <select name="journals" id="journals"
-                            @change="handleChangeJournal">
-                            <option v-for="journal in journal_options" 
-                                :value="journal"
-                                :selected="journal == selected_outlet">{{journal}}</option>
-                        </select> -->
+                    <h2 class="component-header cooccurr-info-header">
+                    Topic Info
+                    <i class='pi pi-info-circle tooltip'>
+                        <span class="tooltiptext right-tooltiptext">
+                        Some explanation a lot of explanation 
+                        </span>
+                    </i>
+                    </h2>
+                    <div class="cooccurr-info-content">
+                        <div class="num_of_articles">
+                            #articles about 
+                            <span style="font-weight:bolder" :title="selected_entity.name"> {{selected_entity.name}} </span>
+                            <span v-if="selected_cooccurr_entity"> 
+                            and 
+                            <span style="font-weight:bolder" :title="selected_cooccurr_entity.name">
+                                {{selected_cooccurr_entity.name}}
+                            </span> 
+                            </span>
+                            is {{ selected_cooccurr_entity? selected_cooccurr_entity.num_of_mentions : selected_entity.num_of_mentions }}
+                        </div>
+                        <Divider layout="vertical"></Divider>
+                        <ul class="entity-info-section">
+                            <li :title="selected_entity.name"> Main topic: {{ selected_entity.name }} </li>
+                            <li v-if='selected_cooccurr_entity' :title="selected_cooccurr_entity.name"> Co-occur topic: {{ selected_cooccurr_entity.name }} </li>
+                            <li :title="selected_entity.outlet"> Media outlet: {{selected_entity.outlet}}</li>
+                        </ul>
                     </div>
                 </div>
-                <div class="selection-container">
-                    <SelectButton
-                        v-model="selectedCategory"
-                        :options="sentiment_options"
-                        option-label="value"
-                        data-key="type" >
-                    </SelectButton>
-                    <Slider
-                        v-model="intensity"
-                        :step="0.01"
-                        :min="0"
-                        :max="1" >
-                    </Slider>
+                <div class="hexview-container"> 
+                    <HexCooccurrence
+                    v-if="data_fetched"
+                        class="compare-co-hexview"
+                        :title="clicked_hexview.title"
+                        :id="`compare-co-hex-inpection`"
+                        :entity_cooccurrences="clicked_hexview.data"
+                        :segmentation="original_segmentation"
+                        @hex-clicked="handleHexClicked">
+                    </HexCooccurrence>
                 </div>
-            </div>
-            <div class="constaints-outlet-scatter-container">
-                <div class="constraints-view">
-                    <ol v-if="constraint_dict[selected_entity.name]">
-                        <li v-for="outlet in Object.keys(constraint_dict[selected_entity.name])"
-                            :class="{not_satisfied: !constraint_statisfaction[outlet] }"> 
-                            {{outlet}} - {{constraint_dict[selected_entity.name][outlet]}}
-                            <i class="pi pi-times-circle" style="cursor:pointer" 
-                            @click="removeConstraint({target: selected_entity.name, outlet: outlet})"></i> 
-                        </li>
-                    </ol> 
+                <div class="select-category-container">
+                    <div class="question-container">
+                        <span> 
+                            How would you describe the coverage on 
+                            <span> {{selected_entity.name}} </span> 
+                            by &nbsp 
+                        </span>
+                        <div class="journal-info-container" style="font-size:small">
+                            <Dropdown :modelValue="selected_outlet"
+                                :options="journal_options" 
+                                placeholder="Select an journal"
+                                @change="handleChangeJournal" />
+                                <!-- <label for="journals"> Journal </label> -->
+                                <!-- <select name="journals" id="journals"
+                                @change="handleChangeJournal">
+                                <option v-for="journal in journal_options" 
+                                    :value="journal"
+                                    :selected="journal == selected_outlet">{{journal}}</option>
+                            </select> -->
+                        </div>
+                    </div>
+                    <div class="selection-container">
+                        <SelectButton
+                            v-model="selectedCategory"
+                            :options="sentiment_options"
+                            option-label="value"
+                            data-key="type" >
+                        </SelectButton>
+                        <span class="slider-label"> Intensity 
+                            <i class='pi pi-info-circle tooltip'>
+                                <span class="tooltiptext right-tooltiptext">
+                                Some explanation a lot of explanation 
+                                </span>
+                            </i>
+                            :
+                        </span>
+                        <Slider
+                            v-model="intensity"
+                            :step="0.01"
+                            :min="0"
+                            :max="1" >
+                        </Slider>
+                    </div>
                 </div>
-                <OutletScatterplot
-                    ref="outlet_scatter"
-                    v-if="entity_grouped_view"
-                    :view="entity_grouped_view"
-                    :highlight_node_text="selected_entity.outlet"
-                    :adjust_offset="adjust_offset"
-                    id="outlet-scatter"
-                    :segment_mode="true"
-                    :segmentation="segmentation"
-                    @update:segmentation="updateSegmentation" >
-                </OutletScatterplot>
-            </div>
-            <div class='navigation-container'>
-                <!-- <router-link v-if="data_fetched" :to="{ name: 'compare', params: { entity: selected_entity.name }}">Back</router-link> -->
+                <div class="constaints-outlet-scatter-container">
+                    <div class="constraints-view">
+                        <ol v-if="constraint_dict[selected_entity.name]">
+                            <li v-for="outlet in Object.keys(constraint_dict[selected_entity.name])"
+                                :class="{not_satisfied: !constraint_statisfaction[outlet] }"> 
+                                {{outlet}} - {{constraint_dict[selected_entity.name][outlet]}}
+                                <i class="pi pi-times-circle" style="cursor:pointer" 
+                                @click="removeConstraint({target: selected_entity.name, outlet: outlet})"></i> 
+                            </li>
+                        </ol> 
+                    </div>
+                    <!-- <Divider layout="vertical"></Divider> -->
+                    <div class="outlet-scatter-container">
+                        <h2 class="component-header outlet-scatter-header">
+                        Outlet Scatterplot
+                        <i class='pi pi-info-circle tooltip'>
+                            <span class="tooltiptext right-tooltiptext">
+                            Some explanation a lot of explanation 
+                            </span>
+                        </i>
+                        </h2>
+                        <OutletScatterplot
+                            ref="outlet_scatter"
+                            v-if="entity_grouped_view"
+                            :view="entity_grouped_view"
+                            :highlight_node_text="selected_entity.outlet"
+                            :adjust_offset="adjust_offset"
+                            id="outlet-scatter"
+                            :segment_mode="true"
+                            :segmentation="segmentation"
+                            @update:segmentation="updateSegmentation" >
+                        </OutletScatterplot>
+                    </div>
+                </div>
+                <div class='navigation-container'>
+                    <!-- <router-link v-if="data_fetched" :to="{ name: 'compare', params: { entity: selected_entity.name }}">Back</router-link> -->
+                </div>
             </div>
         </SplitterPanel>
     </Splitter>
@@ -400,7 +442,9 @@ function updateSegmentation({pos, neg}) {
   height: 98vh;
   display: flex;
 }
-
+.entity-info-panel {
+    overflow: hidden;
+}
 // divider style 
 :deep(.p-divider.p-divider-vertical::before) {
   border-left: 1px solid #dee2e6 !important;
@@ -409,12 +453,6 @@ function updateSegmentation({pos, neg}) {
 // ---------------------
 // headers
 // ---------------------
-.component-header{
-  margin: 2%;
-  border-bottom: solid 1px #b7b7b7;
-  font-family: 'Lato';
-  font-weight: bold;
-}
 
 .article-view-header {
   background: #f7f7f7;
@@ -423,16 +461,20 @@ function updateSegmentation({pos, neg}) {
 }
 
 // ---------------------
+// articlew view section
+// ---------------------
+
+// ---------------------
 // entity info section
 // ---------------------
 .target-cooccurr-container {
-  display: grid;
-  /*! justify-content: space-between; */
-  grid-template-columns: repeat(2, 1fr);
-//   display: flex;
-//   justify-content: space-between;
+  display: flex;
+  flex-direction: column;
   padding-left: 10px;
   padding-right: 10px;
+  background: #f7f7f7;
+  margin-left: 1%;
+  margin-right: 1%;
 }
 :deep(.entity-info-view-container) {
   display: flex;
@@ -442,14 +484,36 @@ function updateSegmentation({pos, neg}) {
   justify-content: center;
   max-width: unset !important;
 }
-
-.outlet-weight-container {
-  display: flex;
-  align-items: center;
+.entity-info-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
 }
+.cooccurr-info-content {
+  display: flex;
+}
+.cooccurr-info-header {
+    margin: 1.5%;
+}
+
+ol {
+    padding-left: 10%;
+}
+li {
+    white-space: pre;
+}
+
 :deep(.p-slider.p-component.p-slider-horizontal) {
   width: 50%;
   margin-left: 15px;
+}
+.entity-info-section {
+  padding-left: 1%;
+  flex: 2 1 0;
+}
+.num_of_articles {
+  flex: 1 1 0;
 }
 
 // ---------------------
@@ -459,13 +523,19 @@ function updateSegmentation({pos, neg}) {
     display: flex;
     align-items: center;
 }
+.slider-label {
+    position:absolute;
+    font-family: Lato;
+    left: 41.2%;
+    top: -10%;
+}
 
 
 // ---------------------
 //  Hexview section
 // ---------------------
 .hexview-container {
-  height: 54%;
+  max-height: 50%;
 }
 
 // ---------------------
@@ -473,10 +543,15 @@ function updateSegmentation({pos, neg}) {
 // ---------------------
 .constaints-outlet-scatter-container {
   display: flex;
-  justify-content: space-between;
+//   justify-content: space-between;
+    flex: 1 1 0;
 }
+
 .constraints-view {
   width: fit-content;
+  background: #f7f7f7;
+  flex: 1 1 0;
+  margin-right: 1%;
 }
 
 #outlet-scatter {
@@ -487,11 +562,35 @@ function updateSegmentation({pos, neg}) {
     transition: background 1s;
 }
 .question-container {
-  display: flex;
-  align-items: center;
+    display: flex;
+    align-items: center;
+    background: #f7f7f7;
+    border-bottom: solid 1px #b7b7b7;
+    font-family: "Lato";
+    padding-left: 1%;
 }
 .journal-info-container {
   white-space: nowrap;
 }
-
+:deep(.outlet-scatter) {
+    top: -5%;
+    flex: 1 1 auto;
+    width: 24% !important;
+}
+.outlet-scatter-container {
+  display: flex;
+  /*! flex-direction: column; */
+  flex: 1 1 19%;
+  background: #f7f7f7;
+}
+.outlet-scatter-header {
+    // display: flex;
+    // flex-direction: column;
+    border-right: solid 1px #b7b7b7;
+    border-bottom: unset;
+    margin: 0%;
+    flex: 1 1 25%;
+    padding-right: 0%;
+    padding-left: 3%;
+}
 </style>
