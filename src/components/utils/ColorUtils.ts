@@ -8,6 +8,7 @@ const pos_color = '#baf0f5' //sst_range(1-offset)
 const neu_color = "#c4c3c3"
 const mixed_color = 'url(#diagonalHatch)'  //"#a54dd9"
 const entity_selected_color = "#007bff"
+export const topic_bar_color = "#4baaf5"
 const key_color_dict = {
                 "positive": pos_color, //pos_color,
                 "negative": neg_color,

@@ -128,8 +128,8 @@ function highlight_element(text) {
 </script>
 
 <template>
-<div class="pos-panel-header"> Positive: {{pos_articles?.length || ""}}</div>
 <ScrollPanel class="pos-article-list">
+    <div class="pos-panel-header"> positive-leaning articles: ({{pos_articles?.length || "0"}})</div>
     <Panel v-for="(article, index) in pos_panel_articles"
     :header="index+1 + '. ' + article.headline"
     :key="article.id"
@@ -154,8 +154,8 @@ function highlight_element(text) {
     </Panel>
 </ScrollPanel>
 
-<div class="neg-panel-header"> Negative: {{neg_articles?.length || ""}} </div>
 <ScrollPanel class="neg-article-list">
+    <div class="neg-panel-header"> negative-leaning articles: ({{neg_articles?.length || "0"}}) </div>
     <Panel v-for="(article, index) in neg_panel_articles"
     :header="index+1 + '. ' + article.headline"
     :key="article.id"

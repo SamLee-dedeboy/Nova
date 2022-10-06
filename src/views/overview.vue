@@ -38,6 +38,7 @@ import HexCooccurrence from "../components/HexCooccurrence.vue";
 import TopicBars from "../components/TopicBars.vue"
 import EntitySelection from "../components/entitySelection.vue"
 import ThresholdController from "../components/ThresholdController.vue";
+import HorizontalTopicBars from "../components/HorizontalTopicBars.vue";
 
 
 const store = useStore()
@@ -154,13 +155,13 @@ const highlight_nodes: Ref<string[]> = ref([])
 /**
  * layout constants in percentage
  */
-const left_section_panel_size = 33
+const left_section_panel_size = 30
 const right_section_panel_size = vue.computed(() => 100 - left_section_panel_size)
 
 const entity_scatter_panel_size = 50 
 const utilities_panel_size = vue.computed(() => 100 - entity_scatter_panel_size)
 
-const entity_info_panel_size = 30
+const entity_info_panel_size = 2.8
 const hex_view_panel_size = vue.computed(() => 100 - entity_info_panel_size)
 
 
@@ -477,6 +478,15 @@ function updateSegmentation({ pos, neg }) {
       <SplitterPanel class="left-section-panel" :size="left_section_panel_size">
         <Splitter layout="vertical">
           <SplitterPanel class="entity-scatter-panel" :size="entity_scatter_panel_size">
+            <h2 class="component-header scatter-header"> 
+              Topic Scatterplot 
+              <i class='pi pi-info-circle tooltip'>
+                <span class="tooltiptext right-tooltiptext">
+                  Some explanation a lot of explanation 
+                </span>
+              </i>
+            </h2>
+
             <div class="overview-scatter-container">
               <!-- load icon -->
               <i v-if="overall_scatter_data_loading" class="pi pi-spin pi-spinner" style="
@@ -496,7 +506,14 @@ function updateSegmentation({ pos, neg }) {
             <!-- Utilities -->
             <div class="utilities-container">
               <div id="segment-utility-container" class="segment-utils">
-                <h2 class="util-header"> Segment </h2>
+                <h2 class="component-header util-header"> 
+                  Segment 
+                  <i class='pi pi-info-circle tooltip'>
+                    <span class="tooltiptext right-tooltiptext">
+                      Some explanation a lot of explanation 
+                    </span>
+                  </i>
+                </h2>
                 <!-- segment & search -->
                 <div class="toolbar-container">
                   <div v-if="overview_constructed" class="segment-toggler-container">
@@ -508,13 +525,19 @@ function updateSegmentation({ pos, neg }) {
                   <!-- Legend -->
                 <div class="legend-utils">
                   <Legend v-if="overview_constructed" id="segment_legend" class="segment-legend"
-                  :color_dict="SstColors.key_color_dict" :filter="true"/>
+                  :color_dict="SstColors.key_color_dict" :filter="true"></Legend>
                 </div>
-
               </div>
 
               <div id="entity-utility-container" class="entity-utils">
-                <h2 class="util-header"> Entity </h2>
+                <h2 class="component-header util-header"> 
+                  Topics Filter
+                  <i class='pi pi-info-circle tooltip'>
+                    <span class="tooltiptext right-tooltiptext">
+                      Some explanation a lot of explanation 
+                    </span>
+                  </i>
+                </h2>
                 <!-- Entity Search -->
                 <!-- <div id="entity-search" v-if="overview_constructed" class="search-bar">
                     <SearchBar :search_terms="entity_list" @entity_searched="handleSearch"/>
@@ -525,7 +548,6 @@ function updateSegmentation({ pos, neg }) {
                     :max_articles="overview_overall_scatter_metadata.max_articles"
                     :min_articles="overview_overall_scatter_metadata.min_articles"></ThresholdController>
                 </div>
-              
                 <!-- outlet weight slider -->
                 <OutletWeightSlider v-if="overview_constructed" :outlet_weight_dict="outlet_weight_dict"
                   @update_outlet_weight="handleUpdateOutletWeight">
@@ -539,6 +561,14 @@ function updateSegmentation({ pos, neg }) {
         <Splitter layout="vertical">
           <SplitterPanel class="overview-hex-panel" :size="hex_view_panel_size">
             <!-- Hex view -->
+            <h2 class="component-header hexview-header">
+              Topic Co-occurrences
+              <i class='pi pi-info-circle tooltip'>
+                <span class="tooltiptext right-tooltiptext">
+                  Some explanation a lot of explanation 
+                </span>
+              </i>
+            </h2>
             <div class="overview-hex-container" v-if="overview_constructed">
               <!-- load icon -->
               <i v-if="!overview_constructed" class="pi pi-spin pi-spinner" style="
@@ -558,20 +588,58 @@ function updateSegmentation({ pos, neg }) {
           <SplitterPanel class="entity-info-panel" :size="entity_info_panel_size">
             <!-- Entity Info -->
             <div class="entity-info-container">
-              <div class="target-cooccurr-container">
-                <EntityInfoView v-if="selected_entity?.outlet === 'Overall'" title="Target Entity"
+              <div class="target-cooccurr-container" v-if="selected_entity">
+                <h2 class="component-header cooccurr-info-header">
+                  Topic Info
+                  <i class='pi pi-info-circle tooltip'>
+                    <span class="tooltiptext right-tooltiptext">
+                      Some explanation a lot of explanation 
+                    </span>
+                  </i>
+                </h2>
+                <div class="cooccurr-info-content">
+                  <div class="num_of_articles">
+                    #articles about 
+                    <span style="font-weight:bolder"> {{selected_entity.name}} </span>
+                    <span v-if="selected_cooccurr_entity"> 
+                      and 
+                      <span style="font-weight:bolder">
+                        {{selected_cooccurr_entity.name}}
+                      </span> 
+                    </span>
+                    is {{ selected_cooccurr_entity? selected_cooccurr_entity.num_of_mentions : selected_entity.num_of_mentions }}
+                  </div>
+                  <Divider layout="vertical"></Divider>
+                  <ul class="entity-info-section">
+                    <li> Main topic: {{ selected_entity.name }} </li>
+                    <li v-if='selected_cooccurr_entity'> Co-occur topic: {{ selected_cooccurr_entity.name }} </li>
+                  </ul>
+                </div>
+                <!-- <EntityInfoView v-if="selected_entity?.outlet === 'Overall'" title="Target Entity"
                   :entity_info="selected_entity">
                 </EntityInfoView>
                 <Divider v-if="selected_cooccurr_entity" layout="vertical"></Divider>
                 <EntityInfoView v-if="selected_cooccurr_entity" title="Co-occurr Entity"
                   :entity_info="selected_cooccurr_entity">
-                </EntityInfoView>
+                </EntityInfoView> -->
               </div>
-              <div class="topic-bar-container">
-                <TopicBars v-if="selected_entity?.outlet === 'Overall'" id="cooccurr_topic_bars"
+              <div class="topic-bar-container" v-if="selected_entity?.outlet === 'Overall'">
+                <!-- <TopicBars v-if="selected_entity?.outlet === 'Overall'" id="cooccurr_topic_bars"
                   :targetTopicBins="selected_entity?.articles_topic_dict"
                   :cooccurrTopicBins="selected_cooccurr_entity?.articles_topic_dict">
-                </TopicBars>
+                </TopicBars> -->
+                <h2 class="component-header topic-bar-header">
+                  Policy Bars
+                  <i class='pi pi-info-circle tooltip'>
+                    <span class="tooltiptext right-tooltiptext">
+                      Some explanation a lot of explanation 
+                    </span>
+                  </i>
+                </h2>
+                <HorizontalTopicBars  id="cooccurr_topic_bars"
+                  :targetTopicBins="selected_entity?.articles_topic_dict"
+                  :cooccurrTopicBins="selected_cooccurr_entity?.articles_topic_dict">
+                </HorizontalTopicBars>
               </div>
               <!-- Next Stage -->
               <div class="navigate-container">
@@ -609,8 +677,8 @@ main {
 .overview-scatter-container,
 .overview-hex-container,
 .overall-co-hexview {
-  width: inherit;
-  height: inherit;
+  width: 100%;
+  height: 95%;
 }
 
 :deep(.p-splitter) {
@@ -633,6 +701,7 @@ main {
 // general layouts
 //
 
+
 // ---------------------
 // entity scatter section
 // ---------------------
@@ -653,10 +722,17 @@ main {
     margin-top: 5%;
 }
 
+.entity-utils{
+  margin: 0.4%;
+  padding: 2%;
+  height: 100%;
+  width: 62%;
+  background: #f7f7f7;
+}
 .segment-utils{
   margin: 1%;
     padding: 2%;
-    width: 30%;
+    width: 33%;
     height: 100%;
     background: #f7f7f7;
 }
@@ -665,11 +741,10 @@ main {
     width: 100%;
 }
 
-.util-header{
-  margin: 2%;
-  border-bottom: solid 1px #b7b7b7;
-  font-family: 'Lato';
-  font-weight: bold;
+.scatter-header {
+  background: #f7f7f7;
+  margin:2%;
+  padding:1%;
 }
 
 .toolbar-container {
@@ -694,33 +769,79 @@ main {
   width: 100%;
   height: 100%;
 }
+.utilities-panel {
+  overflow: visible;
+}
+
+// ---------------------
+// hexview section
+// ---------------------
+.hexview-header {
+  background: #f7f7f7;
+  margin:1%;
+  padding:0.45%;
+}
 
 
 // ---------------------
 // entity info section
 // ---------------------
 
-.entity-utils{
-  margin: 1%;
-  padding: 2%;
-  height: 100%;
-  width: 65%;
-  background: #f7f7f7;
+.entity-info-panel {
+  overflow: visible;
+}
+
+.entity-info-section {
+  padding-left: 2%;
 }
 
 .entity-info-container {
   display: flex;
-  height: 100%;
+  // height: 100%;
   justify-content: space-evenly;
 }
 
 .topic-bar-container {
-  width: 50%;
+  // height:217px;
+  // width:100%;
+  flex: 2 1 0;
+  display: flex;
+  background: #f7f7f7;
+  margin: 0.2%;
+}
+
+.cooccurr-info-content {
+  display: flex;
+  height: 100%;
+  width:100%;
+  overflow-wrap: break-word;
 }
 
 .target-cooccurr-container {
-  display: flex;
-  height: max-content;
+  margin: 0.2%;
+  padding: 0.75%;
+  flex: 1 1 0;
+  max-width: 35%;
+  // height: inherit;
+  // width: 35%;
+  background: #f7f7f7;
 }
+
+.num_of_articles, .entity-info-section {
+  width: 45%
+}
+
+.topic-bar-header {
+  border-bottom: unset;
+  border-right: solid 1px #b7b7b7;
+  margin:1%;
+  padding:1%;
+}
+
+.navigate-container {
+  background: #f7f7f7;
+}
+
+
 </style>
 

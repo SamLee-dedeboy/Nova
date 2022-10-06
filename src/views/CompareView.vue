@@ -15,9 +15,10 @@ import { useRoute } from 'vue-router'
 import { useStore } from 'vuex'
 
 /**
- * types
+ * types & utils
  */
 import * as typeUtils from "../types"
+import * as SstColors from "../components/utils/ColorUtils"
 
 /**
  * vue components
@@ -25,6 +26,8 @@ import * as typeUtils from "../types"
 import HexCooccurrence from "../components/HexCooccurrence.vue";
 import EntityInfoView from "../components/EntityInfoView.vue";
 import TopicBars from "../components/TopicBars.vue";
+import HorizontalTopicBars from '../components/HorizontalTopicBars.vue';
+import Legend from '../components/Legend.vue';
 
 const route = useRoute()
 const store = useStore()
@@ -119,6 +122,16 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
 <template>
     <Splitter class="splitter-outmost">
         <SplitterPanel id="hexview_section" class="hexview-section flex align-items-center justify-content-center" :size="left_section_size" :min-size="left_section_size" >
+            <h2 class="component-header hexview-grid-header"> 
+                Topic Co-occurrences of 
+                <span> {{ route.params.entity }} </span>
+                &nbsp
+                <i class='pi pi-info-circle tooltip'>
+                    <span class="tooltiptext right-tooltiptext">
+                        Some explanation a lot of explanation 
+                    </span>
+                </i>
+            </h2>
             <div class="hexview-grid-container">
                 <div class="hexview-grid-cell-container"
                     v-if="data_fetched"
@@ -136,10 +149,37 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
                 </div>
             </div>
         </SplitterPanel>    
-        <SplitterPanel id="entity_info_section" class="entity-info-section flex align-items-center justify-content-center" :size="right_section_size" >
+        <SplitterPanel id="entity_info_section" class="entity-info-panel flex align-items-center justify-content-center" :size="right_section_size" >
             <div class="entity-info-container">
-                <div class="target-cooccurr-container">
-                <EntityInfoView
+                <div class="target-cooccurr-container" v-if="selected_entity">
+                    <h2 class="component-header cooccurr-info-header">
+                    Topic Info
+                    <i class='pi pi-info-circle tooltip'>
+                        <span class="tooltiptext right-tooltiptext">
+                        Some explanation a lot of explanation 
+                        </span>
+                    </i>
+                    </h2>
+                    <div class="cooccurr-info-content">
+                        <!-- <div class="num_of_articles">
+                            #articles about 
+                            <span style="font-weight:bolder"> {{selected_entity.name}} </span>
+                            <span v-if="selected_cooccurr_entity"> 
+                            and 
+                            <span style="font-weight:bolder">
+                                {{selected_cooccurr_entity.name}}
+                            </span> 
+                            </span>
+                            is {{ selected_cooccurr_entity? selected_cooccurr_entity.num_of_mentions : selected_entity.num_of_mentions }}
+                        </div>
+                        <Divider layout="vertical"></Divider> -->
+                        <ul class="entity-info-section">
+                            <li> Main topic: {{ selected_entity.name }} </li>
+                            <li v-if='selected_cooccurr_entity'> Co-occur topic: {{ selected_cooccurr_entity.name }} </li>
+                            <li> Media outlet: {{selected_entity.outlet}}</li>
+                        </ul>
+                    </div>
+                <!-- <EntityInfoView
                     v-if="selected_entity"
                     title="Target Entity"
                     :entity_info="selected_entity">
@@ -149,15 +189,26 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
                     v-if="selected_cooccurr_entity"
                     title="Co-occurr Entity"
                     :entity_info="selected_cooccurr_entity">
-                </EntityInfoView>
+                </EntityInfoView> -->
                 </div>
-                <div class="topic-bar-container">
-                <TopicBars
-                    v-if="selected_entity"
-                    id="cooccurr_topic_bars"
-                    :targetTopicBins="selected_entity?.articles_topic_dict"
-                    :cooccurrTopicBins="selected_cooccurr_entity?.articles_topic_dict"
-                ></TopicBars>
+                <div class="topic-bar-container" v-if="selected_entity">
+                    <TopicBars
+                        id="cooccurr_topic_bars"
+                        :targetTopicBins="selected_entity?.articles_topic_dict"
+                        :cooccurrTopicBins="selected_cooccurr_entity?.articles_topic_dict"
+                    ></TopicBars>
+                </div>
+                <div class="legend-utils" v-if="selected_entity">
+                    <h2 class="component-header legend-header">
+                    Sentiment
+                        <i class='pi pi-info-circle tooltip'>
+                            <span class="tooltiptext right-tooltiptext">
+                            Some explanation a lot of explanation 
+                            </span>
+                        </i>
+                    </h2>
+                    <Legend v-if="selected_entity" id="segment_legend" class="segment-legend"
+                    :color_dict="SstColors.key_color_dict" :filter="true"></Legend>
                 </div>
                 <router-link v-if="selected_cooccurr_entity" :to="{ name: 'inspection', params: { entity: selected_entity.name, outlet:selected_entity.outlet }}">Next Stage</router-link>
             </div>
@@ -166,7 +217,11 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
     </Splitter>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
+
+// ---------------------
+// general
+// ---------------------
 .splitter-outmost {
   width: 99vw;
   height: 98vh;
@@ -176,6 +231,14 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
   border-left: 1px solid #dee2e6 !important;
 }
 
+// ---------------------
+// hex grid
+// ---------------------
+.hexview-grid-header {
+  background: #f7f7f7;
+  margin:0.5%;
+  padding:0.5%;
+}
 .hexview-grid-container {
     display: grid;
     aspect-ratio: 3/2;
@@ -183,20 +246,10 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
     grid-template-rows: repeat(2, 1fr);  
     gap: 0;
     width: 100%;
-    height: 100%;
+    height: 91%;
 }
 .hexview-grid-cell-container {
   overflow: hidden;
-}
-.target-cooccurr-container {
-  display: flex;
-}
-
-.utilities-container {
-    margin-left: 10px
-}
-.entity-info-container {
-    margin-left: 10px
 }
 .compare-co-hexview {
     z-index:1
@@ -206,4 +259,34 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
     width: 100px;
     bottom: 0px;
 }
+// ---------------------
+// entity info section
+// ---------------------
+.entity-info-container {
+    background: #f7f7f7;
+    margin: 1%;
+}
+.target-cooccurr-container {
+  display: flex;
+  flex-direction: column;
+}
+.cooccurr-info-content {
+    display: flex;
+}
+
+.entity-info-section {
+    padding-left: 1%;
+    margin-left: 6%;
+}
+
+// ---------------------
+// legend section
+// ---------------------
+.legend-utils {
+    margin:1%;
+}
+.legend-container {
+    width: 60%;
+}
+
 </style>
