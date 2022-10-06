@@ -561,7 +561,7 @@ function updateSegmentation({ pos, neg }) {
         <Splitter layout="vertical">
           <SplitterPanel class="overview-hex-panel" :size="hex_view_panel_size">
             <!-- Hex view -->
-            <h2 class="component-header hexview-header">
+            <h2 class="component-header hexview-header" v-if="selected_entity">
               Topic Co-occurrences
               <i class='pi pi-info-circle tooltip'>
                 <span class="tooltiptext right-tooltiptext">
@@ -635,6 +635,10 @@ function updateSegmentation({ pos, neg }) {
                       Some explanation a lot of explanation 
                     </span>
                   </i>
+                  <br/>
+                  <span style="font-size: small; width:max-content;"> 
+                    Some explanation here a lot of explanation here more explanation here
+                  </span>
                 </h2>
                 <HorizontalTopicBars  id="cooccurr_topic_bars"
                   :targetTopicBins="selected_entity?.articles_topic_dict"
@@ -836,6 +840,7 @@ main {
   border-right: solid 1px #b7b7b7;
   margin:1%;
   padding:1%;
+  max-width: 27%;
 }
 
 .navigate-container {
