@@ -48,7 +48,8 @@ const hexview_grid = vue.computed(() => store.state.hexview_grid)
 const setHexViewGrid = (grid) => store.commit("setHexViewGrid", grid)
 const outlet_weight_dict = vue.computed(() => store.state.outlet_weight_dict)
 
-const notes: Ref<string> = ref("")
+const notes = vue.computed(() => store.state.notes)
+const setNotes = (notes) => store.commit("setNotes", notes)
 
 /**
  * left & right section width (percentage)
@@ -223,11 +224,11 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
                             </span>
                         </i>
                     </h2>
-                    <Textarea v-model="notes">
+                    <Textarea :model-value="notes" @update:model-value="setNotes">
                     </Textarea>
                     
                 </div>
-                <router-link v-if="selected_cooccurr_entity" :to="{ name: 'inspection', params: { entity: selected_entity.name, outlet:selected_entity.outlet }}">Next Stage</router-link>
+                <router-link v-if="selected_cooccurr_entity" :to="{ name: 'inspection', params: { entity: selected_entity.name }}">Next Stage</router-link>
             </div>
 
         </SplitterPanel>

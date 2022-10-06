@@ -400,6 +400,7 @@ function updateSegmentation({pos, neg}) {
                                 @click="removeConstraint({target: selected_entity.name, outlet: outlet})"></i> 
                             </li>
                         </ol> 
+                        <router-link v-if="Object.keys(constraint_dict[selected_entity.name]||{}).length > 0" :to="{ name: 'summary', params: { entity: selected_entity.name }}"> Summary </router-link>
                     </div>
                     <!-- <Divider layout="vertical"></Divider> -->
                     <div class="outlet-scatter-container">
@@ -423,9 +424,6 @@ function updateSegmentation({pos, neg}) {
                             @update:segmentation="updateSegmentation" >
                         </OutletScatterplot>
                     </div>
-                </div>
-                <div class='navigation-container'>
-                    <!-- <router-link v-if="data_fetched" :to="{ name: 'compare', params: { entity: selected_entity.name }}">Back</router-link> -->
                 </div>
             </div>
         </SplitterPanel>
@@ -502,6 +500,12 @@ ol {
 }
 li {
     white-space: pre;
+    font-size: 0.9rem;
+}
+a {
+  position: absolute;
+  top: 73%;
+  left: 71%;
 }
 
 :deep(.p-slider.p-component.p-slider-horizontal) {

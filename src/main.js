@@ -18,6 +18,7 @@ const store = createStore({
       hexview_grid: undefined,
       clicked_hexview: undefined,
       constraints: {},
+      notes: ""
     }
   },
   mutations: {
@@ -49,6 +50,9 @@ const store = createStore({
     },
     removeConstraint(state, constraint) {
       delete state.constraints[constraint.target][constraint.outlet]
+    },
+    setNotes(state, notes) {
+      state.notes = notes
     }
 
   }

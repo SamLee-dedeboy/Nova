@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import Overview from "../views/overview.vue"
 import CompareView from "../views/CompareView.vue";
 import InspectionView from "../views/InspectionView.vue"
+import SummaryView from "../views/SummaryView.vue"
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -17,9 +18,14 @@ const router = createRouter({
       component: CompareView,
     },
     {
-      path: "/inspection/:entity/:outlet",
+      path: "/inspection/:entity",
       name: "inspection",
       component: InspectionView,
+    },
+    {
+      path: "/summary/:entity",
+      name: "summary",
+      component: SummaryView,
     },
   ],
 });
