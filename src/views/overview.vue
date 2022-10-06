@@ -154,7 +154,7 @@ const highlight_nodes: Ref<string[]> = ref([])
 /**
  * layout constants in percentage
  */
-const left_section_panel_size = 33
+const left_section_panel_size = 30
 const right_section_panel_size = vue.computed(() => 100 - left_section_panel_size)
 
 const entity_scatter_panel_size = 50 
@@ -744,10 +744,17 @@ main {
     margin-top: 5%;
 }
 
+.entity-utils{
+  margin: 0.4%;
+  padding: 2%;
+  height: 100%;
+  width: 62%;
+  background: #f7f7f7;
+}
 .segment-utils{
   margin: 1%;
     padding: 2%;
-    width: 30%;
+    width: 33%;
     height: 100%;
     background: #f7f7f7;
 }
@@ -799,13 +806,6 @@ main {
 // entity info section
 // ---------------------
 
-.entity-utils{
-  margin: 0.4%;
-  padding: 2%;
-  height: 100%;
-  width: 65%;
-  background: #f7f7f7;
-}
 
 .entity-info-container {
   display: flex;
@@ -820,6 +820,7 @@ main {
 .cooccurr-info-content {
   display: flex;
   height: 100%;
+  overflow-wrap: break-word;
 }
 
 .target-cooccurr-container {

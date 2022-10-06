@@ -146,7 +146,7 @@
 .button-set {
     position: absolute;
     right: 2%;
-    bottom: 1%;
+    bottom: 2.5%;
     display:inline-flex;
 }
 .reset-zoom {
