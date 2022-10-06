@@ -247,7 +247,6 @@ export class EntityScatter {
     
     updateRegionLabel(segment_point: SegmentPoint) {
         const svg = d3.select(`#${this.props.id}`).select("svg")
-
         //
         // set each label individually for positions & colors
         //
@@ -300,7 +299,11 @@ export class EntityScatter {
             .attr("font-size", "4rem")
             .attr("opacity", "0.5")
             .attr("filter", "brightness(50%)")
-            .attr("font-family", "Gill Sans")
+            // .attr("font-family", "Comic Sans MS")
+            // .attr("font-family", "Impact")
+            // .attr("font-family", "Segoe Script")
+            .attr("font-family", "MV Boli")
+            .attr("font-weight", "bold")
     }
 
     updateSegmentationOffset(offset: number) {
@@ -321,7 +324,8 @@ export class EntityScatter {
                     .attr("height", this.yScale(lower_left.neg) - this.yScale(top_left.neg))
                     .attr("fill-opacity", 0)
                     .attr("stroke", "black")
-                    .attr("stroke-dasharray", "1")
+                    .attr("stroke-width", "10")
+                    .attr("stroke-dasharray", "10")
                     .style("pointer-events", "none")
         }
 

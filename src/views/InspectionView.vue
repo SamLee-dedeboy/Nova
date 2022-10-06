@@ -400,6 +400,7 @@ function updateSegmentation({pos, neg}) {
                                 @click="removeConstraint({target: selected_entity.name, outlet: outlet})"></i> 
                             </li>
                         </ol> 
+                        <router-link v-if="Object.keys(constraint_dict[selected_entity.name]||{}).length > 0" :to="{ name: 'summary', params: { entity: selected_entity.name }}"> Summary </router-link>
                     </div>
                     <!-- <Divider layout="vertical"></Divider> -->
                     <div class="outlet-scatter-container">
@@ -423,9 +424,6 @@ function updateSegmentation({pos, neg}) {
                             @update:segmentation="updateSegmentation" >
                         </OutletScatterplot>
                     </div>
-                </div>
-                <div class='navigation-container'>
-                    <!-- <router-link v-if="data_fetched" :to="{ name: 'compare', params: { entity: selected_entity.name }}">Back</router-link> -->
                 </div>
             </div>
         </SplitterPanel>
@@ -502,6 +500,12 @@ ol {
 }
 li {
     white-space: pre;
+    font-size: 0.9rem;
+}
+a {
+  position: absolute;
+  top: 73%;
+  left: 71%;
 }
 
 :deep(.p-slider.p-component.p-slider-horizontal) {
@@ -553,6 +557,15 @@ li {
   flex: 1 1 0;
   margin-right: 1%;
 }
+:deep(.p-button) {
+    padding: 0.1rem 1rem;
+}
+:deep(.p-buttonset, .p-button) {
+    margin: 0.3rem 0rem;
+}
+:deep(.p-inputtext) {
+    padding: 0.2rem 0.5rem;
+}
 
 #outlet-scatter {
   width: 31%;
@@ -571,11 +584,13 @@ li {
 }
 .journal-info-container {
   white-space: nowrap;
+  margin: 0.3rem 0rem;
 }
+
 :deep(.outlet-scatter) {
     top: -5%;
     flex: 1 1 auto;
-    width: 24% !important;
+    width: 26% !important;
 }
 .outlet-scatter-container {
   display: flex;

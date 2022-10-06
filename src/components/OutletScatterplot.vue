@@ -90,6 +90,7 @@
     }, {deep: true})
     vue.watch(() => props.highlight_node_text, (new_value, old_value) => {
         entityScatterPlot.updateCanvas(emit) 
+        entityScatterPlot.updateSegmentationOffset(props.adjust_offset || 0.5)
     })
     vue.watch(() => props.adjust_offset, (new_value, old_value) => {
         entityScatterPlot.updateSegmentationOffset(new_value || 0.5)

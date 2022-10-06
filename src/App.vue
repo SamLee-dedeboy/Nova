@@ -34,7 +34,7 @@ main {
 }
 
 .component-header {
-  margin: 2%;
+  margin: 1% 1% 1% 0%;
   border-bottom: solid 1px #b7b7b7;
   font-family: 'Lato';
   font-weight: bold;
@@ -42,8 +42,8 @@ main {
 .tooltip .tooltiptext {
   visibility: hidden;
   background-color: white;
-  text-align: center;
-  padding: 5px 0;
+  /* text-align: center; */
+  padding: 5px 5px;
   border-radius: 6px;
   border: solid 1px black;
   /* Position the tooltip text */
@@ -63,6 +63,7 @@ main {
 
 .tooltip .right-tooltiptext {
   left: 125%;
+  width: max-content;
 }
 
 /* .tooltip .top-tooltiptext::after {

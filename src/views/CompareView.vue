@@ -5,6 +5,8 @@
 import Splitter from 'primevue/splitter';
 import SplitterPanel from "primevue/splitterpanel"
 import Divider from "primevue/divider"
+import Textarea from 'primevue/textarea';
+
 
 /**
  * libraries
@@ -45,6 +47,9 @@ const setClickedHexView = (hexview) => store.commit("setClickedHexView", hexview
 const hexview_grid = vue.computed(() => store.state.hexview_grid)
 const setHexViewGrid = (grid) => store.commit("setHexViewGrid", grid)
 const outlet_weight_dict = vue.computed(() => store.state.outlet_weight_dict)
+
+const notes = vue.computed(() => store.state.notes)
+const setNotes = (notes) => store.commit("setNotes", notes)
 
 /**
  * left & right section width (percentage)
@@ -210,7 +215,20 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
                     <Legend v-if="selected_entity" id="segment_legend" class="segment-legend"
                     :color_dict="SstColors.key_color_dict" :filter="true"></Legend>
                 </div>
-                <router-link v-if="selected_cooccurr_entity" :to="{ name: 'inspection', params: { entity: selected_entity.name, outlet:selected_entity.outlet }}">Next Stage</router-link>
+                <div class="notes-section" v-if="selected_entity">
+                    <h2 class="component-header notes-header">
+                    Notes
+                        <i class='pi pi-info-circle tooltip'>
+                            <span class="tooltiptext right-tooltiptext" style="width: 145px">
+                                Write down any hypothesis or thoughts you have.
+                            </span>
+                        </i>
+                    </h2>
+                    <Textarea :model-value="notes" @update:model-value="setNotes">
+                    </Textarea>
+                    
+                </div>
+                <router-link v-if="selected_cooccurr_entity" :to="{ name: 'inspection', params: { entity: selected_entity.name }}">Next Stage</router-link>
             </div>
 
         </SplitterPanel>
@@ -289,4 +307,7 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
     width: 60%;
 }
 
+.notes-section {
+  margin-left: 1%;
+}
 </style>
