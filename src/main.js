@@ -6,7 +6,7 @@ import PrimeVue from 'primevue/config';
 import Button from 'primevue/button';
 import mitt from 'mitt';
 import { createStore } from "vuex"
-import { EntityInfo } from "./types"
+// import { EntityInfo } from "./types"
 
 const store = createStore({
   state () {
