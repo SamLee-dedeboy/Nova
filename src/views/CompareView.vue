@@ -281,6 +281,9 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
 // entity info section
 // ---------------------
 .entity-info-container {
+    display:flex;
+    flex-direction: column;
+    height: 100%;
     background: #f7f7f7;
     margin: 1%;
 }
@@ -309,5 +312,9 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
 
 .notes-section {
   margin-left: 1%;
+  flex: 1 1 0;
+}
+:deep(p-inputtextarea) {
+    height: 50%;
 }
 </style>
