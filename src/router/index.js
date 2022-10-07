@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
-import Overview from "../views/overview.vue"
+import Overview from "../views/Overview.vue"
 import CompareView from "../views/CompareView.vue";
 import InspectionView from "../views/InspectionView.vue"
 import SummaryView from "../views/SummaryView.vue"

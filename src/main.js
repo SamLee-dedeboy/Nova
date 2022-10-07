@@ -6,7 +6,7 @@ import PrimeVue from 'primevue/config';
 import Button from 'primevue/button';
 import mitt from 'mitt';
 import { createStore } from "vuex"
-import { EntityInfo } from "./types"
+// import { EntityInfo } from "./types"
 
 const store = createStore({
   state () {
@@ -18,7 +18,9 @@ const store = createStore({
       hexview_grid: undefined,
       clicked_hexview: undefined,
       constraints: {},
-      notes: ""
+      notes: "",
+      marked_articles: [],
+      
     }
   },
   mutations: {
@@ -53,8 +55,16 @@ const store = createStore({
     },
     setNotes(state, notes) {
       state.notes = notes
+    },
+    addMarkedArticle(state, article_id) {
+      state.marked_articles.push(article_id)
+    },
+    removeMarkedArticle(state, article_id) {
+      const index = state.marked_articles.indexOf(article_id);
+      if (index !== -1) {
+        state.marked_articles.splice(index, 1);
+      }
     }
-
   }
 })
 

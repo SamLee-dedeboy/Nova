@@ -7,13 +7,17 @@ import * as _ from "lodash"
 import * as SstColors from "./utils/ColorUtils"
 import { Ref, ref } from "vue"
 import { Article } from "../types"
+import { useStore } from 'vuex'
 
-
+const store = useStore()
 const props = defineProps({
     articles: Object as () => Article[],
     article_highlights: Object as () => any,
     entity_pair: Object as () => String[],
 })
+
+const addMarkedArticle = (article_id: number) => store.commit("addMarkedArticle", article_id)
+const removeMarkedArticle = (article_id: number) => store.commit("removeMarkedArticle", article_id)
 
 
 vue.onMounted(() => {
@@ -70,6 +74,7 @@ function sortByRelevance(a1, a2): number {
 vue.watch(pos_articles, (new_value, old_value) => {
     pos_panel_articles.value.length = 0
     pos_panel_articles.value = pos_articles.value?.slice(0, 10) || []
+    pos_marks.value = Array(pos_articles.value?.length || 0).fill(false)
     vue.nextTick(() => {
         const pos_panel_togglers = document.querySelectorAll(".pos-article-list > .p-scrollpanel-wrapper > .p-scrollpanel-content > .p-panel-toggleable > .p-panel-header > .p-panel-icons > .p-panel-toggler")
         pos_panel_togglers.forEach(toggler => toggler.classList.add("pos-toggler"))
@@ -79,6 +84,7 @@ vue.watch(pos_articles, (new_value, old_value) => {
 vue.watch(neg_articles, (new_value, old_value) => {
     neg_panel_articles.value.length = 0
     neg_panel_articles.value = neg_articles.value?.slice(0, 10) || []
+    neg_marks.value = Array(neg_articles.value?.length || 0).fill(false)
     vue.nextTick(() => {
         const neg_panel_togglers = document.querySelectorAll(".neg-article-list > .p-scrollpanel-wrapper > .p-scrollpanel-content > .p-panel-toggleable > .p-panel-header > .p-panel-icons > .p-panel-toggler")
         neg_panel_togglers.forEach(toggler => toggler.classList.add("neg-toggler"))
@@ -127,16 +133,26 @@ function highlight_element(text) {
 }
 
 function handleMark(mark, index: number, type: string) {
-    if(type === "pos") pos_marks.value[index] = mark
-    if(type === "neg") neg_marks.value[index] = mark
+    if(type === "pos") {
+        pos_marks.value[index] = mark
+        const article_id: number = pos_articles.value![index].id
+        if(mark) addMarkedArticle(article_id)
+        else removeMarkedArticle(article_id)
+    }
+    if(type === "neg") {
+        neg_marks.value[index] = mark
+        const article_id: number = neg_articles.value![index].id
+        if(mark) addMarkedArticle(article_id)
+        else removeMarkedArticle(article_id)
+    }
 }
 
 
 </script>
 
 <template>
+<div class="pos-panel-header"> positive-leaning articles: ({{pos_articles?.length || "0"}})</div>
 <ScrollPanel class="pos-article-list">
-    <div class="pos-panel-header"> positive-leaning articles: ({{pos_articles?.length || "0"}})</div>
     <Panel v-for="(article, index) in pos_panel_articles"
     :header="index+1 + '. ' + article.headline"
     :key="article.id"
@@ -161,8 +177,8 @@ function handleMark(mark, index: number, type: string) {
     </Panel>
 </ScrollPanel>
 
+<div class="neg-panel-header"> negative-leaning articles: ({{neg_articles?.length || "0"}}) </div>
 <ScrollPanel class="neg-article-list">
-    <div class="neg-panel-header"> negative-leaning articles: ({{neg_articles?.length || "0"}}) </div>
     <Panel v-for="(article, index) in neg_panel_articles"
     :header="index+1 + '. ' + article.headline"
     :key="article.id"
@@ -204,7 +220,7 @@ function handleMark(mark, index: number, type: string) {
 }
 .pos-article-list, .neg-article-list {
     /* max-height:50%; */
-    height:44%;
+    height:40.8%;
 }
 .pos-panel-header, .neg-panel-header {
     background: #f7f7f7;
