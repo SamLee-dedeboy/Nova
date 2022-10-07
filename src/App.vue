@@ -48,7 +48,7 @@ main {
   border: solid 1px black;
   /* Position the tooltip text */
   position: absolute;
-  z-index: 2;
+  z-index: 3;
   /* Fade in tooltip */
   opacity: 0;
   transition: opacity 0.3s;
@@ -63,7 +63,7 @@ main {
 
 .tooltip .right-tooltiptext {
   left: 125%;
-  width: max-content;
+  /* width: max-content; */
 }
 
 /* .tooltip .top-tooltiptext::after {

@@ -78,7 +78,7 @@ function handleDecrease() {
 :deep(.p-slider-handle) {
     border-radius: 10px !important; 
     background: white !important;
-    z-index: 100;
+    z-index: 2;
     height: 1.3rem !important;
     width: 0.4rem !important;
     border: 2px solid black !important;
