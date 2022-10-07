@@ -7,18 +7,22 @@ import { Legend } from "./Legend";
 const props = defineProps({
     id: String,
     color_dict: Object as () => {[id: string]: string},
+    row_height: Number,
+    font_size: Number,
 })
 
 const margin = {top: 25, bottom: 10, left: 15, right: 15, vertical: 15}
 const len = Object.keys(props.color_dict!).length
-const row_height = 5 
-const viewBox: [number, number] = [150, margin.top + margin.bottom + len*(margin.vertical + row_height)]
+const row_height = vue.computed(() => props.row_height? props.row_height : 5)
+const font_size = vue.computed(() => props.font_size? props.font_size : 0.8)
+const viewBox: [number, number] = [150, margin.top + margin.bottom + len*(margin.vertical + row_height.value)]
 const legend = new Legend(
     props,
     props.id!,
     margin,
     viewBox,
-    row_height,
+    row_height.value,
+    font_size.value,
 )
 vue.onMounted(()=> {
     legend.draw()
