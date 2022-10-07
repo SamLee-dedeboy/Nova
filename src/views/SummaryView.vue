@@ -14,6 +14,9 @@ import { Article } from "../types"
  */
 import OutletWeightSlider from "../components/OutletWeightSlider.vue";
 
+import * as SstColors from "../components/utils/ColorUtils"
+import { GridTemplateColumnsProperty } from "csstype"
+
 const store = useStore()
 const notes = vue.computed(() => store.state.notes)
 const selected_entity = vue.computed(() => store.state.selected_entity)
@@ -66,9 +69,19 @@ function removeTags(content) {
     const res = content.replaceAll("<n>", "\n")
     return res
 }
+
+function getColor(type: string): string {
+    if(type === "mixed") return SstColors.mixed_color
+    if(type === "neu") return SstColors.neu_color
+    if(type === "pos") return SstColors.pos_color   
+    if(type === "neg") return SstColors.neg_color
+    return "white"
+
+}
 </script>
 
 <template>
+<div class="page-container">
 <div class="summary-container">
     <h2 class="component-header summary-header"> 
         Summary
@@ -80,6 +93,7 @@ function removeTags(content) {
                     <span> Main topic: {{ selected_entity.name }} </span>
                 </div>
                 <div class="outlet-weight-container">
+                    <span>Your adjusted weights for each outlet:</span>
                     <OutletWeightSlider :outlet_weight_dict="outlet_weight_dict"></OutletWeightSlider>
                 </div>
             </div>
@@ -99,7 +113,9 @@ function removeTags(content) {
             <ScrollPanel class="conclusion-content">
                 <div class="constraint-container"
                 v-for="outlet in merged_outled_set">
-                    {{outlet}} - {{constraint_dict[selected_entity.name][outlet] || "unset"}}
+                    <div class="constraint-header" :style="{background:getColor(constraint_dict[selected_entity.name][outlet])}">
+                        {{outlet}} - {{constraint_dict[selected_entity.name][outlet] || "unset"}}
+                    </div>
                     <Panel v-for="(article, index) in marked_articles_grouped[outlet]"
                     :header="index+1 + '. ' + article.headline"
                     :key="article.id"
@@ -123,11 +139,14 @@ function removeTags(content) {
         </div>
     </div>
 </div>
+</div>
 </template>
 
 <style scoped lang="scss">
-:deep(.app-container) {
-    justify-content: left !important;
+.page-container {
+  width: 100%;
+  height: 100%;
+  /*! display: flex; */
 }
 .summary-container {
   width: 50vw;
@@ -157,7 +176,7 @@ function removeTags(content) {
 }
 
 .belief-section {
-  display: flex;
+//   display: flex;
 }
 
 .main-topic-container {
@@ -166,6 +185,11 @@ function removeTags(content) {
 
 .outlet-weight-container {
   flex: 1 1 0;
+  padding-right: 3%;
+    width: 53%;
+}
+:deep(.outlet-weight-grid-container) {
+  padding-top: 2%;
 }
 
 
@@ -204,4 +228,15 @@ function removeTags(content) {
 :deep(.p-scrollpanel-content) {
   height: 100%;
 }
+:deep(.p-slider .p-slider-handle) {
+  height: 0.8rem;
+  width: 0.8rem;
+  pointer-events: none;
+}
+:deep(.p-slider.p-slider-horizontal .p-slider-handle) {
+  margin-top: -0.4rem;
+  margin-left: -0.4rem;
+}
+
+
 </style>
