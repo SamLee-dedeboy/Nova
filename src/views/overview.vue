@@ -482,7 +482,7 @@ function updateSegmentation({ pos, neg }) {
         <Splitter layout="vertical">
           <SplitterPanel class="entity-scatter-panel" :size="entity_scatter_panel_size">
             <h2 class="component-header scatter-header"> 
-              Topic Scatterplot 
+              COVID-19 News Topics 
               <i class='pi pi-info-circle tooltip'>
                 <span class="tooltiptext right-tooltiptext" style="width: 200px;">
                    Each circle is a topic with 2-d sentiment score (pos, neg). <br/>
@@ -509,8 +509,8 @@ function updateSegmentation({ pos, neg }) {
           <SplitterPanel class="utilities-panel" :size="utilities_panel_size">
             <!-- Utilities -->
             <div class="utilities-container">
-              <div id="segment-utility-container" class="segment-utils">
-                <h2 class="component-header util-header"> 
+              <!-- <div id="segment-utility-container" class="segment-utils"> -->
+                <!-- <h2 class="component-header util-header"> 
                   Segment 
                   <i class='pi pi-info-circle tooltip'>
                     <span class="tooltiptext right-tooltiptext" style="width: 300px;">
@@ -518,29 +518,27 @@ function updateSegmentation({ pos, neg }) {
                       A mixed sentiment means the topic has lots of positive and negative articles at the same time. 
                     </span>
                   </i>
-                </h2>
+                </h2> -->
                 <!-- segment & search -->
-                <div class="toolbar-container">
+                <!-- <div class="toolbar-container">
                   <div v-if="overview_constructed" class="segment-toggler-container">
                     <SelectButton v-model="segment_mode" optionValue="value" optionLabel="status" :options="segment_options"/>
-                    <!-- <ToggleButton class='segment-toggler p-primary' v-model="segment_mode" onLabel="Segment"
-                      offLabel="Segment"></ToggleButton> -->
                   </div>
-                </div>
+                </div> -->
                   <!-- Legend -->
-                <div class="legend-utils">
+                <!-- <div class="legend-utils">
                   <Legend v-if="overview_constructed" id="segment_legend" class="segment-legend"
                   :color_dict="SstColors.key_color_dict"></Legend>
-                </div>
-              </div>
+                </div> -->
+              <!-- </div> -->
 
               <div id="entity-utility-container" class="entity-utils">
                 <h2 class="component-header util-header"> 
-                  Topics Controller
+                  Topic Settings
                   <i class='pi pi-info-circle tooltip'>
                     <span class="tooltiptext right-tooltiptext" style="width: 300px">
-                      The color spectrum slider helps filter out unimportant topics by number or articles. <br/>
-                      The six-sliders group lets you control the weights of each media outlet.
+                      The color spectrum slider helps filter topics by number or articles. <br/>
+                      The six-sliders group lets you input your preception of each media outlet based on fairness and importance.
                     </span>
                   </i>
                 </h2>
@@ -549,12 +547,22 @@ function updateSegmentation({ pos, neg }) {
                     <SearchBar :search_terms="entity_list" @entity_searched="handleSearch"/>
                 </div> -->
                 <!-- filter slider -->
+                <h3 class="threshold-title"> Number of Articles </h3>
                 <div v-if="overview_constructed" class="slider-container">
                   <ThresholdController v-model:article_num_threshold="article_num_threshold"
                     :max_articles="overview_overall_scatter_metadata.max_articles"
                     :min_articles="overview_overall_scatter_metadata.min_articles"></ThresholdController>
                 </div>
                 <!-- outlet weight slider -->
+                <h3 class="threshold-title"> 
+                  News Outlet Fairness 
+                  <i class='pi pi-info-circle tooltip'>
+                    <span class="tooltiptext right-tooltiptext" style="width: 300px">
+                      How fair do you believe each of these outlets overall on their coverage of topics. <br/>
+                      Sliding towards left indicates you feel the outlet is unfair. 
+                    </span>
+                  </i>
+                </h3>
                 <OutletWeightSlider v-if="overview_constructed" :outlet_weight_dict="outlet_weight_dict"
                   @update_outlet_weight="handleUpdateOutletWeight">
                 </OutletWeightSlider>
@@ -566,7 +574,7 @@ function updateSegmentation({ pos, neg }) {
       <SplitterPanel class="right-section-panel" :size="right_section_panel_size">
         <Splitter layout="vertical">
           <SplitterPanel class="overview-hex-panel" :size="hex_view_panel_size">
-            <div class="reminder-click-entity" v-if="!selected_entity && overview_constructed"> Click any circle in Topic Scatterplot </div>
+            <div class="reminder-click-entity" v-if="!selected_entity && overview_constructed"> Click on one of the news topic nodes. </div>
             <!-- Hex view -->
             <h2 class="component-header hexview-header" v-if="selected_entity">
               Topic Co-occurrences
@@ -752,15 +760,15 @@ main {
 .entity-utils{
   margin: 0.4%;
   padding: 2%;
-  height: 100%;
-  width: 62%;
+  // height: 100%;
+  width: 100%;
   background: #f7f7f7;
 }
 .segment-utils{
   margin: 1%;
     padding: 2%;
     width: 33%;
-    height: 100%;
+    // height: 100%;
     background: #f7f7f7;
 }
 
@@ -783,8 +791,9 @@ main {
 }
 
 .slider-container {
-  width: 200px;
-  height: max-content;
+  width: 100%;
+  display: flex;
+  // height: max-content;
 }
 
 .utilities-container {
@@ -807,6 +816,14 @@ main {
   margin: 1.3% 1% 1% 1%;
   font-family: Lato;
   font-size: x-large;
+  position: absolute;
+  top: 40%;
+  left: 30%;
+
+	box-shadow: 0 0 0 0 rgba(0, 0, 0, 1);
+	transform: scale(1);
+	animation: pulse 2s infinite;
+
 }
 .hexview-header {
   background: #f7f7f7;
@@ -875,6 +892,27 @@ main {
   background: #f7f7f7;
 }
 
+.threshold-title{
+  width: 100%;
+}
+
+
+@keyframes pulse {
+	0% {
+		transform: scale(0.95);
+		box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7);
+	}
+
+	70% {
+		transform: scale(1);
+		box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
+	}
+
+	100% {
+		transform: scale(0.95);
+		box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+	}
+}
 
 </style>
 

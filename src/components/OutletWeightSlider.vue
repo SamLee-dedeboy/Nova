@@ -48,5 +48,6 @@ function handleChange(outlet) {
 .outlet-weight-grid-cell {
   display: flex;
   flex-direction: column;
+  margin: 5%;
 }
 </style>

@@ -32,8 +32,8 @@ function handleDecrease() {
 <template>
     <div class="threshold-input-container">
         <InputText class="threshold-input" v-model="article_num_threshold"></InputText>
-        <Button class="increment-button p-button-secondary" label="+"  @click="handleIncrement"></Button>
-        <Button class="decrease-button p-button-secondary " label="-"  @click="handleDecrease"></Button>
+        <Button class="increment-button p-button-secondary"  @click="handleIncrement"> <i class="pi pi-angle-up" style="font-size: 0.75rem"></i></Button>
+        <Button class="decrement-button p-button-secondary " label="v"  @click="handleDecrease"> <i class="pi pi-angle-down" style="font-size: 0.75rem"></i></Button>
     </div>
     <div class="threshold-slider-container">
         <div class="slider-spectrum-container">
@@ -48,12 +48,23 @@ function handleDecrease() {
 </template>
 
 <style scoped>
+.increment-button{
+  margin: 1%;
+}
+
+.decrement-button{
+  margin: 1%;
+}
+
 .threshold-input-container {
   display: flex;
-  width: 100%;
+  width: 50%;
+  height: 20%;
+  margin: 2%;
 }
 .threshold-input {
   width: 100%;
+  text-align: right;
 }
 .color-spectrum {
   height: 25px;
@@ -73,7 +84,8 @@ function handleDecrease() {
     height: 0.1rem !important;
 }
 .threshold-slider-container {
-  width: inherit;
+  width: 50%;
+  margin: 2%;
 }
 :deep(.p-slider-handle) {
     border-radius: 10px !important; 
