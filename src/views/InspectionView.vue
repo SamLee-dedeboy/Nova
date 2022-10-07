@@ -383,6 +383,7 @@ function updateSegmentation({pos, neg}) {
                             :
                         </span>
                         <Slider
+                            class="intensity-slider"
                             v-model="intensity"
                             :step="0.01"
                             :min="0"
@@ -528,10 +529,11 @@ a {
     align-items: center;
 }
 .slider-label {
-    position:absolute;
+    margin-left: 5px;
+    // position:absolute;
     font-family: Lato;
-    left: 41.2%;
-    top: -10%;
+    // left: 41.2%;
+    // top: -10%;
 }
 
 
@@ -551,6 +553,9 @@ a {
     flex: 1 1 0;
 }
 
+.intensity-slider {
+    width: 38% !important;
+}
 .constraints-view {
   width: fit-content;
   background: #f7f7f7;
