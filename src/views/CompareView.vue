@@ -119,6 +119,11 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
                 articles_topic_dict: json.cooccurr_articles_topic_dict,
                 cooccurr_article_ids: json.cooccurr_article_ids
             }
+            const hex_cooccurr_entity = view.data.sorted_cooccurrences_list.find(hex_entity => hex_entity.entity === cooccurr_entity.name)
+            if(hex_cooccurr_entity.article_ids.length === 0) {
+                cooccurr_entity.articles_topic_dict = undefined
+            }
+
             setCooccurrEntity(cooccurr_entity)
 
         })
@@ -128,12 +133,12 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
     <Splitter class="splitter-outmost">
         <SplitterPanel id="hexview_section" class="hexview-section flex align-items-center justify-content-center" :size="left_section_size" :min-size="left_section_size" >
             <h2 class="component-header hexview-grid-header"> 
-                Topic Co-occurrences of 
+                Topic Co-occurrences Hive of 
                 <span> {{ route.params.entity }} </span>
                 &nbsp
                 <i class='pi pi-info-circle tooltip'>
                     <span class="tooltiptext right-tooltiptext" style="width: 500px">
-                        Each hex group represents the coverage on {{ selected_entity.name }} by that outlet. <br/>
+                        Each hive represents the coverage on {{ selected_entity.name }} by that outlet. <br/>
                         A hexagon is left blanked if the outlet does not cover that topic. <br/>
                         Try to discover outlet coverage differences and common grounds.
                     </span>
@@ -211,7 +216,7 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
                 </div>
                 <div class="legend-utils" v-if="selected_entity">
                     <h2 class="component-header legend-header">
-                    Sentiment
+                    Coverage Sentiment
                         <!-- <i class='pi pi-info-circle tooltip'>
                             <span class="tooltiptext right-tooltiptext" style="width: 120px;">
                                 The sentiments have four categories as listed. <br/>
@@ -220,7 +225,7 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
                         </i> -->
                     </h2>
                     <Legend v-if="selected_entity" id="segment_legend" class="segment-legend"
-                    :color_dict="SstColors.key_color_dict" :filter="true"></Legend>
+                    :color_dict="SstColors.hive_color_dict" :filter="true"></Legend>
                 </div>
                 <div class="notes-section" v-if="selected_entity">
                     <h2 class="component-header notes-header">

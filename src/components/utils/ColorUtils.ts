@@ -16,11 +16,18 @@ export const topic_color_dict = {
 }
 
 const key_color_dict = {
-                "positive": pos_color, //pos_color,
-                "negative": neg_color,
-                "neutral": neu_color,
-                "mixed": mixed_color, 
-            } 
+        "positive": pos_color, //pos_color,
+        "negative": neg_color,
+        "neutral": neu_color,
+        "mixed": mixed_color, 
+    } 
+export const hive_color_dict = {
+        "positive": pos_color, //pos_color,
+        "negative": neg_color,
+        "neutral": neu_color,
+        "mixed": mixed_color, 
+        "not covered": "white"
+    } 
 const color_dict = {
     "pos": pos_color,
     "neg": neg_color,
