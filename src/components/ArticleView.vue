@@ -7,13 +7,17 @@ import * as _ from "lodash"
 import * as SstColors from "./utils/ColorUtils"
 import { Ref, ref } from "vue"
 import { Article } from "../types"
+import { useStore } from 'vuex'
 
-
+const store = useStore()
 const props = defineProps({
     articles: Object as () => Article[],
     article_highlights: Object as () => any,
     entity_pair: Object as () => String[],
 })
+
+const addMarkedArticle = (article_id: number) => store.commit("addMarkedArticle", article_id)
+const removeMarkedArticle = (article_id: number) => store.commit("removeMarkedArticle", article_id)
 
 
 vue.onMounted(() => {
@@ -127,8 +131,18 @@ function highlight_element(text) {
 }
 
 function handleMark(mark, index: number, type: string) {
-    if(type === "pos") pos_marks.value[index] = mark
-    if(type === "neg") neg_marks.value[index] = mark
+    if(type === "pos") {
+        pos_marks.value[index] = mark
+        const article_id: number = pos_articles.value![index].id
+        if(mark) addMarkedArticle(article_id)
+        else removeMarkedArticle(article_id)
+    }
+    if(type === "neg") {
+        neg_marks.value[index] = mark
+        const article_id: number = neg_articles.value![index].id
+        if(mark) addMarkedArticle(article_id)
+        else removeMarkedArticle(article_id)
+    }
 }
 
 
