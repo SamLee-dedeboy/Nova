@@ -8,6 +8,7 @@ import SelectButton from "primevue/selectbutton"
 import Slider from "primevue/slider"
 import Dropdown from 'primevue/dropdown';
 import Divider from 'primevue/divider';
+import ScrollPanel from 'primevue/scrollpanel'
 
 
 /**
@@ -53,6 +54,20 @@ const constraint_dict = vue.computed(() => store.state.constraints)
 const addConstraint = (constraint: Constraint) => store.commit("addConstraint", constraint)
 const removeConstraint = (constraint: Constraint) => store.commit("removeConstraint", constraint)
 const constraint_statisfaction = ref({})
+const ranked_outlets = vue.computed(() => {
+    return Object.keys(outlet_weight_dict.value).sort(
+        (o1, o2) => outlet_weight_dict.value[o1] - outlet_weight_dict.value[o2]
+    )
+})
+const outlet_category = vue.computed(() => {
+    const res = {}
+    if(!entity_grouped_view.value) return res
+    Object.keys(outlet_weight_dict.value).forEach(outlet => {
+        const target_node = entity_grouped_view.value.data.nodes.find(node => node.text === outlet)
+        res[outlet] = checkCategorization(target_node, segmentation.value)
+    })
+    return res
+})
 
 const selected_outlet: Ref<string> = ref("")
 const offsetScale = vue.computed(() => {
@@ -69,6 +84,9 @@ const target_article_highlights: Ref<any> = ref({})
 const outlet_scatter: Ref<any> = ref(null)
 vue.onMounted(() => {
     prepare_data()
+    Object.keys(outlet_weight_dict.value).forEach(outlet => {
+        constraint_statisfaction.value[outlet] = true
+    })
 })
 
 const sentiment_options = [
@@ -145,17 +163,27 @@ function prepare_data() {
 }
 
 function checkConflict(constraint_dict, outlet_nodes) {
-    if(!constraint_dict) return
     has_conflict.value = false
-    Object.keys(constraint_dict).forEach(outlet => {
+    Object.keys(outlet_weight_dict.value).forEach(outlet => {
         const target_node = outlet_nodes.find(node => node.text === outlet)
         constraint_statisfaction.value[outlet] = checkConstraint(
-            constraint_dict[outlet], 
+            constraint_dict?.[outlet] || undefined, 
             {pos: target_node.pos_sst, neg: target_node.neg_sst},
             segmentation.value
         )
         if(constraint_statisfaction.value[outlet] === false) has_conflict.value = true
     })    
+    console.log(constraint_statisfaction.value)
+}
+
+function checkCategorization(target_node: ScatterNode, segmentation: Sentiment2D) {
+    const pos = target_node.pos_sst
+    const neg = target_node.neg_sst
+    if(pos > segmentation.pos && neg > segmentation.neg) return "mix"
+    if(pos < segmentation.pos && neg > segmentation.neg) return "neg"
+    if(pos > segmentation.pos && neg < segmentation.neg) return "pos"
+    if(pos < segmentation.pos && neg < segmentation.neg) return "neu"
+    return "unknown"
 }
 
 function checkConstraint(type: SentimentType, target: Sentiment2D, segmentation: Sentiment2D): boolean {
@@ -314,7 +342,7 @@ function updateSegmentation({pos, neg}) {
             <div class="entity-info-container">
                 <div class="target-cooccurr-container">
                     <h2 class="component-header cooccurr-info-header">
-                    Topic Info
+                    Outlet Coverage
                     </h2>
                     <div class="cooccurr-info-content">
                         <div class="num_of_articles">
@@ -392,8 +420,18 @@ function updateSegmentation({pos, neg}) {
                         </Slider>
                     </div>
                 </div>
-                <div class="constaints-outlet-scatter-container">
+                <div class="constraints-outlet-scatter-container">
                     <div class="constraints-view">
+                        <h2 class="component-header outlet-scatter-header">
+                        Outlet Comparison
+                        <i class='pi pi-info-circle tooltip'>
+                            <span class="tooltiptext right-tooltiptext" style="width: 300px;">
+                                This scatterplot shows you the relative coverages among outlets on the topic. <br/>
+                                The dotted rectangle indicates how the segmentation will change. <br/>
+                                You can also drag the center point directly.
+                            </span>
+                        </i>
+                        </h2>
                         <i class='pi pi-info-circle tooltip' style="position:absolute; left: 90%; margin:1%; z-index: 1;"
                         v-if="has_conflict">
                             <span class="tooltiptext right-tooltiptext" style="width: 350px;">
@@ -403,39 +441,33 @@ function updateSegmentation({pos, neg}) {
                                 
                             </span>
                         </i>
-                        <ol v-if="constraint_dict[selected_entity.name]">
-                            <li v-for="outlet in Object.keys(constraint_dict[selected_entity.name])"
-                                :class="{not_satisfied: !constraint_statisfaction[outlet] }"> 
-                                {{outlet}} - {{constraint_dict[selected_entity.name][outlet]}}
+                        <table class="constraint-table">
+                            <tr v-for="outlet in ranked_outlets"
+                            :class="{not_satisfied: !constraint_statisfaction[outlet] }"> 
+                                <td> {{outlet}} </td>
+                                <td> {{outlet_category[outlet]}} </td>
+                                <td> {{constraint_dict[selected_entity.name]?.[outlet] || "unset"}} </td>
                                 <i class="pi pi-times-circle" style="cursor:pointer" 
                                 @click="removeConstraint({target: selected_entity.name, outlet: outlet})"></i> 
-                            </li>
-                        </ol> 
+                            </tr>
+                        </table> 
                         <router-link v-if="Object.keys(constraint_dict[selected_entity.name]||{}).length > 0" :to="{ name: 'summary', params: { entity: selected_entity.name }}"> Summary </router-link>
                     </div>
                     <!-- <Divider layout="vertical"></Divider> -->
                     <div class="outlet-scatter-container">
-                        <h2 class="component-header outlet-scatter-header">
-                        Outlet Scatterplot
-                        <i class='pi pi-info-circle tooltip'>
-                            <span class="tooltiptext right-tooltiptext" style="width: 300px;">
-                                This scatterplot shows you the relative coverages among outlets on the topic. <br/>
-                                The dotted rectangle indicates how the segmentation will change. <br/>
-                                You can also drag the center point directly.
-                            </span>
-                        </i>
-                        </h2>
-                        <OutletScatterplot
-                            ref="outlet_scatter"
-                            v-if="entity_grouped_view"
-                            :view="entity_grouped_view"
-                            :highlight_node_text="selected_entity.outlet"
-                            :adjust_offset="adjust_offset"
-                            id="outlet-scatter"
-                            :segment_mode="true"
-                            :segmentation="segmentation"
-                            @update:segmentation="updateSegmentation" >
-                        </OutletScatterplot>
+                        <ScrollPanel>
+                            <OutletScatterplot
+                                ref="outlet_scatter"
+                                v-if="entity_grouped_view"
+                                :view="entity_grouped_view"
+                                :highlight_node_text="selected_entity.outlet"
+                                :adjust_offset="adjust_offset"
+                                id="outlet-scatter"
+                                :segment_mode="true"
+                                :segmentation="segmentation"
+                                @update:segmentation="updateSegmentation" >
+                            </OutletScatterplot>
+                        </ScrollPanel>
                     </div>
                 </div>
             </div>
@@ -503,6 +535,7 @@ function updateSegmentation({pos, neg}) {
 }
 .cooccurr-info-content {
   display: flex;
+  font-size: 0.8rem;
 }
 .cooccurr-info-header {
     margin: 1.5%;
@@ -513,7 +546,6 @@ ol {
 }
 li {
     white-space: pre;
-    font-size: 0.9rem;
 }
 a {
   position: absolute;
@@ -565,21 +597,25 @@ a {
 }
 
 // ---------------------
-// Constaints & Outlet Scatterplot Section
+// Constraints & Outlet Scatterplot Section
 // ---------------------
-.constaints-outlet-scatter-container {
-  display: flex;
+.constraints-outlet-scatter-container {
+    display: flex;
 //   justify-content: space-between;
     flex: 1 1 0;
+    overflow: hidden;
 }
 
 .intensity-slider {
     width: 38% !important;
 }
+.constraint-table {
+    font-size: 0.8rem;
+}
 .constraints-view {
-  width: fit-content;
+//   width: fit-content;
   background: #f7f7f7;
-  flex: 1 1 0;
+//   flex: 1 1 0;
   margin-right: 1%;
 }
 :deep(.p-button) {
@@ -592,8 +628,8 @@ a {
     padding: 0.2rem 0.5rem;
 }
 
-#outlet-scatter {
-  width: 31%;
+:deep(.p-scrollpanel.p-component) {
+  width: 100%;
 }
 .not_satisfied {
     background: #f88e8e;
@@ -613,24 +649,24 @@ a {
 }
 
 :deep(.outlet-scatter) {
-    top: -5%;
-    flex: 1 1 auto;
-    width: 26% !important;
+    width: 100%;
+    // top: -5%;
+    // flex: 1 1 auto;
+    // width: 26% !important;
 }
 .outlet-scatter-container {
   display: flex;
   /*! flex-direction: column; */
-  flex: 1 1 19%;
   background: #f7f7f7;
+  height:100%;
+  flex: 1 1 0;
 }
 .outlet-scatter-header {
     // display: flex;
     // flex-direction: column;
-    border-right: solid 1px #b7b7b7;
-    border-bottom: unset;
+    border-bottom: solid 1px #b7b7b7;
     margin: 0%;
     flex: 1 1 25%;
     padding-right: 0%;
-    padding-left: 3%;
 }
 </style>
