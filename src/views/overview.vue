@@ -173,8 +173,10 @@ const hex_view_panel_size = vue.computed(() => 100 - entity_info_panel_size)
 // const selected_entity: Ref<typeUtils.EntityInfo|undefined> = ref(undefined)
 const selected_entity = vue.computed(() => store.state.selected_entity)
 const setEntity = (entity) => store.commit("setEntity", entity)
-const selected_cooccurr_entity: Ref<typeUtils.CooccurrEntityInfo | undefined> = ref(undefined)
+const selected_cooccurr_entity = vue.computed(() => store.state.selected_cooccurr_entity)
+const setCooccurrEntity = (cooccurr_entity) => store.commit("setCooccurrEntity", cooccurr_entity) 
 const overall_selected_hexview: Ref<typeUtils.CooccurrHexView | undefined> = ref(undefined)
+const constraint_dict = vue.computed(() => store.state.constraints)
 
 /**
  * dict of outlet weight. \
@@ -324,7 +326,7 @@ vue.watch(tutorial_step, (new_value, old_value) => {
 // send data
 async function handleEntityClicked(entity: string) {
   const metadata = overview_overall_scatter_metadata.value
-  selected_cooccurr_entity.value = undefined
+  setCooccurrEntity(undefined)
   const promiseArray: any[] = []
   promiseArray.push(new Promise((resolve) => {
     fetch(`${server_address}/overview/scatter/overall/node/${entity}`)
@@ -448,7 +450,7 @@ async function handleHexClicked({ target, co_occurr_entity }: { target: string, 
       console.log("cooccurr_info fetched", json)
       const overall_flag = target.split("-")[1] === undefined
       const outlet = overall_flag ? "Overall" : target.split("-")[1]
-      selected_cooccurr_entity.value = {
+      const co_occurr_entity = {
         target: json.target,
         name: json.cooccurr_entity,
         outlet: outlet,
@@ -456,6 +458,7 @@ async function handleHexClicked({ target, co_occurr_entity }: { target: string, 
         target_num_of_mentions: json.target_num_of_mentions,
         articles_topic_dict: json.articles_topic_dict
       }
+      setCooccurrEntity(co_occurr_entity)
     })
 }
 
@@ -481,8 +484,9 @@ function updateSegmentation({ pos, neg }) {
             <h2 class="component-header scatter-header"> 
               Topic Scatterplot 
               <i class='pi pi-info-circle tooltip'>
-                <span class="tooltiptext right-tooltiptext">
-                  Some explanation a lot of explanation 
+                <span class="tooltiptext right-tooltiptext" style="width: 200px;">
+                   Each circle is a topic with 2-d sentiment score (pos, neg). <br/>
+                   The scores are determined by how many positive and negatives articles they have.
                 </span>
               </i>
             </h2>
@@ -509,8 +513,9 @@ function updateSegmentation({ pos, neg }) {
                 <h2 class="component-header util-header"> 
                   Segment 
                   <i class='pi pi-info-circle tooltip'>
-                    <span class="tooltiptext right-tooltiptext">
-                      Some explanation a lot of explanation 
+                    <span class="tooltiptext right-tooltiptext" style="width: 300px;">
+                      The sentiments have four categories as listed. <br/>
+                      A mixed sentiment means the topic has lots of positive and negative articles at the same time. 
                     </span>
                   </i>
                 </h2>
@@ -531,10 +536,11 @@ function updateSegmentation({ pos, neg }) {
 
               <div id="entity-utility-container" class="entity-utils">
                 <h2 class="component-header util-header"> 
-                  Topics Filter
+                  Topics Controller
                   <i class='pi pi-info-circle tooltip'>
-                    <span class="tooltiptext right-tooltiptext">
-                      Some explanation a lot of explanation 
+                    <span class="tooltiptext right-tooltiptext" style="width: 300px">
+                      The color spectrum slider helps filter out unimportant topics by number or articles. <br/>
+                      The six-sliders group lets you control the weights of each media outlet.
                     </span>
                   </i>
                 </h2>
@@ -560,12 +566,14 @@ function updateSegmentation({ pos, neg }) {
       <SplitterPanel class="right-section-panel" :size="right_section_panel_size">
         <Splitter layout="vertical">
           <SplitterPanel class="overview-hex-panel" :size="hex_view_panel_size">
+            <div class="reminder-click-entity" v-if="!selected_entity && overview_constructed"> Click any circle in Topic Scatterplot </div>
             <!-- Hex view -->
             <h2 class="component-header hexview-header" v-if="selected_entity">
               Topic Co-occurrences
               <i class='pi pi-info-circle tooltip'>
-                <span class="tooltiptext right-tooltiptext">
-                  Some explanation a lot of explanation 
+                <span class="tooltiptext right-tooltiptext" style="width: 400px">
+                  Shows most-frequently co-occurring topics with the main topic ({{ selected_entity.name }}). <br/>
+                  Each co-occurring topic is categorized by the region segmentation in the Topic Scatterplot. 
                 </span>
               </i>
             </h2>
@@ -592,14 +600,14 @@ function updateSegmentation({ pos, neg }) {
                 <h2 class="component-header cooccurr-info-header">
                   Topic Info
                   <i class='pi pi-info-circle tooltip'>
-                    <span class="tooltiptext right-tooltiptext">
-                      Some explanation a lot of explanation 
+                    <span class="tooltiptext right-tooltiptext" style="width: 250px">
+                      Statistical detail about the main and co-occurred topic.
                     </span>
                   </i>
                 </h2>
                 <div class="cooccurr-info-content">
                   <div class="num_of_articles">
-                    #articles about 
+                    Number of articles about 
                     <span style="font-weight:bolder"> {{selected_entity.name}} </span>
                     <span v-if="selected_cooccurr_entity"> 
                       and 
@@ -631,8 +639,12 @@ function updateSegmentation({ pos, neg }) {
                 <h2 class="component-header topic-bar-header">
                   Policy Bars
                   <i class='pi pi-info-circle tooltip'>
-                    <span class="tooltiptext right-tooltiptext">
-                      Some explanation a lot of explanation 
+                    <span class="tooltiptext right-tooltiptext" style="width: 300px">
+                      The articles about {{ selected_entity.name }} 
+                      <span v-if="selected_cooccurr_entity">
+                      and {{ selected_cooccurr_entity.name }}
+                      </span>
+                      categorized by related policies. <br/>
                     </span>
                   </i>
                   <br/>
@@ -721,6 +733,14 @@ main {
 // ---------------------
 // utitlies section
 // ---------------------
+:deep(.p-slider .p-slider-handle) {
+  height: 0.8rem;
+  width: 0.8rem;
+}
+:deep(.p-slider.p-slider-horizontal .p-slider-handle) {
+  margin-top: -0.4rem;
+  margin-left: -0.4rem;
+}
 
 .legend-utils {
     margin-top: 5%;
@@ -780,6 +800,11 @@ main {
 // ---------------------
 // hexview section
 // ---------------------
+.reminder-click-entity {
+  margin: 1.3% 1% 1% 1%;
+  font-family: Lato;
+  font-size: x-large;
+}
 .hexview-header {
   background: #f7f7f7;
   margin:1%;

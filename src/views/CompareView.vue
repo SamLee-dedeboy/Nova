@@ -132,8 +132,10 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
                 <span> {{ route.params.entity }} </span>
                 &nbsp
                 <i class='pi pi-info-circle tooltip'>
-                    <span class="tooltiptext right-tooltiptext">
-                        Some explanation a lot of explanation 
+                    <span class="tooltiptext right-tooltiptext" style="width: 500px">
+                        Each hex group represents the coverage on {{ selected_entity.name }} by that outlet. <br/>
+                        A hexagon is left blanked if the outlet does not cover that topic. <br/>
+                        Try to discover outlet coverage differences and common grounds.
                     </span>
                 </i>
             </h2>
@@ -159,11 +161,11 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
                 <div class="target-cooccurr-container" v-if="selected_entity">
                     <h2 class="component-header cooccurr-info-header">
                     Topic Info
-                    <i class='pi pi-info-circle tooltip'>
-                        <span class="tooltiptext right-tooltiptext">
-                        Some explanation a lot of explanation 
+                    <!-- <i class='pi pi-info-circle tooltip'>
+                        <span class="tooltiptext right-tooltiptext" style="width: 120px;">
+                            Statistical detail about the main and co-occurred topic.
                         </span>
-                    </i>
+                    </i> -->
                     </h2>
                     <div class="cooccurr-info-content">
                         <!-- <div class="num_of_articles">
@@ -181,7 +183,7 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
                         <ul class="entity-info-section">
                             <li> Main topic: {{ selected_entity.name }} </li>
                             <li v-if='selected_cooccurr_entity'> Co-occur topic: {{ selected_cooccurr_entity.name }} </li>
-                            <li> Media outlet: {{selected_entity.outlet}}</li>
+                            <li> Media outlet: {{selected_entity.outlet === 'Overall'? "Not selected":selected_entity.outlet}}</li>
                         </ul>
                     </div>
                 <!-- <EntityInfoView
@@ -206,11 +208,12 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
                 <div class="legend-utils" v-if="selected_entity">
                     <h2 class="component-header legend-header">
                     Sentiment
-                        <i class='pi pi-info-circle tooltip'>
-                            <span class="tooltiptext right-tooltiptext">
-                            Some explanation a lot of explanation 
+                        <!-- <i class='pi pi-info-circle tooltip'>
+                            <span class="tooltiptext right-tooltiptext" style="width: 120px;">
+                                The sentiments have four categories as listed. <br/>
+                                A mixed sentiment means the topic has lots of positive and negative articles at the same time. 
                             </span>
-                        </i>
+                        </i> -->
                     </h2>
                     <Legend v-if="selected_entity" id="segment_legend" class="segment-legend"
                     :color_dict="SstColors.key_color_dict" :filter="true"></Legend>
@@ -220,7 +223,8 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
                     Notes
                         <i class='pi pi-info-circle tooltip'>
                             <span class="tooltiptext right-tooltiptext" style="width: 145px">
-                                Write down any hypothesis or thoughts you have.
+                                Write down any hypothesis or questions you have. 
+                                The system will document that for you.
                             </span>
                         </i>
                     </h2>
@@ -228,7 +232,10 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
                     </Textarea>
                     
                 </div>
-                <router-link v-if="selected_cooccurr_entity" :to="{ name: 'inspection', params: { entity: selected_entity.name }}">Next Stage</router-link>
+                <div v-if="selected_entity.outlet ==='Overall'" class="remider-click-hex">
+                    Click any hexagon on the left to continue to next stage.
+                </div>
+                <router-link v-if="selected_entity.outlet !== 'Overall'" :to="{ name: 'inspection', params: { entity: selected_entity.name }}">Next Stage</router-link>
             </div>
 
         </SplitterPanel>
@@ -305,6 +312,8 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
 // ---------------------
 .legend-utils {
     margin:1%;
+    display: flex;
+    flex-direction: column;
 }
 .legend-container {
     width: 60%;
@@ -317,4 +326,8 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
 :deep(p-inputtextarea) {
     height: 50%;
 }
+.remider-click-hex {
+  margin: 1%;
+}
+
 </style>

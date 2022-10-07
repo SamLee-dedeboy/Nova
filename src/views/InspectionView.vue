@@ -89,6 +89,7 @@ const journal_options = [
 const intensity: Ref<number> = ref(0.5)
 const adjust_offset = vue.computed(() => offsetScale.value(intensity.value))
 const selectedCategory: Ref<any> = ref({})
+const has_conflict: Ref<boolean> = ref(false)
 vue.watch(selectedCategory, (new_value, old_value) => {
     if(selectedCategory.value === undefined) return
     const adjust_target: Sentiment2D = selected_entity.value.sst_ratio || {pos: 0.5, neg: 0.5}
@@ -145,6 +146,7 @@ function prepare_data() {
 
 function checkConflict(constraint_dict, outlet_nodes) {
     if(!constraint_dict) return
+    has_conflict.value = false
     Object.keys(constraint_dict).forEach(outlet => {
         const target_node = outlet_nodes.find(node => node.text === outlet)
         constraint_statisfaction.value[outlet] = checkConstraint(
@@ -152,6 +154,7 @@ function checkConflict(constraint_dict, outlet_nodes) {
             {pos: target_node.pos_sst, neg: target_node.neg_sst},
             segmentation.value
         )
+        if(constraint_statisfaction.value[outlet] === false) has_conflict.value = true
     })    
 }
 
@@ -183,7 +186,6 @@ async function fetch_articles(article_ids) {
     .then(res => res.json())
     .then(json => {
         target_articles.value = json
-        console.log(target_articles.value)
         console.log("articles fetched")
     })
 }
@@ -288,10 +290,14 @@ function updateSegmentation({pos, neg}) {
                 <span> {{selected_entity.name}} </span> 
                 and 
                 <span> {{selected_cooccurr_entity.name}} </span> 
+                by 
+                <span> {{selected_entity.outlet}}</span>
                 &nbsp
                 <i class='pi pi-info-circle tooltip'>
-                    <span class="tooltiptext right-tooltiptext">
-                        Some explanation a lot of explanation 
+                    <span class="tooltiptext right-tooltiptext" style="width: 400px">
+                        Below are the articles of the selected topics published by {{ selected_entity.outlet }}. <br/>
+                        Click the plus button to expand and see a summary of the article. <br/>
+                        Use the Mark button to mark any interesting articles you find.  <br/>
                     </span>
                 </i>
             </h2>
@@ -309,11 +315,6 @@ function updateSegmentation({pos, neg}) {
                 <div class="target-cooccurr-container">
                     <h2 class="component-header cooccurr-info-header">
                     Topic Info
-                    <i class='pi pi-info-circle tooltip'>
-                        <span class="tooltiptext right-tooltiptext">
-                        Some explanation a lot of explanation 
-                        </span>
-                    </i>
                     </h2>
                     <div class="cooccurr-info-content">
                         <div class="num_of_articles">
@@ -376,8 +377,8 @@ function updateSegmentation({pos, neg}) {
                         </SelectButton>
                         <span class="slider-label"> Intensity 
                             <i class='pi pi-info-circle tooltip'>
-                                <span class="tooltiptext right-tooltiptext">
-                                Some explanation a lot of explanation 
+                                <span class="tooltiptext right-tooltiptext" style="width:300px;">
+                                    Use the slider to controll the intensity of the sentiment.
                                 </span>
                             </i>
                             :
@@ -393,6 +394,15 @@ function updateSegmentation({pos, neg}) {
                 </div>
                 <div class="constaints-outlet-scatter-container">
                     <div class="constraints-view">
+                        <i class='pi pi-info-circle tooltip' style="position:absolute; left: 90%; margin:1%; z-index: 1;"
+                        v-if="has_conflict">
+                            <span class="tooltiptext right-tooltiptext" style="width: 350px;">
+                                <span style='font-weight:bolder'>Why is there a red item?</span> <br/>
+                                Seeing a red colored item means the description you made is not true any more.<br/>
+                                Adjust the segmentation to resolve the conflict or delete that description.
+                                
+                            </span>
+                        </i>
                         <ol v-if="constraint_dict[selected_entity.name]">
                             <li v-for="outlet in Object.keys(constraint_dict[selected_entity.name])"
                                 :class="{not_satisfied: !constraint_statisfaction[outlet] }"> 
@@ -408,8 +418,10 @@ function updateSegmentation({pos, neg}) {
                         <h2 class="component-header outlet-scatter-header">
                         Outlet Scatterplot
                         <i class='pi pi-info-circle tooltip'>
-                            <span class="tooltiptext right-tooltiptext">
-                            Some explanation a lot of explanation 
+                            <span class="tooltiptext right-tooltiptext" style="width: 300px;">
+                                This scatterplot shows you the relative coverages among outlets on the topic. <br/>
+                                The dotted rectangle indicates how the segmentation will change. <br/>
+                                You can also drag the center point directly.
                             </span>
                         </i>
                         </h2>
@@ -534,6 +546,14 @@ a {
     font-family: Lato;
     // left: 41.2%;
     // top: -10%;
+}
+:deep(.p-slider .p-slider-handle) {
+  height: 0.8rem;
+  width: 0.8rem;
+}
+:deep(.p-slider.p-slider-horizontal .p-slider-handle) {
+  margin-top: -0.4rem;
+  margin-left: -0.4rem;
 }
 
 
