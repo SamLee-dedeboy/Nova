@@ -143,6 +143,9 @@ function getColor(type: string): string {
 </template>
 
 <style scoped lang="scss">
+//
+// Page containers
+//
 .page-container {
   width: 100%;
   height: 100%;
@@ -155,7 +158,6 @@ function getColor(type: string): string {
   flex-direction: column;
   justify-content: left;
 }
-
 
 .summary-content {
     height: 100%;
@@ -174,7 +176,15 @@ function getColor(type: string): string {
     flex-direction: column;
     overflow: hidden;
 }
+.component-header.summary-header {
+  background: #f7f7f7;
+  padding-left: 1%;
+  margin: 1% 0% 1% 0%;
+}
 
+// 
+// Main topic & outlet weights
+//
 .belief-section {
 //   display: flex;
 }
@@ -184,15 +194,30 @@ function getColor(type: string): string {
 }
 
 .outlet-weight-container {
-  flex: 1 1 0;
-  padding-right: 3%;
+    flex: 1 1 0;
     width: 53%;
+    padding: 1% 1% 1% 0%;
 }
+
 :deep(.outlet-weight-grid-container) {
   padding-top: 2%;
 }
 
+// slider handler size
+:deep(.p-slider .p-slider-handle) {
+  height: 0.8rem;
+  width: 0.8rem;
+  pointer-events: none;
+}
+:deep(.p-slider.p-slider-horizontal .p-slider-handle) {
+  margin-top: -0.4rem;
+  margin-left: -0.4rem;
+}
 
+
+//
+// Hypothesis/Notes Section
+//
 .hypothesis-container {
     width: 100%;
     height: 30%;
@@ -206,20 +231,16 @@ function getColor(type: string): string {
     height: 30%;
 }
 
-.component-header.summary-header {
-  background: #f7f7f7;
-  padding-left: 1%;
-  margin: 1% 0% 1% 0%;
-}
-
-.outlet-weight-container {
-  padding: 1.5%;
-}
-
+//
+// Conclusion Header
+//
 .component-header.conclusion-header {
   background: #f7f7f7;
   margin: 0% 0% 0% 0%;
   padding-left: 1%;
+}
+.constraint-header {
+    padding-left: 1%;
 }
 
 :deep(.p-scrollpanel.p-component.conclusion-content) {
@@ -227,15 +248,6 @@ function getColor(type: string): string {
 }
 :deep(.p-scrollpanel-content) {
   height: 100%;
-}
-:deep(.p-slider .p-slider-handle) {
-  height: 0.8rem;
-  width: 0.8rem;
-  pointer-events: none;
-}
-:deep(.p-slider.p-slider-horizontal .p-slider-handle) {
-  margin-top: -0.4rem;
-  margin-left: -0.4rem;
 }
 
 
