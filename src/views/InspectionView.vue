@@ -318,7 +318,7 @@ function updateSegmentation({pos, neg}) {
                     </h2>
                     <div class="cooccurr-info-content">
                         <div class="num_of_articles">
-                            #articles about 
+                            Number of articles about 
                             <span style="font-weight:bolder" :title="selected_entity.name"> {{selected_entity.name}} </span>
                             <span v-if="selected_cooccurr_entity"> 
                             and 
