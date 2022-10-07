@@ -569,7 +569,7 @@ function updateSegmentation({ pos, neg }) {
             <div class="reminder-click-entity" v-if="!selected_entity && overview_constructed"> Click any circle in Topic Scatterplot </div>
             <!-- Hex view -->
             <h2 class="component-header hexview-header" v-if="selected_entity">
-              Topic Co-occurrences
+              Topic Co-occurrence Hive
               <i class='pi pi-info-circle tooltip'>
                 <span class="tooltiptext right-tooltiptext" style="width: 400px">
                   Shows most-frequently co-occurring topics with the main topic ({{ selected_entity.name }}). <br/>
