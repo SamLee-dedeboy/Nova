@@ -18,17 +18,20 @@ export class Legend {
     vbHeight: number;
     margin: Margin;
     row_height: number;
+    font_size: number;
     svg: any;
 
     public constructor(
         props:any, svgId: string, 
         margin:Margin, viewBox:[number,number], 
         row_height: number,
+        font_size: number = 0.8,
         ){
         this.props = props
         this.svgId = svgId
         this.margin = margin;
         this.row_height = row_height
+        this.font_size = font_size
         this.viewBox = viewBox;
         this.vbWidth = this.viewBox[0] - this.margin.left - this.margin.right;
         this.vbHeight = this.viewBox[1] - this.margin.top - this.margin.bottom;
@@ -73,7 +76,7 @@ export class Legend {
                 .attr("dominant-baseline", "middle")
                 .style("font-family", 'Roboto')
                 .style("font-weight", '100')
-                .style("font-size", '0.8rem')
+                .style("font-size", this.font_size + 'rem')
             // index is used for vertical offset calculation
             index += 1
         }

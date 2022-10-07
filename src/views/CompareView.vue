@@ -161,11 +161,15 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
                 <div class="target-cooccurr-container" v-if="selected_entity">
                     <h2 class="component-header cooccurr-info-header">
                     Topic Info
-                    <!-- <i class='pi pi-info-circle tooltip'>
-                        <span class="tooltiptext right-tooltiptext" style="width: 120px;">
-                            Statistical detail about the main and co-occurred topic.
+                    <i class='pi pi-info-circle tooltip'>
+                        <span class="tooltiptext right-tooltiptext" style="width: 100px;">
+                            <Legend id="policy_legend" class="policy-bar-legend" 
+                            :color_dict="SstColors.topic_color_dict"
+                            :row_height="10"
+                            :font_size="1.2"
+                            ></Legend>
                         </span>
-                    </i> -->
+                    </i>
                     </h2>
                     <div class="cooccurr-info-content">
                         <!-- <div class="num_of_articles">
@@ -315,7 +319,7 @@ async function handleHexClicked({target, co_occurr_entity}, view) {
     display: flex;
     flex-direction: column;
 }
-.legend-container {
+.segment-legend {
     width: 60%;
 }
 
