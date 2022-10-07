@@ -7,8 +7,6 @@ import { Legend } from "./Legend";
 const props = defineProps({
     id: String,
     color_dict: Object as () => {[id: string]: string},
-    filter: Boolean,
-    interactable: Boolean,
 })
 
 const margin = {top: 25, bottom: 10, left: 15, right: 15, vertical: 15}
@@ -37,7 +35,7 @@ vue.onMounted(()=> {
 <style scoped>
 .legend-container {
     width: 100%;
-    height: 100%;
+    /* height: 100%; */
     /* background-color: #eee3cd;
     border: solid;
     border-width: 2px;

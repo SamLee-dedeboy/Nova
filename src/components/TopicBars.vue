@@ -89,7 +89,7 @@ function updateBars() {
             .transition().duration(1000)
             .attr("y", (d) => y(d.num))
             .attr("height", (d) => viewBox_height-y(d.num))
-            .attr("fill", "white")
+            .attr("fill", SstColors.topic_main_color)
             .attr("stroke", "black")
             .style("filter", `brightness(${SstColors.brightness}%)`)
     if(props.cooccurrTopicBins) {
@@ -105,7 +105,7 @@ function updateBars() {
                 .transition().duration(1000)
                 .attr("y", (d) => y(d.num))
                 .attr("height", (d) => viewBox_height-y(d.num))
-                .attr("fill", SstColors.topic_bar_color)
+                .attr("fill", SstColors.topic_fill_color)
                 .style("filter", `brightness(${SstColors.brightness}%)`)
     } else {
         bars_group.selectAll("g.topic").selectAll("rect.cooccurr").remove()

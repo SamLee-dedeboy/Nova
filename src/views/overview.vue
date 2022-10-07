@@ -530,7 +530,7 @@ function updateSegmentation({ pos, neg }) {
                   <!-- Legend -->
                 <div class="legend-utils">
                   <Legend v-if="overview_constructed" id="segment_legend" class="segment-legend"
-                  :color_dict="SstColors.key_color_dict" :filter="true"></Legend>
+                  :color_dict="SstColors.key_color_dict"></Legend>
                 </div>
               </div>
 
@@ -648,6 +648,9 @@ function updateSegmentation({ pos, neg }) {
                     </span>
                   </i>
                   <br/>
+                  <Legend id="policy_legend" class="policy-bar-legend" 
+                  :color_dict="SstColors.topic_color_dict"
+                  ></Legend>
                   <span style="font-size: small; width:max-content;"> 
                     <!-- Some explanation here a lot of explanation here more explanation here -->
                   </span>
