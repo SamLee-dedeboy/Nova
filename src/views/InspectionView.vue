@@ -9,6 +9,7 @@ import Slider from "primevue/slider"
 import Dropdown from 'primevue/dropdown';
 import Divider from 'primevue/divider';
 import ScrollPanel from 'primevue/scrollpanel'
+import Textarea from 'primevue/textarea'
 
 
 /**
@@ -22,15 +23,13 @@ import * as d3 from 'd3'
 /**
  * types
  */
-import { Article, SentimentType, Sentiment2D, Constraint } from "../types"
+import { Article, SentimentType, Constraint } from "../types"
 
 /**
  * vue components
  */
 import ArticleView from "../components/ArticleView.vue";
-import EntityInfoView from "../components/EntityInfoView.vue";
 import HexCooccurrence from "../components/HexCooccurrence.vue"
-import OutletScatterplot from '../components/OutletScatterplot.vue';
 
 const store = useStore()
 
@@ -45,48 +44,35 @@ const selected_cooccurr_entity = vue.computed(() => store.state.selected_cooccur
 const setCooccurrEntity = (cooccurr_entity) => store.commit("setCooccurrEntity", cooccurr_entity) 
 const segmentation = vue.computed(() => store.state.segmentation)
 const original_segmentation = segmentation.value
-const setSegmentation = (segmentation) => store.commit("setSegmentation", segmentation) 
 const outlet_weight_dict = vue.computed(() => store.state.outlet_weight_dict)
 const clicked_hexview = vue.computed(() => store.state.clicked_hexview)
 const setClickedHexView = (hexview) => store.commit("setClickedHexView", hexview)
 const hexview_grid = vue.computed(() => store.state.hexview_grid)
 const constraint_dict = vue.computed(() => store.state.constraints)
 const addConstraint = (constraint: Constraint) => store.commit("addConstraint", constraint)
-const removeConstraint = (constraint: Constraint) => store.commit("removeConstraint", constraint)
-const constraint_statisfaction = ref({})
 const ranked_outlets = vue.computed(() => {
     return Object.keys(outlet_weight_dict.value).sort(
         (o1, o2) => outlet_weight_dict.value[o1] - outlet_weight_dict.value[o2]
     )
 })
-const outlet_category = vue.computed(() => {
-    const res = {}
-    if(!entity_grouped_view.value) return res
-    Object.keys(outlet_weight_dict.value).forEach(outlet => {
-        const target_node = entity_grouped_view.value.data.nodes.find(node => node.text === outlet)
-        res[outlet] = checkCategorization(target_node, segmentation.value)
-    })
-    return res
-})
 
 const selected_outlet: Ref<string> = ref("")
-const offsetScale = vue.computed(() => {
-    const adjust_target: Sentiment2D = selected_entity.value.sst_ratio || {pos: 0.5, neg: 0.5}
-    console.log(adjust_target)
-    return d3.scaleLinear()
-        .domain([0, 1])
-        // .range([0.05, Math.min(1-adjust_target.pos, 1-adjust_target.neg)])
-        .range([0.05, 1])
-})
-const entity_grouped_view: Ref<any> = ref(undefined)
 const target_articles: Ref<Article[]> = ref([])
 const target_article_highlights: Ref<any> = ref({})
-const outlet_scatter: Ref<any> = ref(null)
+const notes = vue.computed(() => store.state.notes)
+const setNotes = (notes) => store.commit("setNotes", notes)
+const marked_articles_ids_with_outlet = vue.computed(() => store.state.marked_articles)
+const marked_articles_grouped = vue.computed(() => {
+    const res = {}
+    marked_articles_ids_with_outlet.value.forEach(({article_id, outlet}) => {
+        if(!res[outlet]) res[outlet] = []
+        res[outlet].push(article_id)
+    })
+    return res
+}) 
+
 vue.onMounted(() => {
     prepare_data()
-    Object.keys(outlet_weight_dict.value).forEach(outlet => {
-        constraint_statisfaction.value[outlet] = true
-    })
 })
 
 const sentiment_options = [
@@ -104,27 +90,23 @@ const journal_options = [
     "New York Times",
     "Washington Post"
 ]
-const intensity: Ref<number> = ref(0.5)
-const adjust_offset = vue.computed(() => offsetScale.value(intensity.value))
 const selectedCategory: Ref<any> = ref({})
-const has_conflict: Ref<boolean> = ref(false)
 vue.watch(selectedCategory, (new_value, old_value) => {
     if(selectedCategory.value === undefined) return
-    const adjust_target: Sentiment2D = selected_entity.value.sst_ratio || {pos: 0.5, neg: 0.5}
-    // const offset = 0.05
-    if(new_value.type === SentimentType.neu) {
-        setSegmentation({pos: adjust_target.pos + adjust_offset.value, neg: adjust_target.neg + adjust_offset.value})
-    }
-    if(new_value.type === SentimentType.neg) {
-        setSegmentation({pos: adjust_target.pos + adjust_offset.value, neg: adjust_target.neg - adjust_offset.value})
-    }
-    if(new_value.type === SentimentType.pos) {
-        setSegmentation({pos: adjust_target.pos - adjust_offset.value, neg: adjust_target.neg + adjust_offset.value})
-    }
-    if(new_value.type === SentimentType.mix) {
-        setSegmentation({pos: adjust_target.pos - adjust_offset.value, neg: adjust_target.neg - adjust_offset.value})
-    }
-    outlet_scatter.value.updateSegmentation(segmentation.value)
+    // const adjust_target: Sentiment2D = selected_entity.value.sst_ratio || {pos: 0.5, neg: 0.5}
+    // // const offset = 0.05
+    // if(new_value.type === SentimentType.neu) {
+    //     setSegmentation({pos: adjust_target.pos + adjust_offset.value, neg: adjust_target.neg + adjust_offset.value})
+    // }
+    // if(new_value.type === SentimentType.neg) {
+    //     setSegmentation({pos: adjust_target.pos + adjust_offset.value, neg: adjust_target.neg - adjust_offset.value})
+    // }
+    // if(new_value.type === SentimentType.pos) {
+    //     setSegmentation({pos: adjust_target.pos - adjust_offset.value, neg: adjust_target.neg + adjust_offset.value})
+    // }
+    // if(new_value.type === SentimentType.mix) {
+    //     setSegmentation({pos: adjust_target.pos - adjust_offset.value, neg: adjust_target.neg - adjust_offset.value})
+    // }
     const new_constraint: Constraint = {
         target: selected_entity.value.name,
         outlet: selected_entity.value.outlet,
@@ -133,9 +115,6 @@ vue.watch(selectedCategory, (new_value, old_value) => {
     addConstraint(new_constraint)
 })
 
-vue.watch(segmentation, (new_value, old_value) => {
-    checkConflict(constraint_dict.value[selected_entity.value.name], entity_grouped_view.value.data.nodes)
-})
 
 function prepare_data() {
     const article_ids = selected_cooccurr_entity.value.cooccurr_article_ids
@@ -150,56 +129,12 @@ function prepare_data() {
         await fetch_article_highlights(article_ids)
         resolve("success")
     }))
-    promiseArray.push(new Promise(async (resolve) => {
-        await fetch_entity_grouped_node(selected_entity.value.name)
-        resolve("success")
-    }))
     Promise.all(promiseArray)
     .then(() => {
         data_fetched.value = true
         console.log('fetched new articles')
     })
 
-}
-
-function checkConflict(constraint_dict, outlet_nodes) {
-    has_conflict.value = false
-    Object.keys(outlet_weight_dict.value).forEach(outlet => {
-        const target_node = outlet_nodes.find(node => node.text === outlet)
-        constraint_statisfaction.value[outlet] = checkConstraint(
-            constraint_dict?.[outlet] || undefined, 
-            {pos: target_node.pos_sst, neg: target_node.neg_sst},
-            segmentation.value
-        )
-        if(constraint_statisfaction.value[outlet] === false) has_conflict.value = true
-    })    
-    console.log(constraint_statisfaction.value)
-}
-
-function checkCategorization(target_node: ScatterNode, segmentation: Sentiment2D) {
-    const pos = target_node.pos_sst
-    const neg = target_node.neg_sst
-    if(pos > segmentation.pos && neg > segmentation.neg) return "mix"
-    if(pos < segmentation.pos && neg > segmentation.neg) return "neg"
-    if(pos > segmentation.pos && neg < segmentation.neg) return "pos"
-    if(pos < segmentation.pos && neg < segmentation.neg) return "neu"
-    return "unknown"
-}
-
-function checkConstraint(type: SentimentType, target: Sentiment2D, segmentation: Sentiment2D): boolean {
-    if(type === SentimentType.neu) {
-        return target.pos <= segmentation.pos && target.neg <= segmentation.neg 
-    }
-    if(type === SentimentType.neg) {
-        return target.pos <= segmentation.pos && target.neg >= segmentation.neg 
-    }
-    if(type === SentimentType.pos) {
-        return target.pos >= segmentation.pos && target.neg <= segmentation.neg 
-    }
-    if(type === SentimentType.mix) {
-        return target.pos >= segmentation.pos && target.neg >= segmentation.neg 
-    }
-    return true
 }
 
 async function fetch_articles(article_ids) {
@@ -231,22 +166,6 @@ async function fetch_article_highlights(article_ids) {
     .then(json => {
         console.log("highlights fetched")
         target_article_highlights.value = json
-    })
-}
-
-async function fetch_entity_grouped_node(entity) {
-    await fetch(`${server_address}/processed_data/scatter_node/grouped/${entity}`)
-    .then(res => res.json())
-    .then(json => {
-        entity_grouped_view.value = {
-            title: entity,
-            data: {
-                nodes: json,
-                max_articles: Math.max(...json.map(node => node.article_ids.length)),
-                min_articles: Math.min(...json.map(node => node.article_ids.length)),
-            }
-        }
-        console.log("entity grouped view fetched")
     })
 }
 
@@ -296,10 +215,6 @@ async function fetch_cooccurr_into(outlet, entity, co_occurr_entity) {
         })
 }
 
-function updateSegmentation({pos, neg}) {
-  setSegmentation({pos, neg})
-}
-
 </script>
 
 <template>
@@ -315,15 +230,15 @@ function updateSegmentation({pos, neg}) {
             "></i> 
             <h2 class="component-header article-view-header"> 
                 Articles on 
-                <span> {{selected_entity.name}} </span> 
+                <span> {{selected_entity?.name}} </span> 
                 and 
-                <span> {{selected_cooccurr_entity.name}} </span> 
+                <span> {{selected_cooccurr_entity?.name}} </span> 
                 by 
-                <span> {{selected_entity.outlet}}</span>
+                <span> {{selected_entity?.outlet}}</span>
                 &nbsp
                 <i class='pi pi-info-circle tooltip'>
                     <span class="tooltiptext right-tooltiptext" style="width: 400px">
-                        Below are the articles of the selected topics published by {{ selected_entity.outlet }}. <br/>
+                        Below are the articles of the selected topics published by {{ selected_entity?.outlet }}. <br/>
                         Click the plus button to expand and see a summary of the article. <br/>
                         Use the Mark button to mark any interesting articles you find.  <br/>
                     </span>
@@ -335,13 +250,13 @@ function updateSegmentation({pos, neg}) {
             v-model:sst_threshold="segmentation"
             :articles="target_articles"
             :article_highlights="target_article_highlights"
-            :entity_pair="[selected_entity.name as string, selected_cooccurr_entity.name as string]">
+            :entity_pair="[selected_entity?.name as string, selected_cooccurr_entity?.name as string]">
             </ArticleView>
         </SplitterPanel>    
         <SplitterPanel id="entity_info_section" class="entity-info-panel flex align-items-center justify-content-center" :size="right_section_size" >
             <div class="entity-info-container">
                 <div class="target-cooccurr-container">
-                    <div v-if="Object.keys(constraint_dict[selected_entity.name]||{}).length > 0" class="navigate-container">
+                    <div v-if="Object.keys(constraint_dict[selected_entity?.name]||{}).length > 0" class="navigate-container">
                             <router-link  class="goNext" :to="{ name: 'summary', params: { entity: selected_entity.name }}"> Summary Report </router-link>
                         </div>
                     <h2 class="component-header cooccurr-info-header">
@@ -350,7 +265,7 @@ function updateSegmentation({pos, neg}) {
                     <div class="cooccurr-info-content">
                         <div class="num_of_articles">
                             Number of articles about 
-                            <span style="font-weight:bolder" :title="selected_entity.name"> {{selected_entity.name}} </span>
+                            <span style="font-weight:bolder" :title="selected_entity?.name"> {{selected_entity?.name}} </span>
                             <span v-if="selected_cooccurr_entity"> 
                             and 
                             <span style="font-weight:bolder" :title="selected_cooccurr_entity.name">
@@ -382,7 +297,7 @@ function updateSegmentation({pos, neg}) {
                     <div class="question-container">
                         <span> 
                             How would you describe the coverage on 
-                            <span> {{selected_entity.name}} </span> 
+                            <span> {{selected_entity?.name}} </span> 
                             by &nbsp 
                         </span>
                         <div class="journal-info-container" style="font-size:small">
@@ -406,7 +321,7 @@ function updateSegmentation({pos, neg}) {
                             option-label="value"
                             data-key="type" >
                         </SelectButton>
-                        <span class="slider-label"> Intensity 
+                        <!-- <span class="slider-label"> Intensity 
                             <i class='pi pi-info-circle tooltip'>
                                 <span class="tooltiptext right-tooltiptext" style="width:300px;">
                                     Use the slider to controll the intensity of the sentiment.
@@ -420,57 +335,45 @@ function updateSegmentation({pos, neg}) {
                             :step="0.01"
                             :min="0"
                             :max="1" >
-                        </Slider>
+                        </Slider> -->
                     </div>
                 </div>
-                <div class="constraints-outlet-scatter-container">
-                    <div class="constraints-view">
-                        <h2 class="component-header outlet-scatter-header">
-                        Outlet Comparison
-                        <i class='pi pi-info-circle tooltip'>
-                            <span class="tooltiptext right-tooltiptext" style="width: 300px;">
-                                This scatterplot shows you the relative coverages among outlets on the topic. <br/>
-                                The dotted rectangle indicates how the segmentation will change. <br/>
-                                You can also drag the center point directly.
-                            </span>
-                        </i>
+                <div class="document-container">
+                    <div class="notes">
+                        <h2 class="component-header notes-header">
+                            Notes
+                            <i class='pi pi-info-circle tooltip'>
+                                <span class="tooltiptext right-tooltiptext" style="width: 145px">
+                                    Write down any hypothesis or questions you have.
+                                    The system will document that for you.
+                                </span>
+                            </i>
                         </h2>
-                        <i class='pi pi-info-circle tooltip' style="position:absolute; left: 90%; margin:1%; z-index: 1;"
-                        v-if="has_conflict">
-                            <span class="tooltiptext right-tooltiptext" style="width: 350px;">
-                                <span style='font-weight:bolder'>Why is there a red item?</span> <br/>
-                                Seeing a red colored item means the description you made is not true any more.<br/>
-                                Adjust the segmentation to resolve the conflict or delete that description.
-                                
-                            </span>
-                        </i>
-                        <table class="constraint-table">
-                            <tr v-for="outlet in ranked_outlets"
-                            :class="{not_satisfied: !constraint_statisfaction[outlet] }"> 
-                                <td> {{outlet}} </td>
-                                <td> {{outlet_category[outlet]}} </td>
-                                <td> {{constraint_dict[selected_entity.name]?.[outlet] || "unset"}} </td>
-                                <i class="pi pi-times-circle" style="cursor:pointer" 
-                                @click="removeConstraint({target: selected_entity.name, outlet: outlet})"></i> 
-                            </tr>
-                        </table> 
-                    
+                        <Textarea class="notes-style" :model-value="notes" @update:model-value="setNotes"/>
                     </div>
-                    <!-- <Divider layout="vertical"></Divider> -->
-                    <div class="outlet-scatter-container">
-                        <ScrollPanel>
-                            <OutletScatterplot
-                                ref="outlet_scatter"
-                                v-if="entity_grouped_view"
-                                :view="entity_grouped_view"
-                                :highlight_node_text="selected_entity.outlet"
-                                :adjust_offset="adjust_offset"
-                                id="outlet-scatter"
-                                :segment_mode="true"
-                                :segmentation="segmentation"
-                                @update:segmentation="updateSegmentation" >
-                            </OutletScatterplot>
-                        </ScrollPanel>
+                    <div class="marked-articles-container">
+                        <h2 class="component-header marked-articles-header">
+                            Conclusions
+                        </h2>
+                        <table class="mark-table">
+                            <colgroup>
+                                <col span="1" style="width: 25%;">
+                                <col span="1" style="width: 15%;">
+                                <col span="1" style="width: 60%;">
+                            </colgroup>
+                            <tbody>
+                                <tr v-for="outlet in ranked_outlets"> 
+                                    <td> {{outlet}} </td>
+                                    <td> {{constraint_dict[selected_entity.name]?.[outlet] || "unset"}} </td>
+                                    <td>
+                                        <i v-for="id in marked_articles_grouped[outlet]" 
+                                            class="pi pi-file">
+                                        </i>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table> 
+
                     </div>
                 </div>
             </div>
@@ -550,11 +453,6 @@ ol {
 li {
     white-space: pre;
 }
-// a {
-//   position: absolute;
-//   top: 73%;
-//   left: 71%;
-// }
 
 :deep(.p-slider.p-component.p-slider-horizontal) {
   width: 50%;
@@ -596,7 +494,7 @@ li {
 //  Hexview section
 // ---------------------
 .hexview-container {
-  max-height: 50%;
+  max-height: 49%;
 }
 
 // ---------------------
@@ -607,6 +505,7 @@ li {
 //   justify-content: space-between;
     flex: 1 1 0;
     overflow: hidden;
+    flex-direction: column;
 }
 
 .intensity-slider {
@@ -634,10 +533,6 @@ li {
 :deep(.p-scrollpanel.p-component) {
   width: 100%;
 }
-.not_satisfied {
-    background: #f88e8e;
-    transition: background 1s;
-}
 .question-container {
     display: flex;
     align-items: center;
@@ -649,6 +544,27 @@ li {
 .journal-info-container {
   white-space: nowrap;
   margin: 0.3rem 0rem;
+}
+.notes {
+  display: flex;
+  flex-direction: column;
+}
+.notes-style {
+    height: 100%;
+}
+.document-container {
+    display: flex;
+}
+
+.marked-articles-header {
+  margin: 1% 1% 0% 0%;
+}
+.marked-articles-container {
+    width: 100%;
+}
+.mark-table {
+    font-size: 0.7rem;
+    width: 100%;
 }
 
 :deep(.outlet-scatter) {
