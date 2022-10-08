@@ -236,8 +236,7 @@ async function handleHexClicked({ target, co_occurr_entity }, view) {
                             </span>
                         </i>
                     </h2>
-                    <Textarea :model-value="notes" @update:model-value="setNotes">
-                    </Textarea>
+                    <Textarea class="notes-style" :model-value="notes" @update:model-value="setNotes"/>
 
                 </div>
             </div>
@@ -254,6 +253,11 @@ async function handleHexClicked({ target, co_occurr_entity }, view) {
     width: 99vw;
     height: 98vh;
     display: flex;
+}
+
+.notes-style{
+    width: 100%;
+    height: 50%;
 }
 
 :deep(.p-divider.p-divider-vertical::before) {
