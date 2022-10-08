@@ -50,7 +50,7 @@ const setHexViewGrid = (grid) => store.commit("setHexViewGrid", grid)
 const outlet_weight_dict = vue.computed(() => store.state.outlet_weight_dict)
 
 const hex_entity_scatter_view: Ref<any> = ref(undefined)
-
+const highlight_hex_entity: Ref<string> = ref("")
 const notes = vue.computed(() => store.state.notes)
 const setNotes = (notes) => store.commit("setNotes", notes)
 
@@ -130,6 +130,7 @@ async function handleHexClicked({ target, co_occurr_entity }, view) {
     const entity = target.split("-")[0]
     const outlet = target.split("-")[1]
     setClickedHexView(view)
+    highlight_hex_entity.value = co_occurr_entity
     await fetch(`${server_address}/processed_data/cooccurr_info/grouped/${outlet}/${entity}/${co_occurr_entity}`)
         .then(res => res.json())
         .then(json => {
@@ -170,94 +171,95 @@ async function handleHexClicked({ target, co_occurr_entity }, view) {
                 Click any hexagon on the left to continue to next stage.
             </div>
 
-            <div v-if="selected_entity?.outlet !== 'Overall'" class="navigate-container">
-                <router-link class="goNext" :to="{ name: 'inspection', params: { entity: selected_entity?.name || 'undefined' }}">Next
-                    Stage</router-link>
+        <div v-if="selected_entity?.outlet !== 'Overall'" class="navigate-container">
+            <router-link class="goNext" :to="{ name: 'inspection', params: { entity: selected_entity?.name || 'undefined' }}">Next
+                Stage</router-link>
+        </div>
+        <h2 class="component-header hexview-grid-header">
+            Topic Co-occurrences Hive of
+            <span> {{ route.params.entity }} </span>
+            &nbsp
+            <i class='pi pi-info-circle tooltip'>
+                <span class="tooltiptext right-tooltiptext" style="width: 500px">
+                    Each hive represents the coverage on {{ selected_entity?.name }} by that outlet. <br />
+                    A hexagon is left blanked if the outlet does not cover that topic. <br />
+                    Try to discover outlet coverage differences and common grounds.
+                </span>
+            </i>
+        </h2>
+        <div class="hexview-grid-container">
+            <div class="hexview-grid-cell-container" v-if="data_fetched" v-for="view, index in hexview_grid">
+                <HexCooccurrence class="compare-co-hexview" :title="view.title" :id="`compare-co-hex-${index}`"
+                    :entity_cooccurrences="view.data" :segmentation="segmentation"
+                    :highlight_hex_entity="highlight_hex_entity"
+                    v-on:hex-clicked="handleHexClicked($event, view)">
+                </HexCooccurrence>
+                <img :src="`../src/assets/${view.title.split('-')[2]}.png`" class="journal-image" />
             </div>
-            <h2 class="component-header hexview-grid-header">
-                Topic Co-occurrences Hive of
-                <span> {{ route.params.entity }} </span>
-                &nbsp
-                <i class='pi pi-info-circle tooltip'>
-                    <span class="tooltiptext right-tooltiptext" style="width: 500px">
-                        Each hive represents the coverage on {{ selected_entity?.name }} by that outlet. <br />
-                        A hexagon is left blanked if the outlet does not cover that topic. <br />
-                        Try to discover outlet coverage differences and common grounds.
-                    </span>
-                </i>
-            </h2>
-            <div class="hexview-grid-container">
-                <div class="hexview-grid-cell-container" v-if="data_fetched" v-for="view, index in hexview_grid">
-                    <HexCooccurrence class="compare-co-hexview" :title="view.title" :id="`compare-co-hex-${index}`"
-                        :entity_cooccurrences="view.data" :segmentation="segmentation"
-                        v-on:hex-clicked="handleHexClicked($event, view)">
-                    </HexCooccurrence>
-                    <img :src="`../src/assets/${view.title.split('-')[2]}.png`" class="journal-image" />
-                </div>
-            </div>
-        </SplitterPanel>
-        <SplitterPanel id="entity_info_section" class="entity-info-panel flex align-items-center justify-content-center"
-            :size="right_section_size">
-            <div class="entity-info-container">
-                <div class="target-cooccurr-container" v-if="selected_entity">
-                    <h2 class="component-header cooccurr-info-header">
-                        Topic Info
-                        <i class='pi pi-info-circle tooltip'>
-                            <span class="tooltiptext right-tooltiptext" style="width: 100px;">
-                                <Legend id="policy_legend" class="policy-bar-legend"
-                                    :color_dict="SstColors.topic_color_dict" :row_height="10" :font_size="1.2"></Legend>
-                            </span>
-                        </i>
-                    </h2>
-                    <div class="cooccurr-info-content">
-                        <!-- <div class="num_of_articles">
-                            #articles about 
-                            <span style="font-weight:bolder"> {{selected_entity.name}} </span>
-                            <span v-if="selected_cooccurr_entity"> 
-                            and 
-                            <span style="font-weight:bolder">
-                                {{selected_cooccurr_entity.name}}
-                            </span> 
-                            </span>
-                            is {{ selected_cooccurr_entity? selected_cooccurr_entity.num_of_mentions : selected_entity.num_of_mentions }}
-                        </div>
-                        <Divider layout="vertical"></Divider> -->
-                        <ul class="entity-info-section">
-                            <li> Main topic: {{ selected_entity.name }} </li>
-                            <li v-if='selected_cooccurr_entity'> Co-occur topic: {{ selected_cooccurr_entity.name }}
-                            </li>
-                            <li> Media outlet: {{selected_entity.outlet === 'Overall'? "Not selected":selected_entity.outlet}}</li>
-                        </ul>
+        </div>
+    </SplitterPanel>
+    <SplitterPanel id="entity_info_section" class="entity-info-panel flex align-items-center justify-content-center"
+        :size="right_section_size">
+        <div class="entity-info-container">
+            <div class="target-cooccurr-container" v-if="selected_entity">
+                <h2 class="component-header cooccurr-info-header">
+                    Topic Info
+                    <i class='pi pi-info-circle tooltip'>
+                        <span class="tooltiptext right-tooltiptext" style="width: 100px;">
+                            <Legend id="policy_legend" class="policy-bar-legend"
+                                :color_dict="SstColors.topic_color_dict" :row_height="10" :font_size="1.2"></Legend>
+                        </span>
+                    </i>
+                </h2>
+                <div class="cooccurr-info-content">
+                    <!-- <div class="num_of_articles">
+                        #articles about 
+                        <span style="font-weight:bolder"> {{selected_entity.name}} </span>
+                        <span v-if="selected_cooccurr_entity"> 
+                        and 
+                        <span style="font-weight:bolder">
+                            {{selected_cooccurr_entity.name}}
+                        </span> 
+                        </span>
+                        is {{ selected_cooccurr_entity? selected_cooccurr_entity.num_of_mentions : selected_entity.num_of_mentions }}
                     </div>
-                    <!-- <EntityInfoView
-                    v-if="selected_entity"
-                    title="Target Entity"
-                    :entity_info="selected_entity">
-                </EntityInfoView>
-                <Divider v-if="selected_cooccurr_entity" layout="vertical"></Divider>
-                <EntityInfoView
-                    v-if="selected_cooccurr_entity"
-                    title="Co-occurr Entity"
-                    :entity_info="selected_cooccurr_entity">
-                </EntityInfoView> -->
+                    <Divider layout="vertical"></Divider> -->
+                    <ul class="entity-info-section">
+                        <li> Main topic: {{ selected_entity.name }} </li>
+                        <li v-if='selected_cooccurr_entity'> Co-occur topic: {{ selected_cooccurr_entity.name }}
+                        </li>
+                        <li> Media outlet: {{selected_entity.outlet === 'Overall'? "Not selected":selected_entity.outlet}}</li>
+                    </ul>
                 </div>
-                <div class="topic-bar-container" v-if="selected_entity">
-                    <TopicBars id="cooccurr_topic_bars" :targetTopicBins="selected_entity?.articles_topic_dict"
-                        :cooccurrTopicBins="selected_cooccurr_entity?.articles_topic_dict"></TopicBars>
-                </div>
-                <div class="legend-utils" v-if="selected_entity">
-                    <h2 class="component-header legend-header">
-                        Some Scatter
-                        <!-- <i class='pi pi-info-circle tooltip'>
-                            <span class="tooltiptext right-tooltiptext" style="width: 120px;">
-                                The sentiments have four categories as listed. <br/>
-                                A mixed sentiment means the topic has lots of positive and negative articles at the same time. 
-                            </span>
-                        </i> -->
-                    </h2>
-                    <HexEntityScatter
-                        ref="hex_entity_scatter"
-                        v-if="hex_entity_scatter_view"
+                <!-- <EntityInfoView
+                v-if="selected_entity"
+                title="Target Entity"
+                :entity_info="selected_entity">
+            </EntityInfoView>
+            <Divider v-if="selected_cooccurr_entity" layout="vertical"></Divider>
+            <EntityInfoView
+                v-if="selected_cooccurr_entity"
+                title="Co-occurr Entity"
+                :entity_info="selected_cooccurr_entity">
+            </EntityInfoView> -->
+            </div>
+            <div class="topic-bar-container" v-if="selected_entity">
+                <TopicBars id="cooccurr_topic_bars" :targetTopicBins="selected_entity?.articles_topic_dict"
+                    :cooccurrTopicBins="selected_cooccurr_entity?.articles_topic_dict"></TopicBars>
+            </div>
+            <div class="legend-utils" v-if="selected_entity">
+                <h2 class="component-header legend-header">
+                    Some Scatter
+                    <!-- <i class='pi pi-info-circle tooltip'>
+                        <span class="tooltiptext right-tooltiptext" style="width: 120px;">
+                            The sentiments have four categories as listed. <br/>
+                            A mixed sentiment means the topic has lots of positive and negative articles at the same time. 
+                        </span>
+                    </i> -->
+                </h2>
+                <HexEntityScatter
+                    ref="hex_entity_scatter"
+                    v-if="hex_entity_scatter_view"
                         :view="hex_entity_scatter_view"
                         :highlight_node_text="selected_entity.name"
                         id="hex_entity_scatter"

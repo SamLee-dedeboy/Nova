@@ -22,8 +22,8 @@ const props = defineProps({
     title: String,
     id: String,
     entity_cooccurrences: Object as () => EntityCooccurrences,
+    highlight_hex_entity: String,
     segmentation: Sentiment2D,
-    overall_entity_dict: Object as () => { [id: string]: ScatterNode },
 })
 const emit = defineEmits(["hex-clicked"])
 
@@ -71,6 +71,11 @@ vue.watch(() => props.segmentation, (new_value, old_value) => {
     updateHexColor()
 }, { deep: true })
 
+vue.watch(() => props.highlight_hex_entity, (new_value, old_value) => {
+    updateHighlightHex(new_value)
+    removeHighlightHex(old_value)
+
+})
 
 vue.watch(() => props.entity_cooccurrences, (new_value, old_value) => {
     //empty-SVG
@@ -129,13 +134,17 @@ function updateHexBins() {
         .on("click", function (e, d: any) {
             const target = props.title?.split("-").slice(1).join("-")
             emit("hex-clicked", { target: target, co_occurr_entity: d[0].entity })
+            // loopedAnimateHex(hex_group, target)
         })
         .on("mouseover", function (e, d: any) {
+            if(d[0].entity === props.highlight_hex_entity) return
             d3.select(this)
                 .transition().duration(100)
                 .attr("stroke-width", d[0].index === 0 ? 25 : 8)
+            // emit("mouseover", d[0].entity)
         })
         .on("mouseout", function (e, d: any) {
+            if(d[0].entity === props.highlight_hex_entity) return
             d3.select(this)
                 .transition().duration(500)
                 .attr("stroke-width", d[0].index === 0 ? 20 : 1)
@@ -148,6 +157,9 @@ function updateHexBins() {
             const sst = d[0].sst;
             return SstColors.enum_color_dict[categorizeHex(sst, props.segmentation!)]
         })
+    // add looped animation for center hex
+    // loopedAnimateHex(hex_group)
+
 
     hex_group.select("g.hex-labels")
         .selectAll("text")
@@ -178,8 +190,47 @@ function updateHexBins() {
             const target = props.title?.split("-").slice(1).join("-")
             emit("hex-clicked", { target: target, co_occurr_entity: d[0].entity })
         })
+}
+
+function updateHighlightHex(target_entity) {
+    const svg = d3.select(`#${props.id}`).select("svg")
+    const hex_group = svg.select("g.hex-group")
+    loopedAnimateHex(hex_group, target_entity)
+}
+
+function removeHighlightHex(target_entity) {
+    const svg = d3.select(`#${props.id}`).select("svg")
+    const hex_group = svg.select("g.hex-group")
+    var target_hex = hex_group.selectAll("path").filter((d:any) => d[0].entity === target_entity)
+    target_hex.transition().duration(1000)
+        .attr("stroke-width", (d: any) => d[0].index === 0 ? 20 : 1)
+        .on("end", () => (1))
 
 }
+
+function loopedAnimateHex(hex_group, target_entity) {
+    var target_hex = hex_group.selectAll("path").filter((d:any) => d[0].entity === target_entity)
+    // expand Hex
+    repeat()
+    function repeat() {
+        console.log("looping")
+        const duration = 1000
+        target_hex.transition().duration(duration)
+            .attr("stroke-width", 15)
+            .attr("stroke", "#b7b7b7")
+            .transition().duration(duration)
+            .attr("stroke-width", 20)
+            .attr("stroke", "grey")
+            .on("end", repeat)
+    }
+}
+
+
+// function contractHex(hex_path) {
+//     hex_path.transition().duration(500)
+//         .attr("stroke-width", 20)
+//         .on("end", expandHex(hex_path))
+// }
 
 function wrap(text, width) {
     text.each(function (d, i) {
