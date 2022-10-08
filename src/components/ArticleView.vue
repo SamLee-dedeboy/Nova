@@ -17,7 +17,7 @@ const props = defineProps({
     entity_pair: Object as () => String[],
 })
 
-const addMarkedArticle = (article_id: number) => store.commit("addMarkedArticle", article_id)
+const addMarkedArticle = (article_info) => store.commit("addMarkedArticle", article_info)
 const removeMarkedArticle = (article_id: number) => store.commit("removeMarkedArticle", article_id)
 
 
@@ -60,12 +60,14 @@ const pos_articles = vue.computed(() => {
 })
 const pos_panel_articles: Ref<Article[]> = ref(pos_articles.value?.slice(0,10) || []) 
 const pos_marks: Ref<boolean[]> = ref(Array(pos_articles.value?.length || 0).fill(false))
+const pos_article_notes: Ref<string[]> = ref(Array(pos_articles.value?.length || 0).fill(""))
 
 const neg_articles = vue.computed(() => {
     return props.articles?.filter(article => article.sentiment.label === "NEGATIVE").sort(sortByRelevance)
 })
 const neg_panel_articles: Ref<Article[]> = ref(neg_articles.value?.slice(0,10) || []) 
 const neg_marks: Ref<boolean[]> = ref(Array(neg_articles.value?.length || 0).fill(false))
+const neg_article_notes: Ref<string[]> = ref(Array(neg_articles.value?.length || 0).fill(""))
 
 function addHeaderClickEvent() {
     return
@@ -156,13 +158,15 @@ function handleMark(mark, index: number, type: string) {
     if(type === "pos") {
         pos_marks.value[index] = mark
         const article_id: number = pos_articles.value![index].id
-        if(mark) addMarkedArticle({article_id, outlet})
+        const description = `positive #${index+1}` 
+        if(mark) addMarkedArticle({article_id, outlet, description})
         else removeMarkedArticle(article_id)
     }
     if(type === "neg") {
         neg_marks.value[index] = mark
         const article_id: number = neg_articles.value![index].id
-        if(mark) addMarkedArticle({article_id, outlet})
+        const description = `negative #${index+1}` 
+        if(mark) addMarkedArticle({article_id, outlet, description})
         else removeMarkedArticle(article_id)
     }
 }
@@ -192,7 +196,8 @@ function handleMark(mark, index: number, type: string) {
             <span v-html="removeTags(add_highlights(article.summary, props.article_highlights?.summary_entities?.[article.id]))">
             </span>
         </div>
-        <ToggleButton class='mark_toggle' :model-value="pos_marks[index]" onLabel="Unmark" off-label="Mark" @update:model-value="handleMark($event, index, 'pos')"></ToggleButton>
+        <textarea class="article-note-area" placeholder="make a note here" v-model="pos_article_notes[index]"></textarea>
+        <ToggleButton class='mark_toggle' :disabled="pos_article_notes[index] === ''" :model-value="pos_marks[index]" onLabel="Unmark" off-label="Mark" @update:model-value="handleMark($event, index, 'pos')"></ToggleButton>
     </ScrollPanel>
     </Panel>
 </ScrollPanel>
@@ -218,7 +223,8 @@ function handleMark(mark, index: number, type: string) {
             <span v-html="removeTags(add_highlights(article.summary, props.article_highlights?.summary_entities?.[article.id]))">
             </span>
         </div>
-        <ToggleButton class='mark_toggle' :model-value="neg_marks[index]" onLabel="Unmark" off-label="Mark" @update:model-value="handleMark($event, index, 'neg')"></ToggleButton>
+        <textarea class="article-note-area" placeholder="make a note here" v-model="neg_article_notes[index]"></textarea>
+        <ToggleButton class='mark_toggle' :disabled="pos_article_notes[index] === ''" :model-value="neg_marks[index]" onLabel="Unmark" off-label="Mark" @update:model-value="handleMark($event, index, 'neg')"></ToggleButton>
     </ScrollPanel>
     </Panel>
 </ScrollPanel>

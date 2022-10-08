@@ -75,6 +75,7 @@ const overall_entity_dict: Ref<any> = ref({})
 const overall_scatter_data_loading: Ref<boolean> = ref(true)
 const grouped_scatter_data_loaded: Ref<boolean> = ref(false)
 const overview_constructed: Ref<boolean> = ref(false)
+const hex_constructed: Ref<boolean> = ref(true)
 const overall_co_hexview: Ref<any> = ref(null)
 //
 // processed data 
@@ -359,6 +360,7 @@ async function handleEntityClicked(entity: string) {
       })
   }))
   promiseArray.push(new Promise((resolve) => {
+    hex_constructed.value = false
     fetch(`${server_address}/hexview/overall/${entity}`, {
       method: "POST",
       headers: {
@@ -375,6 +377,7 @@ async function handleEntityClicked(entity: string) {
           data: cooccurrences,
         }
         overall_selected_hexview.value = hex_view
+        hex_constructed.value = true
         console.log("cooccurr hex fetched")
         resolve("success")
       })
@@ -498,7 +501,7 @@ function updateSegmentation({ pos, neg }) {
   <main>
     <div v-if="selected_cooccurr_entity" class="navigate-container">
       <router-link class="goNext"
-        :to="{ name: 'compare', params: { entity: selected_entity.name }}">Next Stage</router-link>
+        :to="{ name: 'compare', params: { entity: selected_entity.name, }}">Next Stage</router-link>
     </div>
     <Splitter class="overview-container">
       <SplitterPanel class="left-section-panel" :size="left_section_panel_size">
@@ -516,13 +519,13 @@ function updateSegmentation({ pos, neg }) {
 
             <div class="overview-scatter-container">
               <!-- load icon -->
-              <i v-if="overall_scatter_data_loading" class="pi pi-spin pi-spinner" style="
-                position:absolute;
-                left: 45%;
-                top: 30%;
-                font-size: 3rem;
-                z-index: 1000
-                "></i>
+              <i v-if="overall_scatter_data_loading" class="pi pi-spin pi-spinner" 
+                style="position:absolute;
+                  left: 45%;
+                  top: 30%;
+                  font-size: 3rem;
+                  z-index: 1000">
+              </i>
               <EntitySelection v-if="overall_scatter_view" :view="overall_scatter_view" id="overview-scatter"
                 :article_num_threshold="article_num_threshold" :segment_mode="segment_mode" :segmentation="segmentation"
                 @update:segmentation="updateSegmentation" @node_clicked="handleEntityClicked"
@@ -612,7 +615,7 @@ function updateSegmentation({ pos, neg }) {
             </h2>
             <div class="overview-hex-container" v-if="overview_constructed">
               <!-- load icon -->
-              <i v-if="!overview_constructed" class="pi pi-spin pi-spinner" style="
+              <i v-if="!hex_constructed" class="pi pi-spin pi-spinner" style="
                     position:absolute;
                     left: 45%;
                     top: 30%;

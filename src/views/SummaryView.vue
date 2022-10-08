@@ -14,9 +14,10 @@ import Panel from 'primevue/panel'
  */
 import OutletWeightSlider from "../components/OutletWeightSlider.vue";
 import OutletScatterplot from '../components/OutletScatterplot.vue';
+import HexCooccurrence from "../components/HexCooccurrence.vue"
 
 import * as SstColors from "../components/utils/ColorUtils"
-import { Article, SentimentType, Sentiment2D, Constraint, ScatterNode } from "../types"
+import { Article, SentimentType, Sentiment2D, Constraint, ScatterNode, CooccurrHexView } from "../types"
 
 const store = useStore()
 const notes = vue.computed(() => store.state.notes)
@@ -47,6 +48,7 @@ const ranked_outlets = vue.computed(() => {
         (o1, o2) => outlet_weight_dict.value[o1] - outlet_weight_dict.value[o2]
     )
 })
+const overall_selected_hexview: Ref<CooccurrHexView | undefined> = ref(undefined)
 
 const constraint_dict = vue.computed(() => store.state.constraints)
 const constraint_statisfaction = ref({})
@@ -81,6 +83,7 @@ const adjust_offset = vue.computed(() => offsetScale.value(intensity.value))
 vue.onMounted(() => {
     console.log(marked_articles_ids_with_outlet.value)
     fetch_articles(marked_articles_ids_with_outlet.value.map(pair => pair.article_id))
+    fetch_hexview(selected_entity.value.name)
     fetch_entity_grouped_node(selected_entity.value.name)
     Object.keys(outlet_weight_dict.value).forEach(outlet => {
         constraint_statisfaction.value[outlet] = true
@@ -96,20 +99,39 @@ function checkCategorization(target_node: ScatterNode, segmentation: Sentiment2D
     if(pos < segmentation.pos && neg < segmentation.neg) return "neutral"
     return "unknown"
 }
+
 async function fetch_articles(article_ids) {
-    console.log("🚀 ~ file: SummaryView.vue ~ line 99 ~ fetch_articles ~ article_ids", article_ids)
     await fetch(`${server_address}/processed_data/ids_to_articles`,{
-      method: "POST",
-      headers: {
+        method: "POST",
+        headers: {
         "Accept": "application/json",
         "Content-Type": "application/json"
-      },
-      body: JSON.stringify(article_ids)
+        },
+        body: JSON.stringify(article_ids)
     })
     .then(res => res.json())
     .then(json => {
         marked_articles.value = json
         console.log("articles fetched")
+    })
+}
+async function fetch_hexview(target_entity) {
+    await fetch(`${server_address}/hexview/overall/${target_entity}`, {
+    method: "POST",
+    headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+    },
+    body: JSON.stringify(outlet_weight_dict.value)
+    })
+    .then(res => res.json())
+    .then(json => {
+        const cooccurrences = json
+        const hex_view: CooccurrHexView = {
+        title: `co-${selected_entity.value.name}`,
+        data: cooccurrences,
+        }
+        overall_selected_hexview.value = hex_view
     })
 }
 
@@ -239,58 +261,76 @@ function checkConstraint(type: SentimentType, target: Sentiment2D, segmentation:
             </div>
         </div>
     </div>
-    <div class="relfection-container">
-        <div class="constraints-view">
-            <h2 class="component-header outlet-scatter-header">
-            Outlet Comparison
-            <i class='pi pi-info-circle tooltip'>
-                <span class="tooltiptext right-tooltiptext" style="width: 300px;">
-                    This scatterplot shows you the relative coverages among outlets on the topic. <br/>
-                    The dotted rectangle indicates how the segmentation will change. <br/>
-                    You can also drag the center point directly.
+    <div class="summary-right-section">
+        <div class="entity-hive">
+            <h2 class="component-header hexview-header" v-if="selected_entity">
+              Topic Co-occurrence Hive
+              <i class='pi pi-info-circle tooltip'>
+                <span class="tooltiptext right-tooltiptext" style="width: 400px">
+                  Shows most-frequently co-occurring topics with the main topic ({{ selected_entity.name }}). <br />
+                  Each co-occurring topic is categorized by the region segmentation in the Topic Scatterplot.
                 </span>
-            </i>
+              </i>
             </h2>
-            <i class='pi pi-info-circle tooltip' style="position:absolute; left: 90%; margin:1%; z-index: 1;"
-            v-if="has_conflict">
-                <span class="tooltiptext right-tooltiptext" style="width: 350px;">
-                    <span style="font-weight:bolder">Why is there a red item?</span> <br/>
-                    Seeing a red colored item means the description you made is not true any more.<br/>
-                    Adjust the segmentation to resolve the conflict or delete that description.
-                    
-                </span>
-            </i>
-            <table class="constraint-table">
-                <tr class="header">
-                    <th> Outlet </th>
-                    <th> Current </th>
-                    <th> Set </th>
-
-                </tr>
-                <tr v-for="outlet in ranked_outlets"
-                :class="{not_satisfied: !constraint_statisfaction[outlet] }"> 
-                    <td> {{outlet}} </td>
-                    <td> {{outlet_category[outlet]}} </td>
-                    <td> {{constraint_dict[selected_entity.name]?.[outlet] || "unset"}} </td>
-                    <!-- <i class="pi pi-times-circle" style="cursor:pointer" 
-                    @click="removeConstraint({target: selected_entity.name, outlet: outlet})"></i>  -->
-                </tr>
-            </table> 
-        
+            <div class="overview-hex-container">
+              <HexCooccurrence ref="overall_co_hexview" v-if="overall_selected_hexview" class="overall-co-hexview"
+                :title="overall_selected_hexview.title" :id="`overall-co-hex`"
+                :entity_cooccurrences="overall_selected_hexview.data" :segmentation="segmentation">
+              </HexCooccurrence>
+            </div>
         </div>
-        <!-- <Divider layout="vertical"></Divider> -->
-        <div class="outlet-scatter-container">
-            <OutletScatterplot
-                ref="outlet_scatter"
-                v-if="entity_grouped_view"
-                :view="entity_grouped_view"
-                :highlight_node_text="selected_entity.outlet"
-                :adjust_offset="adjust_offset"
-                id="outlet-scatter"
-                :segment_mode="true"
-                :segmentation="segmentation"
-                @update:segmentation="setSegmentation" >
-            </OutletScatterplot>
+        <div class="relfection-container">
+            <div class="constraints-view">
+                <h2 class="component-header outlet-scatter-header">
+                Outlet Comparison
+                <i class='pi pi-info-circle tooltip'>
+                    <span class="tooltiptext right-tooltiptext" style="width: 300px;">
+                        This scatterplot shows you the relative coverages among outlets on the topic. <br/>
+                        The dotted rectangle indicates how the segmentation will change. <br/>
+                        You can also drag the center point directly.
+                    </span>
+                </i>
+                </h2>
+                <i class='pi pi-info-circle tooltip' style="position:absolute; left: 90%; margin:1%; z-index: 1;"
+                v-if="has_conflict">
+                    <span class="tooltiptext right-tooltiptext" style="width: 350px;">
+                        <span style="font-weight:bolder">Why is there a red item?</span> <br/>
+                        Seeing a red colored item means the description you made is not true any more.<br/>
+                        Adjust the segmentation to resolve the conflict or delete that description.
+                        
+                    </span>
+                </i>
+                <table class="constraint-table">
+                    <tr class="header">
+                        <th> Outlet </th>
+                        <th> Current </th>
+                        <th> Set </th>
+
+                    </tr>
+                    <tr v-for="outlet in ranked_outlets"
+                    :class="{not_satisfied: !constraint_statisfaction[outlet] }"> 
+                        <td> {{outlet}} </td>
+                        <td> {{outlet_category[outlet]}} </td>
+                        <td> {{constraint_dict[selected_entity.name]?.[outlet] || "unset"}} </td>
+                        <!-- <i class="pi pi-times-circle" style="cursor:pointer" 
+                        @click="removeConstraint({target: selected_entity.name, outlet: outlet})"></i>  -->
+                    </tr>
+                </table> 
+            </div>
+            <!-- <Divider layout="vertical"></Divider> -->
+            <div class="outlet-scatter-container">
+                <OutletScatterplot
+                    ref="outlet_scatter"
+                    v-if="entity_grouped_view"
+                    :view="entity_grouped_view"
+                    :highlight_node_text="selected_entity.outlet"
+                    :adjust_offset="adjust_offset"
+                    id="outlet-scatter"
+                    :segment_mode="true"
+                    :segmentation="segmentation"
+                    @update:segmentation="setSegmentation" >
+                </OutletScatterplot>
+            </div>
         </div>
     </div>
 </div>
@@ -301,13 +341,13 @@ function checkConstraint(type: SentimentType, target: Sentiment2D, segmentation:
 // Page containers
 //
 .page-container {
-  width: 100%;
-  height: 100%;
+  width: 98vw;
+  height: 98vh;
   display: flex;
 }
 .summary-container {
-  width: 50vw;
-  height: 98vh;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: left;
@@ -403,9 +443,37 @@ function checkConstraint(type: SentimentType, target: Sentiment2D, segmentation:
 :deep(.p-scrollpanel-content) {
   height: 100%;
 }
-.relfection-container {
-    width: 50%;
-    display: flex;
+
+// 
+// Right Section
+// 
+.summary-right-section {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  margin-left: 1%;
+}
+
+// hex
+.entity-hive {
+  height: 70%;
+  /*! overflow: hidden; */
+}
+.overview-hex-container {
+  height: 100%;
+}
+
+// constraints table
+.constraint-table {
+  width: 100%;
+  font-size: 0.8rem;
+}
+.relfection-container[data-v-0de57da1] {
+  width: 100%;
+  display: flex;
+  height: 100%;
+  overflow: hidden;
 }
 
 th {
