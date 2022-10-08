@@ -53,6 +53,7 @@ main {
   /* Fade in tooltip */
   opacity: 0;
   transition: opacity 0.3s;
+  font-family: Georgia;
 }
 
 .tooltip .top-tooltiptext {
