@@ -24,6 +24,7 @@ import { RouterLink, RouterView } from "vue-router";
 }
 body {
   overflow: hidden;
+  background-color: #f8f9fa;
 }
 header {
   line-height: 1.5;

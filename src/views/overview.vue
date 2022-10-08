@@ -111,8 +111,8 @@ vue.provide("outlet_article_num_dict", outlet_article_num_dict)
  */
 const segment_mode: Ref<boolean> = ref(true)
 const segment_options = [
-  {status: 'On', value: true},
-  {status: 'Off', value: false}
+  { status: 'On', value: true },
+  { status: 'Off', value: false }
 ]
 
 /**
@@ -158,7 +158,7 @@ const highlight_nodes: Ref<string[]> = ref([])
 const left_section_panel_size = 30
 const right_section_panel_size = vue.computed(() => 100 - left_section_panel_size)
 
-const entity_scatter_panel_size = 50 
+const entity_scatter_panel_size = 50
 const utilities_panel_size = vue.computed(() => 100 - entity_scatter_panel_size)
 
 const entity_info_panel_size = 2.8
@@ -174,7 +174,7 @@ const hex_view_panel_size = vue.computed(() => 100 - entity_info_panel_size)
 const selected_entity = vue.computed(() => store.state.selected_entity)
 const setEntity = (entity) => store.commit("setEntity", entity)
 const selected_cooccurr_entity = vue.computed(() => store.state.selected_cooccurr_entity)
-const setCooccurrEntity = (cooccurr_entity) => store.commit("setCooccurrEntity", cooccurr_entity) 
+const setCooccurrEntity = (cooccurr_entity) => store.commit("setCooccurrEntity", cooccurr_entity)
 const overall_selected_hexview: Ref<typeUtils.CooccurrHexView | undefined> = ref(undefined)
 const constraint_dict = vue.computed(() => store.state.constraints)
 
@@ -353,25 +353,25 @@ async function handleEntityClicked(entity: string) {
       })
   }))
   promiseArray.push(new Promise((resolve) => {
-      fetch(`${server_address}/hexview/overall/${entity}`, {
-        method: "POST",
-        headers: {
-          "Accept": "application/json",
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(outlet_weight_dict.value)
+    fetch(`${server_address}/hexview/overall/${entity}`, {
+      method: "POST",
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(outlet_weight_dict.value)
+    })
+      .then(res => res.json())
+      .then(json => {
+        const cooccurrences = json
+        const hex_view: typeUtils.CooccurrHexView = {
+          title: `co-${entity}`,
+          data: cooccurrences,
+        }
+        overall_selected_hexview.value = hex_view
+        console.log("cooccurr hex fetched")
+        resolve("success")
       })
-        .then(res => res.json())
-        .then(json => {
-          const cooccurrences = json
-          const hex_view: typeUtils.CooccurrHexView = {
-            title: `co-${entity}`,
-            data: cooccurrences,
-          }
-          overall_selected_hexview.value = hex_view
-          console.log("cooccurr hex fetched")
-          resolve("success")
-        })
   }))
   await Promise.all(promiseArray)
     .then(res => {
@@ -417,23 +417,23 @@ async function updateOverallEntityNode({ outlet, value }) {
 }
 
 async function updateHexViewData() {
-    await fetch(`${server_address}/hexview/overall/${selected_entity.value.name}`, {
-      method: "POST",
-      headers: {
-        "Accept": "application/json",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(outlet_weight_dict.value)
+  await fetch(`${server_address}/hexview/overall/${selected_entity.value.name}`, {
+    method: "POST",
+    headers: {
+      "Accept": "application/json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(outlet_weight_dict.value)
+  })
+    .then(res => res.json())
+    .then(json => {
+      const cooccurrences = json
+      const hex_view: typeUtils.CooccurrHexView = {
+        title: `co-${selected_entity.value.name}`,
+        data: cooccurrences,
+      }
+      overall_selected_hexview.value = hex_view
     })
-      .then(res => res.json())
-      .then(json => {
-        const cooccurrences = json
-        const hex_view: typeUtils.CooccurrHexView = {
-          title: `co-${selected_entity.value.name}`,
-          data: cooccurrences,
-        }
-        overall_selected_hexview.value = hex_view
-      })
 }
 
 async function fetch_topic_bins(target, callback) {
@@ -477,16 +477,20 @@ function updateSegmentation({ pos, neg }) {
 
 <template>
   <main>
+    <div v-if="selected_cooccurr_entity" class="navigate-container">
+      <router-link class="goNext"
+        :to="{ name: 'compare', params: { entity: selected_entity.name }}">Next Stage</router-link>
+    </div>
     <Splitter class="overview-container">
       <SplitterPanel class="left-section-panel" :size="left_section_panel_size">
         <Splitter layout="vertical">
           <SplitterPanel class="entity-scatter-panel" :size="entity_scatter_panel_size">
-            <h2 class="component-header scatter-header"> 
-              COVID-19 News Topics 
+            <h2 class="component-header scatter-header">
+              COVID-19 News Topics
               <i class='pi pi-info-circle tooltip'>
                 <span class="tooltiptext right-tooltiptext" style="width: 200px;">
-                   Each circle is a topic with 2-d sentiment score (pos, neg). <br/>
-                   The scores are determined by how many positive and negatives articles they have.
+                  Each circle is a topic with 2-d sentiment score (pos, neg). <br />
+                  The scores are determined by how many positive and negatives articles they have.
                 </span>
               </i>
             </h2>
@@ -510,7 +514,7 @@ function updateSegmentation({ pos, neg }) {
             <!-- Utilities -->
             <div class="utilities-container">
               <!-- <div id="segment-utility-container" class="segment-utils"> -->
-                <!-- <h2 class="component-header util-header"> 
+              <!-- <h2 class="component-header util-header"> 
                   Segment 
                   <i class='pi pi-info-circle tooltip'>
                     <span class="tooltiptext right-tooltiptext" style="width: 300px;">
@@ -519,26 +523,27 @@ function updateSegmentation({ pos, neg }) {
                     </span>
                   </i>
                 </h2> -->
-                <!-- segment & search -->
-                <!-- <div class="toolbar-container">
+              <!-- segment & search -->
+              <!-- <div class="toolbar-container">
                   <div v-if="overview_constructed" class="segment-toggler-container">
                     <SelectButton v-model="segment_mode" optionValue="value" optionLabel="status" :options="segment_options"/>
                   </div>
                 </div> -->
-                  <!-- Legend -->
-                <!-- <div class="legend-utils">
+              <!-- Legend -->
+              <!-- <div class="legend-utils">
                   <Legend v-if="overview_constructed" id="segment_legend" class="segment-legend"
                   :color_dict="SstColors.key_color_dict"></Legend>
                 </div> -->
               <!-- </div> -->
 
               <div id="entity-utility-container" class="entity-utils">
-                <h2 class="component-header util-header"> 
+                <h2 class="component-header util-header">
                   Topic Settings
                   <i class='pi pi-info-circle tooltip'>
                     <span class="tooltiptext right-tooltiptext" style="width: 300px">
-                      The color spectrum slider helps filter topics by number or articles. <br/>
-                      The six-sliders group lets you input your preception of each media outlet based on fairness and importance.
+                      The color spectrum slider helps filter topics by number or articles. <br />
+                      The six-sliders group lets you input your preception of each media outlet based on fairness and
+                      importance.
                     </span>
                   </i>
                 </h2>
@@ -554,12 +559,12 @@ function updateSegmentation({ pos, neg }) {
                     :min_articles="overview_overall_scatter_metadata.min_articles"></ThresholdController>
                 </div>
                 <!-- outlet weight slider -->
-                <h3 class="threshold-title"> 
-                  News Outlet Fairness 
+                <h3 class="threshold-title">
+                  News Outlet Fairness
                   <i class='pi pi-info-circle tooltip'>
                     <span class="tooltiptext right-tooltiptext" style="width: 300px">
-                      How fair do you believe each of these outlets overall on their coverage of topics. <br/>
-                      Sliding towards left indicates you feel the outlet is unfair. 
+                      How fair do you believe each of these outlets overall on their coverage of topics. <br />
+                      Sliding towards left indicates you feel the outlet is unfair.
                     </span>
                   </i>
                 </h3>
@@ -574,14 +579,15 @@ function updateSegmentation({ pos, neg }) {
       <SplitterPanel class="right-section-panel" :size="right_section_panel_size">
         <Splitter layout="vertical">
           <SplitterPanel class="overview-hex-panel" :size="hex_view_panel_size">
-            <div class="reminder-click-entity" v-if="!selected_entity && overview_constructed"> Click on one of the news topic nodes. </div>
+            <div class="reminder-click-entity" v-if="!selected_entity && overview_constructed"> Click on one of the news
+              topic nodes. </div>
             <!-- Hex view -->
             <h2 class="component-header hexview-header" v-if="selected_entity">
               Topic Co-occurrence Hive
               <i class='pi pi-info-circle tooltip'>
                 <span class="tooltiptext right-tooltiptext" style="width: 400px">
-                  Shows most-frequently co-occurring topics with the main topic ({{ selected_entity.name }}). <br/>
-                  Each co-occurring topic is categorized by the region segmentation in the Topic Scatterplot. 
+                  Shows most-frequently co-occurring topics with the main topic ({{ selected_entity.name }}). <br />
+                  Each co-occurring topic is categorized by the region segmentation in the Topic Scatterplot.
                 </span>
               </i>
             </h2>
@@ -615,15 +621,16 @@ function updateSegmentation({ pos, neg }) {
                 </h2>
                 <div class="cooccurr-info-content">
                   <div class="num_of_articles">
-                    Number of articles about 
+                    Number of articles about
                     <span style="font-weight:bolder"> {{selected_entity.name}} </span>
-                    <span v-if="selected_cooccurr_entity"> 
-                      and 
+                    <span v-if="selected_cooccurr_entity">
+                      and
                       <span style="font-weight:bolder">
                         {{selected_cooccurr_entity.name}}
-                      </span> 
+                      </span>
                     </span>
-                    is {{ selected_cooccurr_entity? selected_cooccurr_entity.num_of_mentions : selected_entity.num_of_mentions }}
+                    is {{ selected_cooccurr_entity? selected_cooccurr_entity.num_of_mentions :
+                    selected_entity.num_of_mentions }}
                   </div>
                   <Divider layout="vertical"></Divider>
                   <ul class="entity-info-section">
@@ -648,31 +655,25 @@ function updateSegmentation({ pos, neg }) {
                   Policy Bars
                   <i class='pi pi-info-circle tooltip'>
                     <span class="tooltiptext right-tooltiptext" style="width: 300px">
-                      The articles about {{ selected_entity.name }} 
+                      The articles about {{ selected_entity.name }}
                       <span v-if="selected_cooccurr_entity">
-                      and {{ selected_cooccurr_entity.name }}
+                        and {{ selected_cooccurr_entity.name }}
                       </span>
-                      categorized by related policies. <br/>
+                      categorized by related policies. <br />
                     </span>
                   </i>
-                  <br/>
-                  <Legend id="policy_legend" class="policy-bar-legend" 
-                  :color_dict="SstColors.topic_color_dict"
-                  ></Legend>
-                  <span style="font-size: small; width:max-content;"> 
+                  <br />
+                  <Legend id="policy_legend" class="policy-bar-legend" :color_dict="SstColors.topic_color_dict">
+                  </Legend>
+                  <span style="font-size: small; width:max-content;">
                     <!-- Some explanation here a lot of explanation here more explanation here -->
                   </span>
                 </h2>
-                <HorizontalTopicBars  id="cooccurr_topic_bars"
-                  :targetTopicBins="selected_entity?.articles_topic_dict"
+                <HorizontalTopicBars id="cooccurr_topic_bars" :targetTopicBins="selected_entity?.articles_topic_dict"
                   :cooccurrTopicBins="selected_cooccurr_entity?.articles_topic_dict">
                 </HorizontalTopicBars>
               </div>
               <!-- Next Stage -->
-              <div class="navigate-container">
-                <router-link v-if="selected_entity?.outlet === 'Overall'"
-                  :to="{ name: 'compare', params: { entity: selected_entity.name }}">Next Stage</router-link>
-              </div>
             </div>
           </SplitterPanel>
         </Splitter>
@@ -748,46 +749,48 @@ main {
   height: 0.8rem;
   width: 0.8rem;
 }
+
 :deep(.p-slider.p-slider-horizontal .p-slider-handle) {
   margin-top: -0.4rem;
   margin-left: -0.4rem;
 }
 
 .legend-utils {
-    margin-top: 5%;
+  margin-top: 5%;
 }
 
-.entity-utils{
+.entity-utils {
   margin: 0.4%;
   padding: 2%;
   // height: 100%;
   width: 100%;
   background: #f7f7f7;
 }
-.segment-utils{
+
+.segment-utils {
   margin: 1%;
-    padding: 2%;
-    width: 33%;
-    // height: 100%;
-    background: #f7f7f7;
+  padding: 2%;
+  width: 33%;
+  // height: 100%;
+  background: #f7f7f7;
 }
 
 .segment-toggler-container {
-    width: 100%;
+  width: 100%;
 }
 
 .scatter-header {
-  background: #f7f7f7;
-  margin:2%;
-  padding:1%;
+  // background: #f7f7f7;
+  margin: 2%;
+  padding: 1%;
 }
 
 .toolbar-container {
   display: flex;
-    height: max-content;
-    width: 100%;
-    margin-top: 5%;
-    text-align: center;
+  height: max-content;
+  width: 100%;
+  margin-top: 5%;
+  text-align: center;
 }
 
 .slider-container {
@@ -805,6 +808,7 @@ main {
   width: 100%;
   height: 100%;
 }
+
 .utilities-panel {
   overflow: visible;
 }
@@ -820,15 +824,16 @@ main {
   top: 40%;
   left: 30%;
 
-	box-shadow: 0 0 0 0 rgba(0, 0, 0, 1);
-	transform: scale(1);
-	animation: pulse 2s infinite;
+  box-shadow: 0 0 0 0 rgba(0, 0, 0, 1);
+  transform: scale(1);
+  animation: pulse 2s infinite;
 
 }
+
 .hexview-header {
-  background: #f7f7f7;
-  margin:1%;
-  padding:0.45%;
+  // background: #f7f7f7;
+  margin: 1%;
+  padding: 0.45%;
 }
 
 
@@ -862,7 +867,7 @@ main {
 .cooccurr-info-content {
   display: flex;
   height: 100%;
-  width:100%;
+  width: 100%;
   overflow-wrap: break-word;
 }
 
@@ -876,43 +881,60 @@ main {
   background: #f7f7f7;
 }
 
-.num_of_articles, .entity-info-section {
+.num_of_articles,
+.entity-info-section {
   width: 45%
 }
 
 .topic-bar-header {
   border-bottom: unset;
   border-right: solid 1px #b7b7b7;
-  margin:1%;
-  padding:1%;
+  margin: 1%;
+  padding: 1%;
   max-width: 27%;
 }
 
 .navigate-container {
-  background: #f7f7f7;
+  width: 5%;
+  text-align: center;
+  display: flex;
+  height: 5%;
+  position: absolute;
+  top: 2%;
+  right: 1%;
+  z-index: 999;
+
+  box-shadow: 0 0 0 0 rgba(0, 0, 0, 1);
+  transform: scale(1);
+  animation: pulse 2s infinite;
 }
 
-.threshold-title{
+a.goNext {
+  text-decoration: none;
+  margin: 10%;
+  color: #4caaf5;
+}
+
+.threshold-title {
   width: 100%;
 }
 
 
 @keyframes pulse {
-	0% {
-		transform: scale(0.95);
-		box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7);
-	}
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7);
+  }
 
-	70% {
-		transform: scale(1);
-		box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
-	}
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
+  }
 
-	100% {
-		transform: scale(0.95);
-		box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
-	}
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+  }
 }
-
 </style>
 

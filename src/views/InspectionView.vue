@@ -341,6 +341,9 @@ function updateSegmentation({pos, neg}) {
         <SplitterPanel id="entity_info_section" class="entity-info-panel flex align-items-center justify-content-center" :size="right_section_size" >
             <div class="entity-info-container">
                 <div class="target-cooccurr-container">
+                    <div v-if="Object.keys(constraint_dict[selected_entity.name]||{}).length > 0" class="navigate-container">
+                            <router-link  class="goNext" :to="{ name: 'summary', params: { entity: selected_entity.name }}"> Summary Report </router-link>
+                        </div>
                     <h2 class="component-header cooccurr-info-header">
                     Outlet Coverage
                     </h2>
@@ -451,7 +454,7 @@ function updateSegmentation({pos, neg}) {
                                 @click="removeConstraint({target: selected_entity.name, outlet: outlet})"></i> 
                             </tr>
                         </table> 
-                        <router-link v-if="Object.keys(constraint_dict[selected_entity.name]||{}).length > 0" :to="{ name: 'summary', params: { entity: selected_entity.name }}"> Summary </router-link>
+                    
                     </div>
                     <!-- <Divider layout="vertical"></Divider> -->
                     <div class="outlet-scatter-container">
@@ -547,11 +550,11 @@ ol {
 li {
     white-space: pre;
 }
-a {
-  position: absolute;
-  top: 73%;
-  left: 71%;
-}
+// a {
+//   position: absolute;
+//   top: 73%;
+//   left: 71%;
+// }
 
 :deep(.p-slider.p-component.p-slider-horizontal) {
   width: 50%;
@@ -669,4 +672,46 @@ a {
     flex: 1 1 25%;
     padding-right: 0%;
 }
+
+
+.navigate-container {
+    text-align: center;
+    display: flex;
+    position: absolute;
+    height: 25%;
+    width: 25%;
+    top: 10%;
+    right: 1%;
+    z-index: 999;
+    box-shadow: 0 0 0 0 rgb(0 0 0);
+    transform: scale(1);
+    animation: pulse-a39a231a 2s infinite;
+}
+
+a.goNext {
+    text-decoration: none;
+    margin: 1%;
+    color: #4caaf5;
+    width: 100%;
+}
+
+
+@keyframes pulse {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 #4caaf5;
+    }
+
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
+    }
+
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+    }
+}
+
+
 </style>
