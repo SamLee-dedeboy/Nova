@@ -30,6 +30,7 @@ import EntityInfoView from "../components/EntityInfoView.vue";
 import TopicBars from "../components/TopicBars.vue";
 import HorizontalTopicBars from '../components/HorizontalTopicBars.vue';
 import Legend from '../components/Legend.vue';
+import HexEntityScatter from '../components/HexEntityScatter.vue';
 
 const route = useRoute()
 const store = useStore()
@@ -47,6 +48,8 @@ const setClickedHexView = (hexview) => store.commit("setClickedHexView", hexview
 const hexview_grid = vue.computed(() => store.state.hexview_grid)
 const setHexViewGrid = (grid) => store.commit("setHexViewGrid", grid)
 const outlet_weight_dict = vue.computed(() => store.state.outlet_weight_dict)
+
+const hex_entity_scatter_view: Ref<any> = ref(undefined)
 
 const notes = vue.computed(() => store.state.notes)
 const setNotes = (notes) => store.commit("setNotes", notes)
@@ -85,6 +88,10 @@ vue.onMounted(async () => {
                     hexview_grid_data.push(hex_view)
                 })
                 setHexViewGrid(hexview_grid_data)
+                console.log(data_list)
+                const hex_candidates = hexview_grid_data[0].data.sorted_cooccurrences_list.map((hex_entity: typeUtils.HexEntity) => hex_entity.entity)
+                hex_candidates.push(target_entity) 
+                fetch_entity_grouped_node(hex_candidates)
                 resolve("success")
             })
     }))
@@ -94,6 +101,30 @@ vue.onMounted(async () => {
             console.log("all fetched")
         })
 })
+
+async function fetch_entity_grouped_node(hex_candidates) {
+    await fetch(`${server_address}/processed_data/scatter_node/grouped/hex_candidates`, {
+      method: "POST",
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(hex_candidates)
+    })
+    .then(res => res.json())
+    .then(json => {
+        hex_entity_scatter_view.value = {
+            title: "Hex Entity Scatter",
+            data: {
+                nodes: json,
+                max_articles: Math.max(...json.map(node => node.article_ids.length)),
+                min_articles: Math.min(...json.map(node => node.article_ids.length)),
+            }
+        }
+        console.log(hex_entity_scatter_view.value)
+        console.log("hex entity scatter view fetched")
+    })
+}
 
 async function handleHexClicked({ target, co_occurr_entity }, view) {
     const entity = target.split("-")[0]
@@ -216,7 +247,7 @@ async function handleHexClicked({ target, co_occurr_entity }, view) {
                 </div>
                 <div class="legend-utils" v-if="selected_entity">
                     <h2 class="component-header legend-header">
-                        Coverage Sentiment
+                        Some Scatter
                         <!-- <i class='pi pi-info-circle tooltip'>
                             <span class="tooltiptext right-tooltiptext" style="width: 120px;">
                                 The sentiments have four categories as listed. <br/>
@@ -224,8 +255,16 @@ async function handleHexClicked({ target, co_occurr_entity }, view) {
                             </span>
                         </i> -->
                     </h2>
-                    <Legend v-if="selected_entity" id="segment_legend" class="segment-legend"
-                        :color_dict="SstColors.hive_color_dict" :filter="true"></Legend>
+                    <HexEntityScatter
+                        ref="hex_entity_scatter"
+                        v-if="hex_entity_scatter_view"
+                        :view="hex_entity_scatter_view"
+                        :highlight_node_text="selected_entity.name"
+                        id="hex_entity_scatter"
+                        :segment_mode="true"
+                        :segmentation="segmentation"
+                        @update:segmentation="setSegmentation" >
+                    </HexEntityScatter>
                 </div>
                 <div class="notes-section" v-if="selected_entity">
                     <h2 class="component-header notes-header">

@@ -173,6 +173,16 @@ def ids_to_article_highlights():
     }
     return json.dumps(res, default=vars)
 
+
+@app.route("/processed_data/scatter_node/grouped/hex_candidates", methods=["POST"])
+def getHexCandidateGroupedNodes(): 
+    hex_candidates = request.json
+    nodes = []
+    for node in overview_scatter_overall_data.nodes:
+        if node.text in hex_candidates:
+            nodes.append(node)
+    return json.dumps(nodes, default=vars)
+
 @app.route("/test")
 def test():
     return get_overall_scatter_data()
