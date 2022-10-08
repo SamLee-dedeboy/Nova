@@ -79,7 +79,8 @@ const offsetScale = vue.computed(() => {
 const adjust_offset = vue.computed(() => offsetScale.value(intensity.value))
 
 vue.onMounted(() => {
-    fetch_articles(marked_articles_ids_with_outlet.value.map(pair => pair.article_ids))
+    console.log(marked_articles_ids_with_outlet.value)
+    fetch_articles(marked_articles_ids_with_outlet.value.map(pair => pair.article_id))
     fetch_entity_grouped_node(selected_entity.value.name)
     Object.keys(outlet_weight_dict.value).forEach(outlet => {
         constraint_statisfaction.value[outlet] = true
@@ -96,6 +97,7 @@ function checkCategorization(target_node: ScatterNode, segmentation: Sentiment2D
     return "unknown"
 }
 async function fetch_articles(article_ids) {
+    console.log("🚀 ~ file: SummaryView.vue ~ line 99 ~ fetch_articles ~ article_ids", article_ids)
     await fetch(`${server_address}/processed_data/ids_to_articles`,{
       method: "POST",
       headers: {
@@ -250,7 +252,7 @@ function checkConstraint(type: SentimentType, target: Sentiment2D, segmentation:
             </i>
             </h2>
             <i class='pi pi-info-circle tooltip' style="position:absolute; left: 90%; margin:1%; z-index: 1;"
-            v-if="false">
+            v-if="has_conflict">
                 <span class="tooltiptext right-tooltiptext" style="width: 350px;">
                     <span style="font-weight:bolder">Why is there a red item?</span> <br/>
                     Seeing a red colored item means the description you made is not true any more.<br/>
@@ -270,27 +272,25 @@ function checkConstraint(type: SentimentType, target: Sentiment2D, segmentation:
                     <td> {{outlet}} </td>
                     <td> {{outlet_category[outlet]}} </td>
                     <td> {{constraint_dict[selected_entity.name]?.[outlet] || "unset"}} </td>
-                    <i class="pi pi-times-circle" style="cursor:pointer" 
-                    @click="removeConstraint({target: selected_entity.name, outlet: outlet})"></i> 
+                    <!-- <i class="pi pi-times-circle" style="cursor:pointer" 
+                    @click="removeConstraint({target: selected_entity.name, outlet: outlet})"></i>  -->
                 </tr>
             </table> 
         
         </div>
         <!-- <Divider layout="vertical"></Divider> -->
         <div class="outlet-scatter-container">
-            <ScrollPanel>
-                <OutletScatterplot
-                    ref="outlet_scatter"
-                    v-if="entity_grouped_view"
-                    :view="entity_grouped_view"
-                    :highlight_node_text="selected_entity.outlet"
-                    :adjust_offset="adjust_offset"
-                    id="outlet-scatter"
-                    :segment_mode="true"
-                    :segmentation="segmentation"
-                    @update:segmentation="setSegmentation" >
-                </OutletScatterplot>
-            </ScrollPanel>
+            <OutletScatterplot
+                ref="outlet_scatter"
+                v-if="entity_grouped_view"
+                :view="entity_grouped_view"
+                :highlight_node_text="selected_entity.outlet"
+                :adjust_offset="adjust_offset"
+                id="outlet-scatter"
+                :segment_mode="true"
+                :segmentation="segmentation"
+                @update:segmentation="setSegmentation" >
+            </OutletScatterplot>
         </div>
     </div>
 </div>
@@ -415,5 +415,11 @@ th {
 .not_satisfied {
     background: #f88e8e;
     transition: background 1s;
+}
+.constraints-view {
+  width: 100%;
+}
+.outlet-scatter-container {
+  width: 100%;
 }
 </style>
