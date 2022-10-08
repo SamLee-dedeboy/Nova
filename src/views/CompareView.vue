@@ -69,6 +69,7 @@ const data_fetched: Ref<boolean> = ref(false)
 
 vue.onMounted(async () => {
     const target_entity: string = route.params.entity as string
+    const cooccurr_entity = route.params.cooccurr_entity as string
     const promiseArray: any[] = []
     promiseArray.push(new Promise((resolve) => {
         fetch(`${server_address}/hexview/grouped/${target_entity}`)
@@ -134,12 +135,12 @@ async function handleHexClicked({ target, co_occurr_entity }, view) {
     <Splitter class="splitter-outmost">
         <SplitterPanel id="hexview_section" class="hexview-section flex align-items-center justify-content-center"
             :size="left_section_size" :min-size="left_section_size">
-            <div v-if="selected_entity.outlet ==='Overall'" class="reminder-click-hex">
+            <div v-if="selected_entity?.outlet ==='Overall'" class="reminder-click-hex">
                 Click any hexagon on the left to continue to next stage.
             </div>
 
-            <div v-if="selected_entity.outlet !== 'Overall'" class="navigate-container">
-                <router-link class="goNext" :to="{ name: 'inspection', params: { entity: selected_entity.name }}">Next
+            <div v-if="selected_entity?.outlet !== 'Overall'" class="navigate-container">
+                <router-link class="goNext" :to="{ name: 'inspection', params: { entity: selected_entity?.name || 'undefined' }}">Next
                     Stage</router-link>
             </div>
             <h2 class="component-header hexview-grid-header">
@@ -148,7 +149,7 @@ async function handleHexClicked({ target, co_occurr_entity }, view) {
                 &nbsp
                 <i class='pi pi-info-circle tooltip'>
                     <span class="tooltiptext right-tooltiptext" style="width: 500px">
-                        Each hive represents the coverage on {{ selected_entity.name }} by that outlet. <br />
+                        Each hive represents the coverage on {{ selected_entity?.name }} by that outlet. <br />
                         A hexagon is left blanked if the outlet does not cover that topic. <br />
                         Try to discover outlet coverage differences and common grounds.
                     </span>
