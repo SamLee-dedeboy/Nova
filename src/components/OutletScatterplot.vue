@@ -68,7 +68,7 @@
     const show_highlight = true
     const node_clickable = false
     const show_region_label = false
-    const emit_at_end = true
+    const emit_at_end = false
     const svgId = "outletSvg"
     const entityScatterPlot = new EntityScatter(
         props, 
