@@ -326,6 +326,12 @@ vue.watch(tutorial_step, (new_value, old_value) => {
 // send data
 async function handleEntityClicked(entity: string) {
   const metadata = overview_overall_scatter_metadata.value
+
+  legendInput.value = {}
+  legendInput.value[entity] = "white";
+  legendInput.value["Co-Occuring Topic"]= "#4baaf5"; 
+
+
   setCooccurrEntity(undefined)
   const promiseArray: any[] = []
   promiseArray.push(new Promise((resolve) => {
@@ -442,8 +448,21 @@ async function fetch_topic_bins(target, callback) {
     .then(callback)
 }
 
+let legendInput =  ref({});
+legendInput.value["main"] = "white";
+legendInput.value["co-occur"]= "#4baaf5"; 
 
 async function handleHexClicked({ target, co_occurr_entity }: { target: string, co_occurr_entity: string }) {
+
+   let mainTopic = target;
+   let coOccurTopic = target +  " & " + co_occurr_entity; 
+
+   legendInput.value = {}
+
+   legendInput.value[mainTopic] = "white";
+   legendInput.value[coOccurTopic]= "#4baaf5"; 
+   
+
   await fetch(`${server_address}/processed_data/cooccurr_info/overall/${target}/${co_occurr_entity}`)
     .then(res => res.json())
     .then(json => {
@@ -489,8 +508,8 @@ function updateSegmentation({ pos, neg }) {
               COVID-19 News Topics
               <i class='pi pi-info-circle tooltip'>
                 <span class="tooltiptext right-tooltiptext" style="width: 200px;">
-                  Each circle is a topic with 2-d sentiment score (pos, neg). <br />
-                  The scores are determined by how many positive and negatives articles they have.
+                  Each point is a topic with 2D sentiment score (pos, neg). <br />
+                  The score represents how many positive and negatives articles they have.
                 </span>
               </i>
             </h2>
@@ -580,7 +599,7 @@ function updateSegmentation({ pos, neg }) {
         <Splitter layout="vertical">
           <SplitterPanel class="overview-hex-panel" :size="hex_view_panel_size">
             <div class="reminder-click-entity" v-if="!selected_entity && overview_constructed"> Click on one of the news
-              topic nodes. </div>
+              topic points. </div>
             <!-- Hex view -->
             <h2 class="component-header hexview-header" v-if="selected_entity">
               Topic Co-occurrence Hive
@@ -622,11 +641,11 @@ function updateSegmentation({ pos, neg }) {
                 <div class="cooccurr-info-content">
                   <div class="num_of_articles">
                     Number of articles about
-                    <span style="font-weight:bolder"> {{selected_entity.name}} </span>
+                    <span style="font-weight:bolder"> {{selected_entity.name.replaceAll("_", " ")}} </span>
                     <span v-if="selected_cooccurr_entity">
                       and
                       <span style="font-weight:bolder">
-                        {{selected_cooccurr_entity.name}}
+                        {{selected_cooccurr_entity.name.replaceAll("_", " ")}}
                       </span>
                     </span>
                     is {{ selected_cooccurr_entity? selected_cooccurr_entity.num_of_mentions :
@@ -634,8 +653,8 @@ function updateSegmentation({ pos, neg }) {
                   </div>
                   <Divider layout="vertical"></Divider>
                   <ul class="entity-info-section">
-                    <li> Main topic: {{ selected_entity.name }} </li>
-                    <li v-if='selected_cooccurr_entity'> Co-occur topic: {{ selected_cooccurr_entity.name }} </li>
+                    <li> Main topic: {{ selected_entity.name.replaceAll("_", " ") }} </li>
+                    <li v-if='selected_cooccurr_entity'> Co-occur topic: {{ selected_cooccurr_entity.name.replaceAll("_", " ") }} </li>
                   </ul>
                 </div>
                 <!-- <EntityInfoView v-if="selected_entity?.outlet === 'Overall'" title="Target Entity"
@@ -663,7 +682,7 @@ function updateSegmentation({ pos, neg }) {
                     </span>
                   </i>
                   <br />
-                  <Legend id="policy_legend" class="policy-bar-legend" :color_dict="SstColors.topic_color_dict">
+                  <Legend id="policy_legend" class="policy-bar-legend" :color_dict="legendInput">
                   </Legend>
                   <span style="font-size: small; width:max-content;">
                     <!-- Some explanation here a lot of explanation here more explanation here -->

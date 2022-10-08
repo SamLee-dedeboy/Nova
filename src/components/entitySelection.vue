@@ -6,9 +6,9 @@
                 <line x1="0" y1="0" x2="0" y2="10" style="stroke:#f4c49c; stroke-width:8" />
             </pattern>
         </svg>
-        <div class="button-set">
+        <!-- <div class="button-set">
             <Button class="reset-zoom p-button-secondary" @click="resetZoom">reset</Button>
-        </div>
+        </div> -->
         <NodeInfo class='nodeinfo' :node="hovered_node_info" :total_articles="total_articles" style="position:absolute; z-index:1000;pointer-events: none;"></NodeInfo>
     
     </div>
@@ -69,7 +69,7 @@
     const show_axes = true
     const show_offset = false
     const show_highlight = false
-    const zoomable = true
+    const zoomable = false
     const node_clickable = true
     const show_region_label = true
     const emit_at_end = false
