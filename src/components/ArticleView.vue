@@ -5,9 +5,10 @@ import ToggleButton from 'primevue/togglebutton'
 import * as vue from "vue"
 import * as _ from "lodash"
 import * as SstColors from "./utils/ColorUtils"
-import { Ref, ref } from "vue"
+import { Ref, ref, nextTick } from "vue"
 import { Article } from "../types"
 import { useStore } from 'vuex'
+
 
 const store = useStore()
 const props = defineProps({
@@ -21,9 +22,10 @@ const removeMarkedArticle = (article_id: number) => store.commit("removeMarkedAr
 
 
 vue.onMounted(() => {
+    addHeaderClickEvent()
     const pos_scroll_panel = document.querySelector(".pos-article-list > .p-scrollpanel-wrapper > .p-scrollpanel-content")
     const neg_scroll_panel = document.querySelector(".neg-article-list > .p-scrollpanel-wrapper > .p-scrollpanel-content")
-    pos_scroll_panel?.addEventListener("scroll", function(event) {
+    pos_scroll_panel?.addEventListener("scroll", async function(event) {
         const element = event.target as HTMLElement
         if (element.scrollHeight - element.scrollTop - element.clientHeight < 5) {
             const old_len = pos_panel_articles.value.length
@@ -32,6 +34,8 @@ vue.onMounted(() => {
                 pos_panel_articles.value = pos_panel_articles.value.concat(next_ten_articles)
             const pos_panel_togglers = document.querySelectorAll(".pos-article-list > .p-scrollpanel-wrapper > .p-scrollpanel-content > .p-panel-toggleable > .p-panel-header > .p-panel-icons > .p-panel-toggler")
             pos_panel_togglers.forEach(toggler => toggler.classList.add("pos-toggler"))
+            await nextTick();
+            addHeaderClickEvent()
         }
     })
     neg_scroll_panel?.addEventListener("scroll", function(event) {
@@ -43,6 +47,7 @@ vue.onMounted(() => {
                 neg_panel_articles.value = neg_panel_articles.value.concat(next_ten_articles)
             const neg_panel_togglers = document.querySelectorAll(".neg-article-list > .p-scrollpanel-wrapper > .p-scrollpanel-content > .p-panel-toggleable > .p-panel-header > .p-panel-icons > .p-panel-toggler")
             neg_panel_togglers.forEach(toggler => toggler.classList.add("neg-toggler"))
+            addHeaderClickEvent()
         }
     })
     const pos_panel_togglers = document.querySelectorAll(".pos-article-list > .p-scrollpanel-wrapper > .p-scrollpanel-content > .p-panel-toggleable > .p-panel-header > .p-panel-icons > .p-panel-toggler")
@@ -61,6 +66,20 @@ const neg_articles = vue.computed(() => {
 })
 const neg_panel_articles: Ref<Article[]> = ref(neg_articles.value?.slice(0,10) || []) 
 const neg_marks: Ref<boolean[]> = ref(Array(neg_articles.value?.length || 0).fill(false))
+
+function addHeaderClickEvent() {
+    return
+    const headers = document.querySelectorAll('.p-panel-header') 
+    headers.forEach(header => {
+        header.addEventListener("click", function(e) {
+            console.log("header clicked", header.childNodes[3].childNodes[2])
+            if(e.target != header.childNodes[3].childNodes[2] &&
+                ![...header.childNodes[3].childNodes[2].childNodes].includes(e.target)
+            ) 
+            header.childNodes[3].childNodes[2].click()
+        })
+    })
+}
 
 function sortByRelevance(a1, a2): number {
     const r1 = a1.entity_candidates.filter(pair => pair[0] === props.entity_pair![0] || pair[0] === props.entity_pair![1])
@@ -133,16 +152,17 @@ function highlight_element(text) {
 }
 
 function handleMark(mark, index: number, type: string) {
+    const outlet = props.articles?.[0].journal
     if(type === "pos") {
         pos_marks.value[index] = mark
         const article_id: number = pos_articles.value![index].id
-        if(mark) addMarkedArticle(article_id)
+        if(mark) addMarkedArticle({article_id, outlet})
         else removeMarkedArticle(article_id)
     }
     if(type === "neg") {
         neg_marks.value[index] = mark
         const article_id: number = neg_articles.value![index].id
-        if(mark) addMarkedArticle(article_id)
+        if(mark) addMarkedArticle({article_id, outlet})
         else removeMarkedArticle(article_id)
     }
 }
