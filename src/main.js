@@ -56,8 +56,8 @@ const store = createStore({
     setNotes(state, notes) {
       state.notes = notes
     },
-    addMarkedArticle(state, {article_id, outlet}) {
-      state.marked_articles.push({article_id,outlet})
+    addMarkedArticle(state, article_info) {
+      state.marked_articles.push(article_info)
     },
     removeMarkedArticle(state, article_id) {
       const index = state.marked_articles.map(pair => pair.article_id).indexOf(article_id);

@@ -62,11 +62,12 @@ const target_article_highlights: Ref<any> = ref({})
 const notes = vue.computed(() => store.state.notes)
 const setNotes = (notes) => store.commit("setNotes", notes)
 const marked_articles_ids_with_outlet = vue.computed(() => store.state.marked_articles)
-const marked_articles_grouped = vue.computed(() => {
+const marked_article_info_grouped = vue.computed(() => {
     const res = {}
-    marked_articles_ids_with_outlet.value.forEach(({article_id, outlet}) => {
+    marked_articles_ids_with_outlet.value.forEach((article_info) => {
+        const outlet = article_info.outlet
         if(!res[outlet]) res[outlet] = []
-        res[outlet].push(article_id)
+        res[outlet].push(article_info)
     })
     return res
 }) 
@@ -221,13 +222,12 @@ async function fetch_cooccurr_into(outlet, entity, co_occurr_entity) {
     <Splitter class="splitter-outmost">
         <SplitterPanel id="article_view_section" class="articleview-section flex align-items-center justify-content-center" :size="left_section_size">
             <i v-if="!data_fetched" class="pi pi-spin pi-spinner" 
-            style="
-            position:absolute;
-            left: 45%;
-            top: 30%;
-            font-size: 3rem;
-            z-index: 1000
-            "></i> 
+                style="position:absolute;
+                left: 45%;
+                top: 30%;
+                font-size: 3rem;
+                z-index: 1000">
+            </i> 
             <h2 class="component-header article-view-header"> 
                 Articles on 
                 <span> {{selected_entity?.name}} </span> 
@@ -366,8 +366,11 @@ async function fetch_cooccurr_into(outlet, entity, co_occurr_entity) {
                                     <td> {{outlet}} </td>
                                     <td> {{constraint_dict[selected_entity.name]?.[outlet] || "unset"}} </td>
                                     <td>
-                                        <i v-for="id in marked_articles_grouped[outlet]" 
-                                            class="pi pi-file">
+                                        <i v-for="article_info in marked_article_info_grouped[outlet]" 
+                                            class="pi pi-file tooltip" >
+                                            <span class="tooltiptext right-tooltiptext" style="width: max-content">
+                                                {{article_info.description}}
+                                            </span>
                                         </i>
                                     </td>
                                 </tr>
