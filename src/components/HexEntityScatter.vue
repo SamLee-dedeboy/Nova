@@ -70,6 +70,9 @@
     const show_region_label = true
     const emit_at_end = false
     const svgId = "hexEntitySvg"
+    const manualTooltip = true
+    const manualTooltipID = "#hexScatterToolTip"
+
     const entityScatterPlot = new EntityScatter(
         props, 
         svgId,
@@ -87,6 +90,8 @@
         total_articles, min_articles, max_articles, 
         clicked_node, clicked_node_element, 
         hovered_node_info,
+        manualTooltip,
+        manualTooltipID
     );
 
     vue.watch(() => props.view, (new_view, old_view) => {

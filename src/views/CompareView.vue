@@ -283,6 +283,7 @@ function outletIconHeaderStyle(name: string) {
                         id="hex_entity_scatter" :segment_mode="true" :segmentation="segmentation"
                         @update:segmentation="setSegmentation">
                     </HexEntityScatter>
+                    <h4 id="hexScatterToolTip" class="toolTipStyle"> </h4>
                 </div>
                 
             </div>
@@ -513,9 +514,16 @@ a.goNext {
   }
 }
 
+.hex-entity-scatter {
+    height: 75%;
+}
 
 .cooccurr-info-header {
     height: 59%;
+}
+
+.toolTipStyle{
+    text-align: center;
 }
 
 p.next {
