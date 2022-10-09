@@ -8,6 +8,8 @@ import {Ref, ref } from 'vue'
 import { useStore } from 'vuex'
 import ScrollPanel from 'primevue/scrollpanel'
 import Panel from 'primevue/panel'
+import SelectButton from "primevue/selectbutton"
+import Dropdown from "primevue/dropdown"
 
 /**
  * vue components
@@ -22,23 +24,28 @@ import { Article, SentimentType, Sentiment2D, Constraint, ScatterNode, CooccurrH
 const store = useStore()
 const notes = vue.computed(() => store.state.notes)
 const selected_entity = vue.computed(() => store.state.selected_entity)
+const setEntity = (entity) => store.commit("setEntity", entity)
+const selected_cooccurr_entity = vue.computed(() => store.state.selected_cooccurr_entity)
+const setCooccurrEntity = (cooccurr_entity) => store.commit("setCooccurrEntity", cooccurr_entity)
 const outlet_weight_dict = vue.computed(() => store.state.outlet_weight_dict)
-const marked_articles_ids_with_outlet = vue.computed(() => store.state.marked_articles)
+const marked_article_info = vue.computed(() => store.state.marked_articles)
 const marked_articles: Ref<Article[]> = ref([])
 const server_address = vue.inject("server_address")
 const highlight_hex_entity: Ref<string> = ref("")
 const marked_articles_grouped = vue.computed(() => {
     const res = {}
     marked_articles.value.forEach((article: Article) => {
+        const article_info = marked_article_info.value.find(article_info => article_info.article_id === article.id)
+        article["fairness"] = article_info.mark
+        article["notes"] = article_info.description
         if(!res[article.journal]) res[article.journal] = []
         res[article.journal].push(article)
     })
-    console.log(res)
     return res
 }) 
 const merged_outled_set = vue.computed(() => {
-    const constraint_outlet_set = new Set(Object.keys(constraint_dict.value[selected_entity.value.name]))
-    const marked_articles_outlet_set = new Set(Object.keys(marked_articles_grouped.value))
+    const constraint_outlet_set = new Set(Object.keys(constraint_dict.value[selected_entity.value.name]|| {}))
+    const marked_articles_outlet_set = new Set(Object.keys(marked_articles_grouped.value||{}))
     const res = new Set([...constraint_outlet_set, ...marked_articles_outlet_set])
     console.log(res)
     return res
@@ -69,6 +76,43 @@ const outlet_category = vue.computed(() => {
     return res
 })
 
+const hexview_grid = vue.computed(() => store.state.hexview_grid)
+const clicked_hexview = vue.computed(() => store.state.clicked_hexview)
+const setClickedHexView = (hexview) => store.commit("setClickedHexView", hexview)
+const selectedCategory: Ref<any> = ref({})
+vue.watch(selectedCategory, (new_value, old_value) => {
+    if (selectedCategory.value === undefined) return
+    // const adjust_target: Sentiment2D = selected_entity.value.sst_ratio || {pos: 0.5, neg: 0.5}
+    // // const offset = 0.05
+    // if(new_value.type === SentimentType.neu) {
+    //     setSegmentation({pos: adjust_target.pos + adjust_offset.value, neg: adjust_target.neg + adjust_offset.value})
+    // }
+    // if(new_value.type === SentimentType.neg) {
+    //     setSegmentation({pos: adjust_target.pos + adjust_offset.value, neg: adjust_target.neg - adjust_offset.value})
+    // }
+    // if(new_value.type === SentimentType.pos) {
+    //     setSegmentation({pos: adjust_target.pos - adjust_offset.value, neg: adjust_target.neg + adjust_offset.value})
+    // }
+    // if(new_value.type === SentimentType.mix) {
+    //     setSegmentation({pos: adjust_target.pos - adjust_offset.value, neg: adjust_target.neg - adjust_offset.value})
+    // }
+    const new_constraint: Constraint = {
+        target: selected_entity.value.name,
+        outlet: selected_entity.value.outlet,
+        sentiment: new_value.type,
+    }
+    addConstraint(new_constraint)
+})
+
+const addConstraint = (constraint: Constraint) => store.commit("addConstraint", constraint)
+const journal_options = [
+    "CNN",
+    "FoxNews",
+    "Breitbart",
+    "ABC News",
+    "New York Times",
+    "Washington Post"
+]
 const intensity: Ref<number> = ref(0.5)
 const offsetScale = vue.computed(() => {
     const adjust_target: Sentiment2D = selected_entity.value.sst_ratio || {pos: 0.5, neg: 0.5}
@@ -82,13 +126,13 @@ const offsetScale = vue.computed(() => {
 const adjust_offset = vue.computed(() => offsetScale.value(intensity.value))
 
 vue.onMounted(() => {
-    console.log(marked_articles_ids_with_outlet.value)
-    fetch_articles(marked_articles_ids_with_outlet.value.map(pair => pair.article_id))
+    fetch_articles(marked_article_info.value.map(pair => pair.article_id))
     fetch_hexview(selected_entity.value.name)
     fetch_entity_grouped_node(selected_entity.value.name)
     Object.keys(outlet_weight_dict.value).forEach(outlet => {
         constraint_statisfaction.value[outlet] = true
     })
+    selected_outlet.value = selected_entity.value.outlet
 })
 
 function checkCategorization(target_node: ScatterNode, segmentation: Sentiment2D) {
@@ -147,8 +191,49 @@ function getColor(type: string): string {
     if(type === "pos") return SstColors.pos_color   
     if(type === "neg") return SstColors.neg_color
     return "white"
-
 }
+
+async function handleChangeJournal(e) {
+    // const outlet = e.target.value
+    const outlet = e.value
+    selected_outlet.value = outlet
+    const entity = selected_entity.value.name
+    const co_occurr_entity = selected_cooccurr_entity.value.name
+    const view = hexview_grid.value.find(view => view.title.split("-")[2] === outlet)
+    setClickedHexView(view)
+    await fetch_cooccurr_into(outlet, entity, co_occurr_entity)
+    highlight_hex_entity.value = selected_cooccurr_entity.value.name
+    // setSegmentation(selected_entity.value.sst_ratio)
+    selected_outlet.value = selected_entity.value.outlet
+    selectedCategory.value = undefined
+}
+
+async function fetch_cooccurr_into(outlet, entity, co_occurr_entity) {
+    await fetch(`${server_address}/processed_data/cooccurr_info/grouped/${outlet}/${entity}/${co_occurr_entity}`)
+        .then(res => res.json())
+        .then(json => {
+            console.log("cooccurr_info fetched")
+            const target_entity = {
+                name: json.target,
+                outlet: outlet,
+                num_of_mentions: json.target_num,
+                articles_topic_dict: json.target_articles_topic_dict,
+                sst_ratio: clicked_hexview.value.data.target.sst
+            }
+            setEntity(target_entity)
+            const cooccurr_entity = {
+                target: json.target,
+                name: json.cooccurr_entity,
+                outlet: outlet,
+                num_of_mentions: json.cooccurr_num,
+                target_num_of_mentions: json.target_num_of_mentions,
+                articles_topic_dict: json.cooccurr_articles_topic_dict,
+                cooccurr_article_ids: json.cooccurr_article_ids
+            }
+            setCooccurrEntity(cooccurr_entity)
+        })
+}
+
 
 async function fetch_entity_grouped_node(entity) {
     await fetch(`${server_address}/processed_data/scatter_node/grouped/${entity}`)
@@ -170,6 +255,9 @@ async function fetch_entity_grouped_node(entity) {
 vue.watch(segmentation, (new_value, old_value) => {
     checkConflict(constraint_dict.value[selected_entity.value.name], entity_grouped_view.value.data.nodes)
 })
+
+const selected_outlet: Ref<string> = ref("")
+
 const has_conflict: Ref<boolean> = ref(false)
 function checkConflict(constraint_dict, outlet_nodes) {
     has_conflict.value = false
@@ -243,27 +331,30 @@ const sentiment_options = [
                     <ScrollPanel class="conclusion-content">
                         <div class="constraint-container"
                         v-for="outlet in merged_outled_set">
-                            <div class="constraint-header" :style="{background:getColor(constraint_dict[selected_entity.name][outlet])}">
+                            <!-- <div class="constraint-header" :style="{background:getColor(constraint_dict[selected_entity.name][outlet])}">
                                 {{outlet}} - {{constraint_dict[selected_entity.name][outlet] || "unset"}}
+                            </div> -->
+                            <div class="constraint-header">
+                                {{outlet}}
                             </div>
-                            <Panel v-for="(article, index) in marked_articles_grouped[outlet]"
-                            :header="index+1 + '. ' + article.headline"
-                            :key="article.id"
-                            :toggleable="true"
-                            :collapsed="true">
-                                <template #header>
+                            <div class="marked-article-container">
+                                <div v-for="(article, index) in marked_articles_grouped[outlet]">
                                     <span class="headline">
-                                        <span v-html="index+1+'. '  + article.headline">
+                                        <i class="pi pi-file" 
+                                        :class="{fair_icon: article.fairness, unfair_icon: !article.fairness}">
+                                        </i>
+                                        <span v-html="article.headline">
                                         </span>
                                     </span>
-                                </template>
-                                <ScrollPanel style="width: 100%; height: 200px">
-                                    <div class="summary">
-                                        <span v-html="removeTags(article.summary)">
-                                        </span>
+                                    <!-- <div class="fairness">
+                                        Fairness: {{article.fairness? "fair":"unfair"}}
+                                    </div> -->
+                                    <div class="notes">
+                                        Notes: {{article.notes}}
                                     </div>
-                                </ScrollPanel>
-                            </Panel>
+                                </div>
+
+                            </div>
                         </div>
                     </ScrollPanel>
                 </div>
@@ -271,22 +362,40 @@ const sentiment_options = [
         </div>
     </div>
     <div class="summary-right-section">
+        <h2 class="component-header hexview-header" v-if="selected_entity">
+            Topic Co-occurrence Hive
+            <i class='pi pi-info-circle tooltip'>
+            <span class="tooltiptext right-tooltiptext" style="width: 400px">
+                Shows most-frequently co-occurring topics with the main topic ({{ selected_entity.name }}). <br />
+                Each co-occurring topic is categorized by the region segmentation in the Topic Scatterplot.
+            </span>
+            </i>
+        </h2>
         <div class="entity-hive">
-            <h2 class="component-header hexview-header" v-if="selected_entity">
-              Topic Co-occurrence Hive
-              <i class='pi pi-info-circle tooltip'>
-                <span class="tooltiptext right-tooltiptext" style="width: 400px">
-                  Shows most-frequently co-occurring topics with the main topic ({{ selected_entity.name }}). <br />
-                  Each co-occurring topic is categorized by the region segmentation in the Topic Scatterplot.
-                </span>
-              </i>
-            </h2>
             <div class="overview-hex-container">
               <HexCooccurrence ref="overall_co_hexview" v-if="overall_selected_hexview" class="overall-co-hexview"
                 :title="overall_selected_hexview.title" :id="`overall-co-hex`"
                 :highlight_hex_entity="highlight_hex_entity"
                 :entity_cooccurrences="overall_selected_hexview.data" :segmentation="segmentation">
               </HexCooccurrence>
+            </div>
+        </div>
+        <div class="select-category-container">
+            <div class="question-container">
+                <span class="question-content">
+                    How would you describe the coverage on
+                    <span> {{selected_entity?.name.replaceAll("_"," ")}} </span>
+                    by &nbsp
+                </span>
+                <div class="journal-info-container" style="font-size:small">
+                    <Dropdown :modelValue="selected_outlet" :options="journal_options"
+                        placeholder="Select an journal" @change="handleChangeJournal" />
+                </div>
+            </div>
+            <div class="selection-container">
+                <SelectButton v-model="selectedCategory" :options="sentiment_options" option-label="value"
+                    data-key="type">
+                </SelectButton>
             </div>
         </div>
         <div class="relfection-container">
@@ -340,24 +449,6 @@ const sentiment_options = [
                     :segmentation="segmentation"
                     @update:segmentation="setSegmentation" >
                 </OutletScatterplot>
-            </div>
-            <div class="select-category-container">
-                <div class="question-container">
-                    <span>
-                        How would you describe the coverage on
-                        <span> {{selected_entity?.name.replaceAll("_"," ")}} </span>
-                        by &nbsp
-                    </span>
-                    <div class="journal-info-container" style="font-size:small">
-                        <Dropdown :modelValue="selected_outlet" :options="journal_options"
-                            placeholder="Select an journal" @change="handleChangeJournal" />
-                    </div>
-                </div>
-                <div class="selection-container">
-                    <SelectButton v-model="selectedCategory" :options="sentiment_options" option-label="value"
-                        data-key="type">
-                    </SelectButton>
-                </div>
             </div>
         </div>
     </div>
@@ -485,14 +576,25 @@ const sentiment_options = [
 
 // hex
 .entity-hive {
-  height: 70%;
-  /*! overflow: hidden; */
+  max-height: 50%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
-.overview-hex-container {
+.overview-hex-container[data-v-0de57da1] {
   height: 100%;
+  flex: 1 1 0;
 }
 
 // constraints table
+.question-container {
+  display: flex;
+}
+.question-content {
+    text-align: center;
+display: flex;
+align-items: center;
+}
 .constraint-table {
   width: 100%;
   font-size: 0.8rem;
@@ -500,7 +602,7 @@ const sentiment_options = [
 .relfection-container[data-v-0de57da1] {
   width: 100%;
   display: flex;
-  height: 100%;
+//   height: 100%;
   overflow: hidden;
 }
 
@@ -517,5 +619,21 @@ th {
 }
 .outlet-scatter-container {
   width: 100%;
+}
+
+:deep(.p-button) {
+    padding: 0.1rem 1rem;
+}
+
+:deep(.p-buttonset, .p-button) {
+    margin: 0.3rem 0rem;
+}
+.journal-info-container {
+    width: fit-content;
+    white-space: nowrap;
+    margin: 0.3rem 0rem;
+}
+:deep(.p-inputtext) {
+    padding: 0.2rem 0.5rem;
 }
 </style>

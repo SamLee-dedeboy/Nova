@@ -50,7 +50,6 @@ const highlight_hex_entity: Ref<string> = ref("")
 const setClickedHexView = (hexview) => store.commit("setClickedHexView", hexview)
 const hexview_grid = vue.computed(() => store.state.hexview_grid)
 const constraint_dict = vue.computed(() => store.state.constraints)
-const addConstraint = (constraint: Constraint) => store.commit("addConstraint", constraint)
 const ranked_outlets = vue.computed(() => {
     return Object.keys(outlet_weight_dict.value).sort(
         (o1, o2) => outlet_weight_dict.value[o1] - outlet_weight_dict.value[o2]
@@ -86,36 +85,10 @@ const journal_options = [
     "New York Times",
     "Washington Post"
 ]
-const selectedCategory: Ref<any> = ref({})
-vue.watch(selectedCategory, (new_value, old_value) => {
-    if (selectedCategory.value === undefined) return
-    // const adjust_target: Sentiment2D = selected_entity.value.sst_ratio || {pos: 0.5, neg: 0.5}
-    // // const offset = 0.05
-    // if(new_value.type === SentimentType.neu) {
-    //     setSegmentation({pos: adjust_target.pos + adjust_offset.value, neg: adjust_target.neg + adjust_offset.value})
-    // }
-    // if(new_value.type === SentimentType.neg) {
-    //     setSegmentation({pos: adjust_target.pos + adjust_offset.value, neg: adjust_target.neg - adjust_offset.value})
-    // }
-    // if(new_value.type === SentimentType.pos) {
-    //     setSegmentation({pos: adjust_target.pos - adjust_offset.value, neg: adjust_target.neg + adjust_offset.value})
-    // }
-    // if(new_value.type === SentimentType.mix) {
-    //     setSegmentation({pos: adjust_target.pos - adjust_offset.value, neg: adjust_target.neg - adjust_offset.value})
-    // }
-    const new_constraint: Constraint = {
-        target: selected_entity.value.name,
-        outlet: selected_entity.value.outlet,
-        sentiment: new_value.type,
-    }
-    addConstraint(new_constraint)
-})
-
 
 function prepare_data() {
     const article_ids = selected_cooccurr_entity.value.cooccurr_article_ids
     highlight_hex_entity.value = selected_cooccurr_entity.value.name
-    console.log("highlight", highlight_hex_entity.value)
     // setSegmentation(selected_entity.value.sst_ratio)
     selected_outlet.value = selected_entity.value.outlet
     const promiseArray: any[] = []
@@ -177,7 +150,7 @@ async function handleChangeJournal(e) {
     setClickedHexView(view)
     await fetch_cooccurr_into(outlet, entity, co_occurr_entity)
     prepare_data()
-    selectedCategory.value = undefined
+    // selectedCategory.value = undefined
 }
 
 async function handleHexClicked({ target, co_occurr_entity }, view) {
@@ -276,7 +249,7 @@ async function handleArticleIconClicked(article_info) {
             :size="right_section_size">
             <div class="entity-info-container">
                 <div class="target-cooccurr-container">
-                    <div v-if="Object.keys(constraint_dict[selected_entity?.name]||{}).length > 0"
+                    <div v-if="marked_articles_ids_with_outlet.length > 0"
                         class="navigate-container">
                         <router-link class="goNext" :to="{ name: 'summary', params: { entity: selected_entity.name }}">
                             Summary Report </router-link>
@@ -319,24 +292,31 @@ async function handleArticleIconClicked(article_info) {
                 <div class="document-container">
                     <div class="marked-articles-container">
                         <h2 class="component-header marked-articles-header">
-                            Conclusions
+                            Marked Articles
                         </h2>
                         <table class="mark-table">
                             <colgroup>
-                                <col span="1" style="width: 25%;">
-                                <col span="1" style="width: 15%;">
-                                <col span="1" style="width: 60%;">
+                                <col span="1" style="width: 35%;">
+                                <col span="1" style="width: 65%;">
                             </colgroup>
-                            <tbody>
+                            <tbody style="height:100%;">
                                 <tr v-for="outlet in ranked_outlets">
-                                    <td> {{outlet}} </td>
-                                    <td> {{constraint_dict[selected_entity.name]?.[outlet] || "unset"}} </td>
+                                    <td class="journal-image-text-cell"> 
+                                        <div :class="['journal-style', 'table-image' ]">
+                                            <img :src="`../src/assets/${outlet}.png`"
+                                                :class="['journal-image',`${outletIconStyle(outlet)}`]" />
+                                        </div>
+                                        <div class="table-outlet-text">
+                                            {{outlet}} 
+                                        </div>
+                                    </td>
+                                    <!-- <td> {{constraint_dict[selected_entity.name]?.[outlet] || "unset"}} </td> -->
                                     <td>
                                         <i v-for="article_info in marked_article_info_grouped[outlet]"
-                                            class="pi pi-file tooltip" :class="{fair_icon: article_info.mark, unfair_icon: !article_info.mark}"
+                                            class="pi pi-file conclusion-icon tooltip" :class="{fair_icon: article_info.mark, unfair_icon: !article_info.mark}"
                                             style="cursor:pointer;"
                                             @click="handleArticleIconClicked(article_info)">
-                                            <span class="tooltiptext right-tooltiptext" style="width: max-content">
+                                            <span class="tooltiptext right-tooltiptext icon-description" style="width: 300px">
                                                 {{article_info.description}}
                                             </span>
                                         </i>
@@ -545,8 +525,8 @@ li {
 
 .journal-info-container {
   width: fit-content;
-  left: 67%;
-  position: relative;
+  right:0;
+  position: absolute;
     white-space: nowrap;
     margin: 0.3rem 0rem;
 }
@@ -562,27 +542,68 @@ li {
 
 .document-container {
     display: flex;
+    height: 100%;
+    margin-left: 1%;
 }
 
 .marked-articles-header {
     margin: 1% 1% 0% 0%;
+    background: #f7f7f7;
+    padding-left: 1%;
 }
 
 .marked-articles-container {
     width: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .mark-table {
-    font-size: 0.7rem;
+    font-size: 1rem;
     width: 100%;
+    height: 100%;
+    border: 1px solid black;
+    border-collapse: collapse;
 }
 
-:deep(.outlet-scatter) {
-    width: 100%;
-    // top: -5%;
-    // flex: 1 1 auto;
-    // width: 26% !important;
+td {
+border-bottom: solid 1px black;
+border-collapse: collapse;
 }
+
+.journal-style.table-image {
+    width: 34px;
+    height: 34px;
+    bottom: unset;
+}
+.journal-image-text-cell {
+display: flex;
+align-items: center;
+height:100%;
+
+}
+.table-outlet-text {
+  margin-left: 5%;
+}
+.conclusion-icon {
+    font-size: 1.5em;
+}
+.conclusion-icon:hover::before {
+    font-weight: 600;
+}
+.fair_icon {
+    color: red;
+}
+.unfair_icon {
+    color: blue;
+}
+.icon-description {
+    font-size: 1rem;
+    width: 300px;
+}
+
+
+
 
 .outlet-scatter-container {
     display: flex;
