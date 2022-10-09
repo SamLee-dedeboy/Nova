@@ -56,6 +56,13 @@ const store = createStore({
     setNotes(state, notes) {
       state.notes = notes
     },
+    setMarkedArticle(state, article_info) {
+      let found = state.marked_articles.find(existed_article_info => existed_article_info.id === article_info.id)
+      if(!found) {
+        state.marked_articles.push(article_info)
+      }
+      found = article_info
+    },
     addMarkedArticle(state, article_info) {
       state.marked_articles.push(article_info)
     },

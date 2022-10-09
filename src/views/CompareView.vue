@@ -92,7 +92,7 @@ vue.onMounted(async () => {
                 console.log(data_list)
                 const hex_candidates = hexview_grid.value[0].data.sorted_cooccurrences_list.map((hex_entity: typeUtils.HexEntity) => hex_entity.entity)
                 hex_candidates.push(target_entity) 
-                fetch_entity_grouped_node(hex_candidates, selected_outlet.value)
+                // fetch_entity_grouped_node(hex_candidates, selected_outlet.value)
                 resolve("success")
             })
     }))
