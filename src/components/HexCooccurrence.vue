@@ -225,11 +225,15 @@ function loopedAnimateHex(hex_group, target_entity) {
     function repeat() {
         const duration = 1000
         target_hex.raise()
-            .transition().duration(duration)
-            .attr("stroke-width", 5)
+            .transition().duration(0)
+            .attr("stroke-width", 2)
             .attr("stroke", "white")
-            .transition().duration(duration)
-            .attr("stroke-width", 10)
+            .transition().duration(1000)
+            .attr("stroke-width", 7)
+            .attr("stroke", "#444444")
+            .attr("filter","blur(1px)")
+            .transition().duration(2000)
+            .attr("stroke-width", 2)
             .attr("stroke", "white")
             .on("end", repeat)
     }
@@ -354,4 +358,6 @@ defineExpose({
     width: 100%;
     height: 100%;
 }
+
+
 </style>
