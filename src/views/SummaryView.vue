@@ -201,6 +201,14 @@ function checkConstraint(type: SentimentType, target: Sentiment2D, segmentation:
     return true
 }
 
+const sentiment_options = [
+    { type: SentimentType.neu, value: "neu" },
+    { type: SentimentType.neg, value: "neg" },
+    { type: SentimentType.pos, value: "pos" },
+    { type: SentimentType.mix, value: "mix" },
+]
+
+
 </script>
 
 <template>
@@ -332,6 +340,24 @@ function checkConstraint(type: SentimentType, target: Sentiment2D, segmentation:
                     :segmentation="segmentation"
                     @update:segmentation="setSegmentation" >
                 </OutletScatterplot>
+            </div>
+            <div class="select-category-container">
+                <div class="question-container">
+                    <span>
+                        How would you describe the coverage on
+                        <span> {{selected_entity?.name.replaceAll("_"," ")}} </span>
+                        by &nbsp
+                    </span>
+                    <div class="journal-info-container" style="font-size:small">
+                        <Dropdown :modelValue="selected_outlet" :options="journal_options"
+                            placeholder="Select an journal" @change="handleChangeJournal" />
+                    </div>
+                </div>
+                <div class="selection-container">
+                    <SelectButton v-model="selectedCategory" :options="sentiment_options" option-label="value"
+                        data-key="type">
+                    </SelectButton>
+                </div>
             </div>
         </div>
     </div>
