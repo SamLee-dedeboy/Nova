@@ -240,9 +240,9 @@ function outletIconStyle(name:string){
             </i>
             <h2 class="component-header article-view-header">
                 Articles on
-                <span> {{selected_entity?.name}} </span>
-                and
-                <span> {{selected_cooccurr_entity?.name}} </span>
+                <span> {{selected_entity?.name.replaceAll("_"," ")}} </span>
+                &
+                <span> {{selected_cooccurr_entity?.name.replaceAll("_"," ")}} </span>
                 by
                 <span> {{selected_entity?.outlet}}</span>
                 &nbsp
@@ -272,31 +272,24 @@ function outletIconStyle(name:string){
                         Outlet Coverage
                     </h2>
                     <div class="cooccurr-info-content">
+                        <div :class="['journal-style']">
+                            <img :src="`../src/assets/${selected_entity.outlet}.png`"
+                                :class="['journal-image',`${outletIconStyle(selected_entity.outlet)}`]" />
+                        </div>
                         <div class="num_of_articles">
                             Number of articles about
-                            <span style="font-weight:bolder" :title="selected_entity?.name"> {{selected_entity?.name}}
+                            <span style="font-weight:bolder" :title="selected_entity?.name"> {{selected_entity?.name.replaceAll("_"," ")}}
                             </span>
                             <span v-if="selected_cooccurr_entity">
                                 and
                                 <span style="font-weight:bolder" :title="selected_cooccurr_entity.name">
-                                    {{selected_cooccurr_entity.name}}
+                                    {{selected_cooccurr_entity.name.replaceAll("_"," ")}}
                                 </span>
                             </span>
                             is {{ selected_cooccurr_entity? selected_cooccurr_entity.num_of_mentions :
                             selected_entity.num_of_mentions }}
                         </div>
-                        <Divider layout="vertical"></Divider>
-                        <ul class="entity-info-section">
-                            <li :title="selected_entity.name"> Main topic: {{ selected_entity.name }} </li>
-                            <li v-if='selected_cooccurr_entity' :title="selected_cooccurr_entity.name"> Co-occur topic:
-                                {{ selected_cooccurr_entity.name }} </li>
-                            <li :title="selected_entity.outlet"> Media outlet: {{selected_entity.outlet}}</li>
-                        </ul>
 
-                        <div :class="['journal-style']">
-                            <img :src="`../src/assets/${selected_entity.outlet}.png`"
-                                :class="['journal-image',`${outletIconStyle(selected_entity.outlet)}`]" />
-                        </div>
                     </div>
                 </div>
                 <div class="hexview-container">
@@ -310,40 +303,18 @@ function outletIconStyle(name:string){
                     <div class="question-container">
                         <span>
                             How would you describe the coverage on
-                            <span> {{selected_entity?.name}} </span>
+                            <span> {{selected_entity?.name.replaceAll("_"," ")}} </span>
                             by &nbsp
                         </span>
                         <div class="journal-info-container" style="font-size:small">
                             <Dropdown :modelValue="selected_outlet" :options="journal_options"
                                 placeholder="Select an journal" @change="handleChangeJournal" />
-                            <!-- <label for="journals"> Journal </label> -->
-                            <!-- <select name="journals" id="journals"
-                                @change="handleChangeJournal">
-                                <option v-for="journal in journal_options" 
-                                    :value="journal"
-                                    :selected="journal == selected_outlet">{{journal}}</option>
-                            </select> -->
                         </div>
                     </div>
                     <div class="selection-container">
                         <SelectButton v-model="selectedCategory" :options="sentiment_options" option-label="value"
                             data-key="type">
                         </SelectButton>
-                        <!-- <span class="slider-label"> Intensity 
-                            <i class='pi pi-info-circle tooltip'>
-                                <span class="tooltiptext right-tooltiptext" style="width:300px;">
-                                    Use the slider to controll the intensity of the sentiment.
-                                </span>
-                            </i>
-                            :
-                        </span>
-                        <Slider
-                            class="intensity-slider"
-                            v-model="intensity"
-                            :step="0.01"
-                            :min="0"
-                            :max="1" >
-                        </Slider> -->
                     </div>
                 </div>
                 <div class="document-container">
@@ -436,6 +407,7 @@ function outletIconStyle(name:string){
     background: #f7f7f7;
     margin-left: 1%;
     margin-right: 1%;
+    width: 100%;
 }
 
 :deep(.entity-info-view-container) {
@@ -457,6 +429,7 @@ function outletIconStyle(name:string){
 .cooccurr-info-content {
     display: flex;
     font-size: 0.8rem;
+    width: 100%;
 }
 
 .cooccurr-info-header {
@@ -482,7 +455,8 @@ li {
 }
 
 .num_of_articles {
-    flex: 1 1 0;
+    width: 50%;
+    margin-left: 5%;
 }
 
 // ---------------------
@@ -673,6 +647,8 @@ a.goNext {
     overflow: hidden;
     border-radius: 50%;
     border: #d7d7d7 3px solid;
+    bottom: 10%;
+    left: 2%;
 }
 
 .FoxNews-icon{

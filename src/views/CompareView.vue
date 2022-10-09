@@ -92,7 +92,8 @@ vue.onMounted(async () => {
                 console.log(data_list)
                 const hex_candidates = hexview_grid.value[0].data.sorted_cooccurrences_list.map((hex_entity: typeUtils.HexEntity) => hex_entity.entity)
                 hex_candidates.push(target_entity) 
-                fetch_entity_grouped_node(hex_candidates, selected_outlet.value)
+                if(!selected_outlet.value.includes("Overall"))
+                    fetch_entity_grouped_node(hex_candidates, selected_outlet.value)
                 resolve("success")
             })
     }))
@@ -104,7 +105,7 @@ vue.onMounted(async () => {
 })
 
 async function fetch_entity_grouped_node(hex_candidates, outlet) {
-      console.log(hex_candidates)
+      console.log(hex_candidates, outlet)
     await fetch(`${server_address}/processed_data/scatter_node/grouped/hex_candidates/${outlet}`, {
       method: "POST",
       headers: {
@@ -192,13 +193,12 @@ function outletIconHeaderStyle(name: string) {
         <SplitterPanel id="hexview_section" class="hexview-section flex align-items-center justify-content-center"
             :size="left_section_size" :min-size="left_section_size">
             <div v-if="selected_entity?.outlet ==='Overall'" class="reminder-click-hex">
-                Click any hexagon on the left to continue to next stage.
+               <p class="reminderBody">Do you see any differences among outlets for their coverage?</p> 
             </div>
 
             <div v-if="selected_entity?.outlet !== 'Overall'" class="navigate-container">
                 <router-link class="goNext"
-                    :to="{ name: 'inspection', params: { entity: selected_entity?.name || 'undefined' }}">Next
-                    Stage</router-link>
+                    :to="{ name: 'inspection', params: { entity: selected_entity?.name || 'undefined' }}">Review Articles</router-link>
             </div>
             <h2 class="component-header hexview-grid-header">
                 Topic Co-occurrence Hives for
@@ -451,7 +451,7 @@ function outletIconHeaderStyle(name: string) {
 }
 
 .reminder-click-hex {
-    width: 16%;
+    width: 35%;
     text-align: center;
     display: flex;
     height: 5%;
@@ -464,6 +464,14 @@ function outletIconHeaderStyle(name: string) {
     transform: scale(1);
     animation: pulse-b28f3840 2s infinite;
 }
+
+.reminderBody{
+    position: relative;
+    top: 25%;
+    left: 10%;
+    font-style: italic;
+}
+
 
 .navigate-container {
     text-align: center;
