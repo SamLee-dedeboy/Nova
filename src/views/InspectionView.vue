@@ -46,6 +46,7 @@ const segmentation = vue.computed(() => store.state.segmentation)
 const original_segmentation = segmentation.value
 const outlet_weight_dict = vue.computed(() => store.state.outlet_weight_dict)
 const clicked_hexview = vue.computed(() => store.state.clicked_hexview)
+const highlight_hex_entity: Ref<string> = ref("")
 const setClickedHexView = (hexview) => store.commit("setClickedHexView", hexview)
 const hexview_grid = vue.computed(() => store.state.hexview_grid)
 const constraint_dict = vue.computed(() => store.state.constraints)
@@ -119,6 +120,8 @@ vue.watch(selectedCategory, (new_value, old_value) => {
 
 function prepare_data() {
     const article_ids = selected_cooccurr_entity.value.cooccurr_article_ids
+    highlight_hex_entity.value = selected_cooccurr_entity.value.name
+    console.log("highlight", highlight_hex_entity.value)
     // setSegmentation(selected_entity.value.sst_ratio)
     selected_outlet.value = selected_entity.value.outlet
     const promiseArray: any[] = []
@@ -186,6 +189,7 @@ async function handleChangeJournal(e) {
 async function handleHexClicked({target, co_occurr_entity}, view) {
     const entity = target.split("-")[0]
     const outlet = target.split("-")[1] 
+    highlight_hex_entity.value = co_occurr_entity
     await fetch_cooccurr_into(outlet, entity, co_occurr_entity)
     prepare_data()
 }
@@ -290,6 +294,7 @@ async function fetch_cooccurr_into(outlet, entity, co_occurr_entity) {
                         :id="`compare-co-hex-inpection`"
                         :entity_cooccurrences="clicked_hexview.data"
                         :segmentation="original_segmentation"
+                        :highlight_hex_entity="highlight_hex_entity"
                         @hex-clicked="handleHexClicked">
                     </HexCooccurrence>
                 </div>

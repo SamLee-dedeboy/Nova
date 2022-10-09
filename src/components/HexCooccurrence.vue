@@ -57,9 +57,9 @@ const sorted_cooccurrence_list = vue.computed(() => {
     })
     return res
 })
-const hexbin = d3_hexbin.hexbin()
-    .radius(radius) // size of the bin in px
-    .extent([[0, 0], [viewBox_width, max_height]])
+// const hexbin = d3_hexbin.hexbin()
+//     .radius(radius) // size of the bin in px
+//     .extent([[0, 0], [viewBox_width, max_height]])
 const x = d3.scaleLinear()
     .domain([-viewBox_width / 2, viewBox_width / 2])
     .range([0, viewBox_width])
@@ -67,6 +67,11 @@ const y = d3.scaleLinear()
     .domain([-max_height / 2, max_height / 2])
     .range([max_height + hex_height / 2, hex_height / 2])
 
+const hexbin_ = d3_hexbin.hexbin()
+    .x(d => x(d.x))
+    .y(d => y(d.y))
+    .radius(radius) // size of the bin in px
+    .extent([[0, 0], [viewBox_width, max_height]])
 vue.watch(() => props.segmentation, (new_value, old_value) => {
     updateHexColor()
 }, { deep: true })
@@ -102,11 +107,6 @@ function updateHexBins() {
 
     const hex_labels =  svg.select("g.hex-labels")
 
-    const hexbin_ = d3_hexbin.hexbin()
-        .x(d => x(d.x))
-        .y(d => y(d.y))
-        .radius(radius) // size of the bin in px
-        .extent([[0, 0], [viewBox_width, max_height]])
 
     const hex_data = hexbin_(sorted_cooccurrence_list.value)
     // const centers = hexbin_.centers()
@@ -138,6 +138,7 @@ function updateHexBins() {
         })
         .on("mouseover", function (e, d: any) {
             if(d[0].entity === props.highlight_hex_entity) return
+            if(d[0].index === 0) return
             d3.select(this)
                 .transition().duration(100)
                 .attr("stroke-width", d[0].index === 0 ? 25 : 8)
@@ -145,6 +146,7 @@ function updateHexBins() {
         })
         .on("mouseout", function (e, d: any) {
             if(d[0].entity === props.highlight_hex_entity) return
+            if(d[0].index === 0) return
             d3.select(this)
                 .transition().duration(500)
                 .attr("stroke-width", d[0].index === 0 ? 20 : 1)
@@ -158,7 +160,10 @@ function updateHexBins() {
             return SstColors.enum_color_dict[categorizeHex(sst, props.segmentation!)]
         })
     // add looped animation for center hex
-    // loopedAnimateHex(hex_group)
+    const center_entity = hex_data[0][0].entity
+    loopedAnimateHex(hex_group, center_entity)
+    if(props.highlight_hex_entity)
+        loopedAnimateHex(hex_group, props.highlight_hex_entity)
 
 
     hex_group.select("g.hex-labels")
@@ -196,6 +201,10 @@ function updateHighlightHex(target_entity) {
     const svg = d3.select(`#${props.id}`).select("svg")
     const hex_group = svg.select("g.hex-group")
     loopedAnimateHex(hex_group, target_entity)
+
+    const hex_data = hexbin_(sorted_cooccurrence_list.value)
+    const center_entity = hex_data[0][0].entity
+    loopedAnimateHex(hex_group, center_entity)
 }
 
 function removeHighlightHex(target_entity) {
@@ -204,8 +213,8 @@ function removeHighlightHex(target_entity) {
     var target_hex = hex_group.selectAll("path").filter((d:any) => d[0].entity === target_entity)
     target_hex.transition().duration(1000)
         .attr("stroke-width", (d: any) => d[0].index === 0 ? 20 : 1)
+        .attr("stroke", "white")
         .on("end", () => (1))
-
 }
 
 function loopedAnimateHex(hex_group, target_entity) {
@@ -215,11 +224,12 @@ function loopedAnimateHex(hex_group, target_entity) {
     function repeat() {
         console.log("looping")
         const duration = 1000
-        target_hex.transition().duration(duration)
-            .attr("stroke-width", 15)
+        target_hex.raise()
+            .transition().duration(duration)
+            .attr("stroke-width", 5)
             .attr("stroke", "#b7b7b7")
             .transition().duration(duration)
-            .attr("stroke-width", 20)
+            .attr("stroke-width", 10)
             .attr("stroke", "grey")
             .on("end", repeat)
     }

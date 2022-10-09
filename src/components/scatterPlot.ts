@@ -561,7 +561,6 @@ export class EntityScatter {
         }
         if(this.show_highlight) {
             const highlight_outlet = this.props.highlight_node_text
-            console.log(highlight_outlet)
             const highlight_node = svg.selectAll("g.entity").filter((d: any) => { console.log(d.text); return highlight_outlet === d.text})
                 .raise()
             console.log(highlight_node.node())
