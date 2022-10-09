@@ -503,7 +503,10 @@ function updateSegmentation({ pos, neg }) {
   <main>
     <div v-if="selected_cooccurr_entity" class="navigate-container">
       <router-link class="goNext"
-        :to="{ name: 'compare', params: { entity: selected_entity.name, }}">Next Stage</router-link>
+        :to="{ name: 'compare', params: { entity: selected_entity.name, }}">
+         After finding a topic, <span class="clickNext">click here</span> to assess how each outlet covered it.
+         <p class="next"><i class="pi pi-arrow-right "/></p>
+      </router-link>
     </div>
     <Splitter class="overview-container">
       <SplitterPanel class="left-section-panel" :size="left_section_panel_size">
@@ -925,24 +928,28 @@ main {
 }
 
 .navigate-container {
-  width: 5%;
-  text-align: center;
-  display: flex;
-  height: 5%;
-  position: absolute;
-  top: 2%;
-  right: 1%;
-  z-index: 999;
-
-  box-shadow: 0 0 0 0 rgba(0, 0, 0, 1);
-  transform: scale(1);
-  animation: pulse 2s infinite;
+  width: 12%;
+    text-align: left;
+    display: flex;
+    height: 5%;
+    position: absolute;
+    top: 34%;
+    left: 85%;
+    z-index: 999;
 }
 
 a.goNext {
   text-decoration: none;
-  margin: 10%;
-  color: #4caaf5;
+  color: #00000075;
+}
+
+.clickNext{
+  font-style: italic;
+  font-weight: 700;
+}
+
+p.next {
+    text-align: center;
 }
 
 .threshold-title {
