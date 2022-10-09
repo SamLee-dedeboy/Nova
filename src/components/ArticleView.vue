@@ -2,6 +2,7 @@
 import ScrollPanel from 'primevue/scrollpanel'
 import Panel from 'primevue/panel'
 import ToggleButton from 'primevue/togglebutton'
+import SelectButton from 'primevue/selectbutton'
 import * as vue from "vue"
 import * as _ from "lodash"
 import * as SstColors from "./utils/ColorUtils"
@@ -68,6 +69,20 @@ const neg_articles = vue.computed(() => {
 const neg_panel_articles: Ref<Article[]> = ref(neg_articles.value?.slice(0,10) || []) 
 const neg_marks: Ref<boolean[]> = ref(Array(neg_articles.value?.length || 0).fill(false))
 const neg_article_notes: Ref<string[]> = ref(Array(neg_articles.value?.length || 0).fill(""))
+
+const selected_article: Ref<Article|undefined> = ref(undefined)
+const mark_options = [
+  {status: 'Fair', value: true},
+  {status: 'Unfair', value: false}
+]
+const selected_article_mark: Ref<boolean> = ref(false)
+vue.watch(selected_article_mark, (new_mark, old_mark) => {
+    // pos_marks.value[index] = mark
+    const article_id: number = selected_article.value.id
+    // const description = `something #${index+1}` 
+    const mark = new_value
+    setMarkedArticle({article_id, outlet, description, mark})
+})
 
 function addHeaderClickEvent() {
     return
@@ -155,81 +170,116 @@ function highlight_element(text) {
 
 function handleMark(mark, index: number, type: string) {
     const outlet = props.articles?.[0].journal
-    if(type === "pos") {
-        pos_marks.value[index] = mark
-        const article_id: number = pos_articles.value![index].id
-        const description = `positive #${index+1}` 
-        if(mark) addMarkedArticle({article_id, outlet, description})
-        else removeMarkedArticle(article_id)
-    }
-    if(type === "neg") {
-        neg_marks.value[index] = mark
-        const article_id: number = neg_articles.value![index].id
-        const description = `negative #${index+1}` 
-        if(mark) addMarkedArticle({article_id, outlet, description})
-        else removeMarkedArticle(article_id)
-    }
+    console.log(mark)
+
+    // if(type === "pos") {
+    //     pos_marks.value[index] = mark
+    //     const article_id: number = pos_articles.value![index].id
+    //     const description = `positive #${index+1}` 
+    //     if(mark) addMarkedArticle({article_id, outlet, description})
+    //     else removeMarkedArticle(article_id)
+    // }
+    // if(type === "neg") {
+    //     neg_marks.value[index] = mark
+    //     const article_id: number = neg_articles.value![index].id
+    //     const description = `negative #${index+1}` 
+    //     if(mark) addMarkedArticle({article_id, outlet, description})
+    //     else removeMarkedArticle(article_id)
+    // }
+}
+
+function handleArticleClicked(e, article) {
+    selected_article.value = article
 }
 
 
 </script>
 
 <template>
-<div class="pos-panel-header"> positive-leaning articles: ({{pos_articles?.length || "0"}})</div>
-<ScrollPanel class="pos-article-list">
-    <Panel v-for="(article, index) in pos_panel_articles"
-    :header="index+1 + '. ' + article.headline"
-    :key="article.id"
-    :toggleable=true
-    :collapsed="true">
-    <template #header>
-        <span class="headline">
-            <span v-html="index+1+'. ' + add_highlights(article.headline, props.article_highlights?.headline_entities?.[article.id])">
-            </span>
-        </span>
-    </template>
+<div class="article-cards-container">
+    <div class="pos-cards-container">
+        <div class="pos-panel-header"> positive-leaning articles: ({{pos_articles?.length || "0"}})</div>
+        <ScrollPanel class="pos-article-list">
+            <div class="article-card" v-for="(article, index) in pos_panel_articles" @click="handleArticleClicked($event, article)">
+                <div class="icon-container"> 
+                    <i class="pi pi-file pos-icon"/>
+                </div>
+                <span v-html="add_highlights(article.headline, props.article_highlights?.headline_entities?.[article.id])">
+                </span>
+            </div>
+        </ScrollPanel>
+    </div>
+    <div class="neg-cards-container">
+        <div class="neg-panel-header"> negative-leaning articles: ({{neg_articles?.length || "0"}})</div>
+        <ScrollPanel class="neg-article-list">
+            <div class="article-card" v-for="(article, index) in neg_panel_articles" @click="handleArticleClicked($event, article)">
+                <div class="icon-container"> 
+                    <i class="pi pi-file neg-icon"/>
+                </div>
+                <span v-html="add_highlights(article.headline, props.article_highlights?.headline_entities?.[article.id])">
+                </span>
+            </div>
+        </ScrollPanel>
+    </div>
+</div>
+<div class="analysis-container">
+    <h2 class="component-header analysis-header">
+        Analysis
+    </h2>
     <ScrollPanel style="width: 100%; height: 200px">
-        <!-- <span class="summary">
-            {{removeTags(article.summary)}}
-        </span> -->
-        <div class="summary">
-            <span v-html="removeTags(add_highlights(article.summary, props.article_highlights?.summary_entities?.[article.id]))">
+        <div class="summary" v-if="selected_article">
+            <span class="selected-article-headline" v-html="add_highlights(selected_article.headline, props.article_highlights?.headline_entities?.[selected_article.id])">
             </span>
+            <span class="selected-article-summary" v-html="removeTags(add_highlights(selected_article.summary, props.article_highlights?.summary_entities?.[selected_article.id]))">
+            </span>
+            <SelectButton v-model="selected_article_mark" optionValue="value" optionLabel="status" :options="mark_options"/>
         </div>
-        <textarea class="article-note-area" placeholder="make a note here" v-model="pos_article_notes[index]"></textarea>
-        <ToggleButton class='mark_toggle' :disabled="pos_article_notes[index] === ''" :model-value="pos_marks[index]" onLabel="Unmark" off-label="Mark" @update:model-value="handleMark($event, index, 'pos')"></ToggleButton>
-    </ScrollPanel>
-    </Panel>
-</ScrollPanel>
+        <!-- <textarea class="article-note-area" placeholder="make a note here" v-model="article_notes"></textarea> -->
 
-<div class="neg-panel-header"> negative-leaning articles: ({{neg_articles?.length || "0"}}) </div>
-<ScrollPanel class="neg-article-list">
-    <Panel v-for="(article, index) in neg_panel_articles"
-    :header="index+1 + '. ' + article.headline"
-    :key="article.id"
-    :toggleable="true"
-    :collapsed="true">
-    <template #header>
-        <span class="headline">
-            <span v-html="index+1+'. '  + add_highlights(article.headline, props.article_highlights?.headline_entities?.[article.id])">
-            </span>
-        </span>
-        <!-- <Chip >
-            {{article.sentiment.score.toFixed(2)}}
-        </Chip> -->
-    </template>
-    <ScrollPanel style="width: 100%; height: 200px">
-        <div class="summary">
-            <span v-html="removeTags(add_highlights(article.summary, props.article_highlights?.summary_entities?.[article.id]))">
-            </span>
-        </div>
-        <textarea class="article-note-area" placeholder="make a note here" v-model="neg_article_notes[index]"></textarea>
-        <ToggleButton class='mark_toggle' :disabled="pos_article_notes[index] === ''" :model-value="neg_marks[index]" onLabel="Unmark" off-label="Mark" @update:model-value="handleMark($event, index, 'neg')"></ToggleButton>
+        <!-- <ToggleButton class='mark_toggle'  :model-value="selected_article_mark" onLabel="Unmark" off-label="Mark" @update:model-value="handleMark($event)"></ToggleButton> -->
     </ScrollPanel>
-    </Panel>
-</ScrollPanel>
+</div>
 </template>
 <style scoped>
+.article-cards-container {
+  display: flex;
+  height: 50%;
+}
+.article-card {
+  display: flex;
+  border-bottom: 1px solid black;
+  cursor: pointer;
+}
+.pi.pi-file.pos-icon {
+  font-size: 2em;
+  position: relative;
+  top: 23%;
+  color: #baf0f5
+}
+.pi.pi-file.neg-icon {
+  font-size: 2em;
+  position: relative;
+  top: 23%;
+  color:#f4c49c; 
+}
+.pos-cards-container {
+  width: 100%;
+  margin-right: 1%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-right: black solid 1px;
+  padding-right: 1%;
+}
+.neg-cards-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.analysis-container {
+  height: 100%;
+}
 :deep(.p-panel-header) {
     cursor: pointer;
     background: unset !important;
@@ -246,7 +296,7 @@ function handleMark(mark, index: number, type: string) {
 }
 .pos-article-list, .neg-article-list {
     /* max-height:50%; */
-    height:40.8%;
+    height:100%;
 }
 .pos-panel-header, .neg-panel-header {
     background: #f7f7f7;
