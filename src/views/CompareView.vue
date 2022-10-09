@@ -161,6 +161,19 @@ async function handleHexClicked({ target, co_occurr_entity }, view) {
 
         })
 }
+
+function toggleSelection(selectedOutlet:any, currentOutlet:string){
+    currentOutlet = currentOutlet.split('-')[2];
+    let selectionClass = (currentOutlet.includes(selectedOutlet.outlet)) ? 'hiveSelect': '';
+    return selectionClass
+}
+
+function outletIconStyle(name:string){
+    let className = name.split('-')[2].replaceAll(' ','-') + '-icon';
+    className = (className.includes("FoxNews") || className.includes("Breitbart")) ? className : 'icon';
+    return className;
+}
+
 </script>
 
 <template>
@@ -194,7 +207,9 @@ async function handleHexClicked({ target, co_occurr_entity }, view) {
                     :highlight_hex_entity="highlight_hex_entity"
                     v-on:hex-clicked="handleHexClicked($event, view)">
                 </HexCooccurrence>
-                <img :src="`../src/assets/${view.title.split('-')[2]}.png`" class="journal-image" />
+                <div  :class="['journal-style', toggleSelection(selected_entity, view.title)]">
+                    <img :src="`../src/assets/${view.title.split('-')[2]}.png`" :class="['journal-image',`${outletIconStyle(view.title)}`]" />
+                </div>
             </div>
         </div>
     </SplitterPanel>
@@ -333,10 +348,43 @@ async function handleHexClicked({ target, co_occurr_entity }, view) {
     z-index: 1
 }
 
+.journal-style{
+    width: 50px;
+    height: 50px;
+    position: relative;
+    bottom: 15%;
+    left: 10%;
+    overflow: hidden;
+    border-radius: 50%;
+    border: #d7d7d7 3px solid;
+}
+
+.FoxNews-icon{
+    height: 85%;
+    right: 30%;
+    bottom: 2%;
+}
+
+.Breitbart-icon{
+    height: 65%;
+    top: 20%;
+    left: 10%;
+}
+
+.icon {
+    height: 100%;
+}
+
+.hiveSelect{
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 1);
+    transform: scale(1);
+    animation: pulse 2s infinite;
+}
+
 .journal-image {
-    position: absolute;
-    width: 100px;
-    bottom: 0px;
+  display: inline;
+  margin: 0 auto;
+  width: auto;
 }
 
 // ---------------------

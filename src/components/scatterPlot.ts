@@ -505,6 +505,9 @@ export class EntityScatter {
         const svg = d3.select(`#${this.props.id}`).select("svg")
     
         let bind_data: ScatterNode[] = this.filtered_data.value
+
+        const colorScale =  d3.scaleLog().domain([1,this.max_articles.value]).range(["#FFFFFF","#5e0053"]);
+        // const colorScale = d3.scaleSequential( (d) => d3.interpolateReds(logScale(d)))
     
         const node_group = svg.select("g.node_group")
         node_group.selectAll("g.entity")
@@ -518,7 +521,7 @@ export class EntityScatter {
                     .attr("cx", (d) => this.xScale(d.pos_sst))
                     .attr("cy", (d) => this.yScale(Math.abs(d.neg_sst)))
                     // .attr("fill", (d) => SstColors.outlet_color_dict[d.text])
-                    .attr("fill", (d) => d.article_ids.length === 0? "white" :SstColors.article_num_color_scale(d.article_ids.length/this.max_articles.value))
+                    .attr("fill", (d) => d.article_ids.length === 0? "white" : colorScale(d.article_ids.length))
                     .attr("opacity", 0.8)
                     // .raise();
 
