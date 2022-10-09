@@ -16,7 +16,7 @@ import Textarea from 'primevue/textarea'
  * libraries
  */
 import * as vue from "vue"
-import {Ref, ref} from 'vue'
+import { Ref, ref } from 'vue'
 import { useStore } from 'vuex'
 import * as d3 from 'd3'
 
@@ -33,15 +33,15 @@ import HexCooccurrence from "../components/HexCooccurrence.vue"
 
 const store = useStore()
 
-const left_section_size = 60 
-const right_section_size = vue.computed(() => 100-left_section_size)
+const left_section_size = 60
+const right_section_size = vue.computed(() => 100 - left_section_size)
 const server_address = vue.inject("server_address")
 const data_fetched: Ref<boolean> = ref(false)
 
 const selected_entity = vue.computed(() => store.state.selected_entity)
-const setEntity = (entity) => store.commit("setEntity", entity) 
+const setEntity = (entity) => store.commit("setEntity", entity)
 const selected_cooccurr_entity = vue.computed(() => store.state.selected_cooccurr_entity)
-const setCooccurrEntity = (cooccurr_entity) => store.commit("setCooccurrEntity", cooccurr_entity) 
+const setCooccurrEntity = (cooccurr_entity) => store.commit("setCooccurrEntity", cooccurr_entity)
 const segmentation = vue.computed(() => store.state.segmentation)
 const original_segmentation = segmentation.value
 const outlet_weight_dict = vue.computed(() => store.state.outlet_weight_dict)
@@ -67,21 +67,21 @@ const marked_article_info_grouped = vue.computed(() => {
     const res = {}
     marked_articles_ids_with_outlet.value.forEach((article_info) => {
         const outlet = article_info.outlet
-        if(!res[outlet]) res[outlet] = []
+        if (!res[outlet]) res[outlet] = []
         res[outlet].push(article_info)
     })
     return res
-}) 
+})
 
 vue.onMounted(() => {
     prepare_data()
 })
 
 const sentiment_options = [
-    {type: SentimentType.neu, value: "neu"}, 
-    {type: SentimentType.neg, value: "neg"}, 
-    {type: SentimentType.pos, value: "pos"}, 
-    {type: SentimentType.mix, value: "mix"}, 
+    { type: SentimentType.neu, value: "neu" },
+    { type: SentimentType.neg, value: "neg" },
+    { type: SentimentType.pos, value: "pos" },
+    { type: SentimentType.mix, value: "mix" },
 ]
 
 const journal_options = [
@@ -94,7 +94,7 @@ const journal_options = [
 ]
 const selectedCategory: Ref<any> = ref({})
 vue.watch(selectedCategory, (new_value, old_value) => {
-    if(selectedCategory.value === undefined) return
+    if (selectedCategory.value === undefined) return
     // const adjust_target: Sentiment2D = selected_entity.value.sst_ratio || {pos: 0.5, neg: 0.5}
     // // const offset = 0.05
     // if(new_value.type === SentimentType.neu) {
@@ -134,43 +134,43 @@ function prepare_data() {
         resolve("success")
     }))
     Promise.all(promiseArray)
-    .then(() => {
-        data_fetched.value = true
-        console.log('fetched new articles')
-    })
+        .then(() => {
+            data_fetched.value = true
+            console.log('fetched new articles')
+        })
 
 }
 
 async function fetch_articles(article_ids) {
-    await fetch(`${server_address}/processed_data/ids_to_articles`,{
-      method: "POST",
-      headers: {
-        "Accept": "application/json",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(article_ids)
+    await fetch(`${server_address}/processed_data/ids_to_articles`, {
+        method: "POST",
+        headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(article_ids)
     })
-    .then(res => res.json())
-    .then(json => {
-        target_articles.value = json
-        console.log("articles fetched")
-    })
+        .then(res => res.json())
+        .then(json => {
+            target_articles.value = json
+            console.log("articles fetched")
+        })
 }
 
 async function fetch_article_highlights(article_ids) {
-    await fetch(`${server_address}/processed_data/ids_to_articles_highlights`,{
-      method: "POST",
-      headers: {
-        "Accept": "application/json",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(article_ids)
+    await fetch(`${server_address}/processed_data/ids_to_articles_highlights`, {
+        method: "POST",
+        headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(article_ids)
     })
-    .then(res => res.json())
-    .then(json => {
-        console.log("highlights fetched")
-        target_article_highlights.value = json
-    })
+        .then(res => res.json())
+        .then(json => {
+            console.log("highlights fetched")
+            target_article_highlights.value = json
+        })
 }
 
 async function handleChangeJournal(e) {
@@ -186,9 +186,9 @@ async function handleChangeJournal(e) {
     selectedCategory.value = undefined
 }
 
-async function handleHexClicked({target, co_occurr_entity}, view) {
+async function handleHexClicked({ target, co_occurr_entity }, view) {
     const entity = target.split("-")[0]
-    const outlet = target.split("-")[1] 
+    const outlet = target.split("-")[1]
     highlight_hex_entity.value = co_occurr_entity
     await fetch_cooccurr_into(outlet, entity, co_occurr_entity)
     prepare_data()
@@ -203,7 +203,7 @@ async function fetch_cooccurr_into(outlet, entity, co_occurr_entity) {
                 name: json.target,
                 outlet: outlet,
                 num_of_mentions: json.target_num,
-                articles_topic_dict: json.target_articles_topic_dict, 
+                articles_topic_dict: json.target_articles_topic_dict,
                 sst_ratio: clicked_hexview.value.data.target.sst
             }
             setEntity(target_entity)
@@ -220,98 +220,104 @@ async function fetch_cooccurr_into(outlet, entity, co_occurr_entity) {
         })
 }
 
+function outletIconStyle(name:string){
+    let className = name.replaceAll(' ','-') + '-icon';
+    className = (className.includes("FoxNews") || className.includes("Breitbart")) ? className : 'icon';
+    return className;
+}
+
 </script>
 
 <template>
     <Splitter class="splitter-outmost">
-        <SplitterPanel id="article_view_section" class="articleview-section flex align-items-center justify-content-center" :size="left_section_size">
-            <i v-if="!data_fetched" class="pi pi-spin pi-spinner" 
-                style="position:absolute;
+        <SplitterPanel id="article_view_section"
+            class="articleview-section flex align-items-center justify-content-center" :size="left_section_size">
+            <i v-if="!data_fetched" class="pi pi-spin pi-spinner" style="position:absolute;
                 left: 45%;
                 top: 30%;
                 font-size: 3rem;
                 z-index: 1000">
-            </i> 
-            <h2 class="component-header article-view-header"> 
-                Articles on 
-                <span> {{selected_entity?.name}} </span> 
-                and 
-                <span> {{selected_cooccurr_entity?.name}} </span> 
-                by 
+            </i>
+            <h2 class="component-header article-view-header">
+                Articles on
+                <span> {{selected_entity?.name}} </span>
+                and
+                <span> {{selected_cooccurr_entity?.name}} </span>
+                by
                 <span> {{selected_entity?.outlet}}</span>
                 &nbsp
                 <i class='pi pi-info-circle tooltip'>
                     <span class="tooltiptext right-tooltiptext" style="width: 400px">
-                        Below are the articles of the selected topics published by {{ selected_entity?.outlet }}. <br/>
-                        Click the plus button to expand and see a summary of the article. <br/>
-                        Use the Mark button to mark any interesting articles you find.  <br/>
+                        Below are the articles of the selected topics published by {{ selected_entity?.outlet }}. <br />
+                        Click the plus button to expand and see a summary of the article. <br />
+                        Use the Mark button to mark any interesting articles you find. <br />
                     </span>
                 </i>
             </h2>
-            <ArticleView
-            class="article-view-container"
-            v-if="data_fetched"
-            v-model:sst_threshold="segmentation"
-            :articles="target_articles"
-            :article_highlights="target_article_highlights"
-            :entity_pair="[selected_entity?.name as string, selected_cooccurr_entity?.name as string]">
+            <ArticleView class="article-view-container" v-if="data_fetched" v-model:sst_threshold="segmentation"
+                :articles="target_articles" :article_highlights="target_article_highlights"
+                :entity_pair="[selected_entity?.name as string, selected_cooccurr_entity?.name as string]">
             </ArticleView>
-        </SplitterPanel>    
-        <SplitterPanel id="entity_info_section" class="entity-info-panel flex align-items-center justify-content-center" :size="right_section_size" >
+        </SplitterPanel>
+        <SplitterPanel id="entity_info_section" class="entity-info-panel flex align-items-center justify-content-center"
+            :size="right_section_size">
             <div class="entity-info-container">
                 <div class="target-cooccurr-container">
-                    <div v-if="Object.keys(constraint_dict[selected_entity?.name]||{}).length > 0" class="navigate-container">
-                            <router-link  class="goNext" :to="{ name: 'summary', params: { entity: selected_entity.name }}"> Summary Report </router-link>
-                        </div>
+                    <div v-if="Object.keys(constraint_dict[selected_entity?.name]||{}).length > 0"
+                        class="navigate-container">
+                        <router-link class="goNext" :to="{ name: 'summary', params: { entity: selected_entity.name }}">
+                            Summary Report </router-link>
+                    </div>
                     <h2 class="component-header cooccurr-info-header">
-                    Outlet Coverage
+                        Outlet Coverage
                     </h2>
                     <div class="cooccurr-info-content">
                         <div class="num_of_articles">
-                            Number of articles about 
-                            <span style="font-weight:bolder" :title="selected_entity?.name"> {{selected_entity?.name}} </span>
-                            <span v-if="selected_cooccurr_entity"> 
-                            and 
-                            <span style="font-weight:bolder" :title="selected_cooccurr_entity.name">
-                                {{selected_cooccurr_entity.name}}
-                            </span> 
+                            Number of articles about
+                            <span style="font-weight:bolder" :title="selected_entity?.name"> {{selected_entity?.name}}
                             </span>
-                            is {{ selected_cooccurr_entity? selected_cooccurr_entity.num_of_mentions : selected_entity.num_of_mentions }}
+                            <span v-if="selected_cooccurr_entity">
+                                and
+                                <span style="font-weight:bolder" :title="selected_cooccurr_entity.name">
+                                    {{selected_cooccurr_entity.name}}
+                                </span>
+                            </span>
+                            is {{ selected_cooccurr_entity? selected_cooccurr_entity.num_of_mentions :
+                            selected_entity.num_of_mentions }}
                         </div>
                         <Divider layout="vertical"></Divider>
                         <ul class="entity-info-section">
                             <li :title="selected_entity.name"> Main topic: {{ selected_entity.name }} </li>
-                            <li v-if='selected_cooccurr_entity' :title="selected_cooccurr_entity.name"> Co-occur topic: {{ selected_cooccurr_entity.name }} </li>
+                            <li v-if='selected_cooccurr_entity' :title="selected_cooccurr_entity.name"> Co-occur topic:
+                                {{ selected_cooccurr_entity.name }} </li>
                             <li :title="selected_entity.outlet"> Media outlet: {{selected_entity.outlet}}</li>
                         </ul>
+
+                        <div :class="['journal-style']">
+                            <img :src="`../src/assets/${selected_entity.outlet}.png`"
+                                :class="['journal-image',`${outletIconStyle(selected_entity.outlet)}`]" />
+                        </div>
                     </div>
                 </div>
-                <div class="hexview-container"> 
-                    <HexCooccurrence
-                    v-if="data_fetched"
-                        class="compare-co-hexview"
-                        :title="clicked_hexview.title"
-                        :id="`compare-co-hex-inpection`"
-                        :entity_cooccurrences="clicked_hexview.data"
-                        :segmentation="original_segmentation"
-                        :highlight_hex_entity="highlight_hex_entity"
+                <div class="hexview-container">
+                    <HexCooccurrence v-if="data_fetched" class="compare-co-hexview" :title="clicked_hexview.title"
+                        :id="`compare-co-hex-inpection`" :entity_cooccurrences="clicked_hexview.data"
+                        :segmentation="original_segmentation" :highlight_hex_entity="highlight_hex_entity"
                         @hex-clicked="handleHexClicked">
                     </HexCooccurrence>
                 </div>
                 <div class="select-category-container">
                     <div class="question-container">
-                        <span> 
-                            How would you describe the coverage on 
-                            <span> {{selected_entity?.name}} </span> 
-                            by &nbsp 
+                        <span>
+                            How would you describe the coverage on
+                            <span> {{selected_entity?.name}} </span>
+                            by &nbsp
                         </span>
                         <div class="journal-info-container" style="font-size:small">
-                            <Dropdown :modelValue="selected_outlet"
-                                :options="journal_options" 
-                                placeholder="Select an journal"
-                                @change="handleChangeJournal" />
-                                <!-- <label for="journals"> Journal </label> -->
-                                <!-- <select name="journals" id="journals"
+                            <Dropdown :modelValue="selected_outlet" :options="journal_options"
+                                placeholder="Select an journal" @change="handleChangeJournal" />
+                            <!-- <label for="journals"> Journal </label> -->
+                            <!-- <select name="journals" id="journals"
                                 @change="handleChangeJournal">
                                 <option v-for="journal in journal_options" 
                                     :value="journal"
@@ -320,11 +326,8 @@ async function fetch_cooccurr_into(outlet, entity, co_occurr_entity) {
                         </div>
                     </div>
                     <div class="selection-container">
-                        <SelectButton
-                            v-model="selectedCategory"
-                            :options="sentiment_options"
-                            option-label="value"
-                            data-key="type" >
+                        <SelectButton v-model="selectedCategory" :options="sentiment_options" option-label="value"
+                            data-key="type">
                         </SelectButton>
                         <!-- <span class="slider-label"> Intensity 
                             <i class='pi pi-info-circle tooltip'>
@@ -354,7 +357,7 @@ async function fetch_cooccurr_into(outlet, entity, co_occurr_entity) {
                                 </span>
                             </i>
                         </h2>
-                        <Textarea class="notes-style" :model-value="notes" @update:model-value="setNotes"/>
+                        <Textarea class="notes-style" :model-value="notes" @update:model-value="setNotes" />
                     </div>
                     <div class="marked-articles-container">
                         <h2 class="component-header marked-articles-header">
@@ -367,12 +370,12 @@ async function fetch_cooccurr_into(outlet, entity, co_occurr_entity) {
                                 <col span="1" style="width: 60%;">
                             </colgroup>
                             <tbody>
-                                <tr v-for="outlet in ranked_outlets"> 
+                                <tr v-for="outlet in ranked_outlets">
                                     <td> {{outlet}} </td>
                                     <td> {{constraint_dict[selected_entity.name]?.[outlet] || "unset"}} </td>
                                     <td>
-                                        <i v-for="article_info in marked_article_info_grouped[outlet]" 
-                                            class="pi pi-file tooltip" >
+                                        <i v-for="article_info in marked_article_info_grouped[outlet]"
+                                            class="pi pi-file tooltip">
                                             <span class="tooltiptext right-tooltiptext" style="width: max-content">
                                                 {{article_info.description}}
                                             </span>
@@ -380,7 +383,7 @@ async function fetch_cooccurr_into(outlet, entity, co_occurr_entity) {
                                     </td>
                                 </tr>
                             </tbody>
-                        </table> 
+                        </table>
 
                     </div>
                 </div>
@@ -390,21 +393,22 @@ async function fetch_cooccurr_into(outlet, entity, co_occurr_entity) {
 
 </template>
 <style scoped lang="scss">
-
 // ---------------------
 // css for split-panel layout
 // ---------------------
 .splitter-outmost {
-  width: 99vw;
-  height: 98vh;
-  display: flex;
+    width: 99vw;
+    height: 98vh;
+    display: flex;
 }
+
 .entity-info-panel {
     overflow: hidden;
 }
+
 // divider style 
 :deep(.p-divider.p-divider-vertical::before) {
-  border-left: 1px solid #dee2e6 !important;
+    border-left: 1px solid #dee2e6 !important;
 }
 
 // ---------------------
@@ -412,9 +416,9 @@ async function fetch_cooccurr_into(outlet, entity, co_occurr_entity) {
 // ---------------------
 
 .article-view-header {
-  background: #f7f7f7;
-  margin:0%;
-  padding:0.5%;
+    background: #f7f7f7;
+    margin: 0%;
+    padding: 0.5%;
 }
 
 // ---------------------
@@ -425,32 +429,36 @@ async function fetch_cooccurr_into(outlet, entity, co_occurr_entity) {
 // entity info section
 // ---------------------
 .target-cooccurr-container {
-  display: flex;
-  flex-direction: column;
-  padding-left: 10px;
-  padding-right: 10px;
-  background: #f7f7f7;
-  margin-left: 1%;
-  margin-right: 1%;
+    display: flex;
+    flex-direction: column;
+    padding-left: 10px;
+    padding-right: 10px;
+    background: #f7f7f7;
+    margin-left: 1%;
+    margin-right: 1%;
 }
+
 :deep(.entity-info-view-container) {
-  display: flex;
-  flex-direction: column;
-  align-content: center;
-  width: 100%;
-  justify-content: center;
-  max-width: unset !important;
+    display: flex;
+    flex-direction: column;
+    align-content: center;
+    width: 100%;
+    justify-content: center;
+    max-width: unset !important;
 }
+
 .entity-info-container {
     display: flex;
     flex-direction: column;
     height: 100%;
     overflow: hidden;
 }
+
 .cooccurr-info-content {
-  display: flex;
-  font-size: 0.8rem;
+    display: flex;
+    font-size: 0.8rem;
 }
+
 .cooccurr-info-header {
     margin: 1.5%;
 }
@@ -458,20 +466,23 @@ async function fetch_cooccurr_into(outlet, entity, co_occurr_entity) {
 ol {
     padding-left: 10%;
 }
+
 li {
     white-space: pre;
 }
 
 :deep(.p-slider.p-component.p-slider-horizontal) {
-  width: 50%;
-  margin-left: 15px;
+    width: 50%;
+    margin-left: 15px;
 }
+
 .entity-info-section {
-  padding-left: 1%;
-  flex: 2 1 0;
+    padding-left: 1%;
+    flex: 2 1 0;
 }
+
 .num_of_articles {
-  flex: 1 1 0;
+    flex: 1 1 0;
 }
 
 // ---------------------
@@ -481,6 +492,7 @@ li {
     display: flex;
     align-items: center;
 }
+
 .slider-label {
     margin-left: 5px;
     // position:absolute;
@@ -488,13 +500,15 @@ li {
     // left: 41.2%;
     // top: -10%;
 }
+
 :deep(.p-slider .p-slider-handle) {
-  height: 0.8rem;
-  width: 0.8rem;
+    height: 0.8rem;
+    width: 0.8rem;
 }
+
 :deep(.p-slider.p-slider-horizontal .p-slider-handle) {
-  margin-top: -0.4rem;
-  margin-left: -0.4rem;
+    margin-top: -0.4rem;
+    margin-left: -0.4rem;
 }
 
 
@@ -502,7 +516,7 @@ li {
 //  Hexview section
 // ---------------------
 .hexview-container {
-  max-height: 49%;
+    max-height: 49%;
 }
 
 // ---------------------
@@ -510,7 +524,7 @@ li {
 // ---------------------
 .constraints-outlet-scatter-container {
     display: flex;
-//   justify-content: space-between;
+    //   justify-content: space-between;
     flex: 1 1 0;
     overflow: hidden;
     flex-direction: column;
@@ -519,28 +533,34 @@ li {
 .intensity-slider {
     width: 38% !important;
 }
+
 .constraint-table {
     font-size: 0.8rem;
 }
+
 .constraints-view {
-//   width: fit-content;
-  background: #f7f7f7;
-//   flex: 1 1 0;
-  margin-right: 1%;
+    //   width: fit-content;
+    background: #f7f7f7;
+    //   flex: 1 1 0;
+    margin-right: 1%;
 }
+
 :deep(.p-button) {
     padding: 0.1rem 1rem;
 }
+
 :deep(.p-buttonset, .p-button) {
     margin: 0.3rem 0rem;
 }
+
 :deep(.p-inputtext) {
     padding: 0.2rem 0.5rem;
 }
 
 :deep(.p-scrollpanel.p-component) {
-  width: 100%;
+    width: 100%;
 }
+
 .question-container {
     display: flex;
     align-items: center;
@@ -549,27 +569,33 @@ li {
     font-family: "Lato";
     padding-left: 1%;
 }
+
 .journal-info-container {
-  white-space: nowrap;
-  margin: 0.3rem 0rem;
+    white-space: nowrap;
+    margin: 0.3rem 0rem;
 }
+
 .notes {
-  display: flex;
-  flex-direction: column;
+    display: flex;
+    flex-direction: column;
 }
+
 .notes-style {
     height: 100%;
 }
+
 .document-container {
     display: flex;
 }
 
 .marked-articles-header {
-  margin: 1% 1% 0% 0%;
+    margin: 1% 1% 0% 0%;
 }
+
 .marked-articles-container {
     width: 100%;
 }
+
 .mark-table {
     font-size: 0.7rem;
     width: 100%;
@@ -581,13 +607,15 @@ li {
     // flex: 1 1 auto;
     // width: 26% !important;
 }
+
 .outlet-scatter-container {
-  display: flex;
-  /*! flex-direction: column; */
-  background: #f7f7f7;
-  height:100%;
-  flex: 1 1 0;
+    display: flex;
+    /*! flex-direction: column; */
+    background: #f7f7f7;
+    height: 100%;
+    flex: 1 1 0;
 }
+
 .outlet-scatter-header {
     // display: flex;
     // flex-direction: column;
@@ -637,5 +665,36 @@ a.goNext {
     }
 }
 
+
+.journal-style{
+    width: 50px;
+    height: 50px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 50%;
+    border: #d7d7d7 3px solid;
+}
+
+.FoxNews-icon{
+    height: 85%;
+    right: 30%;
+    bottom: 2%;
+}
+
+.Breitbart-icon{
+    height: 65%;
+    top: 20%;
+    left: 10%;
+}
+
+.icon {
+    height: 100%;
+}
+
+.journal-image {
+  display: inline;
+  margin: 0 auto;
+  width: auto;
+}
 
 </style>

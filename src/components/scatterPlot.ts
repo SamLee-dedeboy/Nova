@@ -507,6 +507,10 @@ export class EntityScatter {
         let bind_data: ScatterNode[] = this.filtered_data.value
         console.log(bind_data)
         var self = this
+
+        const colorScale =  d3.scaleLog().domain([1,this.max_articles.value]).range(["#FFFFFF","#5e0053"]);
+        // const colorScale = d3.scaleSequential( (d) => d3.interpolateReds(logScale(d)))
+    
         const node_group = svg.select("g.node_group")
         node_group.selectAll("g.entity")
         .data(bind_data, function(d: any) {return d.text})
@@ -519,7 +523,7 @@ export class EntityScatter {
                     .attr("cx", (d) => this.xScale(d.pos_sst))
                     .attr("cy", (d) => this.yScale(Math.abs(d.neg_sst)))
                     // .attr("fill", (d) => SstColors.outlet_color_dict[d.text])
-                    .attr("fill", (d) => d.article_ids.length === 0? "white" :SstColors.article_num_color_scale(d.article_ids.length/this.max_articles.value))
+                    .attr("fill", (d) => d.article_ids.length === 0? "white" : colorScale(d.article_ids.length))
                     .attr("opacity", 0.8)
                     // .raise();
 
@@ -554,9 +558,9 @@ export class EntityScatter {
                         emit("update-weight-ended")
                     })
                 update.selectAll("circle.entity_circle")
-                    .attr("fill", (d: any) => SstColors.article_num_color_scale(d.article_ids.length/this.max_articles.value))
-            },
-            exit => exit.remove()
+                .attr("fill", (d:any) => d.article_ids.length === 0? "white" : colorScale(d.article_ids.length))
+
+            }
         ) 
         // const dots = svg.selectAll("g.entity")
         // dots.sort((da: any, db: any) => (da.article_ids.length - db.article_ids.length))

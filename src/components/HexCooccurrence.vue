@@ -223,15 +223,14 @@ function loopedAnimateHex(hex_group, target_entity) {
     // expand Hex
     repeat()
     function repeat() {
-        console.log("looping")
         const duration = 1000
         target_hex.raise()
             .transition().duration(duration)
             .attr("stroke-width", 5)
-            .attr("stroke", "#b7b7b7")
+            .attr("stroke", "white")
             .transition().duration(duration)
             .attr("stroke-width", 10)
-            .attr("stroke", "grey")
+            .attr("stroke", "white")
             .on("end", repeat)
     }
 }
