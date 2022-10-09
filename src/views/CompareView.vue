@@ -53,6 +53,7 @@ const hex_entity_scatter_view: Ref<any> = ref(undefined)
 const highlight_hex_entity: Ref<string> = ref("")
 const notes = vue.computed(() => store.state.notes)
 const setNotes = (notes) => store.commit("setNotes", notes)
+const selected_outlet = vue.computed(() => selected_entity.value?.outlet || "ABC News")
 
 /**
  * left & right section width (percentage)
@@ -89,9 +90,9 @@ vue.onMounted(async () => {
                 })
                 setHexViewGrid(hexview_grid_data)
                 console.log(data_list)
-                const hex_candidates = hexview_grid_data[0].data.sorted_cooccurrences_list.map((hex_entity: typeUtils.HexEntity) => hex_entity.entity)
+                const hex_candidates = hexview_grid.value[0].data.sorted_cooccurrences_list.map((hex_entity: typeUtils.HexEntity) => hex_entity.entity)
                 hex_candidates.push(target_entity) 
-                fetch_entity_grouped_node(hex_candidates)
+                fetch_entity_grouped_node(hex_candidates, selected_outlet.value)
                 resolve("success")
             })
     }))
@@ -102,8 +103,9 @@ vue.onMounted(async () => {
         })
 })
 
-async function fetch_entity_grouped_node(hex_candidates) {
-    await fetch(`${server_address}/processed_data/scatter_node/grouped/hex_candidates`, {
+async function fetch_entity_grouped_node(hex_candidates, outlet) {
+      console.log(hex_candidates)
+    await fetch(`${server_address}/processed_data/scatter_node/grouped/hex_candidates/${outlet}`, {
       method: "POST",
       headers: {
         "Accept": "application/json",
@@ -160,6 +162,9 @@ async function handleHexClicked({ target, co_occurr_entity }, view) {
             setCooccurrEntity(cooccurr_entity)
 
         })
+    const hex_candidates = hexview_grid.value[0].data.sorted_cooccurrences_list.map((hex_entity: typeUtils.HexEntity) => hex_entity.entity)
+    hex_candidates.push(entity) 
+    await fetch_entity_grouped_node(hex_candidates, selected_outlet.value)
 }
 </script>
 

@@ -505,7 +505,8 @@ export class EntityScatter {
         const svg = d3.select(`#${this.props.id}`).select("svg")
     
         let bind_data: ScatterNode[] = this.filtered_data.value
-    
+        console.log(bind_data)
+        var self = this
         const node_group = svg.select("g.node_group")
         node_group.selectAll("g.entity")
         .data(bind_data, function(d: any) {return d.text})
@@ -541,36 +542,39 @@ export class EntityScatter {
                     // .attr("r", node_circle_radius/(current_zoom?.k || 1))
                     .attr("cx", (d: any) => this.xScale(d.pos_sst))
                     .attr("cy", (d: any) => this.yScale(Math.abs(d.neg_sst)))
-    
+                console.log(update.selectAll("circle").nodes())
                 update.select("circle.expand_circle")
                     .transition().duration(1000)
                     // .attr("r", node_circle_radius/(current_zoom?.k || 1))
-                    .attr("cx", (d: any) => this.xScale(d.pos_sst))
+                    .attr("cx", function(d: any) { 
+                        return self.xScale(d.pos_sst)
+                    })
                     .attr("cy", (d: any) => this.yScale(Math.abs(d.neg_sst)))
-                .on("end", function() {
-                    emit("update-weight-ended")
-                })
+                    .on("end", function() {
+                        emit("update-weight-ended")
+                    })
                 update.selectAll("circle.entity_circle")
-                .attr("fill", (d: any) => SstColors.article_num_color_scale(d.article_ids.length/this.max_articles.value))
-            }
+                    .attr("fill", (d: any) => SstColors.article_num_color_scale(d.article_ids.length/this.max_articles.value))
+            },
+            exit => exit.remove()
         ) 
-        const dots = svg.selectAll("g.entity")
-        dots.sort((da: any, db: any) => (da.article_ids.length - db.article_ids.length))
-        if(this.current_zoom) {
-            dots.attr("transform", this.current_zoom)
-        }
+        // const dots = svg.selectAll("g.entity")
+        // dots.sort((da: any, db: any) => (da.article_ids.length - db.article_ids.length))
+        // if(this.current_zoom) {
+        //     dots.attr("transform", this.current_zoom)
+        // }
         if(this.show_highlight) {
             const highlight_outlet = this.props.highlight_node_text
-            const highlight_node = svg.selectAll("g.entity").filter((d: any) => { console.log(d.text); return highlight_outlet === d.text})
+            const highlight_node = svg.selectAll("g.entity").filter((d: any) => { return highlight_outlet === d.text})
                 .raise()
-            console.log(highlight_node.node())
+            console.log(highlight_outlet)
             const other_nodes = svg.selectAll("g.entity").filter((d: any) => highlight_outlet !== d.text)
             svg.select("g.node_group").raise()
             // svg.selectAll("rect.segment-controller").lower()
-            this.applyExpandStyle(highlight_node, this)
+            // this.applyExpandStyle(highlight_node, this)
             this.addNodeLabel(highlight_node, this)
 
-            this.removeExpandedStyle(other_nodes, this)
+            // this.removeExpandedStyle(other_nodes, this)
             this.removeNodeLabel(other_nodes, this)
         }
     }
@@ -665,30 +669,32 @@ export class EntityScatter {
     applyExpandStyle(container: any, cvThis) {
         container.style("filter", "brightness(90%)")
         // apply hover effect
-        container.selectAll("circle.expand_circle")
+        container.select("circle.expand_circle")
             .transition().duration(100)
             .attr("r", (d) => (parseFloat(container.select("circle.entity_circle").attr("r"))*1.5 ))
-        const target_node_text = container.data()[0].text
-        const other_nodes_container = d3.select(`#${cvThis.props.id}`).selectAll("g.entity").filter((d: any) => d.text != target_node_text)
-        other_nodes_container.selectAll("image")
-            .attr("opacity", 0)
-        container.selectAll("image")
-            .transition().duration(100)
-            .attr("opacity", 0.8)
+
+        // const target_node_text = container.data()[0].text
+        // const other_nodes_container = d3.select(`#${cvThis.props.id}`).selectAll("g.entity").filter((d: any) => d.text !== target_node_text)
+        // other_nodes_container.selectAll("image")
+        //     .attr("opacity", 0)
+        // container.selectAll("image")
+        //     .transition().duration(100)
+        //     .attr("opacity", 0.8)
     }
     
     removeExpandedStyle(container: any, cvThis) {
         container.style("filter", "brightness(100%)")
-        container.selectAll("circle.expand_circle")
+        container.select("circle.expand_circle")
             .transition().duration(100)
             .attr("r", (d) => (parseFloat(container.select("circle.entity_circle").attr("r"))))
-        const target_node_text = container.data()[0].text
-        const other_nodes_container = d3.select(`#${cvThis.props.id}`).selectAll("g.entity").filter((d: any) => d.text != target_node_text)
-        other_nodes_container.selectAll("image")
-            .attr("opacity", 0.3)
-        container.selectAll("image")
-            .transition().duration(100)
-            .attr("opacity", 0.3)
+
+        // const target_node_text = container.data()[0].text
+        // const other_nodes_container = d3.select(`#${cvThis.props.id}`).selectAll("g.entity").filter((d: any) => d.text !== target_node_text)
+        // other_nodes_container.selectAll("image")
+        //     .attr("opacity", 0.3)
+        // container.selectAll("image")
+        //     .transition().duration(100)
+        //     .attr("opacity", 0.3)
     }
     
     updateNodeInfo(node_data: ScatterNode, cvThis) {

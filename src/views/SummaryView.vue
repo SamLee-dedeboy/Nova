@@ -26,6 +26,7 @@ const outlet_weight_dict = vue.computed(() => store.state.outlet_weight_dict)
 const marked_articles_ids_with_outlet = vue.computed(() => store.state.marked_articles)
 const marked_articles: Ref<Article[]> = ref([])
 const server_address = vue.inject("server_address")
+const highlight_hex_entity: Ref<string> = ref("")
 const marked_articles_grouped = vue.computed(() => {
     const res = {}
     marked_articles.value.forEach((article: Article) => {
@@ -275,6 +276,7 @@ function checkConstraint(type: SentimentType, target: Sentiment2D, segmentation:
             <div class="overview-hex-container">
               <HexCooccurrence ref="overall_co_hexview" v-if="overall_selected_hexview" class="overall-co-hexview"
                 :title="overall_selected_hexview.title" :id="`overall-co-hex`"
+                :highlight_hex_entity="highlight_hex_entity"
                 :entity_cooccurrences="overall_selected_hexview.data" :segmentation="segmentation">
               </HexCooccurrence>
             </div>

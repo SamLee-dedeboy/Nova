@@ -140,6 +140,7 @@ function updateHexBins() {
             if(d[0].entity === props.highlight_hex_entity) return
             if(d[0].index === 0) return
             d3.select(this)
+                .raise()
                 .transition().duration(100)
                 .attr("stroke-width", d[0].index === 0 ? 25 : 8)
             // emit("mouseover", d[0].entity)

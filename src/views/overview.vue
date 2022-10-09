@@ -77,6 +77,7 @@ const grouped_scatter_data_loaded: Ref<boolean> = ref(false)
 const overview_constructed: Ref<boolean> = ref(false)
 const hex_constructed: Ref<boolean> = ref(true)
 const overall_co_hexview: Ref<any> = ref(null)
+const highlight_hex_entity: Ref<string> = ref("")
 //
 // processed data 
 //
@@ -457,6 +458,7 @@ legendInput.value["co-occur"]= "#4baaf5";
 
 async function handleHexClicked({ target, co_occurr_entity }: { target: string, co_occurr_entity: string }) {
 
+    highlight_hex_entity.value = co_occurr_entity
    let mainTopic = target;
    let coOccurTopic = target +  " & " + co_occurr_entity; 
 
@@ -625,6 +627,7 @@ function updateSegmentation({ pos, neg }) {
               <HexCooccurrence ref="overall_co_hexview" v-if="overall_selected_hexview" class="overall-co-hexview"
                 :title="overall_selected_hexview.title" :id="`overall-co-hex`"
                 :entity_cooccurrences="overall_selected_hexview.data" :segmentation="segmentation"
+                :highlight_hex_entity="highlight_hex_entity"
                 :overall_entity_dict="overall_entity_dict" v-on:hex-clicked="handleHexClicked">
               </HexCooccurrence>
             </div>
