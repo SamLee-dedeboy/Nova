@@ -55,6 +55,7 @@ const notes = vue.computed(() => store.state.notes)
 const setNotes = (notes) => store.commit("setNotes", notes)
 const selected_outlet = vue.computed(() => selected_entity.value?.outlet || "ABC News")
 
+
 /**
  * left & right section width (percentage)
  */
@@ -192,13 +193,8 @@ function outletIconHeaderStyle(name: string) {
     <Splitter class="splitter-outmost">
         <SplitterPanel id="hexview_section" class="hexview-section flex align-items-center justify-content-center"
             :size="left_section_size" :min-size="left_section_size">
-            <div v-if="selected_entity?.outlet ==='Overall'" class="reminder-click-hex">
+            <div class="reminder-click-hex">
                <p class="reminderBody">Do you see any differences among outlets for their coverage?</p> 
-            </div>
-
-            <div v-if="selected_entity?.outlet !== 'Overall'" class="navigate-container">
-                <router-link class="goNext"
-                    :to="{ name: 'inspection', params: { entity: selected_entity?.name || 'undefined' }}">Review Articles</router-link>
             </div>
             <h2 class="component-header hexview-grid-header">
                 Topic Co-occurrence Hives for
@@ -249,6 +245,25 @@ function outletIconHeaderStyle(name: string) {
                     </div>
 
                 </div>
+                <div class="notes-section" v-if="selected_entity">
+                    <h2 class="component-header notes-header">
+                        Notes
+                        <i class='pi pi-info-circle tooltip'>
+                            <span class="tooltiptext right-tooltiptext" style="width: 145px">
+                                Write down any observations, these will be saved and added to your report.
+                            </span>
+                        </i>
+                    </h2>
+                    <textarea class="notes-style" :model-value="notes" @update:model-value="setNotes" placeholder="Write down any observations..." />
+
+                    <div v-if="selected_entity?.outlet !== 'Overall'" class="navigate-container">
+                        <router-link class="goNext"
+                            :to="{ name: 'inspection', params: { entity: selected_entity?.name || 'undefined' }}">
+                            <span class="clickNext">click here</span> to review articles
+                            <p class="next"><i class="pi pi-arrow-right "/></p>
+                        </router-link>
+                    </div>
+                </div>
                 <div class="topic-bar-container" v-if="selected_entity">
                     <TopicBars id="cooccurr_topic_bars" :targetTopicBins="selected_entity?.articles_topic_dict"
                         :cooccurrTopicBins="selected_cooccurr_entity?.articles_topic_dict"></TopicBars>
@@ -257,7 +272,7 @@ function outletIconHeaderStyle(name: string) {
                     <h2 class="component-header legend-header">
                         <div class="journalSent">
                             <div :class="['journal-style']">
-                                <img :src="`../src/assets/${selected_entity.outlet}.png`"
+                                <img v-if="selected_entity?.outlet !=='Overall'"  :src="`../src/assets/${selected_entity.outlet}.png`"
                                     :class="['journal-image',`${outletIconHeaderStyle(selected_entity.outlet)}`]" />
                             </div>
                             <div class="journalSentContent">Sentiment</div>
@@ -268,20 +283,9 @@ function outletIconHeaderStyle(name: string) {
                         id="hex_entity_scatter" :segment_mode="true" :segmentation="segmentation"
                         @update:segmentation="setSegmentation">
                     </HexEntityScatter>
+                    <h4 id="hexScatterToolTip" class="toolTipStyle"> </h4>
                 </div>
-                <div class="notes-section" v-if="selected_entity">
-                    <h2 class="component-header notes-header">
-                        Notes
-                        <i class='pi pi-info-circle tooltip'>
-                            <span class="tooltiptext right-tooltiptext" style="width: 145px">
-                                Write down any hypothesis or questions you have.
-                                The system will document that for you.
-                            </span>
-                        </i>
-                    </h2>
-                    <Textarea class="notes-style" :model-value="notes" @update:model-value="setNotes" />
-
-                </div>
+                
             </div>
 
         </SplitterPanel>
@@ -460,9 +464,8 @@ function outletIconHeaderStyle(name: string) {
     top: 1.25%;
     right: 1%;
     z-index: 999;
-    box-shadow: 0 0 0 0 rgb(0 0 0);
     transform: scale(1);
-    animation: pulse-b28f3840 2s infinite;
+    animation: pulse 2s infinite;
 }
 
 .reminderBody{
@@ -476,47 +479,56 @@ function outletIconHeaderStyle(name: string) {
 .navigate-container {
     text-align: center;
     display: flex;
-    position: absolute;
-    height: 5%;
-    width: 7%;
-    top: 1.25%;
-    right: 1%;
+    position: relative;
+    height: 20%;
+    width: 100%;
     z-index: 999;
 
-    box-shadow: 0 0 0 0 rgba(0, 0, 0, 1);
     transform: scale(1);
     animation: pulse 2s infinite;
 }
 
 a.goNext {
     text-decoration: none;
-    margin: 10%;
-    color: #4caaf5;
+    color: #00000075;
+    width: 100%;
+}
+
+.clickNext{
+  font-style: italic;
+  font-weight: 700;
 }
 
 
 @keyframes pulse {
     0% {
-        transform: scale(0.95);
-        box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7);
-    }
+    transform: scale(0.95);
+  }
 
-    70% {
-        transform: scale(1);
-        box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
-    }
+  70% {
+    transform: scale(1);
+  }
 
-    100% {
-        transform: scale(0.95);
-        box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
-    }
+  100% {
+    transform: scale(0.95);
+  }
 }
 
+.hex-entity-scatter {
+    height: 75%;
+}
 
 .cooccurr-info-header {
     height: 59%;
 }
 
+.toolTipStyle{
+    text-align: center;
+}
+
+p.next {
+    text-align: center;
+}
 
 
 </style>

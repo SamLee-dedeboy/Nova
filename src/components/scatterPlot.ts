@@ -68,6 +68,8 @@ export class EntityScatter {
     show_highlight: boolean
     showRegionLabel: boolean
     emit_at_end: boolean
+    manualTooltip: boolean
+    manualTooltipID: string
 
     public constructor(
         props:any, svgId: string, 
@@ -86,6 +88,7 @@ export class EntityScatter {
         min_articles: ComputedRef<any>, max_articles: ComputedRef<any>, 
         clicked_node: Ref<ScatterNode>, clicked_node_element: Ref<any>,
         hovered_node_info: Ref<OutletNodeInfo>,
+        manualTooltip: boolean,  manualTooltipID: string
         ){
         this.props = props
         this.svgId = svgId
@@ -114,6 +117,8 @@ export class EntityScatter {
         this.clicked_node = clicked_node;
         this.clicked_node_element = clicked_node_element;
         this.hovered_node_info = hovered_node_info;
+        this.manualTooltip = manualTooltip;
+        this.manualTooltipID = manualTooltipID
         
         this.xMin = this.margin.left
         this.xMax = this.vbWidth+this.margin.left
@@ -607,6 +612,14 @@ export class EntityScatter {
                 const parentNode: any = (this as HTMLElement).parentNode
                 const container: any = d3.select(parentNode)
                 applyExpandStyle(container,cvThis)
+
+                if(cvThis.manualTooltip){
+                    console.log(container)
+                    const text = container.data()[0].text
+                    d3.select(cvThis.manualTooltipID).text(text.replaceAll("_"," "))
+                    return true;
+                }
+
     
                 // update tooltip
                 updateNodeInfo(d as ScatterNode, cvThis)
@@ -652,22 +665,6 @@ export class EntityScatter {
                 cvThis.clicked_node.value = d as ScatterNode
                 emit("node_clicked", cvThis.clicked_node.value.text)
             })
-    
-        // add images if comparing across outlets
-        // if(this.props.view?.type === ViewType.OutletScatter) {
-        //     const outlets = this.svg.selectAll("g.outlet")
-        //     const image_size = 100
-        //     outlets.selectAll("image.outlet_image")
-        //         .attr("href", (d: any) => `src/assets/${NodeUtils.abbr_dict[d.text.split("-")[1]]}.png`)
-        //         .attr("height", image_size)
-        //         .attr("width", image_size)
-        //         .attr("x", (d: any) => this.xScale(d.pos_sst)-image_size/2)
-        //         .attr("y", (d: any) => this.yScale(Math.abs(d.neg_sst))-image_size/2)
-        //         .attr("opacity", 0.3)
-        //         .attr("pointer-events", "none")
-        //         .lower()
-        //         .lower()
-        // }
     }
 
     applyExpandStyle(container: any, cvThis) {

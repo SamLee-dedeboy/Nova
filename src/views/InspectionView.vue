@@ -324,6 +324,7 @@ function outletIconStyle(name:string){
                             </tbody>
                         </table>
 
+                        
                     </div>
                 </div>
             </div>
