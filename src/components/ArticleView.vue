@@ -201,11 +201,14 @@ function handleArticleClicked(e, article) {
         <div class="pos-panel-header"> positive-leaning articles: ({{pos_articles?.length || "0"}})</div>
         <ScrollPanel class="pos-article-list">
             <div class="article-card" v-for="(article, index) in pos_panel_articles" @click="handleArticleClicked($event, article)">
-                <div class="icon-container"> 
-                    <i class="pi pi-file pos-icon"/>
+                <div class="card-contents">
+                    <div class="icon-container"> 
+                        <i class="pi pi-file pos-icon"/>
+                    </div>
+                    <span class="headlineStyle" v-html="add_highlights(article.headline, props.article_highlights?.headline_entities?.[article.id])">
+                    </span>
                 </div>
-                <span v-html="add_highlights(article.headline, props.article_highlights?.headline_entities?.[article.id])">
-                </span>
+
             </div>
         </ScrollPanel>
     </div>
@@ -213,11 +216,13 @@ function handleArticleClicked(e, article) {
         <div class="neg-panel-header"> negative-leaning articles: ({{neg_articles?.length || "0"}})</div>
         <ScrollPanel class="neg-article-list">
             <div class="article-card" v-for="(article, index) in neg_panel_articles" @click="handleArticleClicked($event, article)">
-                <div class="icon-container"> 
-                    <i class="pi pi-file neg-icon"/>
+                <div class="card-contents">
+                    <div class="icon-container"> 
+                        <i class="pi pi-file neg-icon"/>
+                    </div>
+                    <span class="headlineStyle" v-html="add_highlights(article.headline, props.article_highlights?.headline_entities?.[article.id])">
+                    </span>
                 </div>
-                <span v-html="add_highlights(article.headline, props.article_highlights?.headline_entities?.[article.id])">
-                </span>
             </div>
         </ScrollPanel>
     </div>
@@ -249,17 +254,18 @@ function handleArticleClicked(e, article) {
   display: flex;
   border-bottom: 1px solid black;
   cursor: pointer;
+  height: 10%;
 }
 .pi.pi-file.pos-icon {
   font-size: 2em;
   position: relative;
-  top: 23%;
+  top: 10%;
   color: #baf0f5
 }
 .pi.pi-file.neg-icon {
   font-size: 2em;
   position: relative;
-  top: 23%;
+  top: 10%;
   color:#f4c49c; 
 }
 .pos-cards-container {
@@ -318,6 +324,28 @@ function handleArticleClicked(e, article) {
 }
 :deep(.p-splitter-gutter) {
     pointer-events: none;
+}
+
+.card-contents {
+    width: 100%;
+    display: flex;
+}
+
+.icon-container {
+    width: 10%;
+}
+
+.headlineStyle{
+   font-size: .75em;
+   font-weight: 200;
+}
+
+.headlineStyle:hover{
+    font-weight: 600;
+}
+
+.article-card:hover{
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
 }
 
 </style>
