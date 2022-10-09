@@ -264,7 +264,7 @@ function outletIconHeaderStyle(name: string) {
                         </router-link>
                     </div>
                 </div>
-                <div class="topic-bar-container" v-if="selected_entity">
+                <div class="topic-bar-container" v-if="selected_entity.outlet !== 'Overall'">
                     <TopicBars id="cooccurr_topic_bars" :targetTopicBins="selected_entity?.articles_topic_dict"
                         :cooccurrTopicBins="selected_cooccurr_entity?.articles_topic_dict"></TopicBars>
                 </div>

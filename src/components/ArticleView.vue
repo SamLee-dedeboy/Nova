@@ -17,8 +17,12 @@ const props = defineProps({
     article_highlights: Object as () => any,
     entity_pair: Object as () => String[],
 })
-
+const marked_articles = vue.computed(() => store.state.marked_articles)
 const setMarkedArticle = (article_info) => store.commit("setMarkedArticle", article_info)
+const removeMarkedArticle = (article_id) => store.commit("removeMarkedArticle", article_id)
+const notes: Ref<string> = ref("")
+// const notes = vue.computed(() => store.state.notes)
+// const setNotes = (notes) => store.commit("setNotes", notes)
 
 vue.onMounted(() => {
     addHeaderClickEvent()
@@ -71,18 +75,31 @@ const neg_article_notes: Ref<string[]> = ref(Array(neg_articles.value?.length ||
 const selected_article: Ref<Article|undefined> = ref(undefined)
 const mark_options = [
   {status: 'Fair', value: true},
-  {status: 'Unfair', value: false}
+  {status: 'Unfair', value: false},
 ]
 const selected_article_mark: Ref<boolean|undefined> = ref(undefined)
 vue.watch(selected_article_mark, (new_mark, old_mark) => {
+    if(new_mark === undefined) return
     // pos_marks.value[index] = mark
-    const article_id: number = selected_article.value.id
-    const outlet = selected_article.value.journal
-    const description = `some description ` 
+    const article_id: number = selected_article.value!.id
+    const outlet = selected_article.value!.journal
+    const description = notes.value
     const mark = new_mark
-    console.log({article_id, outlet, description, mark})
     setMarkedArticle({article_id, outlet, description, mark})
+    // console.log(marked_articles.value)
 })
+
+function setNotes(e) {
+    console.log("set notes")
+    notes.value = e.target.value 
+    if(selected_article_mark.value === undefined) return
+    const article_id: number = selected_article.value!.id
+    const outlet = selected_article.value!.journal
+    const description = notes.value
+    const mark = selected_article_mark.value
+    setMarkedArticle({article_id, outlet, description, mark})
+}
+
 
 function addHeaderClickEvent() {
     return
@@ -111,6 +128,7 @@ vue.watch(pos_articles, (new_value, old_value) => {
     pos_panel_articles.value.length = 0
     pos_panel_articles.value = pos_articles.value?.slice(0, 10) || []
     pos_marks.value = Array(pos_articles.value?.length || 0).fill(false)
+    initAnalysisPanel()
     vue.nextTick(() => {
         const pos_panel_togglers = document.querySelectorAll(".pos-article-list > .p-scrollpanel-wrapper > .p-scrollpanel-content > .p-panel-toggleable > .p-panel-header > .p-panel-icons > .p-panel-toggler")
         pos_panel_togglers.forEach(toggler => toggler.classList.add("pos-toggler"))
@@ -121,6 +139,7 @@ vue.watch(neg_articles, (new_value, old_value) => {
     neg_panel_articles.value.length = 0
     neg_panel_articles.value = neg_articles.value?.slice(0, 10) || []
     neg_marks.value = Array(neg_articles.value?.length || 0).fill(false)
+    initAnalysisPanel()
     vue.nextTick(() => {
         const neg_panel_togglers = document.querySelectorAll(".neg-article-list > .p-scrollpanel-wrapper > .p-scrollpanel-content > .p-panel-toggleable > .p-panel-header > .p-panel-icons > .p-panel-toggler")
         neg_panel_togglers.forEach(toggler => toggler.classList.add("neg-toggler"))
@@ -188,9 +207,34 @@ function handleMark(mark, index: number, type: string) {
     // }
 }
 
-function handleArticleClicked(e, article) {
-    selected_article.value = article
+function removeSelectedArticleMark() {
+    const selected_article_id = selected_article.value!.id
+    removeMarkedArticle(selected_article_id)
+    selected_article_mark.value = undefined
 }
+
+function handleArticleClicked(e, article: Article) {
+    selected_article.value = article
+    initAnalysisPanel(article.id)
+}
+
+function initAnalysisPanel(article_id: number|undefined=undefined) {
+    // find article in marked articles
+      let found = marked_articles.value.find(existed_article_info => existed_article_info.article_id === article_id)
+      console.log("found", found)
+      if(!found) {
+        selected_article_mark.value = undefined
+        notes.value = ""
+        console.log("here")
+      } else {
+        selected_article_mark.value = found.mark
+        notes.value = found.description
+      }
+      console.log("notes:", notes.value)
+}
+defineExpose({
+    handleArticleClicked,
+})
 
 
 </script>
@@ -243,6 +287,11 @@ function handleArticleClicked(e, article) {
                     </div>
                     <div class="options">
                         <SelectButton v-model="selected_article_mark" optionValue="value" optionLabel="status" :options="mark_options"/>
+                        <div class="remove-button-container"> 
+                            <Button class="p-button-raised p-button-secondary p-button-text" label="remove"
+                            :disabled="selected_article_mark===undefined"
+                            @click="removeSelectedArticleMark()"> </Button>
+                        </div>
                     </div>
                 </div>
                 <!-- <textarea class="article-note-area" placeholder="make a note here" v-model="article_notes"></textarea> -->
@@ -262,9 +311,9 @@ function handleArticleClicked(e, article) {
             </i>
         </h2>
         <textarea class="notes-style"
-         :model-value="notes"
-         placeholder="Write down why you think it's fair/unfair..."
-         @update:model-value="setNotes" />
+         :value="notes"
+         placeholder="Write down why you think it's fair/unfair..." 
+         @input="setNotes" />
     </div>
 </div>
 </template>
@@ -277,7 +326,7 @@ function handleArticleClicked(e, article) {
   display: flex;
   border-bottom: 1px solid black;
   cursor: pointer;
-  height: 10%;
+  height: 11%;
 }
 .pi.pi-file.pos-icon {
   font-size: 2em;
@@ -323,6 +372,7 @@ function handleArticleClicked(e, article) {
 .pos-article-list, .neg-article-list {
     /* max-height:50%; */
     height:100%;
+    overflow: hidden;
 }
 .pos-panel-header, .neg-panel-header {
     background: #f7f7f7;
