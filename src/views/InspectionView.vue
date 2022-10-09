@@ -60,8 +60,6 @@ const ranked_outlets = vue.computed(() => {
 const selected_outlet: Ref<string> = ref("")
 const target_articles: Ref<Article[]> = ref([])
 const target_article_highlights: Ref<any> = ref({})
-const notes = vue.computed(() => store.state.notes)
-const setNotes = (notes) => store.commit("setNotes", notes)
 const marked_articles_ids_with_outlet = vue.computed(() => store.state.marked_articles)
 const marked_article_info_grouped = vue.computed(() => {
     const res = {}
@@ -73,6 +71,8 @@ const marked_article_info_grouped = vue.computed(() => {
     console.log(res)
     return res
 })
+
+const article_view = ref(null)
 
 vue.onMounted(() => {
     prepare_data()
@@ -220,13 +220,31 @@ function outletIconStyle(name:string){
     return className;
 }
 
+async function handleArticleIconClicked(article_info) {
+    let target_article
+    await fetch(`${server_address}/processed_data/ids_to_articles`, {
+        method: "POST",
+        headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify([article_info.article_id])
+    })
+        .then(res => res.json())
+        .then(json => {
+            target_article = json[0]
+        })
+    article_view.value.handleArticleClicked(null, target_article)
+}
+
 </script>
 
 <template>
     <Splitter class="splitter-outmost">
         <SplitterPanel id="article_view_section"
             class="articleview-section flex align-items-center justify-content-center" :size="left_section_size">
-            <i v-if="!data_fetched" class="pi pi-spin pi-spinner" style="position:absolute;
+            <i v-if="!data_fetched" class="pi pi-spin pi-spinner" 
+            style="position:absolute;
                 left: 45%;
                 top: 30%;
                 font-size: 3rem;
@@ -249,6 +267,7 @@ function outletIconStyle(name:string){
                 </i>
             </h2>
             <ArticleView class="article-view-container" v-if="data_fetched" v-model:sst_threshold="segmentation"
+                ref="article_view"
                 :articles="target_articles" :article_highlights="target_article_highlights"
                 :entity_pair="[selected_entity?.name as string, selected_cooccurr_entity?.name as string]">
             </ArticleView>
@@ -314,7 +333,9 @@ function outletIconStyle(name:string){
                                     <td> {{constraint_dict[selected_entity.name]?.[outlet] || "unset"}} </td>
                                     <td>
                                         <i v-for="article_info in marked_article_info_grouped[outlet]"
-                                            class="pi pi-file tooltip" :class="{fair_icon: article_info.mark, unfair_icon: !article_info.mark}">
+                                            class="pi pi-file tooltip" :class="{fair_icon: article_info.mark, unfair_icon: !article_info.mark}"
+                                            style="cursor:pointer;"
+                                            @click="handleArticleIconClicked(article_info)">
                                             <span class="tooltiptext right-tooltiptext" style="width: max-content">
                                                 {{article_info.description}}
                                             </span>
