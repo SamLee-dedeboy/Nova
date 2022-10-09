@@ -18,9 +18,7 @@ const props = defineProps({
     entity_pair: Object as () => String[],
 })
 
-const addMarkedArticle = (article_info) => store.commit("addMarkedArticle", article_info)
-const removeMarkedArticle = (article_id: number) => store.commit("removeMarkedArticle", article_id)
-
+const setMarkedArticle = (article_info) => store.commit("setMarkedArticle", article_info)
 
 vue.onMounted(() => {
     addHeaderClickEvent()
@@ -75,12 +73,14 @@ const mark_options = [
   {status: 'Fair', value: true},
   {status: 'Unfair', value: false}
 ]
-const selected_article_mark: Ref<boolean> = ref(false)
+const selected_article_mark: Ref<boolean|undefined> = ref(undefined)
 vue.watch(selected_article_mark, (new_mark, old_mark) => {
     // pos_marks.value[index] = mark
     const article_id: number = selected_article.value.id
-    // const description = `something #${index+1}` 
-    const mark = new_value
+    const outlet = selected_article.value.journal
+    const description = `some description ` 
+    const mark = new_mark
+    console.log({article_id, outlet, description, mark})
     setMarkedArticle({article_id, outlet, description, mark})
 })
 
@@ -223,21 +223,41 @@ function handleArticleClicked(e, article) {
     </div>
 </div>
 <div class="analysis-container">
-    <h2 class="component-header analysis-header">
-        Analysis
-    </h2>
-    <ScrollPanel style="width: 100%; height: 200px">
-        <div class="summary" v-if="selected_article">
-            <span class="selected-article-headline" v-html="add_highlights(selected_article.headline, props.article_highlights?.headline_entities?.[selected_article.id])">
-            </span>
-            <span class="selected-article-summary" v-html="removeTags(add_highlights(selected_article.summary, props.article_highlights?.summary_entities?.[selected_article.id]))">
-            </span>
-            <SelectButton v-model="selected_article_mark" optionValue="value" optionLabel="status" :options="mark_options"/>
-        </div>
-        <!-- <textarea class="article-note-area" placeholder="make a note here" v-model="article_notes"></textarea> -->
+    <div class="analysis-left">
+        <h2 class="component-header analysis-header">
+            Analysis
+        </h2>
+        <div class="analysis-content">
+            <ScrollPanel style="width: 100%; height: 100%">
+                <div class="summary" v-if="selected_article">
+                    <span class="selected-article-headline" v-html="add_highlights(selected_article.headline, props.article_highlights?.headline_entities?.[selected_article.id])">
+                    </span>
+                    <span class="selected-article-summary" v-html="removeTags(add_highlights(selected_article.summary, props.article_highlights?.summary_entities?.[selected_article.id]))">
+                    </span>
+                    <SelectButton v-model="selected_article_mark" optionValue="value" optionLabel="status" :options="mark_options"/>
+                    <div style="height: 30px"></div>
+                </div>
+                <!-- <textarea class="article-note-area" placeholder="make a note here" v-model="article_notes"></textarea> -->
 
-        <!-- <ToggleButton class='mark_toggle'  :model-value="selected_article_mark" onLabel="Unmark" off-label="Mark" @update:model-value="handleMark($event)"></ToggleButton> -->
-    </ScrollPanel>
+                <!-- <ToggleButton class='mark_toggle'  :model-value="selected_article_mark" onLabel="Unmark" off-label="Mark" @update:model-value="handleMark($event)"></ToggleButton> -->
+            </ScrollPanel>
+        </div>
+    </div>
+    <div class="notes" v-if="selected_article">
+        <h2 class="component-header notes-header">
+            Notes
+            <i class='pi pi-info-circle tooltip'>
+                <span class="tooltiptext right-tooltiptext" style="width: 145px">
+                    Write down any hypothesis or questions you have.
+                    The system will document that for you.
+                </span>
+            </i>
+        </h2>
+        <textarea class="notes-style"
+         :model-value="notes"
+         placeholder="Write down why you think it's fair/unfair..."
+         @update:model-value="setNotes" />
+    </div>
 </div>
 </template>
 <style scoped>
@@ -277,9 +297,6 @@ function handleArticleClicked(e, article) {
   flex-direction: column;
   overflow: hidden;
 }
-.analysis-container {
-  height: 100%;
-}
 :deep(.p-panel-header) {
     cursor: pointer;
     background: unset !important;
@@ -315,9 +332,50 @@ function handleArticleClicked(e, article) {
 
 .summary {
     white-space: pre-line;
+    height:100%;
+    /* display: flex; */
+    flex-direction: column;
+}
+.selected-article-summary {
+  margin-left: 1%;
 }
 :deep(.p-splitter-gutter) {
     pointer-events: none;
+}
+.selected-article-headline {
+  border-bottom: 1px solid;
+  margin-left: 1%;
+}
+
+.analysis-container {
+    display: flex;
+  overflow: hidden;
+  /*! height: 100%; */
+  flex: 1 1 0;
+  height: 100%;
+}
+.analysis-content {
+  display: flex;
+  height: 100%;
+flex: 1 1 0;
+overflow: hidden;
+}
+.analysis-left {
+    width: 75%;
+    overflow: hidden;
+display: flex;
+flex-direction: column;
+}
+.notes {
+  width: 25%;
+  /* height: 100%; */
+  padding-bottom: 1%;
+  display: flex;
+  flex-direction: column;
+}
+.notes-style {
+  width: 100%;
+  height: 100%;
 }
 
 </style>

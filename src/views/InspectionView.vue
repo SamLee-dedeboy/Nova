@@ -70,19 +70,13 @@ const marked_article_info_grouped = vue.computed(() => {
         if (!res[outlet]) res[outlet] = []
         res[outlet].push(article_info)
     })
+    console.log(res)
     return res
 })
 
 vue.onMounted(() => {
     prepare_data()
 })
-
-const sentiment_options = [
-    { type: SentimentType.neu, value: "neu" },
-    { type: SentimentType.neg, value: "neg" },
-    { type: SentimentType.pos, value: "pos" },
-    { type: SentimentType.mix, value: "mix" },
-]
 
 const journal_options = [
     "CNN",
@@ -293,43 +287,17 @@ function outletIconStyle(name:string){
                     </div>
                 </div>
                 <div class="hexview-container">
+                    <div class="journal-info-container" style="font-size:small">
+                        <Dropdown :modelValue="selected_outlet" :options="journal_options"
+                            placeholder="Select an journal" @change="handleChangeJournal" />
+                    </div>
                     <HexCooccurrence v-if="data_fetched" class="compare-co-hexview" :title="clicked_hexview.title"
                         :id="`compare-co-hex-inpection`" :entity_cooccurrences="clicked_hexview.data"
                         :segmentation="original_segmentation" :highlight_hex_entity="highlight_hex_entity"
                         @hex-clicked="handleHexClicked">
                     </HexCooccurrence>
                 </div>
-                <div class="select-category-container">
-                    <div class="question-container">
-                        <span>
-                            How would you describe the coverage on
-                            <span> {{selected_entity?.name.replaceAll("_"," ")}} </span>
-                            by &nbsp
-                        </span>
-                        <div class="journal-info-container" style="font-size:small">
-                            <Dropdown :modelValue="selected_outlet" :options="journal_options"
-                                placeholder="Select an journal" @change="handleChangeJournal" />
-                        </div>
-                    </div>
-                    <div class="selection-container">
-                        <SelectButton v-model="selectedCategory" :options="sentiment_options" option-label="value"
-                            data-key="type">
-                        </SelectButton>
-                    </div>
-                </div>
                 <div class="document-container">
-                    <div class="notes">
-                        <h2 class="component-header notes-header">
-                            Notes
-                            <i class='pi pi-info-circle tooltip'>
-                                <span class="tooltiptext right-tooltiptext" style="width: 145px">
-                                    Write down any hypothesis or questions you have.
-                                    The system will document that for you.
-                                </span>
-                            </i>
-                        </h2>
-                        <Textarea class="notes-style" :model-value="notes" @update:model-value="setNotes" />
-                    </div>
                     <div class="marked-articles-container">
                         <h2 class="component-header marked-articles-header">
                             Conclusions
@@ -346,7 +314,7 @@ function outletIconStyle(name:string){
                                     <td> {{constraint_dict[selected_entity.name]?.[outlet] || "unset"}} </td>
                                     <td>
                                         <i v-for="article_info in marked_article_info_grouped[outlet]"
-                                            class="pi pi-file tooltip">
+                                            class="pi pi-file tooltip" :class="{fair_icon: article_info.mark, unfair_icon: !article_info.mark}">
                                             <span class="tooltiptext right-tooltiptext" style="width: max-content">
                                                 {{article_info.description}}
                                             </span>
@@ -395,6 +363,12 @@ function outletIconStyle(name:string){
 // ---------------------
 // articlew view section
 // ---------------------
+.articleview-section {
+  overflow: hidden;
+  height: 100%;
+  display: flex !important;
+  flex-direction: column !important;
+}
 
 // ---------------------
 // entity info section
@@ -534,6 +508,9 @@ li {
 :deep(.p-scrollpanel.p-component) {
     width: 100%;
 }
+:deep(.p-scrollpanel-bar-y) {
+    background: #4d4e4f;
+}
 
 .question-container {
     display: flex;
@@ -545,6 +522,9 @@ li {
 }
 
 .journal-info-container {
+  width: fit-content;
+  left: 67%;
+  position: relative;
     white-space: nowrap;
     margin: 0.3rem 0rem;
 }
