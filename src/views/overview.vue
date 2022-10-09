@@ -605,7 +605,9 @@ function updateSegmentation({ pos, neg }) {
               topic points. </div>
             <!-- Hex view -->
             <h2 class="component-header hexview-header" v-if="selected_entity">
-              Topic Co-occurrence Hive
+              Topic Co-occurrence Hive for
+              <span class="mainTopicStyle"> {{ selected_entity.name.replaceAll("_"," ") }} </span>
+              &nbsp
               <i class='pi pi-info-circle tooltip'>
                 <span class="tooltiptext right-tooltiptext" style="width: 400px">
                   Shows most-frequently co-occurring topics with the main topic ({{ selected_entity.name }}). <br />
@@ -750,7 +752,10 @@ main {
 //
 // general layouts
 //
-
+.mainTopicStyle{
+    font-style: italic;
+    font-weight: 200;
+}
 
 // ---------------------
 // entity scatter section

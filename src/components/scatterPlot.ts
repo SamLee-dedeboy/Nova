@@ -554,7 +554,8 @@ export class EntityScatter {
                     emit("update-weight-ended")
                 })
                 update.selectAll("circle.entity_circle")
-                .attr("fill", (d: any) => SstColors.article_num_color_scale(d.article_ids.length/this.max_articles.value))
+                .attr("fill", (d:any) => d.article_ids.length === 0? "white" : colorScale(d.article_ids.length))
+
             }
         ) 
         const dots = svg.selectAll("g.entity")

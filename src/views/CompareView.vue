@@ -90,7 +90,7 @@ vue.onMounted(async () => {
                 setHexViewGrid(hexview_grid_data)
                 console.log(data_list)
                 const hex_candidates = hexview_grid_data[0].data.sorted_cooccurrences_list.map((hex_entity: typeUtils.HexEntity) => hex_entity.entity)
-                hex_candidates.push(target_entity) 
+                hex_candidates.push(target_entity)
                 fetch_entity_grouped_node(hex_candidates)
                 resolve("success")
             })
@@ -104,26 +104,26 @@ vue.onMounted(async () => {
 
 async function fetch_entity_grouped_node(hex_candidates) {
     await fetch(`${server_address}/processed_data/scatter_node/grouped/hex_candidates`, {
-      method: "POST",
-      headers: {
-        "Accept": "application/json",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(hex_candidates)
+        method: "POST",
+        headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(hex_candidates)
     })
-    .then(res => res.json())
-    .then(json => {
-        hex_entity_scatter_view.value = {
-            title: "Hex Entity Scatter",
-            data: {
-                nodes: json,
-                max_articles: Math.max(...json.map(node => node.article_ids.length)),
-                min_articles: Math.min(...json.map(node => node.article_ids.length)),
+        .then(res => res.json())
+        .then(json => {
+            hex_entity_scatter_view.value = {
+                title: "Hex Entity Scatter",
+                data: {
+                    nodes: json,
+                    max_articles: Math.max(...json.map(node => node.article_ids.length)),
+                    min_articles: Math.min(...json.map(node => node.article_ids.length)),
+                }
             }
-        }
-        console.log(hex_entity_scatter_view.value)
-        console.log("hex entity scatter view fetched")
-    })
+            console.log(hex_entity_scatter_view.value)
+            console.log("hex entity scatter view fetched")
+        })
 }
 
 async function handleHexClicked({ target, co_occurr_entity }, view) {
@@ -162,14 +162,20 @@ async function handleHexClicked({ target, co_occurr_entity }, view) {
         })
 }
 
-function toggleSelection(selectedOutlet:any, currentOutlet:string){
+function toggleSelection(selectedOutlet: any, currentOutlet: string) {
     currentOutlet = currentOutlet.split('-')[2];
-    let selectionClass = (currentOutlet.includes(selectedOutlet.outlet)) ? 'hiveSelect': '';
+    let selectionClass = (currentOutlet.includes(selectedOutlet.outlet)) ? 'hiveSelect' : '';
     return selectionClass
 }
 
-function outletIconStyle(name:string){
-    let className = name.split('-')[2].replaceAll(' ','-') + '-icon';
+function outletIconStyle(name: string) {
+    let className = name.split('-')[2].replaceAll(' ', '-') + '-icon';
+    className = (className.includes("FoxNews") || className.includes("Breitbart")) ? className : 'icon';
+    return className;
+}
+
+function outletIconHeaderStyle(name: string) {
+    let className = name.replaceAll(' ', '-') + '-icon';
     className = (className.includes("FoxNews") || className.includes("Breitbart")) ? className : 'icon';
     return className;
 }
@@ -184,103 +190,78 @@ function outletIconStyle(name:string){
                 Click any hexagon on the left to continue to next stage.
             </div>
 
-        <div v-if="selected_entity?.outlet !== 'Overall'" class="navigate-container">
-            <router-link class="goNext" :to="{ name: 'inspection', params: { entity: selected_entity?.name || 'undefined' }}">Next
-                Stage</router-link>
-        </div>
-        <h2 class="component-header hexview-grid-header">
-            Topic Co-occurrences Hive of
-            <span> {{ route.params.entity }} </span>
-            &nbsp
-            <i class='pi pi-info-circle tooltip'>
-                <span class="tooltiptext right-tooltiptext" style="width: 500px">
-                    Each hive represents the coverage on {{ selected_entity?.name }} by that outlet. <br />
-                    A hexagon is left blanked if the outlet does not cover that topic. <br />
-                    Try to discover outlet coverage differences and common grounds.
-                </span>
-            </i>
-        </h2>
-        <div class="hexview-grid-container">
-            <div class="hexview-grid-cell-container" v-if="data_fetched" v-for="view, index in hexview_grid">
-                <HexCooccurrence class="compare-co-hexview" :title="view.title" :id="`compare-co-hex-${index}`"
-                    :entity_cooccurrences="view.data" :segmentation="segmentation"
-                    :highlight_hex_entity="highlight_hex_entity"
-                    v-on:hex-clicked="handleHexClicked($event, view)">
-                </HexCooccurrence>
-                <div  :class="['journal-style', toggleSelection(selected_entity, view.title)]">
-                    <img :src="`../src/assets/${view.title.split('-')[2]}.png`" :class="['journal-image',`${outletIconStyle(view.title)}`]" />
-                </div>
+            <div v-if="selected_entity?.outlet !== 'Overall'" class="navigate-container">
+                <router-link class="goNext"
+                    :to="{ name: 'inspection', params: { entity: selected_entity?.name || 'undefined' }}">Next
+                    Stage</router-link>
             </div>
-        </div>
-    </SplitterPanel>
-    <SplitterPanel id="entity_info_section" class="entity-info-panel flex align-items-center justify-content-center"
-        :size="right_section_size">
-        <div class="entity-info-container">
-            <div class="target-cooccurr-container" v-if="selected_entity">
-                <h2 class="component-header cooccurr-info-header">
-                    Topic Info
-                    <i class='pi pi-info-circle tooltip'>
-                        <span class="tooltiptext right-tooltiptext" style="width: 100px;">
-                            <Legend id="policy_legend" class="policy-bar-legend"
-                                :color_dict="SstColors.topic_color_dict" :row_height="10" :font_size="1.2"></Legend>
-                        </span>
-                    </i>
-                </h2>
-                <div class="cooccurr-info-content">
-                    <!-- <div class="num_of_articles">
-                        #articles about 
-                        <span style="font-weight:bolder"> {{selected_entity.name}} </span>
-                        <span v-if="selected_cooccurr_entity"> 
-                        and 
-                        <span style="font-weight:bolder">
-                            {{selected_cooccurr_entity.name}}
-                        </span> 
-                        </span>
-                        is {{ selected_cooccurr_entity? selected_cooccurr_entity.num_of_mentions : selected_entity.num_of_mentions }}
+            <h2 class="component-header hexview-grid-header">
+                Topic Co-occurrence Hives for
+                <span class="mainTopicStyle"> {{ route.params.entity.replaceAll("_"," ") }} </span>
+                &nbsp
+                <i class='pi pi-info-circle tooltip'>
+                    <span class="tooltiptext right-tooltiptext" style="width: 500px">
+                        Each hive represents the coverage on {{ selected_entity?.name }} by that outlet. <br />
+                        A hexagon is left blanked if the outlet does not cover that topic. <br />
+                        Try to discover outlet coverage differences and common grounds.
+                    </span>
+                </i>
+            </h2>
+            <div class="hexview-grid-container">
+                <div class="hexview-grid-cell-container" v-if="data_fetched" v-for="view, index in hexview_grid">
+                    <HexCooccurrence class="compare-co-hexview" :title="view.title" :id="`compare-co-hex-${index}`"
+                        :entity_cooccurrences="view.data" :segmentation="segmentation"
+                        :highlight_hex_entity="highlight_hex_entity" v-on:hex-clicked="handleHexClicked($event, view)">
+                    </HexCooccurrence>
+                    <div :class="['journal-style', toggleSelection(selected_entity, view.title)]">
+                        <img :src="`../src/assets/${view.title.split('-')[2]}.png`"
+                            :class="['journal-image',`${outletIconStyle(view.title)}`]" />
                     </div>
-                    <Divider layout="vertical"></Divider> -->
-                    <ul class="entity-info-section">
-                        <li> Main topic: {{ selected_entity.name }} </li>
-                        <li v-if='selected_cooccurr_entity'> Co-occur topic: {{ selected_cooccurr_entity.name }}
-                        </li>
-                        <li> Media outlet: {{selected_entity.outlet === 'Overall'? "Not selected":selected_entity.outlet}}</li>
-                    </ul>
                 </div>
-                <!-- <EntityInfoView
-                v-if="selected_entity"
-                title="Target Entity"
-                :entity_info="selected_entity">
-            </EntityInfoView>
-            <Divider v-if="selected_cooccurr_entity" layout="vertical"></Divider>
-            <EntityInfoView
-                v-if="selected_cooccurr_entity"
-                title="Co-occurr Entity"
-                :entity_info="selected_cooccurr_entity">
-            </EntityInfoView> -->
             </div>
-            <div class="topic-bar-container" v-if="selected_entity">
-                <TopicBars id="cooccurr_topic_bars" :targetTopicBins="selected_entity?.articles_topic_dict"
-                    :cooccurrTopicBins="selected_cooccurr_entity?.articles_topic_dict"></TopicBars>
-            </div>
-            <div class="legend-utils" v-if="selected_entity">
-                <h2 class="component-header legend-header">
-                    Some Scatter
-                    <!-- <i class='pi pi-info-circle tooltip'>
-                        <span class="tooltiptext right-tooltiptext" style="width: 120px;">
-                            The sentiments have four categories as listed. <br/>
-                            A mixed sentiment means the topic has lots of positive and negative articles at the same time. 
-                        </span>
-                    </i> -->
-                </h2>
-                <HexEntityScatter
-                    ref="hex_entity_scatter"
-                    v-if="hex_entity_scatter_view"
-                        :view="hex_entity_scatter_view"
-                        :highlight_node_text="selected_entity.name"
-                        id="hex_entity_scatter"
-                        :segment_mode="true"
-                        :segmentation="segmentation"
-                        @update:segmentation="setSegmentation" >
+        </SplitterPanel>
+        <SplitterPanel id="entity_info_section" class="entity-info-panel flex align-items-center justify-content-center"
+            :size="right_section_size">
+            <div class="entity-info-container">
+                <div class="target-cooccurr-container" v-if="selected_entity">
+                    <h2 class="component-header cooccurr-info-header">
+                        Topic Info
+                        <i class='pi pi-info-circle tooltip'>
+                            <span class="tooltiptext right-tooltiptext" style="width: 100px;">
+                                <Legend id="policy_legend" class="policy-bar-legend"
+                                    :color_dict="SstColors.topic_color_dict" :row_height="10" :font_size="1.2"></Legend>
+                            </span>
+                        </i>
+                    </h2>
+                    <div class="cooccurr-info-content">
+                        <div class="cooccurContent">
+                            <h4>Articles with <span class="topicStyle"> {{ selected_entity.name.replaceAll("_"," ") }} </span> &
+                                <span v-if='selected_cooccurr_entity' class="topicStyle"> {{
+                                selected_cooccurr_entity.name.replaceAll("_"," ") }} </span>
+                            </h4>
+
+                        </div>
+                    </div>
+
+                </div>
+                <div class="topic-bar-container" v-if="selected_entity">
+                    <TopicBars id="cooccurr_topic_bars" :targetTopicBins="selected_entity?.articles_topic_dict"
+                        :cooccurrTopicBins="selected_cooccurr_entity?.articles_topic_dict"></TopicBars>
+                </div>
+                <div class="legend-utils" v-if="selected_entity">
+                    <h2 class="component-header legend-header">
+                        <div class="journalSent">
+                            <div :class="['journal-style']">
+                                <img :src="`../src/assets/${selected_entity.outlet}.png`"
+                                    :class="['journal-image',`${outletIconHeaderStyle(selected_entity.outlet)}`]" />
+                            </div>
+                            <div class="journalSentContent">Sentiment</div>
+                        </div>
+                    </h2>
+                    <HexEntityScatter ref="hex_entity_scatter" v-if="hex_entity_scatter_view"
+                        :view="hex_entity_scatter_view" :highlight_node_text="selected_entity.name"
+                        id="hex_entity_scatter" :segment_mode="true" :segmentation="segmentation"
+                        @update:segmentation="setSegmentation">
                     </HexEntityScatter>
                 </div>
                 <div class="notes-section" v-if="selected_entity">
@@ -293,7 +274,7 @@ function outletIconStyle(name:string){
                             </span>
                         </i>
                     </h2>
-                    <Textarea class="notes-style" :model-value="notes" @update:model-value="setNotes"/>
+                    <Textarea class="notes-style" :model-value="notes" @update:model-value="setNotes" />
 
                 </div>
             </div>
@@ -312,7 +293,7 @@ function outletIconStyle(name:string){
     display: flex;
 }
 
-.notes-style{
+.notes-style {
     width: 100%;
     height: 50%;
 }
@@ -348,7 +329,7 @@ function outletIconStyle(name:string){
     z-index: 1
 }
 
-.journal-style{
+.journal-style {
     width: 50px;
     height: 50px;
     position: relative;
@@ -359,13 +340,13 @@ function outletIconStyle(name:string){
     border: #d7d7d7 3px solid;
 }
 
-.FoxNews-icon{
+.FoxNews-icon {
     height: 85%;
     right: 30%;
     bottom: 2%;
 }
 
-.Breitbart-icon{
+.Breitbart-icon {
     height: 65%;
     top: 20%;
     left: 10%;
@@ -375,16 +356,27 @@ function outletIconStyle(name:string){
     height: 100%;
 }
 
-.hiveSelect{
+.hiveSelect {
     box-shadow: 0 0 0 0 rgba(0, 0, 0, 1);
     transform: scale(1);
     animation: pulse 2s infinite;
 }
 
 .journal-image {
-  display: inline;
-  margin: 0 auto;
-  width: auto;
+    display: inline;
+    margin: 0 auto;
+    width: auto;
+}
+
+.journalSent {
+    display: flex
+}
+
+.journalSentContent {
+    width: 50%;
+    position: absolute;
+    left: 35%;
+    top: 10%;
 }
 
 // ---------------------
@@ -401,15 +393,26 @@ function outletIconStyle(name:string){
 .target-cooccurr-container {
     display: flex;
     flex-direction: column;
+    height: 10%;
+}
+
+.topic-bar-container {
+    height: 30%;
 }
 
 .cooccurr-info-content {
     display: flex;
+    text-align: center;
 }
 
 .entity-info-section {
     padding-left: 1%;
     margin-left: 6%;
+}
+
+.topicStyle{
+    font-style: italic;
+    font-weight: 700;
 }
 
 // ---------------------
@@ -419,6 +422,7 @@ function outletIconStyle(name:string){
     margin: 1%;
     display: flex;
     flex-direction: column;
+    height: 40%;
 }
 
 .segment-legend {
@@ -428,6 +432,13 @@ function outletIconStyle(name:string){
 .notes-section {
     margin-left: 1%;
     flex: 1 1 0;
+    height: 20%;
+}
+
+
+.mainTopicStyle{
+    font-style: italic;
+    font-weight: 200;
 }
 
 :deep(p-inputtextarea) {
@@ -487,4 +498,12 @@ a.goNext {
         box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
     }
 }
+
+
+.cooccurr-info-header {
+    height: 59%;
+}
+
+
+
 </style>

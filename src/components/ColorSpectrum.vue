@@ -9,7 +9,9 @@ const props = defineProps({
 
 const viewBox = [300, 25]
 const steps = 11
-const interpolation = [...Array(steps).keys()].map(p => p/(steps-1))
+const interpolation =  [1,3572] //[...Array(steps).keys()].map(p => p/(steps-1))
+const colorScale =  d3.scaleLog().domain([1,3572]).range(["#FFFFFF","#5e0053"]); // hardcoded sorry :( pass article max via a store 
+
 onMounted(() => {
     const svg = d3.select("svg.spectrum-container")
         .attr("viewBox", `0 0 ${viewBox[0]} ${viewBox[1]}`)
@@ -24,7 +26,7 @@ onMounted(() => {
         .data(interpolation)
         .enter()
         .append("stop")
-        .style("stop-color", (d) => (props.colorScale!(d)))
+        .style("stop-color", (d) => (colorScale!(d)))
         .attr("offset", (d, i) => (100*(i/(interpolation.length-1)) + '%'))
     svg.append("rect")
         .attr("x", 0)
