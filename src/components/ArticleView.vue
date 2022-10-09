@@ -164,7 +164,7 @@ function add_highlights(raw_text: string, highlights: any[]) {
 }
 
 function highlight_element(text) {
-    const highlight_color = "rgb(242, 247, 99)"
+    const highlight_color = "#f4e12c5c"
     return `<span style='background-color:${highlight_color};'>${text}</span>`
 }
 
@@ -230,17 +230,20 @@ function handleArticleClicked(e, article) {
 <div class="analysis-container">
     <div class="analysis-left">
         <h2 class="component-header analysis-header">
-            Analysis
+            Article Reviewer
         </h2>
         <div class="analysis-content">
             <ScrollPanel style="width: 100%; height: 100%">
                 <div class="summary" v-if="selected_article">
-                    <span class="selected-article-headline" v-html="add_highlights(selected_article.headline, props.article_highlights?.headline_entities?.[selected_article.id])">
-                    </span>
-                    <span class="selected-article-summary" v-html="removeTags(add_highlights(selected_article.summary, props.article_highlights?.summary_entities?.[selected_article.id]))">
-                    </span>
-                    <SelectButton v-model="selected_article_mark" optionValue="value" optionLabel="status" :options="mark_options"/>
-                    <div style="height: 30px"></div>
+                    <h4 class="articleHeadline">
+                        <span class="selected-article-headline" v-html="add_highlights(selected_article.headline, props.article_highlights?.headline_entities?.[selected_article.id])"/>
+                    </h4>
+                    <div class="articleSummary">
+                        <span class="selected-article-summary" v-html="removeTags(add_highlights(selected_article.summary, props.article_highlights?.summary_entities?.[selected_article.id]))"/>
+                    </div>
+                    <div class="options">
+                        <SelectButton v-model="selected_article_mark" optionValue="value" optionLabel="status" :options="mark_options"/>
+                    </div>
                 </div>
                 <!-- <textarea class="article-note-area" placeholder="make a note here" v-model="article_notes"></textarea> -->
 
@@ -349,8 +352,7 @@ function handleArticleClicked(e, article) {
     pointer-events: none;
 }
 .selected-article-headline {
-  border-bottom: 1px solid;
-  margin-left: 1%;
+  font-weight: 600;
 }
 
 .analysis-container {
@@ -404,6 +406,25 @@ flex-direction: column;
 
 .article-card:hover{
     box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+}
+
+
+.articleHeadline {
+    height: 10%;
+    margin-top: 2%;
+    text-align: center;
+}
+
+.articleSummary {
+    height: 60%;
+    margin-left: 8%;
+    margin-right: 8%;
+    font-style: italic;
+}
+
+.options {
+    height: 20%;
+    margin-left: 8%;
 }
 
 </style>
