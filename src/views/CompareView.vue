@@ -52,7 +52,7 @@ const outlet_weight_dict = vue.computed(() => store.state.outlet_weight_dict)
 const hex_entity_scatter_view: Ref<any> = ref(undefined)
 const highlight_hex_entity: Ref<string> = ref("")
 const notes = vue.computed(() => store.state.notes)
-const setNotes = (notes) => store.commit("setNotes", notes)
+const setNotes = (e) => store.commit("setNotes", e.target.value)
 const selected_outlet = vue.computed(() => selected_entity.value?.outlet || "ABC News")
 
 
@@ -254,7 +254,7 @@ function outletIconHeaderStyle(name: string) {
                             </span>
                         </i>
                     </h2>
-                    <textarea class="notes-style" :model-value="notes" @update:model-value="setNotes" placeholder="Write down any observations..." />
+                    <textarea class="notes-style" :value="notes" @input="setNotes" placeholder="Write down any observations..." />
 
                     <div v-if="selected_entity?.outlet !== 'Overall'" class="navigate-container">
                         <router-link class="goNext"

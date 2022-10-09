@@ -20,9 +20,9 @@ const props = defineProps({
 const marked_articles = vue.computed(() => store.state.marked_articles)
 const setMarkedArticle = (article_info) => store.commit("setMarkedArticle", article_info)
 const removeMarkedArticle = (article_id) => store.commit("removeMarkedArticle", article_id)
-const notes: Ref<string> = ref("")
-// const notes = vue.computed(() => store.state.notes)
-// const setNotes = (notes) => store.commit("setNotes", notes)
+// const notes: Ref<string> = ref("")
+const notes = vue.computed(() => store.state.notes)
+const setNotes = (e) => store.commit("setNotes", e.target.value)
 
 vue.onMounted(() => {
     addHeaderClickEvent()
@@ -83,22 +83,23 @@ vue.watch(selected_article_mark, (new_mark, old_mark) => {
     // pos_marks.value[index] = mark
     const article_id: number = selected_article.value!.id
     const outlet = selected_article.value!.journal
-    const description = notes.value
+    // const description = notes.value
+    const description = selected_article.value!.headline
     const mark = new_mark
     setMarkedArticle({article_id, outlet, description, mark})
     // console.log(marked_articles.value)
 })
 
-function setNotes(e) {
-    console.log("set notes")
-    notes.value = e.target.value 
-    if(selected_article_mark.value === undefined) return
-    const article_id: number = selected_article.value!.id
-    const outlet = selected_article.value!.journal
-    const description = notes.value
-    const mark = selected_article_mark.value
-    setMarkedArticle({article_id, outlet, description, mark})
-}
+// function setNotes(e) {
+//     console.log("set notes")
+//     notes.value = e.target.value 
+//     if(selected_article_mark.value === undefined) return
+//     const article_id: number = selected_article.value!.id
+//     const outlet = selected_article.value!.journal
+//     const description = notes.value
+//     const mark = selected_article_mark.value
+//     setMarkedArticle({article_id, outlet, description, mark})
+// }
 
 
 function addHeaderClickEvent() {
@@ -219,18 +220,22 @@ function handleArticleClicked(e, article: Article) {
 }
 
 function initAnalysisPanel(article_id: number|undefined=undefined) {
+    if(article_id === undefined) {
+        selected_article.value = undefined
+        return
+    }
     // find article in marked articles
-      let found = marked_articles.value.find(existed_article_info => existed_article_info.article_id === article_id)
-      console.log("found", found)
-      if(!found) {
-        selected_article_mark.value = undefined
-        notes.value = ""
-        console.log("here")
-      } else {
-        selected_article_mark.value = found.mark
-        notes.value = found.description
-      }
-      console.log("notes:", notes.value)
+    let found = marked_articles.value.find(existed_article_info => existed_article_info.article_id === article_id)
+    console.log("found", found)
+    if(!found) {
+    selected_article_mark.value = undefined
+    // notes.value = ""
+    console.log("here")
+    } else {
+    selected_article_mark.value = found.mark
+    // notes.value = found.description
+    }
+    console.log("notes:", notes.value)
 }
 defineExpose({
     handleArticleClicked,
@@ -279,9 +284,9 @@ defineExpose({
         <div class="analysis-content">
             <ScrollPanel style="width: 100%; height: 100%">
                 <div class="summary" v-if="selected_article">
-                    <h4 class="articleHeadline">
-                        <span class="selected-article-headline" v-html="add_highlights(selected_article.headline, props.article_highlights?.headline_entities?.[selected_article.id])"/>
-                    </h4>
+                    <div class="articleHeadline">
+                        <h4 class="selected-article-headline" v-html="add_highlights(selected_article.headline, props.article_highlights?.headline_entities?.[selected_article.id])"/>
+                    </div>
                     <div class="articleSummary">
                         <span class="selected-article-summary" v-html="removeTags(add_highlights(selected_article.summary, props.article_highlights?.summary_entities?.[selected_article.id]))"/>
                     </div>
@@ -293,6 +298,7 @@ defineExpose({
                             @click="removeSelectedArticleMark()"> </Button>
                         </div>
                     </div>
+                    <div style="height: 30px"></div>
                 </div>
                 <!-- <textarea class="article-note-area" placeholder="make a note here" v-model="article_notes"></textarea> -->
 
@@ -300,7 +306,7 @@ defineExpose({
             </ScrollPanel>
         </div>
     </div>
-    <div class="notes" v-if="selected_article">
+    <div class="notes" >
         <h2 class="component-header notes-header">
             Notes
             <i class='pi pi-info-circle tooltip'>
@@ -312,7 +318,7 @@ defineExpose({
         </h2>
         <textarea class="notes-style"
          :value="notes"
-         placeholder="Write down why you think it's fair/unfair..." 
+         placeholder="Write down any thoughts you have..." 
          @input="setNotes" />
     </div>
 </div>
@@ -412,6 +418,10 @@ defineExpose({
   flex: 1 1 0;
   height: 100%;
 }
+.component-header.analysis-header {
+  background: #f7f7f7;
+  padding-left: 1%;
+}
 .analysis-content {
   display: flex;
   height: 100%;
@@ -423,6 +433,11 @@ overflow: hidden;
     overflow: hidden;
 display: flex;
 flex-direction: column;
+}
+.component-header.notes-header {
+    background: #f7f7f7;
+    margin: 3% 1% 1% 0%;
+    padding-left: 2%;
 }
 .notes {
   width: 25%;
@@ -459,14 +474,15 @@ flex-direction: column;
 }
 
 
+:deep(.p-scrollpanel .p-scrollpanel-bar) {
+    background: #838585;
+}
 .articleHeadline {
-    height: 10%;
-    margin-top: 2%;
     text-align: center;
+    margin: 2% 2% 2% 2%;
 }
 
 .articleSummary {
-    height: 60%;
     margin-left: 8%;
     margin-right: 8%;
     font-style: italic;
@@ -475,6 +491,12 @@ flex-direction: column;
 .options {
     height: 20%;
     margin-left: 8%;
+  display: flex;
+  align-items: center;
+}
+
+.remove-button-container {
+  margin-left: 1%;
 }
 
 </style>
