@@ -245,7 +245,7 @@ function outletIconHeaderStyle(name: string) {
                         :highlight_hex_entity="highlight_hex_entity" v-on:hex-clicked="handleHexClicked($event, view)">
                     </HexCooccurrence>
                     <div :class="['journal-style', toggleSelection(selected_entity, view.title)]">
-                        <img :src="`../../src/assets/${view.title.split('-')[2]}.png`"
+                        <img :src="`/${view.title.split('-')[2]}.png`"
                             :class="['journal-image',`${outletIconStyle(view.title)}`]" />
                     </div>
                 </div>
@@ -303,7 +303,7 @@ function outletIconHeaderStyle(name: string) {
                     <h2 class="component-header legend-header">
                         <div class="journalSent">
                             <div :class="['journal-style']">
-                                <img v-if="selected_outlet !=='Overall'"  :src="`../../src/assets/${selected_outlet}.png`"
+                                <img v-if="selected_outlet !=='Overall'"  :src="`/${selected_outlet}.png`"
                                     :class="['journal-image',`${outletIconHeaderStyle(selected_outlet)}`]" />
                             </div>
                             <div class="journalSentContent">Sentiment</div>

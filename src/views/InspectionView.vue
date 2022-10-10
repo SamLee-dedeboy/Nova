@@ -259,7 +259,7 @@ async function handleArticleIconClicked(article_info) {
                     </h2>
                     <div class="cooccurr-info-content">
                         <div :class="['journal-style']">
-                            <img :src="`../src/assets/${selected_entity.outlet}.png`"
+                            <img :src="`/${selected_entity.outlet}.png`"
                                 :class="['journal-image',`${outletIconStyle(selected_entity.outlet)}`]" />
                         </div>
                         <div class="num_of_articles">
@@ -304,7 +304,7 @@ async function handleArticleIconClicked(article_info) {
                                 <tr v-for="outlet in ranked_outlets" class="markedTr">
                                     <td class="journal-image-text-cell"> 
                                         <div :class="['journal-style', 'table-image' ]">
-                                            <img :src="`../src/assets/${outlet}.png`"
+                                            <img :src="`/${outlet}.png`"
                                                 :class="['journal-image',`${outletIconStyle(outlet)}`]" />
                                         </div>
                                         <div class="table-outlet-text">

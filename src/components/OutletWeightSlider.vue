@@ -30,7 +30,7 @@ function outletIconStyle(name: string) {
         <div class="outlet-weight-grid-cell" v-for="outlet in outlet_list" >
             <div class="wrapper">
                 <div :class="['journal-style']">
-                    <img :src="`../src/assets/${outlet}.png`"
+                    <img :src="`/${outlet}.png`"
                     :class="['journal-image',`${outletIconStyle(outlet)}`]" />
                 </div>
                 <span class="outletName" :style="{'font-size':fontSize}">{{outlet}}</span>
