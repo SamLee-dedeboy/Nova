@@ -6,6 +6,7 @@ import Slider from "primevue/slider"
 import InputText from "primevue/inputtext"
 import SelectButton from 'primevue/selectbutton';
 import ToggleButton from 'primevue/togglebutton';
+import Dialog from 'primevue/dialog';
 import Divider from 'primevue/divider';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from "primevue/splitterpanel"
@@ -78,6 +79,7 @@ const overview_constructed: Ref<boolean> = ref(false)
 const hex_constructed: Ref<boolean> = ref(true)
 const overall_co_hexview: Ref<any> = ref(null)
 const highlight_hex_entity: Ref<string> = ref("")
+const showTutorial: Ref<boolean> = ref(true)
 //
 // processed data 
 //
@@ -401,7 +403,8 @@ function handleUpdateOutletWeight({ outlet, value }) {
   console.log(outlet_weight_dict.value)
   setOutletWeight({ outlet: outlet, weight: value })
   updateOverallEntityNode({ outlet, value })
-  updateHexViewData()
+  if(!showTutorial)
+    updateHexViewData()
 }
 
 async function updateOverallEntityNode({ outlet, value }) {
@@ -494,7 +497,9 @@ function updateSegmentation({ pos, neg }) {
   setSegmentation({ pos, neg })
 }
 
-
+function toggleTutorial(e:MouseEvent){
+    showTutorial.value=false
+}
 
 </script>
 
@@ -508,6 +513,34 @@ function updateSegmentation({ pos, neg }) {
          <p class="next"><i class="pi pi-arrow-right "/></p>
       </router-link>
     </div>
+
+    <Dialog v-model:visible="showTutorial" class="tutorialStyle" position="right" :modal="true">
+      <template #header>
+        <h3> <i class="pi pi-compass"/> U.S. News Media Coverage Assessment</h3>
+      </template>
+
+      <p class="introTutorial">
+        This application's purpose is to help you assess if your expectations of how fair mainstream news media covers topics aligns with their reporting.
+        We gathered articles centered around COVID-19 from 6 U.S. mainstream media outlets.
+        To demonstrate the system, let's see how these outlets covered the start of the COVID-19 Pandemic (Feb-June 2020).
+      </p>
+      <p class="tutorialInstructions">
+        Before we begin, please adjust the sliders below for how fair you believe each of corresponding outlets are.
+        The scale is from 0 to 1, where 1 is fair. If you believe they are all fair you may leave them as is.
+      </p>
+      <div class="fairnessLegend">
+        <i class="pi pi-arrow-left"/> Unfair 
+        Fair <i class="pi pi-arrow-right"/>
+      </div>
+
+      <div class="initialWeights">
+        <OutletWeightSlider v-if="overview_constructed" :outlet_weight_dict="outlet_weight_dict" @update_outlet_weight="handleUpdateOutletWeight" fontSize="1.0em" />
+      </div>
+      <template #footer>
+          <Button label="Ready" icon="pi pi-check" @click="toggleTutorial" autofocus />
+      </template>
+    </Dialog>
+
     <Splitter class="overview-container">
       <SplitterPanel class="left-section-panel" :size="left_section_panel_size">
         <Splitter layout="vertical">
@@ -540,29 +573,6 @@ function updateSegmentation({ pos, neg }) {
           <SplitterPanel class="utilities-panel" :size="utilities_panel_size">
             <!-- Utilities -->
             <div class="utilities-container">
-              <!-- <div id="segment-utility-container" class="segment-utils"> -->
-              <!-- <h2 class="component-header util-header"> 
-                  Segment 
-                  <i class='pi pi-info-circle tooltip'>
-                    <span class="tooltiptext right-tooltiptext" style="width: 300px;">
-                      The sentiments have four categories as listed. <br/>
-                      A mixed sentiment means the topic has lots of positive and negative articles at the same time. 
-                    </span>
-                  </i>
-                </h2> -->
-              <!-- segment & search -->
-              <!-- <div class="toolbar-container">
-                  <div v-if="overview_constructed" class="segment-toggler-container">
-                    <SelectButton v-model="segment_mode" optionValue="value" optionLabel="status" :options="segment_options"/>
-                  </div>
-                </div> -->
-              <!-- Legend -->
-              <!-- <div class="legend-utils">
-                  <Legend v-if="overview_constructed" id="segment_legend" class="segment-legend"
-                  :color_dict="SstColors.key_color_dict"></Legend>
-                </div> -->
-              <!-- </div> -->
-
               <div id="entity-utility-container" class="entity-utils">
                 <h2 class="component-header util-header">
                   Topic Settings
@@ -574,10 +584,6 @@ function updateSegmentation({ pos, neg }) {
                     </span>
                   </i>
                 </h2>
-                <!-- Entity Search -->
-                <!-- <div id="entity-search" v-if="overview_constructed" class="search-bar">
-                    <SearchBar :search_terms="entity_list" @entity_searched="handleSearch"/>
-                </div> -->
                 <!-- filter slider -->
                 <h3 class="threshold-title"> Number of Articles </h3>
                 <div v-if="overview_constructed" class="slider-container">
@@ -596,7 +602,7 @@ function updateSegmentation({ pos, neg }) {
                   </i>
                 </h3>
                 <OutletWeightSlider v-if="overview_constructed" :outlet_weight_dict="outlet_weight_dict"
-                  @update_outlet_weight="handleUpdateOutletWeight">
+                  @update_outlet_weight="handleUpdateOutletWeight" fontSize="0.75em" >
                 </OutletWeightSlider>
               </div>
             </div>
@@ -615,7 +621,7 @@ function updateSegmentation({ pos, neg }) {
               &nbsp
               <i class='pi pi-info-circle tooltip'>
                 <span class="tooltiptext right-tooltiptext" style="width: 400px">
-                  Shows most-frequently co-occurring topics with the main topic ({{ selected_entity.name }}). <br />
+                  Shows most-frequently co-occurring topics with the main topic ({{ selected_entity.name.replaceAll("_"," ") }}). <br />
                   Each co-occurring topic is categorized by the region segmentation in the Topic Scatterplot.
                 </span>
               </i>
@@ -715,6 +721,12 @@ function updateSegmentation({ pos, neg }) {
       @click="tutorial_mode=false">Skip</span>
   </main>
 </template>
+
+<style lang="css">
+  .p-dialog.p-component.tutorialStyle {
+      width: 50%;
+  }
+</style>
 
 <style scoped lang="scss">
 * {
@@ -816,6 +828,15 @@ main {
   // background: #f7f7f7;
   margin: 2%;
   padding: 1%;
+}
+
+
+.tooltiptext{
+    font-size: 1rem;
+    font-size: 1rem;
+    font-family: 'Lato';
+    font-weight: 200;
+    box-shadow: rgb(0 0 0 / 25%) 0px 54px 55px, rgb(0 0 0 / 12%) 0px -12px 30px, rgb(0 0 0 / 12%) 0px 4px 6px, rgb(0 0 0 / 17%) 0px 12px 13px, rgb(0 0 0 / 9%) 0px -3px 5px;
 }
 
 .toolbar-container {
@@ -973,5 +994,16 @@ p.next {
     box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
   }
 }
+
+p.tutorialInstructions {
+    font-style: italic;
+    margin-bottom: 2%;
+}
+
+.fairnessLegend{
+  text-align: center;
+  width: 100%;
+}
+
 </style>
 
