@@ -396,7 +396,7 @@ const sentiment_options = [
                 </SelectButton>
             </div>
         </div>
-        <div class="relfection-container">
+        <!-- <div class="relfection-container">
             <div class="constraints-view">
                 <h2 class="component-header outlet-scatter-header">
                 Outlet Comparison
@@ -428,14 +428,14 @@ const sentiment_options = [
                     :class="{not_satisfied: !constraint_statisfaction[outlet] }"> 
                         <td> {{outlet}} </td>
                         <td> {{outlet_category[outlet]}} </td>
-                        <td> {{constraint_dict[selected_entity.name]?.[outlet] || "unset"}} </td>
+                        <td> {{constraint_dict[selected_entity.name]?.[outlet] || "unset"}} </td> -->
                         <!-- <i class="pi pi-times-circle" style="cursor:pointer" 
                         @click="removeConstraint({target: selected_entity.name, outlet: outlet})"></i>  -->
-                    </tr>
+                    <!-- </tr>
                 </table> 
-            </div>
+            </div> -->
             <!-- <Divider layout="vertical"></Divider> -->
-            <div class="outlet-scatter-container">
+            <!-- <div class="outlet-scatter-container">
                 <OutletScatterplot
                     ref="outlet_scatter"
                     v-if="entity_grouped_view"
@@ -447,8 +447,8 @@ const sentiment_options = [
                     :segmentation="segmentation"
                     @update:segmentation="setSegmentation" >
                 </OutletScatterplot>
-            </div>
-        </div>
+            </div> 
+        </div>-->
     </div>
 </div>
 </template>
