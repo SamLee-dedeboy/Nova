@@ -349,9 +349,6 @@ const sentiment_options = [
                                     <!-- <div class="fairness">
                                         Fairness: {{article.fairness? "fair":"unfair"}}
                                     </div> -->
-                                    <div class="notes">
-                                        Notes: {{article.notes}}
-                                    </div>
                                 </div>
 
                             </div>
@@ -509,7 +506,6 @@ const sentiment_options = [
 
 .outlet-weight-container {
     flex: 1 1 0;
-    width: 53%;
     padding: 1% 1% 1% 0%;
 }
 
@@ -562,6 +558,12 @@ const sentiment_options = [
 }
 :deep(.p-scrollpanel-content) {
   height: 100%;
+}
+.fair_icon {
+    color: red;
+}
+.unfair_icon {
+    color: blue;
 }
 
 // 
