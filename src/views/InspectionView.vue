@@ -301,7 +301,7 @@ async function handleArticleIconClicked(article_info) {
                                 <col span="1" style="width: 65%;">
                             </colgroup>
                             <tbody style="height:100%;">
-                                <tr v-for="outlet in ranked_outlets">
+                                <tr v-for="outlet in ranked_outlets" class="markedTr">
                                     <td class="journal-image-text-cell"> 
                                         <div :class="['journal-style', 'table-image' ]">
                                             <img :src="`../src/assets/${outlet}.png`"
@@ -317,7 +317,7 @@ async function handleArticleIconClicked(article_info) {
                                             class="pi pi-file conclusion-icon tooltip" :class="{fair_icon: article_info.mark, unfair_icon: !article_info.mark}"
                                             style="cursor:pointer;"
                                             @click="handleArticleIconClicked(article_info)">
-                                            <span class="tooltiptext right-tooltiptext icon-description" style="width: 300px">
+                                            <span class="tooltiptext top-tooltiptext icon-description" style="width: 300px">
                                                 {{article_info.description}}
                                             </span>
                                         </i>
@@ -567,10 +567,16 @@ li {
     border-collapse: collapse;
 }
 
-td {
-border-bottom: solid 1px black;
-border-collapse: collapse;
+// td {
+// border-bottom: solid 1px black;
+// border-collapse: collapse;
+// }
+
+.markedTr {
+    border: 1px solid #b7b7b7;
 }
+
+
 
 .journal-style.table-image {
     width: 34px;
@@ -600,7 +606,10 @@ height:100%;
 }
 .icon-description {
     font-size: 1rem;
-    width: 300px;
+    font-size: 1rem;
+    font-family: 'Lato';
+    font-weight: 200;
+    box-shadow: rgb(0 0 0 / 25%) 0px 54px 55px, rgb(0 0 0 / 12%) 0px -12px 30px, rgb(0 0 0 / 12%) 0px 4px 6px, rgb(0 0 0 / 17%) 0px 12px 13px, rgb(0 0 0 / 9%) 0px -3px 5px;
 }
 
 

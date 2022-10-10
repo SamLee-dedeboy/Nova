@@ -425,8 +425,9 @@ defineExpose({
 .analysis-content {
   display: flex;
   height: 100%;
-flex: 1 1 0;
-overflow: hidden;
+    flex: 1 1 0;
+    overflow: hidden;
+    margin: 1%
 }
 .analysis-left {
     width: 75%;

@@ -93,8 +93,8 @@ vue.onMounted(async () => {
                 setHexViewGrid(hexview_grid_data)
                 console.log(data_list)
                 const hex_candidates = hexview_grid.value[0].data.sorted_cooccurrences_list.map((hex_entity: typeUtils.HexEntity) => hex_entity.entity)
-                hex_candidates.push(target_entity) 
-                if(!selected_outlet.value.includes("Overall"))
+                hex_candidates.push(target_entity)
+                if (!selected_outlet.value.includes("Overall"))
                     fetch_entity_grouped_node(hex_candidates, selected_outlet.value)
                 resolve("success")
             })
@@ -112,12 +112,12 @@ vue.onMounted(async () => {
 async function fetch_entity_grouped_node(hex_candidates, outlet) {
     console.log(hex_candidates)
     await fetch(`${server_address}/processed_data/scatter_node/grouped/hex_candidates/${outlet}`, {
-      method: "POST",
-      headers: {
-        "Accept": "application/json",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(hex_candidates)
+        method: "POST",
+        headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(hex_candidates)
     })
         .then(res => res.json())
         .then(json => {
@@ -169,7 +169,7 @@ async function handleHexClicked({ target, co_occurr_entity }, view) {
 
         })
     const hex_candidates = hexview_grid.value[0].data.sorted_cooccurrences_list.map((hex_entity: typeUtils.HexEntity) => hex_entity.entity)
-    hex_candidates.push(entity) 
+    hex_candidates.push(entity)
     await fetch_entity_grouped_node(hex_candidates, selected_outlet.value)
 }
 
@@ -198,7 +198,7 @@ function outletIconHeaderStyle(name: string) {
         <SplitterPanel id="hexview_section" class="hexview-section flex align-items-center justify-content-center"
             :size="left_section_size" :min-size="left_section_size">
             <div class="reminder-click-hex">
-               <p class="reminderBody">Do you see any differences among outlets for their coverage?</p> 
+                <p class="reminderBody">Do you see any differences among outlets for their coverage?</p>
             </div>
             <h2 class="component-header hexview-grid-header">
                 Topic Co-occurrence Hives for
@@ -206,7 +206,8 @@ function outletIconHeaderStyle(name: string) {
                 &nbsp
                 <i class='pi pi-info-circle tooltip'>
                     <span class="tooltiptext right-tooltiptext" style="width: 500px">
-                        Each hive represents the coverage on {{ selected_entity?.name }} by that outlet. <br />
+                        Each hive represents the coverage on {{ selected_entity?.name.replaceAll("_"," ") }} by that
+                        outlet. <br />
                         A hexagon is left blanked if the outlet does not cover that topic. <br />
                         Try to discover outlet coverage differences and common grounds.
                     </span>
@@ -241,7 +242,8 @@ function outletIconHeaderStyle(name: string) {
                     </h2>
                     <div class="cooccurr-info-content">
                         <div class="cooccurContent">
-                            <h4>Articles with <span class="topicStyle"> {{ selected_entity.name.replaceAll("_"," ") }} </span> &
+                            <h4>Articles with <span class="topicStyle"> {{ selected_entity.name.replaceAll("_"," ") }}
+                                </span> &
                                 <span v-if='selected_cooccurr_entity' class="topicStyle"> {{
                                 selected_cooccurr_entity.name.replaceAll("_"," ") }} </span>
                             </h4>
@@ -259,13 +261,14 @@ function outletIconHeaderStyle(name: string) {
                             </span>
                         </i>
                     </h2>
-                    <textarea class="notes-style" :value="notes" @input="setNotes" placeholder="Write down any observations..." />
+                    <textarea class="notes-style" :value="notes" @input="setNotes"
+                        placeholder="Write down any observations..." />
 
                     <div v-if="selected_outlet !== 'Overall'" class="navigate-container">
                         <router-link class="goNext"
                             :to="{ name: 'inspection', params: { entity: selected_entity?.name || 'undefined' }}">
                             <span class="clickNext">click here</span> to review articles
-                            <p class="next"><i class="pi pi-arrow-right "/></p>
+                            <p class="next"><i class="pi pi-arrow-right " /></p>
                         </router-link>
                     </div>
                 </div>
@@ -291,7 +294,7 @@ function outletIconHeaderStyle(name: string) {
                     </HexEntityScatter>
                     <h4 id="hexScatterToolTip" class="toolTipStyle"> </h4>
                 </div>
-                
+
             </div>
 
         </SplitterPanel>
@@ -425,7 +428,7 @@ function outletIconHeaderStyle(name: string) {
     margin-left: 6%;
 }
 
-.topicStyle{
+.topicStyle {
     font-style: italic;
     font-weight: 700;
 }
@@ -451,7 +454,7 @@ function outletIconHeaderStyle(name: string) {
 }
 
 
-.mainTopicStyle{
+.mainTopicStyle {
     font-style: italic;
     font-weight: 200;
 }
@@ -471,16 +474,23 @@ function outletIconHeaderStyle(name: string) {
     right: 1%;
     z-index: 999;
     transform: scale(1);
-    animation: pulse 2s infinite;
+    animation: pulseText 2s infinite;
 }
 
-.reminderBody{
+.reminderBody {
     position: relative;
     top: 25%;
     left: 10%;
     font-style: italic;
 }
 
+.tooltiptext {
+    font-size: 1rem;
+    font-size: 1rem;
+    font-family: 'Lato';
+    font-weight: 200;
+    box-shadow: rgb(0 0 0 / 25%) 0px 54px 55px, rgb(0 0 0 / 12%) 0px -12px 30px, rgb(0 0 0 / 12%) 0px 4px 6px, rgb(0 0 0 / 17%) 0px 12px 13px, rgb(0 0 0 / 9%) 0px -3px 5px;
+}
 
 .navigate-container {
     text-align: center;
@@ -491,7 +501,7 @@ function outletIconHeaderStyle(name: string) {
     z-index: 999;
 
     transform: scale(1);
-    animation: pulse 2s infinite;
+    animation: pulseText 2s infinite;
 }
 
 a.goNext {
@@ -500,24 +510,41 @@ a.goNext {
     width: 100%;
 }
 
-.clickNext{
-  font-style: italic;
-  font-weight: 700;
+.clickNext {
+    font-style: italic;
+    font-weight: 700;
 }
 
 
+@keyframes pulseText {
+    0% {
+        transform: scale(0.95);
+    }
+
+    70% {
+        transform: scale(1);
+    }
+
+    100% {
+        transform: scale(0.95);
+    }
+}
+
 @keyframes pulse {
     0% {
-    transform: scale(0.95);
-  }
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7);
+    }
 
-  70% {
-    transform: scale(1);
-  }
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
+    }
 
-  100% {
-    transform: scale(0.95);
-  }
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+    }
 }
 
 .hex-entity-scatter {
@@ -528,13 +555,11 @@ a.goNext {
     height: 59%;
 }
 
-.toolTipStyle{
+.toolTipStyle {
     text-align: center;
 }
 
 p.next {
     text-align: center;
 }
-
-
 </style>
