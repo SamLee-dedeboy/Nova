@@ -74,12 +74,12 @@ const data_fetched: Ref<boolean> = ref(false)
 
 
 vue.onMounted(async () => {
-    const target_entity: string = route.params.entity as string
-    const cooccurr_entity = route.params.cooccurr_entity as string
-    highlight_hex_entity.value = cooccurr_entity
+    const target: string = route.params.entity as string
+    const co_occurr_entity = route.params.cooccurr_entity as string
+    highlight_hex_entity.value = co_occurr_entity
     const promiseArray: any[] = []
     promiseArray.push(new Promise((resolve) => {
-        fetch(`${server_address}/hexview/grouped/${target_entity}`)
+        fetch(`${server_address}/hexview/grouped/${target}`)
             .then(res => res.json())
             .then(json => {
                 const data_list = json
@@ -94,7 +94,7 @@ vue.onMounted(async () => {
                 setHexViewGrid(hexview_grid_data)
                 console.log(data_list)
                 const hex_candidates = hexview_grid.value[0].data.sorted_cooccurrences_list.map((hex_entity: typeUtils.HexEntity) => hex_entity.entity)
-                hex_candidates.push(target_entity)
+                hex_candidates.push(target)
                 if (!selected_outlet.value.includes("Overall"))
                     fetch_entity_grouped_node(hex_candidates, selected_outlet.value)
                 resolve("success")
@@ -105,9 +105,7 @@ vue.onMounted(async () => {
             data_fetched.value = true
             console.log("all fetched")
         })
-    const hex_candidates = hexview_grid.value[0].data.sorted_cooccurrences_list.map((hex_entity: typeUtils.HexEntity) => hex_entity.entity)
-    hex_candidates.push(target_entity) 
-    await fetch_entity_grouped_node(hex_candidates, selected_outlet.value)
+    handleHexClicked({target: target + "-"+selected_outlet.value, co_occurr_entity} , hexview_grid.value[0]) 
 })
 
 async function fetch_entity_grouped_node(hex_candidates, outlet) {
