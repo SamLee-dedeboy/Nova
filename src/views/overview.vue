@@ -689,23 +689,25 @@ function toggleTutorial(e:MouseEvent){
                   :cooccurrTopicBins="selected_cooccurr_entity?.articles_topic_dict">
                 </TopicBars> -->
                 <h2 class="component-header topic-bar-header">
-                  Policy Bars
+                  COVID Context
                   <i class='pi pi-info-circle tooltip'>
                     <span class="tooltiptext right-tooltiptext" style="width: 300px">
-                      The articles about {{ selected_entity.name }}
+                      Articles about {{ selected_entity.name.replaceAll("_"," ") }} and
                       <span v-if="selected_cooccurr_entity">
-                        and {{ selected_cooccurr_entity.name }}
+                        {{ selected_cooccurr_entity.name.replaceAll("_"," ") }}
                       </span>
-                      categorized by related policies. <br />
+                      classified by if they reference a type of government policy or not. <br />
                     </span>
                   </i>
                   <br />
                   <Legend id="policy_legend" class="policy-bar-legend" :color_dict="legendInput">
                   </Legend>
-                  <span style="font-size: small; width:max-content;">
+                  <span style="font-size: small; width:20%; font-style:italic;">
                     <!-- Some explanation here a lot of explanation here more explanation here -->
+                    <p> *Ratio of articles that addressed a type of policy issued due to COVID-19 or did not.</p>
                   </span>
                 </h2>
+
                 <HorizontalTopicBars id="cooccurr_topic_bars" :targetTopicBins="selected_entity?.articles_topic_dict"
                   :cooccurrTopicBins="selected_cooccurr_entity?.articles_topic_dict">
                 </HorizontalTopicBars>

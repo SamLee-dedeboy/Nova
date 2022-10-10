@@ -46,6 +46,8 @@ vue.watch(() => props.cooccurrTopicBins, (new_value, old_value) => {
 vue.onMounted(() => {
     const svg = d3.select(`#${props.id}`).select("svg")
         .attr("viewBox", `0 0 ${viewBox[0]} ${viewBox[1]}`)
+        .attr("height", "200px")
+        .attr("width", "500px")
     svg.append("g")
         .attr("class", "canvas")
         .attr("transform", `translate(${margin.left}, ${margin.top})`)
