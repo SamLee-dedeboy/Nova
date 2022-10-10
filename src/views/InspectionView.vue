@@ -279,13 +279,14 @@ async function handleArticleIconClicked(article_info) {
                     </div>
                 </div>
                 <div class="hexview-container">
-                    <div class="journal-info-container" style="font-size:small">
+                    <div class="journal-info-container" style="font-size:small; z-index:99;">
                         <Dropdown :modelValue="selected_outlet" :options="journal_options"
                             placeholder="Select an journal" @change="handleChangeJournal" />
                     </div>
                     <HexCooccurrence v-if="data_fetched" class="compare-co-hexview" :title="clicked_hexview.title"
                         :id="`compare-co-hex-inpection`" :entity_cooccurrences="clicked_hexview.data"
                         :segmentation="original_segmentation" :highlight_hex_entity="highlight_hex_entity"
+                        :show_blink="false"
                         @hex-clicked="handleHexClicked">
                     </HexCooccurrence>
                 </div>

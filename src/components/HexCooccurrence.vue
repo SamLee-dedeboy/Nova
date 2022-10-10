@@ -24,6 +24,7 @@ const props = defineProps({
     entity_cooccurrences: Object as () => EntityCooccurrences,
     highlight_hex_entity: String,
     segmentation: Sentiment2D,
+    show_blink: Boolean,
 })
 const emit = defineEmits(["hex-clicked"])
 
@@ -129,8 +130,9 @@ function updateHexBins() {
             centers_indexed.push(d)
             return `translate(${d.x},${d.y})`
         })
-        .attr("stroke", "white")
-        .attr("stroke-width", (d, i) => i === 0 ? 20 : 1)
+        .attr("filter",(d, i) => i===0? "blur(1px)": "none")
+        .attr("stroke", (d,i) => i===0? "#444444": "white")
+        .attr("stroke-width", (d, i) => i === 0 ? 7 : 1)
         .on("click", function (e, d: any) {
             const target = props.title?.split("-").slice(1).join("-")
             emit("hex-clicked", { target: target, co_occurr_entity: d[0].entity })
@@ -140,9 +142,10 @@ function updateHexBins() {
             if(d[0].entity === props.highlight_hex_entity) return
             if(d[0].index === 0) return
             d3.select(this)
-                .raise()
                 .transition().duration(100)
                 .attr("stroke-width", d[0].index === 0 ? 25 : 8)
+            if(props.show_blink)
+                d3.select(this).raise()
             // emit("mouseover", d[0].entity)
         })
         .on("mouseout", function (e, d: any) {
@@ -162,8 +165,11 @@ function updateHexBins() {
         })
     // add looped animation for center hex
     const center_entity = hex_data[0][0].entity
+    if(props.show_blink)
+        removeHighlightHex(center_entity)
     loopedAnimateHex(hex_group, center_entity)
     if(props.highlight_hex_entity)
+        removeHighlightHex(hex_group, props.highlight_hex_entity)
         loopedAnimateHex(hex_group, props.highlight_hex_entity)
 
 
@@ -199,6 +205,7 @@ function updateHexBins() {
 }
 
 function updateHighlightHex(target_entity) {
+    console.log(target_entity)
     const svg = d3.select(`#${props.id}`).select("svg")
     const hex_group = svg.select("g.hex-group")
     loopedAnimateHex(hex_group, target_entity)
@@ -211,31 +218,50 @@ function updateHighlightHex(target_entity) {
 function removeHighlightHex(target_entity) {
     const svg = d3.select(`#${props.id}`).select("svg")
     const hex_group = svg.select("g.hex-group")
-    var target_hex = hex_group.selectAll("path").filter((d:any) => d[0].entity === target_entity)
-    target_hex.transition().duration(1000)
+    const target_hex = hex_group.selectAll("path").filter((d:any) => d[0].entity === target_entity)
+    target_hex.transition().duration(0)
         .attr("stroke-width", (d: any) => d[0].index === 0 ? 20 : 1)
         .attr("stroke", "white")
         .on("end", () => (1))
 }
 
 function loopedAnimateHex(hex_group, target_entity) {
-    var target_hex = hex_group.selectAll("path").filter((d:any) => d[0].entity === target_entity)
-    // expand Hex
-    repeat()
-    function repeat() {
-        const duration = 1000
-        target_hex.raise()
-            .transition().duration(0)
-            .attr("stroke-width", 2)
-            .attr("stroke", "white")
-            .transition().duration(1000)
+    const center_entity = hexbin_(sorted_cooccurrence_list.value)[0][0].entity
+    const co_entity = props.highlight_hex_entity
+    if(!props.show_blink) {
+        const target_path = hex_group.selectAll("path").filter(function (d:any) {
+            return d[0].entity === center_entity || d[0].entity === co_entity
+        })
+        target_path
             .attr("stroke-width", 7)
             .attr("stroke", "#444444")
             .attr("filter","blur(1px)")
-            .transition().duration(2000)
-            .attr("stroke-width", 2)
-            .attr("stroke", "white")
-            .on("end", repeat)
+            .raise()
+        return
+    }
+    var target_path = hex_group.selectAll("path").filter(function (d:any) {
+        return d[0].entity === center_entity || d[0].entity === co_entity
+    })
+    // console.log(target_hex.data()[0][0].entity)
+    // expand Hex
+    // if(target_path.nodes().length != 0)
+    repeat()
+    function repeat() {
+        const duration = 1000
+        if(target_path) {
+            target_path.raise()
+                .transition().duration(0)
+                .attr("stroke-width", 2)
+                .attr("stroke", "white")
+                .transition().duration(1000)
+                .attr("stroke-width", 7)
+                .attr("stroke", "#444444")
+                .attr("filter","blur(1px)")
+                .transition().duration(2000)
+                .attr("stroke-width", 2)
+                .attr("stroke", "white")
+                .on("end", repeat)
+        }
     }
 }
 

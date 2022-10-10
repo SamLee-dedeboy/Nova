@@ -376,6 +376,7 @@ const sentiment_options = [
               <HexCooccurrence ref="overall_co_hexview" v-if="overall_selected_hexview" class="overall-co-hexview"
                 :title="overall_selected_hexview.title" :id="`overall-co-hex`"
                 :highlight_hex_entity="highlight_hex_entity"
+                :show_blink="false"
                 :entity_cooccurrences="overall_selected_hexview.data" :segmentation="segmentation">
               </HexCooccurrence>
             </div>
