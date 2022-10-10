@@ -996,6 +996,12 @@ p.next {
   }
 }
 
+.introTutorial{
+  margin-bottom: 2%;
+  padding-bottom: 2%;
+  border-bottom: 2px solid #b7b7b7;
+}
+
 p.tutorialInstructions {
     font-style: italic;
     margin-bottom: 2%;

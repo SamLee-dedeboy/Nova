@@ -6,6 +6,7 @@ import Splitter from 'primevue/splitter';
 import SplitterPanel from "primevue/splitterpanel"
 import Divider from "primevue/divider"
 import Textarea from 'primevue/textarea';
+import Dialog from 'primevue/dialog';
 
 
 /**
@@ -173,6 +174,12 @@ async function handleHexClicked({ target, co_occurr_entity }, view) {
     await fetch_entity_grouped_node(hex_candidates, selected_outlet.value)
 }
 
+const showTutorial: Ref<boolean> = ref(true)
+
+function toggleTutorial(e:MouseEvent){
+    showTutorial.value=false
+}
+
 function toggleSelection(selectedOutlet: any, currentOutlet: string) {
     currentOutlet = currentOutlet.split('-')[2];
     let selectionClass = (currentOutlet.includes(selectedOutlet.outlet)) ? 'hiveSelect' : '';
@@ -194,6 +201,25 @@ function outletIconHeaderStyle(name: string) {
 </script>
 
 <template>
+    <Dialog v-model:visible="showTutorial" class="tutorialStyle" position="center" :modal="true">
+      <template #header>
+        <h3> <i class="pi pi-compass"/> Compare Coverage for {{ route.params.entity.replaceAll("_"," ") }} </h3>
+      </template>
+
+      <p class="introTutorial">
+        Try to spot some similarities and difference between the outlets for how they covered {{ route.params.entity.replaceAll("_"," ") }}.
+        For example, some outlets discuss different topics when mentioning {{ route.params.entity.replaceAll("_"," ") }}.
+      </p>
+      <p class="tutorialInstructions">
+        Use the notes block to keep track of any general observations you may find here.
+        Click <span class="bold"> review articles </span> after selecting a hexagon to see articles that contain that topic and {{ route.params.entity.replaceAll("_"," ") }}.
+      </p>
+
+      <template #footer>
+          <Button label="Ready" icon="pi pi-check" @click="toggleTutorial" autofocus />
+      </template>
+    </Dialog>
+
     <Splitter class="splitter-outmost">
         <SplitterPanel id="hexview_section" class="hexview-section flex align-items-center justify-content-center"
             :size="left_section_size" :min-size="left_section_size">
@@ -267,8 +293,7 @@ function outletIconHeaderStyle(name: string) {
                     <div v-if="selected_outlet !== 'Overall'" class="navigate-container">
                         <router-link class="goNext"
                             :to="{ name: 'inspection', params: { entity: selected_entity?.name || 'undefined' }}">
-                            <span class="clickNext">click here</span> to review articles
-                            <p class="next"><i class="pi pi-arrow-right " /></p>
+                            <Button label="Review Articles" icon="pi pi-file" />
                         </router-link>
                     </div>
                 </div>
@@ -499,9 +524,6 @@ function outletIconHeaderStyle(name: string) {
     height: 20%;
     width: 100%;
     z-index: 999;
-
-    transform: scale(1);
-    animation: pulseText 2s infinite;
 }
 
 a.goNext {
@@ -562,4 +584,20 @@ a.goNext {
 p.next {
     text-align: center;
 }
+
+.bold{
+    font-weight: 800;
+}
+
+.introTutorial{
+  margin-bottom: 2%;
+  padding-bottom: 2%;
+  border-bottom: 2px solid #b7b7b7;
+}
+
+p.tutorialInstructions {
+    font-style: italic;
+    margin-bottom: 2%;
+}
+
 </style>
