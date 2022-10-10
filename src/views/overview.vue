@@ -503,7 +503,7 @@ function updateSegmentation({ pos, neg }) {
   <main>
     <div v-if="selected_cooccurr_entity" class="navigate-container">
       <router-link class="goNext"
-        :to="{ name: 'compare', params: { entity: selected_entity.name, }}">
+        :to="{ name: 'compare', params: { entity: selected_entity.name, cooccurr_entity: selected_cooccurr_entity.name }}">
          After finding a topic, <span class="clickNext">click here</span> to assess how each outlet covered it.
          <p class="next"><i class="pi pi-arrow-right "/></p>
       </router-link>
@@ -633,6 +633,7 @@ function updateSegmentation({ pos, neg }) {
                 :title="overall_selected_hexview.title" :id="`overall-co-hex`"
                 :entity_cooccurrences="overall_selected_hexview.data" :segmentation="segmentation"
                 :highlight_hex_entity="highlight_hex_entity"
+                :show_blink="true"
                 :overall_entity_dict="overall_entity_dict" v-on:hex-clicked="handleHexClicked">
               </HexCooccurrence>
             </div>

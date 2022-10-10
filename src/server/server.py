@@ -179,7 +179,6 @@ def getHexCandidateGroupedNodes(outlet):
     hex_candidates = request.json
     # nodes = overview_scatter_grouped_data[outlet].nodes
     nodes = []
-    print(overview_scatter_grouped_data[outlet].nodes[0].text)
     for node in overview_scatter_grouped_data[outlet].nodes:
         if node.text.split("-")[0] in hex_candidates:
             node.text = node.text.split("-")[0]

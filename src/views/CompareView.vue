@@ -53,7 +53,7 @@ const hex_entity_scatter_view: Ref<any> = ref(undefined)
 const highlight_hex_entity: Ref<string> = ref("")
 const notes = vue.computed(() => store.state.notes)
 const setNotes = (e) => store.commit("setNotes", e.target.value)
-const selected_outlet = vue.computed(() => selected_entity.value?.outlet || "ABC News")
+const selected_outlet = vue.computed(() => selected_entity.value?.outlet === "Overall"? "ABC News" :selected_entity.value?.outlet)
 
 
 /**
@@ -75,6 +75,7 @@ const data_fetched: Ref<boolean> = ref(false)
 vue.onMounted(async () => {
     const target_entity: string = route.params.entity as string
     const cooccurr_entity = route.params.cooccurr_entity as string
+    highlight_hex_entity.value = cooccurr_entity
     const promiseArray: any[] = []
     promiseArray.push(new Promise((resolve) => {
         fetch(`${server_address}/hexview/grouped/${target_entity}`)
@@ -103,10 +104,13 @@ vue.onMounted(async () => {
             data_fetched.value = true
             console.log("all fetched")
         })
+    const hex_candidates = hexview_grid.value[0].data.sorted_cooccurrences_list.map((hex_entity: typeUtils.HexEntity) => hex_entity.entity)
+    hex_candidates.push(target_entity) 
+    await fetch_entity_grouped_node(hex_candidates, selected_outlet.value)
 })
 
 async function fetch_entity_grouped_node(hex_candidates, outlet) {
-      console.log(hex_candidates, outlet)
+    console.log(hex_candidates)
     await fetch(`${server_address}/processed_data/scatter_node/grouped/hex_candidates/${outlet}`, {
       method: "POST",
       headers: {
@@ -212,10 +216,11 @@ function outletIconHeaderStyle(name: string) {
                 <div class="hexview-grid-cell-container" v-if="data_fetched" v-for="view, index in hexview_grid">
                     <HexCooccurrence class="compare-co-hexview" :title="view.title" :id="`compare-co-hex-${index}`"
                         :entity_cooccurrences="view.data" :segmentation="segmentation"
+                        :show_blink="true"
                         :highlight_hex_entity="highlight_hex_entity" v-on:hex-clicked="handleHexClicked($event, view)">
                     </HexCooccurrence>
                     <div :class="['journal-style', toggleSelection(selected_entity, view.title)]">
-                        <img :src="`../src/assets/${view.title.split('-')[2]}.png`"
+                        <img :src="`../../src/assets/${view.title.split('-')[2]}.png`"
                             :class="['journal-image',`${outletIconStyle(view.title)}`]" />
                     </div>
                 </div>
@@ -256,7 +261,7 @@ function outletIconHeaderStyle(name: string) {
                     </h2>
                     <textarea class="notes-style" :value="notes" @input="setNotes" placeholder="Write down any observations..." />
 
-                    <div v-if="selected_entity?.outlet !== 'Overall'" class="navigate-container">
+                    <div v-if="selected_outlet !== 'Overall'" class="navigate-container">
                         <router-link class="goNext"
                             :to="{ name: 'inspection', params: { entity: selected_entity?.name || 'undefined' }}">
                             <span class="clickNext">click here</span> to review articles
@@ -264,7 +269,7 @@ function outletIconHeaderStyle(name: string) {
                         </router-link>
                     </div>
                 </div>
-                <div class="topic-bar-container" v-if="selected_entity.outlet !== 'Overall'">
+                <div class="topic-bar-container" v-if="selected_outlet !== 'Overall'">
                     <TopicBars id="cooccurr_topic_bars" :targetTopicBins="selected_entity?.articles_topic_dict"
                         :cooccurrTopicBins="selected_cooccurr_entity?.articles_topic_dict"></TopicBars>
                 </div>
@@ -272,14 +277,15 @@ function outletIconHeaderStyle(name: string) {
                     <h2 class="component-header legend-header">
                         <div class="journalSent">
                             <div :class="['journal-style']">
-                                <img v-if="selected_entity?.outlet !=='Overall'"  :src="`../src/assets/${selected_entity.outlet}.png`"
-                                    :class="['journal-image',`${outletIconHeaderStyle(selected_entity.outlet)}`]" />
+                                <img v-if="selected_outlet !=='Overall'"  :src="`../../src/assets/${selected_outlet}.png`"
+                                    :class="['journal-image',`${outletIconHeaderStyle(selected_outlet)}`]" />
                             </div>
                             <div class="journalSentContent">Sentiment</div>
                         </div>
                     </h2>
                     <HexEntityScatter ref="hex_entity_scatter" v-if="hex_entity_scatter_view"
                         :view="hex_entity_scatter_view" :highlight_node_text="selected_entity.name"
+                        :highlight_cooccurr="selected_cooccurr_entity.name"
                         id="hex_entity_scatter" :segment_mode="true" :segmentation="segmentation"
                         @update:segmentation="setSegmentation">
                     </HexEntityScatter>

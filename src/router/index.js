@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
-import Overview from "../views/Overview.vue"
+import Overview from "../views/overview.vue"
 import CompareView from "../views/CompareView.vue";
 import InspectionView from "../views/InspectionView.vue"
 import SummaryView from "../views/SummaryView.vue"
@@ -13,7 +13,7 @@ const router = createRouter({
       component: Overview,
     },
     {
-      path: "/compare/:entity",
+      path: "/compare/:entity/:cooccurr_entity",
       name: "compare",
       component: CompareView,
     },
