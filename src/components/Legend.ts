@@ -44,7 +44,7 @@ export class Legend {
 
     initScatterSvg(svgID:string){
         this.svg = d3.select(`#${svgID}`);
-        this.svg.attr("viewBox", `0 0 200 200`).attr("width", "100%").attr("height","100%");
+        this.svg.attr("viewBox", `0 0 ${this.viewBox[0]} ${this.viewBox[1]}`).attr("width", "100%").attr("height","100%");
     }
 
     drawLegend() {
@@ -82,7 +82,7 @@ export class Legend {
                 .style("font-family", 'Roboto')
                 .style("font-weight", '100')
                 .style("font-size", this.font_size + 'rem')
-                .call(this.wrap, 100)
+                .call(this.wrap, this.viewBox[0]-this.margin.left - this.margin.right)
             // index is used for vertical offset calculation
             index += 1
         }
