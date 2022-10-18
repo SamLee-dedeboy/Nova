@@ -43,6 +43,9 @@ function outletIconStyle(name: string) {
             :max="1"
             @mouseup="handleChange(outlet)"
             />
+            <span class=slider-label>
+                {{ outlet_weight_dict![outlet]}}
+            </span>
         </div>
     </div>
 </template>

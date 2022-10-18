@@ -520,7 +520,7 @@ function toggleTutorial(e:MouseEvent){
       </template>
 
       <p class="introTutorial">
-        This application's purpose is to help you assess if your expectations of how fair mainstream news media covers topics aligns with their reporting.
+        This application's purpose is to help you assess if your expectations of how fair mainstream news media cover topics align with their reporting.
         We gathered articles centered around COVID-19 from 6 U.S. mainstream media outlets.
         To demonstrate the system, let's see how these outlets covered the start of the COVID-19 Pandemic (Feb-June 2020).
       </p>
@@ -585,7 +585,14 @@ function toggleTutorial(e:MouseEvent){
                   </i>
                 </h2>
                 <!-- filter slider -->
-                <h3 class="threshold-title"> Number of Articles </h3>
+                <h3 class="threshold-title"> Number of Articles Threshold
+                  <i class='pi pi-info-circle tooltip'>
+                    <span class="tooltiptext right-tooltiptext" style="width: 300px">
+                      User the slider to set a threshold on topics' minimum articles. 
+                      Topics with less articles than the threshold will not appear in scatter plot.
+                    </span>
+                  </i>
+                </h3>
                 <div v-if="overview_constructed" class="slider-container">
                   <ThresholdController v-model:article_num_threshold="article_num_threshold"
                     :max_articles="overview_overall_scatter_metadata.max_articles"
@@ -597,6 +604,7 @@ function toggleTutorial(e:MouseEvent){
                   <i class='pi pi-info-circle tooltip'>
                     <span class="tooltiptext right-tooltiptext" style="width: 300px">
                       How fair do you believe each of these outlets overall on their coverage of topics. <br />
+                      Provide a score between 0 and 1 <br/>
                       Sliding towards left indicates you feel the outlet is unfair.
                     </span>
                   </i>
