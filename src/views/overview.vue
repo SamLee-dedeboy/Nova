@@ -159,13 +159,13 @@ const highlight_nodes: Ref<string[]> = ref([])
 /**
  * layout constants in percentage
  */
-const left_section_panel_size = 30
+const left_section_panel_size = 32
 const right_section_panel_size = vue.computed(() => 100 - left_section_panel_size)
 
 const entity_scatter_panel_size = 50
 const utilities_panel_size = vue.computed(() => 100 - entity_scatter_panel_size)
 
-const entity_info_panel_size = 2.8
+const entity_info_panel_size = 31
 const hex_view_panel_size = vue.computed(() => 100 - entity_info_panel_size)
 
 
@@ -778,12 +778,26 @@ main {
   border-left: 1px solid #dee2e6 !important;
 }
 
+
 //
 // general layouts
 //
 .mainTopicStyle{
     font-style: italic;
     font-weight: 200;
+}
+.p-splitter-panel.entity-scatter-panel {
+  height: 62%;
+}
+.p-splitter-panel.entity-info-panel {
+  height: 30%;
+  overflow: hidden;
+}
+.p-splitter-panel.overview-hex-panel {
+  height: 68%;
+}
+.legend-container.policy-bar-legend {
+  height: 30%;
 }
 
 // ---------------------
@@ -794,6 +808,9 @@ main {
 .entity-scatter-panel {
   // This attribute is for node info to show 
   overflow: visible;
+}
+:deep(.scatter-container) {
+  top: -2%;
 }
 
 
@@ -916,7 +933,7 @@ main {
 
 .entity-info-container {
   display: flex;
-  // height: 100%;
+  height: 100%;
   justify-content: space-evenly;
 }
 

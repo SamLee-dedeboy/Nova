@@ -584,7 +584,7 @@ const sentiment_options = [
   display: flex;
   flex-direction: column;
 }
-.overview-hex-container[data-v-0de57da1] {
+.overview-hex-container {
   height: 100%;
   flex: 1 1 0;
 }
@@ -602,7 +602,7 @@ align-items: center;
   width: 100%;
   font-size: 0.8rem;
 }
-.relfection-container[data-v-0de57da1] {
+.relfection-container {
   width: 100%;
   display: flex;
 //   height: 100%;
