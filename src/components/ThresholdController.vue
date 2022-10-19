@@ -60,7 +60,7 @@ function handleDecrease() {
   display: flex;
   width: 50%;
   height: 20%;
-  margin: 2%;
+  /* margin: 2%; */
 }
 .threshold-input {
   width: 100%;
@@ -85,7 +85,7 @@ function handleDecrease() {
 }
 .threshold-slider-container {
   width: 50%;
-  margin: 2%;
+  /* margin: 2%; */
 }
 :deep(.p-slider-handle) {
     border-radius: 10px !important; 

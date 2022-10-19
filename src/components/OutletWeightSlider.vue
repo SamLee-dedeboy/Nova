@@ -53,6 +53,11 @@ function outletIconStyle(name: string) {
 .slider-label {
     margin-left: auto;
     margin-right: auto;
+    position: absolute;
+bottom: -20px;
+font-size: 0.8rem;
+width: 100%;
+text-align: center;
 }
 .outlet-weight-grid-container {
   display: grid;
