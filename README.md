@@ -28,3 +28,26 @@ preprocess.gen_single_topic_dataset(dataset)
 python3 sentiment.py
 ```
 
+## Virtual Env instead of Conda
+Create the virtual environment.
+`python3 -m venv ./env`
+
+Activate the virtual environment
+`source env/bin/activate`
+
+Install the dependencies for the venv
+`pip install -r requirements.txt`
+
+
+## Activating the server
+`cd src/server`
+`flask --app server run`
+Takes up localhost:5000
+
+## Activating frontend
+Install the packages
+`npm i`
+
+Start
+`npm dev`
+
