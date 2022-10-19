@@ -2,7 +2,7 @@
 import * as d3 from "d3"
 import { OutletNode } from '../types'
 import { defineComponent, computed, watch, onMounted, PropType} from 'vue'
-import * as SstColors from './ColorUtils'
+import * as SstColors from './utils/ColorUtils'
 import { enableTracking } from "@vue/reactivity";
 import {OutletNodeInfo} from "../types"
 
@@ -192,15 +192,19 @@ function updateTotalArticles(pos_articles, neg_articles, total_articles) {
     .attr("dominant-baseline", "central")
 }
 
+function titleText(title:any){
+    return (title) ? title.replaceAll("_"," ") : ""
+}
+
 </script>
 <template>
     <table class="node-info-table" width="300px">
         <tr class="title">
-            <td class="title" colspan="2">{{props.node?.text}}</td>
+            <td class="title" colspan="2">{{ titleText(props.node?.text)}}</td>
         </tr>
         <tr class="header">
-            <td class="score" >score</td>
-            <td class="articles" >#articles</td>
+            <td class="score" >Score</td>
+            <td class="articles" >Articles</td>
         </tr>
         <tr class="pos">
             <td class="pos_score"> <svg></svg></td>
@@ -209,15 +213,9 @@ function updateTotalArticles(pos_articles, neg_articles, total_articles) {
         <tr class="neg">
             <td class="neg_score" > <svg></svg></td>
             <td class="neg_articles" ><svg></svg> </td>
-            <!-- <td class="neg_avg_score"> <svg></svg></td> -->
         </tr>
-        <!-- <tr class="neu">
-            <td class="neu_articles"><svg></svg> </td>
-            <td class="neu_score"> <svg></svg></td>
-            <td class="neu_avg_score"> <svg></svg></td>
-        </tr> -->
         <tr class="total">
-            <td class="total_articles_header" > total articles:  </td>
+            <td class="total_articles_header" > % of Total  </td>
             <td class="total_articles" > <svg></svg> </td>
         </tr>
     </table>
@@ -226,17 +224,17 @@ function updateTotalArticles(pos_articles, neg_articles, total_articles) {
 
 <style scoped lang="scss">
 th, tr, td {
-    border: 1px solid black;
     text-align: center;
 }
+
+tr.title {
+    border-bottom: solid #b9b9b9 1px;
+}
+
 .node-info-table {
+    background-color: #ffffff;
     border-collapse: collapse;
-    background-color: #fcf1dd;
-    border: solid;
-    border-radius: 3px;
-    padding: 5px;
-    border-style: hidden; /* hide standard table (collapsed) border */
-    box-shadow: 0 0 0 2px #666; /* this draws the table border  */ 
+    box-shadow: rgb(0 0 0 / 25%) 0px 54px 55px, rgb(0 0 0 / 12%) 0px -12px 30px, rgb(0 0 0 / 12%) 0px 4px 6px, rgb(0 0 0 / 17%) 0px 12px 13px, rgb(0 0 0 / 9%) 0px -3px 5px;
 }
 svg {
     left: 1px;

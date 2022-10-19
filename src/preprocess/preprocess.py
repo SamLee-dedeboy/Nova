@@ -1,5 +1,4 @@
 from code import InteractiveInterpreter
-from email.policy import default
 import json
 import pprint
 # import nltk
@@ -104,7 +103,7 @@ def gen_entity_cooccurrence(filepath="data/candidate_entity_mention_articles.jso
     dict_to_json(cooccurrence_mat, filepath="data/entity_cooccurrences.json")
     return
 
-def articles_groupby_outlet(filepath="data/processed_articles_summary_normalized.json"):
+def articles_groupby_outlet(filepath="data/processed_articles_summary_normalized_entity_candidates.json"):
     article_list = pd.read_json(filepath)
     outlet_article_dict = dict(tuple(article_list.groupby(['journal'])))
     res = {}
@@ -258,6 +257,4 @@ def extract_candidate_entities(filepath='data/processed_articles_with_summary.js
     # dict_to_json(article_list, filepath='data/processed_articles_summary_normalized_entity_candidates.json')
 
 
-
-    
-gen_entity_cooccurrence_groupby_outlet()
+entities_groupy_outlet()

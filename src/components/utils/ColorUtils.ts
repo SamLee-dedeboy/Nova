@@ -1,19 +1,33 @@
 import * as d3 from "d3"
-import { SentimentType } from "../types"
-const brightness = 140
+import { SentimentType } from "../../types"
+const brightness = 100
 const offset = 0.15
 const sst_range = d3.interpolateBrBG
-const neg_color = sst_range(0+offset)
-const pos_color = sst_range(1-offset)
-const neu_color = "grey"
-const mixed_color = "#125f3b"
+const neg_color = '#f4c49c' //sst_range(0+offset)
+const pos_color = '#baf0f5' //sst_range(1-offset)
+const neu_color = '#dddddd' //"#c4c3c3"
+const mixed_color = 'url(#diagonalHatch)'  //"#a54dd9"
 const entity_selected_color = "#007bff"
+export const topic_fill_color = "#4baaf5"
+export const topic_main_color = "white"
+export const topic_color_dict = {
+    "main": topic_main_color,
+    "co-occur": topic_fill_color,
+}
+
 const key_color_dict = {
-                "positive": pos_color,
-                "negative": neg_color,
-                "neutral": neu_color,
-                "mixed": mixed_color, 
-            } 
+        "positive": pos_color, //pos_color,
+        "negative": neg_color,
+        "neutral": neu_color,
+        "mixed": mixed_color, 
+    } 
+export const hive_color_dict = {
+        "positive": pos_color, //pos_color,
+        "negative": neg_color,
+        "neutral": neu_color,
+        "mixed": mixed_color, 
+        "not covered": "white"
+    } 
 const color_dict = {
     "pos": pos_color,
     "neg": neg_color,

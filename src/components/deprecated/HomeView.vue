@@ -19,7 +19,7 @@ import * as typeUtils from "../types"
 import Legend from "../components/Legend.vue";
 import Divider from 'primevue/divider';
 import ColorSpectrum from '../components/ColorSpectrum.vue'
-import * as SstColors from "../components/ColorUtils"
+import * as SstColors from "../components/utils/ColorUtils"
 import * as _ from "lodash"
 import TemporalCoordinates from "../components/TemporalCoordinates.vue";
 import TemporalPathSelector from "../components/TemporalPathSelector.vue";
@@ -28,10 +28,20 @@ import Tooltip from "../components/Tooltip.vue";
 import SearchBar from "../components/SearchBar.vue";
 import ArticleView from "../components/ArticleView.vue"
 import EntityInfoView from "../components/EntityInfoView.vue"
+import HexCooccurrence from "../components/HexCooccurrence.vue";
+import TopicBars from "../components/TopicBars.vue"
 import tutorial_intro_json from "../assets/tutorial/tutorial_intro.json"
-import * as tutorial from "../components/TutorialUtils"
+import * as tutorial from "../components/utils/TutorialUtils"
 import { resolve } from "path";
-import SelectButton  from "../components/SelectButton.vue";
+import { useRouter, useRoute } from 'vue-router'
+import { useStore } from 'vuex'
+
+
+const store = useStore()
+const router = useRouter()
+const route = useRoute()
+
+
 
 
 //
@@ -58,9 +68,11 @@ const grouped_scatter_view_dict = vue.computed(() => {
   })
   return res_dict
 })
+const overall_entity_dict: Ref<any> = ref({})
 const overall_scatter_data_loading: Ref<boolean> = ref(true)
 const grouped_scatter_data_loaded: Ref<boolean> = ref(false)
 const overview_constructed: Ref<boolean> = ref(false)
+const overall_co_hexview: Ref<any> = ref(null)
 //
 // processed data 
 //
@@ -139,6 +151,7 @@ const selectedScatterViews_right: Ref<typeUtils.PanelView[]> = ref([])
  */
 const compare_mode: Ref<boolean> = ref(false)
 vue.provide('compare_mode', compare_mode)
+const compare_stage: Ref<boolean> = ref(false)
 
 /**
  * Flag for displaying article view. 
@@ -185,11 +198,6 @@ const max_timestamp: Ref<string> = ref("")
 vue.provide('max_timestamp', max_timestamp)
 
 /**
- * segmentation threshold of sentiment value.
- */
-const segment_sst: Ref<typeUtils.Sentiment2D> = ref({pos: 0.5, neg: 0.5}) 
-vue.provide('segment_sst', {segment_sst, updateThreshold})
-/**
  * flag for tutorial mode.
  */
 const tutorial_mode: Ref<boolean> = ref(false)
@@ -215,7 +223,7 @@ const tutorial_intro: Ref<string[]> = ref(tutorial_intro_json.map(step => _.sum(
 const highlight_nodes: Ref<string[]> = ref([])
 
 function updateThreshold(new_value) {
-  segment_sst.value = new_value
+  setSegmentation(new_value)
 }
 
 /**
@@ -236,13 +244,27 @@ const node_article_id_dict = ref({})
  * Used in ArticleView.
  */
 // const selected_articles: Ref<typeUtils.Article[]> = ref([])
-const selected_entity: Ref<typeUtils.EntityInfo> = ref(new typeUtils.EntityInfo())
+// const selected_entity: Ref<typeUtils.EntityInfo|undefined> = ref(undefined)
+const selected_entity = vue.computed(() => store.state.selected_entity) 
+const setEntity = (entity) => store.commit("setEntity", entity) 
+const selected_cooccurr_entity = vue.computed(() => store.state.selected_cooccurr_entity)
+const setCooccurrEntity = (cooccurr_entity) => store.commit("setCooccurrEntity", cooccurr_entity) 
+const overall_selected_hexview: Ref<typeUtils.CooccurrHexView | undefined> = ref(undefined)
 
 /**
  * dict of outlet weight. \
  * { [id: string]: number }
  */
-const outlet_weight_dict: Ref<any> = ref({})
+const outlet_weight_dict = vue.computed(() => store.state.outlet_weight_dict) 
+const resetOutletWeight = (outlet_weight_dict) => store.commit("resetOutletWeight", outlet_weight_dict) 
+const setOutletWeight = (outlet, weight) => store.commit("setOutletWeight", outlet, weight) 
+/**
+ * segmentation threshold of sentiment value.
+ */
+const segment_sst: Ref<typeUtils.Sentiment2D> = vue.computed(() => store.state.segmentation)
+const setSegmentation = (segmentation) => store.commit("setSegmentation", segmentation) 
+
+vue.provide('segment_sst', {segment_sst, updateThreshold})
 
 /**
  * flags for hex views being active
@@ -255,7 +277,6 @@ const show_co_button = computed(() => {
 
 const cohex_mode: Ref<any> = ref(null)
 const cohex_options: Ref<string[]> = ref(["Common", "Diff"])
-const cached_nodes: Ref<typeUtils.ScatterNode[]> = ref([])
 
 /**
  * refs for panel left & right
@@ -338,6 +359,9 @@ vue.onMounted(async() => {
         }
         selectedScatterViews_left.value.push(overall_scatter_view)
         console.log("overall scatter fetched")
+        overall_scatter_view.data.nodes.forEach(node => {
+          overall_entity_dict.value[node.text] = node
+        })
         overall_scatter_data_loading.value = false
         resolve("success")
       })
@@ -392,13 +416,32 @@ vue.onMounted(async() => {
     .then(res => res.json())
     .then(json => {
       enabled_outlet_set.value = json
+      const tmp_weight_dict = {}
       enabled_outlet_set.value.forEach(outlet => {
-        outlet_weight_dict.value[outlet] = 1
+        tmp_weight_dict[outlet] = 1
       })
+      resetOutletWeight(tmp_weight_dict)
       console.log("outlet_set fetched")
       resolve("success")
     })
   }))
+  if(selected_entity.value) {
+    promiseArray.push(new Promise((resolve) => {
+      fetch(`${server_address}/hexview/overall/${selected_entity.value.name}`)
+      .then(res => res.json())
+      .then(json => {
+        const cooccurrences = json
+        const hex_view: typeUtils.CooccurrHexView = {
+          title: `co-${selected_entity.value.name}`,
+          type: typeUtils.ViewType.CooccurrHex,
+          data: cooccurrences,
+        }
+        overall_selected_hexview.value = hex_view
+        resolve("success")
+      })
+    }))
+
+  }
   await Promise.all(promiseArray)
     .then(res => {
       overview_constructed.value = true
@@ -551,22 +594,47 @@ async function handleEntityClicked({title, type, d}: {title: string, type: typeU
   if(type === typeUtils.ViewType.CooccurrHex) {
     const entity = d.text.split("-")[0]
     const outlet = d.text.split("-")[1]
-    cached_nodes.value.push(d)
+    const overall_flag = title === "Overall"
+    const path_overall_or_grouped = (overall_flag? "overall":"grouped")
+    const metadata = overview_overall_scatter_metadata.value
+    const store_entity: typeUtils.EntityInfo = {
+      name: d.text,
+      outlet: "Overall",
+      num_of_mentions:d.article_ids.length,
+      sst_ratio: {
+        pos_artcs: d.pos_article_ids.length,
+        neg_artcs: d.neg_article_ids.length,
+        pos: d.pos_sst,
+        neg: d.neg_sst,
+        pos_max: metadata.pos_max,
+        pos_min: metadata.pos_min,
+        neg_max: metadata.neg_max,
+        neg_min: metadata.neg_min,
+      },
+      articles_topic_dict: d.topicBins,
+    }
+    setEntity(store_entity)
 
-    const path_overall_or_grouped = ((title === "Overall")? "overall":"grouped")
     await fetch(`${server_address}/hexview/${path_overall_or_grouped}/${d.text}`)
       .then(res => res.json())
       .then(json => {
+        console.log("🚀 ~ file: HomeView.vue ~ line 616 ~ handleEntityClicked ~ json", json)
         const cooccurrences = json
         const hex_view: typeUtils.CooccurrHexView = {
           title: `co-${d.text}`,
           type: typeUtils.ViewType.CooccurrHex,
           data: cooccurrences,
         }
-        selectedScatterViews_left.value.push(hex_view)
+        if(title === "Overall") {
+          overall_selected_hexview.value = hex_view
+        } else {
+          selectedScatterViews_left.value.push(hex_view)
+        }
+        console.log(overall_selected_hexview.value)
         console.log("cooccurr hex fetched")
       })
-    fetch_articles(d)
+    if(title !== "Overall")
+      fetch_articles(d)
     return
   }
   if(type === typeUtils.ViewType.Article) {
@@ -642,7 +710,7 @@ function handleSearch(item) {
 }
 
 function handleUpdateOutletWeight({outlet, value}) {
-  outlet_weight_dict.value[outlet] = value
+  setOutletWeight(outlet, value)
   updateOverallEntityNode({outlet, value})
 }
 
@@ -661,6 +729,10 @@ async function updateOverallEntityNode({outlet, value}) {
     .then(json => {
       console.log("update outlet weight done")
       overall_entity_scatter.data = json
+      overall_entity_scatter.data.nodes.forEach(node => {
+        overall_entity_dict.value[node.text] = node
+      })
+      console.log(overall_entity_dict.value)
       overall_scatter_data_loading.value = false
     })
 }
@@ -737,13 +809,34 @@ async function fetch_articles(d: typeUtils.ScatterNode) {
 
 }
 
-async function handleHexClicked(entity: string) {
-  await fetch(`${server_address}/processed_data/scatter_node/${entity}`)
+async function fetch_topic_bins(target, callback) {
+  await fetch(`${server_address}/processed_data/topic_bins/${target}`)
+    .then(res => res.json())
+    .then(callback)
+}
+
+
+async function handleHexClicked({target, co_occurr_entity}: {target: string, co_occurr_entity: string}) {
+  await fetch(`${server_address}/processed_data/cooccurr_info/overall/${target}/${co_occurr_entity}`)
     .then(res => res.json())
     .then(json => {
-      console.log("scatter_node fetched")
-      fetch_articles(json as typeUtils.ScatterNode)
+      console.log("cooccurr_info fetched", json)
+      const cooccurr_entity = {
+        target: json.target,
+        name: json.cooccurr_entity,
+        outlet: "Overall",
+        num_of_mentions: json.cooccurr_num,
+        target_num_of_mentions: json.target_num_of_mentions,
+        articles_topic_dict: json.articles_topic_dict,
+        article_ids: json.cooccurr_article_ids,
+      }
+      setCooccurrEntity(cooccurr_entity)
     })
+}
+
+function handleUpdateWeightEnded() {
+  overall_co_hexview.value.updateHexColor(overall_entity_dict.value)
+
 }
 </script>
 
@@ -783,6 +876,7 @@ async function handleHexClicked(entity: string) {
             @entity-clicked="handleEntityClicked"
             @hex-clicked="handleHexClicked"
             @show_temporal="handleShowTemporal"
+            @update-weight-ended="handleUpdateWeightEnded"
             >
             </PanelContainer>
             <Divider v-if="compare_mode" layout="vertical">
@@ -821,18 +915,14 @@ async function handleHexClicked(entity: string) {
           <SplitterPanel id='sidebar' class="sidebar flex align-items-center justify-content-center" :size="45" :min-size="45">
             <div v-if="!display_article_view" class="overview-container">
               <div  class="toolbar-container">
-                <ToggleButton v-if="overview_constructed" class='compare_toggle ' v-model="compare_mode" onIcon="pi pi-images" offIcon="pi pi-images"></ToggleButton>
+                <!-- <ToggleButton v-if="overview_constructed" class='compare_toggle ' v-model="compare_mode" onIcon="pi pi-images" offIcon="pi pi-images"></ToggleButton> -->
                 <div v-if="overview_constructed" class="segment-toggler-container">
                   <ToggleButton class='segment-toggler p-primary' v-model="segment_mode" onLabel="Segment" offLabel="Segment"></ToggleButton>
                 </div>
                 <div v-if="overview_constructed" class="search-bar">
                   <SearchBar :search_terms="entity_list" @entity_searched="handleSearch"></SearchBar>
                 </div>
-                <!-- <MyToolbar ref="toolbar" 
-                @candidate_updated="updateNpList"
-                @dataset_imported="datasetImported"  >
-                </MyToolbar> -->
-                <ToggleButton v-if="overview_constructed" class='temporal-toggler ' v-model="temporal_mode" onIcon="pi pi-chart-line" offIcon="pi pi-chart-line"></ToggleButton>
+                <!-- <ToggleButton v-if="overview_constructed" class='temporal-toggler ' v-model="temporal_mode" onIcon="pi pi-chart-line" offIcon="pi pi-chart-line"></ToggleButton> -->
               </div>
               <i v-if="!overview_constructed" class="pi pi-spin pi-spinner" 
               style="
@@ -842,24 +932,49 @@ async function handleHexClicked(entity: string) {
               font-size: 3rem;
               z-index: 1000
               "></i> 
-            <div class="overview-grid-container" v-if="overview_constructed && !temporal_mode" >
-              <SentimentScatter
-                  v-for="(outlet, index) in Object.keys(grouped_scatter_view_dict)" :key="outlet" 
-                  class="outlet-scatter"
-                  :view="grouped_scatter_view_dict[outlet]"
-                  :view_index="index"
-                  :id="`scatter-${index}`"
-                  :article_num_threshold="article_num_threshold"
-                  :segment_mode="segment_mode"
+              <div class="overall-hex-container"  v-if="overview_constructed">
+                <HexCooccurrence
+                  ref="overall_co_hexview"
+                  v-if="overall_selected_hexview"
+                  class="overall-co-hexview"
+                  :title="overall_selected_hexview.title"
+                  :id="`overall-co-hex`"
+                  :entity_cooccurrences="overall_selected_hexview.data"
                   :segmentation="segment_sst"
-                  :highlight_nodes="highlight_nodes"
-                  :expanded="false"
-                  :draggable="true"
-                  @dragstart="handleDragOutletScatter($event, index)"
-                  @click="handleScatterClicked(index)"
-              >
-              </SentimentScatter>
+                  :overall_entity_dict="overall_entity_dict"
+                  v-on:hex-clicked="handleHexClicked">
+                </HexCooccurrence>
+                <div class="entity-info-container">
+                  <div class="target-cooccurr-container">
+                    <EntityInfoView
+                    v-if="selected_entity"
+                    title="Target Entity"
+                    :entity_info="selected_entity"
+                    v-model:segmentation="segment_sst"
+                    >
+                    </EntityInfoView>
+                    <Divider v-if="selected_cooccurr_entity" layout="vertical"></Divider>
+                    <EntityInfoView
+                    v-if="selected_cooccurr_entity"
+                    title="Co-occurr Entity"
+                    :entity_info="selected_cooccurr_entity"
+                    >
+                    </EntityInfoView>
+                  </div>
+                  <div class="topic-bar-container">
+                    <TopicBars
+                      v-if="selected_entity"
+                      id="cooccurr_topic_bars"
+                      :targetTopicBins="selected_entity?.articles_topic_dict"
+                      :cooccurrTopicBins="selected_cooccurr_entity?.articles_topic_dict"
+                    ></TopicBars>
+                  </div>
+                  <!-- <Button v-if="selected_entity"
+                  class="next-stage-button p-button-secondary" label="Next Stage"  @click="() => router.push(`/compare/${selected_entity?.name}`)"></Button> -->
+                  <router-link v-if="selected_entity" :to="{ name: 'compare', params: { entity: selected_entity.name }}">Next Stage</router-link>
+                </div>
               </div>
+
               <div class="overview-temporal-container" v-if="overview_constructed && temporal_mode">
                 <TemporalCoordinates class="overview-temporal-coord" 
                   :id="`overview_temporal`"
@@ -900,8 +1015,9 @@ async function handleHexClicked(entity: string) {
                 class="segment-legend"
                 :color_dict="SstColors.key_color_dict" 
                 :filter="true" 
-                :interactable="false"></Legend>
-              </div>
+                :interactable="false">
+              </Legend>
+            </div>
               <div v-if="display_article_view" class="article-view-container">
                 <i v-if="fetching_article" class="pi pi-spin pi-spinner" 
                 style="
@@ -1146,5 +1262,26 @@ async function handleHexClicked(entity: string) {
 .common-diff > :deep(.p-button.p-component) {
   font-size: inherit;
 }
+
+.overview-container {
+  width: 100%;
+  height: 100%;
+}
+.overall-hex-container {
+  width: 100%;
+  height: 59%;
+  display: flex;
+}
+.overall-co-hexview {
+  width: 60% !important;
+  height: 100% !important;
+}
+.entity-info-container {
+  width: 40% !important;
+}
+.target-cooccurr-container {
+  display: flex;
+}
+
  </style>
 

@@ -34,8 +34,8 @@ def add_sentiment(src_dataset_path, dst_dataset_path, subset=None):
     preprocess.dict_to_json(articles, filepath=dst_dataset_path)
 
 
-add_sentiment(
-    src_dataset_path="data/test_articles_with_summary.json",
-    dst_dataset_path="data/processed_articles_with_summary.json",
-    subset=None
-)
+# add_sentiment(
+#     src_dataset_path="data/test_articles_with_summary.json",
+#     dst_dataset_path="data/processed_articles_with_summary.json",
+#     subset=None
+# )

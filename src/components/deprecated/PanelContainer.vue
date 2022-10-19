@@ -15,7 +15,6 @@ import TemporalCoordinates from "./TemporalCoordinates.vue";
 import TemporalPathSelector from "./TemporalPathSelector.vue";
 import SentimentScatter from "./SentimentScatter.vue";
 import NodeInfo from "./NodeInfo.vue"
-import ArticleInfo from "./ArticleInfo.vue";
 import DataTable from "primevue/datatable";
 import Column from 'primevue/column'
 import * as _ from "lodash"
@@ -116,6 +115,7 @@ const emit = defineEmits(
     "show_temporal",
     "hex_active_changed",
     "hex-clicked",
+    "update-weight-ended"
     ]
 )
 
@@ -236,7 +236,7 @@ function handleHexClicked({title, entity}) {
         const outlet = title.split('-')[2]
         entity = entity + "-" + outlet
     }
-    emit("hex-clicked", entity)
+    emit("hex-clicked", {title, entity})
 }
 
 defineExpose({
@@ -274,6 +274,7 @@ defineExpose({
                 @update:segmentation="updateSegmentation"
                 @node_clicked="handleEntityClicked"
                 @show_temporal="handleShowTemporal"
+                @update-weight-ended="$emit('update-weight-ended')"
             ></SentimentScatter>
             <!-- <ArticleInfo
                 id="article-info-test"
@@ -309,9 +310,9 @@ defineExpose({
                         </template>
                     </Column>
                 </DataTable>
-                <ArticleInfo v-if="selectedNodes.length !== 0" 
+                <!-- <ArticleInfo v-if="selectedNodes.length !== 0" 
                 :id="`${compare_part}-article-info-${index}`"
-                :topicBins="topicBins"></ArticleInfo>
+                :topicBins="topicBins"></ArticleInfo> -->
             </div>
         </div>
         <div class="target-temporal-container" v-if="view.type === ViewType.Temporal">

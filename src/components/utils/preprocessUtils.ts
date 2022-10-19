@@ -1,7 +1,7 @@
 import * as dfd from "danfojs"
 import * as _ from 'lodash'
 import { Series } from "danfojs/dist/danfojs-base"
-import { Article, SentimentType, Sentiment2D, EntityScatterView, OutletScatterView, ScatterNode, ViewType } from "../types"
+import { Article, SentimentType, Sentiment2D, EntityScatterView, OutletScatterView, ScatterNode, ViewType } from "../../types"
 
 export function constructEntityGraph(entity_mentions_grouped, article_dict) {
     var r_graph_dict = {}
