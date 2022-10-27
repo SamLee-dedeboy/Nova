@@ -29,9 +29,13 @@ let y: any = d3.scaleLinear()
 
 vue.watch(() => props.targetTopicBins, (new_value, old_value) => {
     // update y axis
-    y = d3.scaleLinear()
+    // y = d3.scaleBand()
+    //     .domain(Object.keys(props.targetTopicBins!).sort())
+    //     .range([ 0, viewBox_height ])
+    //     .padding(0.2);
+    x = d3.scaleLinear()
         .domain([0, max_articles.value])
-        .range([viewBox_height, 0])
+        .range([0, viewBox_width])
     d3.select(`#${props.id}`).select("svg").select("g.y-axis-group")
         .call(d3.axisLeft(y) as any)
     // update bars

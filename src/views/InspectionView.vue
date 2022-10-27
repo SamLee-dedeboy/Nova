@@ -249,11 +249,11 @@ async function handleArticleIconClicked(article_info) {
             :size="right_section_size">
             <div class="entity-info-container">
                 <div class="target-cooccurr-container">
-                    <div v-if="marked_articles_ids_with_outlet.length > 0"
+                    <!-- <div v-if="marked_articles_ids_with_outlet.length > 0"
                         class="navigate-container">
                         <router-link class="goNext" :to="{ name: 'summary', params: { entity: selected_entity.name }}">
                             Summary Report </router-link>
-                    </div>
+                    </div> -->
                     <h2 class="component-header cooccurr-info-header">
                         Outlet Coverage
                     </h2>
