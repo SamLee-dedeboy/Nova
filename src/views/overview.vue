@@ -17,7 +17,7 @@ import SplitterPanel from "primevue/splitterpanel"
 import { watch, computed, onMounted, PropType, ref, Ref, nextTick, } from 'vue'
 import * as vue from 'vue'
 import * as _ from "lodash"
-import { useStore } from 'vuex'
+import { useUserDataStore } from '../store/userStore'
 
 /**
  * types & utils
@@ -42,7 +42,7 @@ import ThresholdController from "../components/ThresholdController.vue";
 import HorizontalTopicBars from "../components/HorizontalTopicBars.vue";
 
 
-const store = useStore()
+const store = useUserDataStore()
 
 
 
@@ -175,25 +175,25 @@ const hex_view_panel_size = vue.computed(() => 100 - entity_info_panel_size)
  */
 // const selected_articles: Ref<typeUtils.Article[]> = ref([])
 // const selected_entity: Ref<typeUtils.EntityInfo|undefined> = ref(undefined)
-const selected_entity = vue.computed(() => store.state.selected_entity)
-const setEntity = (entity) => store.commit("setEntity", entity)
-const selected_cooccurr_entity = vue.computed(() => store.state.selected_cooccurr_entity)
-const setCooccurrEntity = (cooccurr_entity) => store.commit("setCooccurrEntity", cooccurr_entity)
+const selected_entity = vue.computed(() => store.selected_entity)
+const setEntity = (entity) => store.setEntity(entity)
+const selected_cooccurr_entity = vue.computed(() => store.selected_cooccurr_entity)
+const setCooccurrEntity = (cooccurr_entity) => store.setCooccurrEntity(cooccurr_entity)
 const overall_selected_hexview: Ref<typeUtils.CooccurrHexView | undefined> = ref(undefined)
-const constraint_dict = vue.computed(() => store.state.constraints)
+const constraint_dict = vue.computed(() => store.constraints)
 
 /**
  * dict of outlet weight. \
  * { [id: string]: number }
  */
-const outlet_weight_dict = vue.computed(() => store.state.outlet_weight_dict)
-const resetOutletWeight = (outlet_weight_dict) => store.commit("resetOutletWeight", outlet_weight_dict)
-const setOutletWeight = ({ outlet, weight }) => store.commit("setOutletWeight", { outlet, weight })
+const outlet_weight_dict = vue.computed(() => store.outlet_weight_dict)
+const resetOutletWeight = (outlet_weight_dict) => store.resetOutletWeight(outlet_weight_dict)
+const setOutletWeight = ({ outlet, weight }) => store.setOutletWeight(outlet, weight)
 /**
  * segmentation threshold of sentiment value.
  */
-const segmentation = vue.computed(() => store.state.segmentation)
-const setSegmentation = (segmentation) => store.commit("setSegmentation", segmentation)
+const segmentation = vue.computed(() => store.segmentation)
+const setSegmentation = (segmentation) => store.setSegmentation(segmentation)
 
 
 
@@ -333,7 +333,7 @@ async function handleEntityClicked(entity: string) {
 
   legendInput.value = {}
   legendInput.value[entity] = "white";
-  legendInput.value["Co-Occuring Topic"]= "#4baaf5"; 
+  legendInput.value["Co-Occuring Topic"] = "#4baaf5";
 
 
   setCooccurrEntity(undefined)
@@ -403,7 +403,7 @@ function handleUpdateOutletWeight({ outlet, value }) {
   console.log(outlet_weight_dict.value)
   setOutletWeight({ outlet: outlet, weight: value })
   updateOverallEntityNode({ outlet, value })
-  if(!showTutorial)
+  if (!showTutorial)
     updateHexViewData()
 }
 
@@ -455,21 +455,21 @@ async function fetch_topic_bins(target, callback) {
     .then(callback)
 }
 
-let legendInput =  ref({});
+let legendInput = ref({});
 legendInput.value["main"] = "white";
-legendInput.value["co-occur"]= "#4baaf5"; 
+legendInput.value["co-occur"] = "#4baaf5";
 
 async function handleHexClicked({ target, co_occurr_entity }: { target: string, co_occurr_entity: string }) {
 
-    highlight_hex_entity.value = co_occurr_entity
-   let mainTopic = target;
-   let coOccurTopic = target +  " & " + co_occurr_entity; 
+  highlight_hex_entity.value = co_occurr_entity
+  let mainTopic = target;
+  let coOccurTopic = target + " & " + co_occurr_entity;
 
-   legendInput.value = {}
+  legendInput.value = {}
 
-   legendInput.value[mainTopic] = "white";
-   legendInput.value[coOccurTopic]= "#4baaf5"; 
-   
+  legendInput.value[mainTopic] = "white";
+  legendInput.value[coOccurTopic] = "#4baaf5";
+
 
   await fetch(`${server_address}/processed_data/cooccurr_info/overall/${target}/${co_occurr_entity}`)
     .then(res => res.json())
@@ -497,8 +497,8 @@ function updateSegmentation({ pos, neg }) {
   setSegmentation({ pos, neg })
 }
 
-function toggleTutorial(e:MouseEvent){
-    showTutorial.value=false
+function toggleTutorial(e: MouseEvent) {
+  showTutorial.value = false
 }
 
 </script>
@@ -508,36 +508,39 @@ function toggleTutorial(e:MouseEvent){
   <main>
     <div v-if="selected_cooccurr_entity" class="navigate-container">
       <router-link class="goNext"
-        :to="{ name: 'compare', params: { entity: selected_entity.name, cooccurr_entity: selected_cooccurr_entity.name }}">
-         After finding a topic, <span class="clickNext">click here</span> to assess how each outlet covered it.
-         <p class="next"><i class="pi pi-arrow-right "/></p>
+        :to="{ name: 'compare', params: { entity: selected_entity.name, cooccurr_entity: selected_cooccurr_entity.name } }">
+        After finding a topic, <span class="clickNext">click here</span> to assess how each outlet covered it.
+        <p class="next"><i class="pi pi-arrow-right " /></p>
       </router-link>
     </div>
 
     <Dialog v-model:visible="showTutorial" class="tutorialStyle" position="right" :modal="true">
       <template #header>
-        <h3> <i class="pi pi-compass"/> U.S. News Media Coverage Assessment</h3>
+        <h3> <i class="pi pi-compass" /> U.S. News Media Coverage Assessment</h3>
       </template>
 
       <p class="introTutorial">
-        This application's purpose is to help you assess if your expectations of how fair mainstream news media cover topics align with their reporting.
+        This application's purpose is to help you assess if your expectations of how fair mainstream news media cover
+        topics align with their reporting.
         We gathered articles centered around COVID-19 from 6 U.S. mainstream media outlets.
-        To demonstrate the system, let's see how these outlets covered the start of the COVID-19 Pandemic (Feb-June 2020).
+        To demonstrate the system, let's see how these outlets covered the start of the COVID-19 Pandemic (Feb-June
+        2020).
       </p>
       <p class="tutorialInstructions">
         Before we begin, please adjust the sliders below for how fair you believe each of corresponding outlets are.
         The scale is from 0 to 1, where 1 is fair. If you believe they are all fair you may leave them as is.
       </p>
       <div class="fairnessLegend">
-        <i class="pi pi-arrow-left"/> Unfair 
-        Fair <i class="pi pi-arrow-right"/>
+        <i class="pi pi-arrow-left" /> Unfair
+        Fair <i class="pi pi-arrow-right" />
       </div>
 
       <div class="initialWeights">
-        <OutletWeightSlider v-if="overview_constructed" :outlet_weight_dict="outlet_weight_dict" @update_outlet_weight="handleUpdateOutletWeight" fontSize="1.0em" />
+        <OutletWeightSlider v-if="overview_constructed" :outlet_weight_dict="outlet_weight_dict"
+          @update_outlet_weight="handleUpdateOutletWeight" fontSize="1.0em" />
       </div>
       <template #footer>
-          <Button label="Ready" icon="pi pi-check" @click="toggleTutorial" autofocus />
+        <Button label="Ready" icon="pi pi-check" @click="toggleTutorial" autofocus />
       </template>
     </Dialog>
 
@@ -557,8 +560,7 @@ function toggleTutorial(e:MouseEvent){
 
             <div class="overview-scatter-container">
               <!-- load icon -->
-              <i v-if="overall_scatter_data_loading" class="pi pi-spin pi-spinner" 
-                style="position:absolute;
+              <i v-if="overall_scatter_data_loading" class="pi pi-spin pi-spinner" style="position:absolute;
                   left: 45%;
                   top: 30%;
                   font-size: 3rem;
@@ -588,7 +590,7 @@ function toggleTutorial(e:MouseEvent){
                 <h3 class="threshold-title"> Number of Articles Threshold
                   <i class='pi pi-info-circle tooltip'>
                     <span class="tooltiptext right-tooltiptext" style="width: 300px">
-                      User the slider to set a threshold on topics' minimum articles. 
+                      User the slider to set a threshold on topics' minimum articles.
                       Topics with less articles than the threshold will not appear in scatter plot.
                     </span>
                   </i>
@@ -604,13 +606,13 @@ function toggleTutorial(e:MouseEvent){
                   <i class='pi pi-info-circle tooltip'>
                     <span class="tooltiptext right-tooltiptext" style="width: 300px">
                       How fair do you believe each of these outlets overall on their coverage of topics. <br />
-                      Provide a score between 0 and 1 <br/>
+                      Provide a score between 0 and 1 <br />
                       Sliding towards left indicates you feel the outlet is unfair.
                     </span>
                   </i>
                 </h3>
                 <OutletWeightSlider v-if="overview_constructed" :outlet_weight_dict="outlet_weight_dict"
-                  @update_outlet_weight="handleUpdateOutletWeight" fontSize="0.75em" >
+                  @update_outlet_weight="handleUpdateOutletWeight" fontSize="0.75em">
                 </OutletWeightSlider>
               </div>
             </div>
@@ -625,11 +627,13 @@ function toggleTutorial(e:MouseEvent){
             <!-- Hex view -->
             <h2 class="component-header hexview-header" v-if="selected_entity">
               Topic Co-occurrence Hive for
-              <span class="mainTopicStyle"> {{ selected_entity.name.replaceAll("_"," ") }} </span>
+              <span class="mainTopicStyle"> {{ selected_entity.name.replaceAll("_", " ") }} </span>
               &nbsp
               <i class='pi pi-info-circle tooltip'>
                 <span class="tooltiptext right-tooltiptext" style="width: 400px">
-                  Shows most-frequently co-occurring topics with the main topic ({{ selected_entity.name.replaceAll("_"," ") }}). <br />
+                  Shows most-frequently co-occurring topics with the main topic ({{
+                      selected_entity.name.replaceAll("_", " ")
+                  }}). <br />
                   Each co-occurring topic is categorized by the region segmentation in the Topic Scatterplot.
                 </span>
               </i>
@@ -646,8 +650,7 @@ function toggleTutorial(e:MouseEvent){
               <HexCooccurrence ref="overall_co_hexview" v-if="overall_selected_hexview" class="overall-co-hexview"
                 :title="overall_selected_hexview.title" :id="`overall-co-hex`"
                 :entity_cooccurrences="overall_selected_hexview.data" :segmentation="segmentation"
-                :highlight_hex_entity="highlight_hex_entity"
-                :show_blink="true"
+                :highlight_hex_entity="highlight_hex_entity" :show_blink="true"
                 :overall_entity_dict="overall_entity_dict" v-on:hex-clicked="handleHexClicked">
               </HexCooccurrence>
             </div>
@@ -667,20 +670,23 @@ function toggleTutorial(e:MouseEvent){
                 <div class="cooccurr-info-content">
                   <div class="num_of_articles">
                     Number of articles about
-                    <span style="font-weight:bolder"> {{selected_entity.name.replaceAll("_", " ")}} </span>
+                    <span style="font-weight:bolder"> {{ selected_entity.name.replaceAll("_", " ") }} </span>
                     <span v-if="selected_cooccurr_entity">
                       and
                       <span style="font-weight:bolder">
-                        {{selected_cooccurr_entity.name.replaceAll("_", " ")}}
+                        {{ selected_cooccurr_entity.name.replaceAll("_", " ") }}
                       </span>
                     </span>
-                    is {{ selected_cooccurr_entity? selected_cooccurr_entity.num_of_mentions :
-                    selected_entity.num_of_mentions }}
+                    is {{ selected_cooccurr_entity ? selected_cooccurr_entity.num_of_mentions :
+                        selected_entity.num_of_mentions
+                    }}
                   </div>
                   <Divider layout="vertical"></Divider>
                   <ul class="entity-info-section">
                     <li> Main topic: {{ selected_entity.name.replaceAll("_", " ") }} </li>
-                    <li v-if='selected_cooccurr_entity'> Co-occur topic: {{ selected_cooccurr_entity.name.replaceAll("_", " ") }} </li>
+                    <li v-if='selected_cooccurr_entity'> Co-occur topic: {{
+                        selected_cooccurr_entity.name.replaceAll("_", " ")
+                    }} </li>
                   </ul>
                 </div>
                 <!-- <EntityInfoView v-if="selected_entity?.outlet === 'Overall'" title="Target Entity"
@@ -700,9 +706,9 @@ function toggleTutorial(e:MouseEvent){
                   COVID Context
                   <i class='pi pi-info-circle tooltip'>
                     <span class="tooltiptext right-tooltiptext" style="width: 300px">
-                      Articles about {{ selected_entity.name.replaceAll("_"," ") }} and
+                      Articles about {{ selected_entity.name.replaceAll("_", " ") }} and
                       <span v-if="selected_cooccurr_entity">
-                        {{ selected_cooccurr_entity.name.replaceAll("_"," ") }}
+                        {{ selected_cooccurr_entity.name.replaceAll("_", " ") }}
                       </span>
                       classified by if they reference a type of government policy or not. <br />
                     </span>
@@ -729,14 +735,14 @@ function toggleTutorial(e:MouseEvent){
     <!-- Tooltip for tutorial -->
     <Tooltip v-if="tutorial_mode" class="tutorial_tooltip" :content="tutorial_intro[tutorial_step]"></Tooltip>
     <span v-if="tutorial_mode" class="skip-button" style='text-decoration:underline;'
-      @click="tutorial_mode=false">Skip</span>
+      @click="tutorial_mode = false">Skip</span>
   </main>
 </template>
 
 <style lang="css">
-  .p-dialog.p-component.tutorialStyle {
-      width: 50%;
-  }
+.p-dialog.p-component.tutorialStyle {
+  width: 50%;
+}
 </style>
 
 <style scoped lang="scss">
@@ -782,20 +788,24 @@ main {
 //
 // general layouts
 //
-.mainTopicStyle{
-    font-style: italic;
-    font-weight: 200;
+.mainTopicStyle {
+  font-style: italic;
+  font-weight: 200;
 }
+
 .p-splitter-panel.entity-scatter-panel {
   height: 62%;
 }
+
 .p-splitter-panel.entity-info-panel {
   height: 30%;
   overflow: hidden;
 }
+
 .p-splitter-panel.overview-hex-panel {
   height: 68%;
 }
+
 .legend-container.policy-bar-legend {
   height: 30%;
 }
@@ -809,6 +819,7 @@ main {
   // This attribute is for node info to show 
   overflow: visible;
 }
+
 :deep(.scatter-container) {
   top: -2%;
 }
@@ -859,12 +870,12 @@ main {
 }
 
 
-.tooltiptext{
-    font-size: 1rem;
-    font-size: 1rem;
-    font-family: 'Lato';
-    font-weight: 200;
-    box-shadow: rgb(0 0 0 / 25%) 0px 54px 55px, rgb(0 0 0 / 12%) 0px -12px 30px, rgb(0 0 0 / 12%) 0px 4px 6px, rgb(0 0 0 / 17%) 0px 12px 13px, rgb(0 0 0 / 9%) 0px -3px 5px;
+.tooltiptext {
+  font-size: 1rem;
+  font-size: 1rem;
+  font-family: 'Lato';
+  font-weight: 200;
+  box-shadow: rgb(0 0 0 / 25%) 0px 54px 55px, rgb(0 0 0 / 12%) 0px -12px 30px, rgb(0 0 0 / 12%) 0px 4px 6px, rgb(0 0 0 / 17%) 0px 12px 13px, rgb(0 0 0 / 9%) 0px -3px 5px;
 }
 
 .toolbar-container {
@@ -978,13 +989,13 @@ main {
 
 .navigate-container {
   width: 12%;
-    text-align: left;
-    display: flex;
-    height: 5%;
-    position: absolute;
-    top: 34%;
-    left: 85%;
-    z-index: 999;
+  text-align: left;
+  display: flex;
+  height: 5%;
+  position: absolute;
+  top: 34%;
+  left: 85%;
+  z-index: 999;
 }
 
 a.goNext {
@@ -992,13 +1003,13 @@ a.goNext {
   color: #00000075;
 }
 
-.clickNext{
+.clickNext {
   font-style: italic;
   font-weight: 700;
 }
 
 p.next {
-    text-align: center;
+  text-align: center;
 }
 
 .threshold-title {
@@ -1023,21 +1034,20 @@ p.next {
   }
 }
 
-.introTutorial{
+.introTutorial {
   margin-bottom: 2%;
   padding-bottom: 2%;
   border-bottom: 2px solid #b7b7b7;
 }
 
 p.tutorialInstructions {
-    font-style: italic;
-    margin-bottom: 2%;
+  font-style: italic;
+  margin-bottom: 2%;
 }
 
-.fairnessLegend{
+.fairnessLegend {
   text-align: center;
   width: 100%;
 }
-
 </style>
 
