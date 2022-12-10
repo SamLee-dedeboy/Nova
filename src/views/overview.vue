@@ -197,6 +197,9 @@ const setSegmentation = (segmentation) => store.commit("setSegmentation", segmen
 
 
 
+/**
+ * init tutorial
+ */
 vue.watch(overview_constructed, (new_value, old_value) => {
   if (tutorial_mode.value) {
     tutorial.updateOverviewGrid()
@@ -204,6 +207,9 @@ vue.watch(overview_constructed, (new_value, old_value) => {
 })
 
 
+/**
+ * handle skip tutorial
+ */
 vue.watch(tutorial_mode, (new_value, old_value) => {
   if (old_value === true && new_value === false) {
     tutorial.handleSkipTutorial()
@@ -211,11 +217,14 @@ vue.watch(tutorial_mode, (new_value, old_value) => {
 })
 
 
-// prepare for tutorial
 vue.onMounted(async () => {
+  // prepare for tutorial
   tutorial.prepareComponentsForTutorial({ tutorial_mode, tutorial_step })
+
+  // request data from server
   const promiseArray: any[] = []
   promiseArray.push(new Promise((resolve) => {
+    // overview overall scatter data 
     fetch(`${server_address}/overview/scatter/overall/data`)
       .then(res => res.json())
       .then(json => {
@@ -233,6 +242,7 @@ vue.onMounted(async () => {
       })
   }))
   promiseArray.push(new Promise((resolve) => {
+    // overview grouped scatter data 
     fetch(`${server_address}/overview/scatter/grouped/data`)
       .then(res => res.json())
       .then(json => {
@@ -242,6 +252,7 @@ vue.onMounted(async () => {
       })
   }))
   promiseArray.push(new Promise((resolve) => {
+    // overview overall scatter metadata
     fetch(`${server_address}/overview/scatter/overall/metadata`)
       .then(res => res.json())
       .then(json => {
@@ -251,6 +262,7 @@ vue.onMounted(async () => {
       })
   }))
   promiseArray.push(new Promise((resolve) => {
+    // overview grouped scatter metadata
     fetch(`${server_address}/overview/scatter/grouped/metadata`)
       .then(res => res.json())
       .then(json => {
@@ -260,6 +272,7 @@ vue.onMounted(async () => {
       })
   }))
   promiseArray.push(new Promise((resolve) => {
+    // outlet article numbers, return as a dictionary
     fetch(`${server_address}/processed_data/outlet_article_num_dict`)
       .then(res => res.json())
       .then(json => {
@@ -269,6 +282,7 @@ vue.onMounted(async () => {
       })
   }))
   promiseArray.push(new Promise((resolve) => {
+    // entity list
     fetch(`${server_address}/processed_data/entity_list`)
       .then(res => res.json())
       .then(json => {
@@ -278,6 +292,7 @@ vue.onMounted(async () => {
       })
   }))
   promiseArray.push(new Promise((resolve) => {
+    // outlet set
     fetch(`${server_address}/processed_data/outlet_set`)
       .then(res => res.json())
       .then(json => {
@@ -292,6 +307,7 @@ vue.onMounted(async () => {
       })
   }))
   if (selected_entity.value) {
+    // request selected entity data (happens when user use back button)
     promiseArray.push(new Promise((resolve) => {
       fetch(`${server_address}/hexview/overall/${selected_entity.value.name}`, {
         method: "POST",
@@ -312,6 +328,7 @@ vue.onMounted(async () => {
           resolve("success")
         })
     }))
+    // trigger handler function 
     handleEntityClicked(selected_entity.value.name)
 
   }
@@ -326,8 +343,9 @@ vue.watch(tutorial_step, (new_value, old_value) => {
   tutorial.handleNextStep({ tutorial_mode, tutorial_step })
 })
 
-// handlers
-// send data
+//
+// event handlers
+//
 async function handleEntityClicked(entity: string) {
   const metadata = overview_overall_scatter_metadata.value
 
@@ -336,9 +354,13 @@ async function handleEntityClicked(entity: string) {
   legendInput.value["Co-Occuring Topic"]= "#4baaf5"; 
 
 
+  // reset co-occur entity
   setCooccurrEntity(undefined)
+
+  // request entity-related data
   const promiseArray: any[] = []
   promiseArray.push(new Promise((resolve) => {
+    // selected entity node data
     fetch(`${server_address}/overview/scatter/overall/node/${entity}`)
       .then(res => res.json())
       .then(json => {
@@ -364,6 +386,7 @@ async function handleEntityClicked(entity: string) {
   }))
   promiseArray.push(new Promise((resolve) => {
     hex_constructed.value = false
+    // hex view data 
     fetch(`${server_address}/hexview/overall/${entity}`, {
       method: "POST",
       headers: {
@@ -374,6 +397,7 @@ async function handleEntityClicked(entity: string) {
     })
       .then(res => res.json())
       .then(json => {
+        // update hex view data
         const cooccurrences = json
         const hex_view: typeUtils.CooccurrHexView = {
           title: `co-${entity}`,
@@ -399,6 +423,7 @@ function handleSearch(item) {
   highlight_nodes.value.push(item)
 }
 
+// send updated outlet weights to server and request updated scatter data
 function handleUpdateOutletWeight({ outlet, value }) {
   console.log(outlet_weight_dict.value)
   setOutletWeight({ outlet: outlet, weight: value })
@@ -407,6 +432,7 @@ function handleUpdateOutletWeight({ outlet, value }) {
     updateHexViewData()
 }
 
+// update overall scatter positions because of outlet weight change
 async function updateOverallEntityNode({ outlet, value }) {
   overall_scatter_data_loading.value = true
   await fetch(`${server_address}/processed_data/updateOutletWeight`, {
@@ -430,6 +456,7 @@ async function updateOverallEntityNode({ outlet, value }) {
 }
 
 async function updateHexViewData() {
+  // request hex view data by selected entity 
   await fetch(`${server_address}/hexview/overall/${selected_entity.value.name}`, {
     method: "POST",
     headers: {
