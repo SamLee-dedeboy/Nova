@@ -1,11 +1,12 @@
 import { defineStore } from "pinia"
-import * as typeUtils from "../types"
 
+// selected_entity: typeUtils.EntityInfo,
+// selected_cooccurr_entity: typeUtils.CooccurrEntityInfo,
 
 export const useUserDataStore = defineStore('userData', {
     state: () => ({
-        selected_entity: typeUtils.EntityInfo,
-        selected_cooccurr_entity: typeUtils.CooccurrEntityInfo,
+        selected_entity: undefined,
+        selected_cooccurr_entity: undefined,
         outlet_weight_dict: { "CNN": 1, "Washington Post": 1, "FoxNews": 1, "New York Times": 1, "Breitbart": 1, "ABC News": 1 },
         segmentation: { pos: 0.5, neg: 0.5 },
         hexview_grid: undefined,

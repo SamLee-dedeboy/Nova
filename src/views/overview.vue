@@ -39,7 +39,7 @@ import TopicBars from "../components/TopicBars.vue"
 import EntitySelection from "../components/entitySelection.vue"
 import ThresholdController from "../components/ThresholdController.vue";
 import HorizontalTopicBars from "../components/HorizontalTopicBars.vue";
-
+import EntityTable from "../components/entityTable.vue";
 
 const store = useUserDataStore()
 
@@ -169,7 +169,7 @@ const hex_view_panel_size = vue.computed(() => 100 - entity_info_panel_size)
 
 
 /**
- * Array of selected articles. \
+ * Array of selected articles. 
  * Used in ArticleView.
  */
 // const selected_articles: Ref<typeUtils.Article[]> = ref([])
@@ -328,6 +328,7 @@ vue.watch(tutorial_step, (new_value, old_value) => {
 // handlers
 // send data
 async function handleEntityClicked(entity: string) {
+  console.log("Enity Selection", entity)
   const metadata = overview_overall_scatter_metadata.value
 
   legendInput.value = {}
@@ -568,7 +569,14 @@ function toggleTutorial(e: MouseEvent) {
               <EntitySelection v-if="overall_scatter_view" :view="overall_scatter_view" id="overview-scatter"
                 :article_num_threshold="article_num_threshold" :segment_mode="segment_mode" :segmentation="segmentation"
                 @update:segmentation="updateSegmentation" @node_clicked="handleEntityClicked"
-                @update-weight-ended="$emit('update-weight-ended')"></EntitySelection>
+                @update-weight-ended="$emit('update-weight-ended')"/>
+            </div>
+          </SplitterPanel>
+          <SplitterPanel class="entity-table-panel" :size="utilities_panel_size">
+            <div id="entityTableWrapper">
+              <EntityTable  v-if="overall_scatter_view" :view="overall_scatter_view" :article_num_threshold="article_num_threshold" 
+                @topic_selected="handleEntityClicked"
+              />
             </div>
           </SplitterPanel>
         
@@ -595,8 +603,7 @@ function toggleTutorial(e: MouseEvent) {
             </h2>
             <div class="overview-hex-container" v-if="overview_constructed">
               <!-- load icon -->
-              <i v-if="!hex_constructed" class="pi pi-spin pi-spinner" style="
-                    position:absolute;
+              <i v-if="!hex_constructed" class="pi pi-spin pi-spinner" style="position:absolute;
                     left: 45%;
                     top: 30%;
                     font-size: 3rem;
