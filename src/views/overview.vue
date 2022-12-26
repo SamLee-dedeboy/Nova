@@ -24,7 +24,6 @@ import { useUserDataStore } from '../store/userStore'
  */
 import * as typeUtils from "../types"
 import * as SstColors from "../components/utils/ColorUtils"
-import tutorial_intro_json from "../assets/tutorial/tutorial_intro.json"
 import * as tutorial from "../components/utils/TutorialUtils"
 
 /**
@@ -148,7 +147,7 @@ vue.provide('tutorial_step', tutorial_step)
  * Each item can be embedded html. \
  * Raw data stored in src/assets/tutorial_intro.json. 
  */
-const tutorial_intro: Ref<string[]> = ref(tutorial_intro_json.map(step => _.sum(step.content)))
+// const tutorial_intro: Ref<string[]> = ref(tutorial_intro_json.map(step => _.sum(step.content))) 
 
 /**
  * Array of highlighted node titles. \
@@ -477,7 +476,7 @@ async function handleHexClicked({ target, co_occurr_entity }: { target: string, 
       console.log("cooccurr_info fetched", json)
       const overall_flag = target.split("-")[1] === undefined
       const outlet = overall_flag ? "Overall" : target.split("-")[1]
-      const co_occurr_entity = {
+      const co_occurr_entity: typeUtils.CooccurrEntityInfo = {
         target: json.target,
         name: json.cooccurr_entity,
         outlet: outlet,
@@ -572,7 +571,46 @@ function toggleTutorial(e: MouseEvent) {
                 @update-weight-ended="$emit('update-weight-ended')"></EntitySelection>
             </div>
           </SplitterPanel>
-          <SplitterPanel class="utilities-panel" :size="utilities_panel_size">
+        
+        </Splitter>
+      </SplitterPanel>
+      <SplitterPanel class="right-section-panel" :size="right_section_panel_size">
+        <Splitter layout="vertical">
+          <SplitterPanel class="overview-hex-panel" :size="hex_view_panel_size">
+            <div class="reminder-click-entity" v-if="!selected_entity && overview_constructed"> Click on one of the news
+              topic points. </div>
+            <!-- Hex view -->
+            <h2 class="component-header hexview-header" v-if="selected_entity">
+              Topic Co-occurrence Hive for
+              <span class="mainTopicStyle"> {{ selected_entity.name.replaceAll("_", " ") }} </span>
+              &nbsp
+              <i class='pi pi-info-circle tooltip'>
+                <span class="tooltiptext right-tooltiptext" style="width: 400px">
+                  Shows most-frequently co-occurring topics with the main topic ({{
+                      selected_entity.name.replaceAll("_", " ")
+                  }}). <br />
+                  Each co-occurring topic is categorized by the region segmentation in the Topic Scatterplot.
+                </span>
+              </i>
+            </h2>
+            <div class="overview-hex-container" v-if="overview_constructed">
+              <!-- load icon -->
+              <i v-if="!hex_constructed" class="pi pi-spin pi-spinner" style="
+                    position:absolute;
+                    left: 45%;
+                    top: 30%;
+                    font-size: 3rem;
+                    z-index: 1000
+                    "></i>
+              <HexCooccurrence ref="overall_co_hexview" v-if="overall_selected_hexview" class="overall-co-hexview"
+                :title="overall_selected_hexview.title" :id="`overall-co-hex`"
+                :entity_cooccurrences="overall_selected_hexview.data" :segmentation="segmentation"
+                :highlight_hex_entity="highlight_hex_entity" :show_blink="true"
+                :overall_entity_dict="overall_entity_dict" v-on:hex-clicked="handleHexClicked">
+              </HexCooccurrence>
+            </div>
+          </SplitterPanel>
+          <SplitterPanel class="utilities-panel" :size="entity_info_panel_size">
             <!-- Utilities -->
             <div class="utilities-container">
               <div id="entity-utility-container" class="entity-utils">
@@ -619,123 +657,11 @@ function toggleTutorial(e: MouseEvent) {
           </SplitterPanel>
         </Splitter>
       </SplitterPanel>
-      <SplitterPanel class="right-section-panel" :size="right_section_panel_size">
-        <Splitter layout="vertical">
-          <SplitterPanel class="overview-hex-panel" :size="hex_view_panel_size">
-            <div class="reminder-click-entity" v-if="!selected_entity && overview_constructed"> Click on one of the news
-              topic points. </div>
-            <!-- Hex view -->
-            <h2 class="component-header hexview-header" v-if="selected_entity">
-              Topic Co-occurrence Hive for
-              <span class="mainTopicStyle"> {{ selected_entity.name.replaceAll("_", " ") }} </span>
-              &nbsp
-              <i class='pi pi-info-circle tooltip'>
-                <span class="tooltiptext right-tooltiptext" style="width: 400px">
-                  Shows most-frequently co-occurring topics with the main topic ({{
-                      selected_entity.name.replaceAll("_", " ")
-                  }}). <br />
-                  Each co-occurring topic is categorized by the region segmentation in the Topic Scatterplot.
-                </span>
-              </i>
-            </h2>
-            <div class="overview-hex-container" v-if="overview_constructed">
-              <!-- load icon -->
-              <i v-if="!hex_constructed" class="pi pi-spin pi-spinner" style="
-                    position:absolute;
-                    left: 45%;
-                    top: 30%;
-                    font-size: 3rem;
-                    z-index: 1000
-                    "></i>
-              <HexCooccurrence ref="overall_co_hexview" v-if="overall_selected_hexview" class="overall-co-hexview"
-                :title="overall_selected_hexview.title" :id="`overall-co-hex`"
-                :entity_cooccurrences="overall_selected_hexview.data" :segmentation="segmentation"
-                :highlight_hex_entity="highlight_hex_entity" :show_blink="true"
-                :overall_entity_dict="overall_entity_dict" v-on:hex-clicked="handleHexClicked">
-              </HexCooccurrence>
-            </div>
-          </SplitterPanel>
-          <SplitterPanel class="entity-info-panel" :size="entity_info_panel_size">
-            <!-- Entity Info -->
-            <div class="entity-info-container">
-              <div class="target-cooccurr-container" v-if="selected_entity">
-                <h2 class="component-header cooccurr-info-header">
-                  Topic Info
-                  <i class='pi pi-info-circle tooltip'>
-                    <span class="tooltiptext right-tooltiptext" style="width: 250px">
-                      Statistical detail about the main and co-occurred topic.
-                    </span>
-                  </i>
-                </h2>
-                <div class="cooccurr-info-content">
-                  <div class="num_of_articles">
-                    Number of articles about
-                    <span style="font-weight:bolder"> {{ selected_entity.name.replaceAll("_", " ") }} </span>
-                    <span v-if="selected_cooccurr_entity">
-                      and
-                      <span style="font-weight:bolder">
-                        {{ selected_cooccurr_entity.name.replaceAll("_", " ") }}
-                      </span>
-                    </span>
-                    is {{ selected_cooccurr_entity ? selected_cooccurr_entity.num_of_mentions :
-                        selected_entity.num_of_mentions
-                    }}
-                  </div>
-                  <Divider layout="vertical"></Divider>
-                  <ul class="entity-info-section">
-                    <li> Main topic: {{ selected_entity.name.replaceAll("_", " ") }} </li>
-                    <li v-if='selected_cooccurr_entity'> Co-occur topic: {{
-                        selected_cooccurr_entity.name.replaceAll("_", " ")
-                    }} </li>
-                  </ul>
-                </div>
-                <!-- <EntityInfoView v-if="selected_entity?.outlet === 'Overall'" title="Target Entity"
-                  :entity_info="selected_entity">
-                </EntityInfoView>
-                <Divider v-if="selected_cooccurr_entity" layout="vertical"></Divider>
-                <EntityInfoView v-if="selected_cooccurr_entity" title="Co-occurr Entity"
-                  :entity_info="selected_cooccurr_entity">
-                </EntityInfoView> -->
-              </div>
-              <div class="topic-bar-container" v-if="selected_entity?.outlet === 'Overall'">
-                <!-- <TopicBars v-if="selected_entity?.outlet === 'Overall'" id="cooccurr_topic_bars"
-                  :targetTopicBins="selected_entity?.articles_topic_dict"
-                  :cooccurrTopicBins="selected_cooccurr_entity?.articles_topic_dict">
-                </TopicBars> -->
-                <h2 class="component-header topic-bar-header">
-                  COVID Context
-                  <i class='pi pi-info-circle tooltip'>
-                    <span class="tooltiptext right-tooltiptext" style="width: 300px">
-                      Articles about {{ selected_entity.name.replaceAll("_", " ") }} and
-                      <span v-if="selected_cooccurr_entity">
-                        {{ selected_cooccurr_entity.name.replaceAll("_", " ") }}
-                      </span>
-                      classified by if they reference a type of government policy or not. <br />
-                    </span>
-                  </i>
-                  <br />
-                  <Legend id="policy_legend" class="policy-bar-legend" :color_dict="legendInput">
-                  </Legend>
-                  <span style="font-size: small; width:20%; font-style:italic;">
-                    <!-- Some explanation here a lot of explanation here more explanation here -->
-                    <p> *Ratio of articles that addressed a type of policy issued due to COVID-19 or did not.</p>
-                  </span>
-                </h2>
-
-                <HorizontalTopicBars id="cooccurr_topic_bars" :targetTopicBins="selected_entity?.articles_topic_dict"
-                  :cooccurrTopicBins="selected_cooccurr_entity?.articles_topic_dict">
-                </HorizontalTopicBars>
-              </div>
-              <!-- Next Stage -->
-            </div>
-          </SplitterPanel>
-        </Splitter>
-      </SplitterPanel>
     </Splitter>
     <!-- Tooltip for tutorial -->
-    <Tooltip v-if="tutorial_mode" class="tutorial_tooltip" :content="tutorial_intro[tutorial_step]"></Tooltip>
+    <!-- <Tooltip v-if="tutorial_mode" class="tutorial_tooltip" :content="tutorial_intro[tutorial_step]"></Tooltip>
     <span v-if="tutorial_mode" class="skip-button" style='text-decoration:underline;'
-      @click="tutorial_mode = false">Skip</span>
+      @click="tutorial_mode = false">Skip</span> -->
   </main>
 </template>
 

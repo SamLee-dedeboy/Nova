@@ -1,0 +1,10 @@
+{
+    "compilerOptions": {
+      // ... other options
+      "lib": [
+        // ... other libs
+        "DOM",
+        "ES2021.String"
+      ]
+    }
+  }

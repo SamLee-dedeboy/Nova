@@ -35,6 +35,9 @@
     import {EntityScatter} from "./scatterPlot"
 
 
+
+
+
     // initialization
     const props = defineProps({
         view: Object as () => EntityScatterView,
@@ -59,11 +62,11 @@
         )
     })
 
-    const filtered_data: Ref<ScatterNode[]> = computed( () => props.view?.data.nodes.filter((node: ScatterNode) => node.article_ids.length > (props.article_num_threshold || 0)))
+    const filtered_data = computed( () => props.view?.data.nodes.filter((node: ScatterNode) => node.article_ids.length > (props.article_num_threshold || 0))) as  Ref<ScatterNode[]>
     const clicked_node: Ref<ScatterNode> = ref(new ScatterNode())
     const clicked_node_element: Ref<any> = ref(undefined)
     const viewBox: [number, number] = [1000, 1000]
-    const margin = {top: 60, bottom: 60, right:40, left: 80} 
+    const margin = {top: 60, bottom: 120, right:40, left: 80} 
     const node_radius = 10
     const segment_controller_width = 12
     const show_axes = true
@@ -97,7 +100,6 @@
         manualTooltip,
         manualTooltipID
     );
-    
     
     vue.watch(() => props.view, (new_view, old_view) => {
         entityScatterPlot.updateCanvas(emit) 
