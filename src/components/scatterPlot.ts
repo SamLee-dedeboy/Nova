@@ -607,7 +607,7 @@ export class EntityScatter {
             .on("mouseover", function (e, d) {
                 const parentNode: any = (this as HTMLElement).parentNode
                 const container: any = d3.select(parentNode)
-                applyExpandStyle(container, cvThis)
+                applyExpandStyle(container)
 
                 if (cvThis.manualTooltip) {
                     console.log(container)
@@ -626,7 +626,7 @@ export class EntityScatter {
                     if (d.text !== highlight_node_text) {
                         const highlight_node = svg.selectAll("g.entity").filter((d: any) => highlight_node_text === d.text)
                         cvThis.removeNodeLabel(highlight_node, cvThis)
-                        removeExpandedStyle(highlight_node, cvThis)
+                        removeExpandedStyle(highlight_node)
                     }
                     cvThis.addNodeLabel(container, cvThis)
                 }
@@ -639,13 +639,13 @@ export class EntityScatter {
                 const container: any = d3.select(parentNode)
 
                 if (!cvThis.show_highlight || d.text !== cvThis.props.highlight_node_text) {
-                    removeExpandedStyle(container, cvThis)
+                    removeExpandedStyle(container)
                 }
                 if (cvThis.show_highlight) {
                     cvThis.removeNodeLabel(container, cvThis)
                     const highlight_node = svg.selectAll("g.entity").filter((d: any) => cvThis.props.highlight_node_text === d.text)
                         .raise()
-                    cvThis.applyExpandStyle(highlight_node, cvThis)
+                    cvThis.applyExpandStyle(highlight_node)
                     cvThis.addNodeLabel(highlight_node, cvThis)
                 }
             })
@@ -655,15 +655,16 @@ export class EntityScatter {
                 if (cvThis.clicked_node_element.value !== undefined) {
                     const parentNode: any = (cvThis.clicked_node_element.value as HTMLElement).parentNode
                     const container: any = d3.select(parentNode)
-                    removeExpandedStyle(container, cvThis)
+                    removeExpandedStyle(container)
                 }
                 cvThis.clicked_node_element.value = this
                 cvThis.clicked_node.value = d as ScatterNode
-                emit("node_clicked", cvThis.clicked_node.value.text)
+                // emit("node_clicked", cvThis.clicked_node.value.text)
+                emit("update:selected_entity_name", cvThis.clicked_node.value.text)
             })
     }
 
-    applyExpandStyle(container: any, cvThis) {
+    applyExpandStyle(container: any) {
         container.style("filter", "brightness(90%)")
         // apply hover effect
         container.select("circle.expand_circle")
@@ -679,7 +680,7 @@ export class EntityScatter {
         //     .attr("opacity", 0.8)
     }
 
-    removeExpandedStyle(container: any, cvThis) {
+    removeExpandedStyle(container: any) {
         container.style("filter", "brightness(100%)")
         container.select("circle.expand_circle")
             .transition().duration(100)
@@ -692,6 +693,23 @@ export class EntityScatter {
         // container.selectAll("image")
         //     .transition().duration(100)
         //     .attr("opacity", 0.3)
+    }
+
+    setHighlightNode(node_text, emit) {
+        if (!this.node_clickable) return
+        // if(tutorial_mode.value && tutorial_step.value < 7) { return }
+        if (this.clicked_node_element.value !== undefined) {
+            const parentNode: any = (this.clicked_node_element.value as HTMLElement).parentNode
+            const container: any = d3.select(parentNode)
+            this.removeExpandedStyle(container)
+        }
+        const highlight_node: any = d3.selectAll("g.entity").filter((d: any) => d.text == node_text).nodes()[0]
+        this.applyExpandStyle(d3.select(highlight_node))
+
+        this.clicked_node_element.value = d3.select(highlight_node).select("circle.entity_circle").node()
+        this.clicked_node.value = d3.select(highlight_node).data()[0] as ScatterNode
+        // emit("node_clicked", this.clicked_node.value.text)
+
     }
 
     updateNodeInfo(node_data: ScatterNode, cvThis) {

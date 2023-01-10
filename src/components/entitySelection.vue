@@ -43,11 +43,18 @@
         view: Object as () => EntityScatterView,
         view_index: Number,
         id: String,
+        selected_entity_name: String,
         article_num_threshold: Number,
         segment_mode: Boolean,
         segmentation: Sentiment2D
     })
-    const emit = defineEmits(['node_clicked', 'update:segmentation', 'show_temporal', 'update-weight-ended'])
+    const emit = defineEmits([
+        // 'node_clicked', 
+        'update:segmentation', 
+        'show_temporal', 
+        'update-weight-ended',
+        'update:selected_entity_name',
+        ])
     const tooltip_content: Ref<string> = ref("") 
     const hovered_node_info: Ref<OutletNodeInfo> = ref(new OutletNodeInfo())
 
@@ -116,14 +123,28 @@
         const svg = d3.select(`#${props.id}`).select("svg")
         svg.select("rect.segment-controller").style("opacity", new_value?1:0).raise()
     })
+    vue.watch(() => props.selected_entity_name, () => {
+        setHighlightNode(props.selected_entity_name)
+    })
+
     
     onMounted(() => {
         // Render Scatter
         entityScatterPlot.draw(emit);
     })
+
+    function setHighlightNode(node_text) {
+        console.log('set highlight node', node_text)
+        entityScatterPlot.setHighlightNode(node_text, emit)
+    }
+
     function resetZoom() {
         entityScatterPlot.resetView()
     }
+
+    defineExpose({
+        setHighlightNode,
+    })
     
 </script>
 

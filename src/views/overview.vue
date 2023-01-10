@@ -45,6 +45,10 @@ const store = useUserDataStore()
 
 
 
+//
+// refs
+//
+const overview_scatter = ref(null)
 
 //
 // raw data
@@ -176,6 +180,10 @@ const hex_view_panel_size = vue.computed(() => 100 - entity_info_panel_size)
 // const selected_entity: Ref<typeUtils.EntityInfo|undefined> = ref(undefined)
 const selected_entity = vue.computed(() => store.selected_entity)
 const setEntity = (entity) => store.setEntity(entity)
+const selected_entity_name: Ref<String> = ref("")
+vue.watch(selected_entity_name, (new_value, old_value) => {
+  handleEntityClicked(selected_entity_name.value)
+})
 const selected_cooccurr_entity = vue.computed(() => store.selected_cooccurr_entity)
 const setCooccurrEntity = (cooccurr_entity) => store.setCooccurrEntity(cooccurr_entity)
 const overall_selected_hexview: Ref<typeUtils.CooccurrHexView | undefined> = ref(undefined)
@@ -327,6 +335,12 @@ vue.watch(tutorial_step, (new_value, old_value) => {
 
 // handlers
 // send data
+async function handleTableEntityClicked(entity: string) {
+  console.log(overview_scatter)
+  overview_scatter.value.setHighlightNode(entity)
+  await handleEntityClicked(entity)
+}
+
 async function handleEntityClicked(entity: string) {
   console.log("Enity Selection", entity)
   const metadata = overview_overall_scatter_metadata.value
@@ -567,16 +581,20 @@ function toggleTutorial(e: MouseEvent) {
                   z-index: 1000">
               </i>
               <EntitySelection v-if="overall_scatter_view" :view="overall_scatter_view" id="overview-scatter"
+                ref='overview_scatter'
                 :article_num_threshold="article_num_threshold" :segment_mode="segment_mode" :segmentation="segmentation"
-                @update:segmentation="updateSegmentation" @node_clicked="handleEntityClicked"
+                v-model:selected_entity_name='selected_entity_name'
+                @update:segmentation="updateSegmentation" 
                 @update-weight-ended="$emit('update-weight-ended')"/>
             </div>
+                <!-- @node_clicked="handleEntityClicked" -->
           </SplitterPanel>
           <SplitterPanel class="entity-table-panel" :size="utilities_panel_size">
             <div id="entityTableWrapper">
-              <EntityTable  v-if="overall_scatter_view" :view="overall_scatter_view" :article_num_threshold="article_num_threshold" 
-                @topic_selected="handleEntityClicked"
+              <EntityTable v-if="overall_scatter_view" :view="overall_scatter_view" :article_num_threshold="article_num_threshold" 
+                v-model:selected_entity_name='selected_entity_name'
               />
+              <!-- @topic_selected="handleTableEntityClicked" -->
             </div>
           </SplitterPanel>
         
