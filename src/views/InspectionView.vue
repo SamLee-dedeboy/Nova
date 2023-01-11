@@ -286,7 +286,7 @@ async function handleArticleIconClicked(article_info) {
                     <HexCooccurrence v-if="data_fetched" class="compare-co-hexview" :title="clicked_hexview.title"
                         :id="`compare-co-hex-inpection`" :entity_cooccurrences="clicked_hexview.data"
                         :segmentation="original_segmentation" :highlight_hex_entity="highlight_hex_entity"
-                        :show_blink="false"
+                        :show_blink="true"
                         @hex-clicked="handleHexClicked">
                     </HexCooccurrence>
                 </div>
