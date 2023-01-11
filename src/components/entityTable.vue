@@ -1,6 +1,6 @@
 <template>
     <div id="entityList" class="entityList">
-        <DataTable :value="entityList" :paginator="true" :rows="2" :rowHover="true" sortField="frequency" :sortOrder="-1" 
+        <DataTable :value="entityList" :paginator="true" :rows="8" :rowHover="true" sortField="frequency" :sortOrder="-1" 
          :scrollable="true" scrollHeight="flex" 
          v-model:selection="table_selection" paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink ">
             <Column selectionMode="single" header="Selection"></Column>

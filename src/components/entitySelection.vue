@@ -160,7 +160,7 @@
 .entity-scatterplot {
     // overflow: hidden;
     // height: inherit;
-    max-height: 100%;
+    // max-height: 100%;
     aspect-ratio: 1;
     // overflow: hidden;
     // height: auto;

@@ -162,10 +162,10 @@ const highlight_nodes: Ref<string[]> = ref([])
 /**
  * layout constants in percentage
  */
-const left_section_panel_size = 62
+const left_section_panel_size = 63
 const right_section_panel_size = vue.computed(() => 100 - left_section_panel_size)
 
-const entity_scatter_panel_size = 40
+const entity_scatter_panel_size = 100
 const utilities_panel_size = vue.computed(() => 100 - entity_scatter_panel_size)
 
 const table_panel_size = 20
@@ -784,6 +784,16 @@ main {
 
 :deep(.scatter-container) {
   top: -2%;
+}
+
+.entity-scatter-content {
+  height: 100%;
+  /*! display: flex; */
+  flex-direction: content;
+}
+.entity-scatter-panel {
+  display: flex;
+  flex-direction: column;
 }
 
 
