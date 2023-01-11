@@ -297,10 +297,10 @@ function outletIconHeaderStyle(name: string) {
                         </router-link>
                     </div>
                 </div>
-                <div class="topic-bar-container" v-if="selected_outlet !== 'Overall'">
+                <!-- <div class="topic-bar-container" v-if="selected_outlet !== 'Overall'">
                     <TopicBars id="cooccurr_topic_bars" :targetTopicBins="selected_entity?.articles_topic_dict"
                         :cooccurrTopicBins="selected_cooccurr_entity?.articles_topic_dict"></TopicBars>
-                </div>
+                </div> -->
                 <div class="legend-utils" v-if="selected_entity">
                     <h2 class="component-header legend-header">
                         <div class="journalSent">
@@ -465,7 +465,7 @@ function outletIconHeaderStyle(name: string) {
     margin: 1%;
     display: flex;
     flex-direction: column;
-    height: 40%;
+    height: 45%;
 }
 
 .segment-legend {
@@ -474,6 +474,7 @@ function outletIconHeaderStyle(name: string) {
 
 .notes-section {
     margin-left: 1%;
+    margin-top: 10%;
     flex: 1 1 0;
     height: 20%;
 }
