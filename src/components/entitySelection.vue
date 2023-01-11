@@ -73,7 +73,8 @@
     const clicked_node: Ref<ScatterNode> = ref(new ScatterNode())
     const clicked_node_element: Ref<any> = ref(undefined)
     const viewBox: [number, number] = [1000, 1000]
-    const margin = {top: 60, bottom: 120, right:40, left: 80} 
+    // const margin = {top: 60, bottom: 120, right:40, left: 80} 
+    const margin = {top: 10, bottom: 50, right:50, left: 50} 
     const node_radius = 10
     const segment_controller_width = 12
     const show_axes = true

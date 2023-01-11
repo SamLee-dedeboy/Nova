@@ -162,11 +162,14 @@ const highlight_nodes: Ref<string[]> = ref([])
 /**
  * layout constants in percentage
  */
-const left_section_panel_size = 32
+const left_section_panel_size = 62
 const right_section_panel_size = vue.computed(() => 100 - left_section_panel_size)
 
-const entity_scatter_panel_size = 50
+const entity_scatter_panel_size = 40
 const utilities_panel_size = vue.computed(() => 100 - entity_scatter_panel_size)
+
+const table_panel_size = 20
+const scatter_panel_size = vue.computed(() => 100 - table_panel_size)
 
 const entity_info_panel_size = 31
 const hex_view_panel_size = vue.computed(() => 100 - entity_info_panel_size)
@@ -562,6 +565,7 @@ function toggleTutorial(e: MouseEvent) {
       <SplitterPanel class="left-section-panel" :size="left_section_panel_size">
         <Splitter layout="vertical">
           <SplitterPanel class="entity-scatter-panel" :size="entity_scatter_panel_size">
+            <!-- left section header -->
             <h2 class="component-header scatter-header">
               COVID-19 News Topics
               <i class='pi pi-info-circle tooltip'>
@@ -571,32 +575,39 @@ function toggleTutorial(e: MouseEvent) {
                 </span>
               </i>
             </h2>
-
-            <div class="overview-scatter-container">
-              <!-- load icon -->
-              <i v-if="overall_scatter_data_loading" class="pi pi-spin pi-spinner" style="position:absolute;
-                  left: 45%;
-                  top: 30%;
-                  font-size: 3rem;
-                  z-index: 1000">
-              </i>
-              <EntitySelection v-if="overall_scatter_view" :view="overall_scatter_view" id="overview-scatter"
-                ref='overview_scatter'
-                :article_num_threshold="article_num_threshold" :segment_mode="segment_mode" :segmentation="segmentation"
-                v-model:selected_entity_name='selected_entity_name'
-                @update:segmentation="updateSegmentation" 
-                @update-weight-ended="$emit('update-weight-ended')"/>
+            <div class='entity-scatter-content'>
+              <Splitter class='table-scatter-splitter'>
+                <SplitterPanel class="entity-table-panel" :size="table_panel_size">
+                  <div id="entityTableWrapper">
+                    <EntityTable v-if="overall_scatter_view" :view="overall_scatter_view" :article_num_threshold="article_num_threshold" 
+                      v-model:selected_entity_name='selected_entity_name'
+                    />
+                    <!-- @topic_selected="handleTableEntityClicked" -->
+                  </div>
+                </SplitterPanel>
+                <SplitterPanel class='entity-scatter-panel'>
+                  <div class="overview-scatter-container">
+                    <!-- load icon -->
+                    <i v-if="overall_scatter_data_loading" class="pi pi-spin pi-spinner" style="position:absolute;
+                        left: 45%;
+                        top: 30%;
+                        font-size: 3rem;
+                        z-index: 1000">
+                    </i>
+                    <EntitySelection v-if="overall_scatter_view" :view="overall_scatter_view" id="overview-scatter"
+                      ref='overview_scatter'
+                      :article_num_threshold="article_num_threshold" :segment_mode="segment_mode" :segmentation="segmentation"
+                      v-model:selected_entity_name='selected_entity_name'
+                      @update:segmentation="updateSegmentation" 
+                      @update-weight-ended="$emit('update-weight-ended')"/>
+                  </div>
+                      <!-- @node_clicked="handleEntityClicked" -->
+                </SplitterPanel>
+              </Splitter>
             </div>
-                <!-- @node_clicked="handleEntityClicked" -->
+            <!-- overview scatter -->
           </SplitterPanel>
-          <SplitterPanel class="entity-table-panel" :size="utilities_panel_size">
-            <div id="entityTableWrapper">
-              <EntityTable v-if="overall_scatter_view" :view="overall_scatter_view" :article_num_threshold="article_num_threshold" 
-                v-model:selected_entity_name='selected_entity_name'
-              />
-              <!-- @topic_selected="handleTableEntityClicked" -->
-            </div>
-          </SplitterPanel>
+          <!-- overview table -->
         
         </Splitter>
       </SplitterPanel>
