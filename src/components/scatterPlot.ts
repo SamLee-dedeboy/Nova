@@ -1,8 +1,10 @@
 import { ScatterNode, OutletNodeInfo } from "../types"
 import { ComputedRef, Ref } from "vue"
 import * as d3 from "d3"
+import * as d3_fisheye from "d3-fisheye"
 import * as _ from "lodash"
 import * as SstColors from "./utils/ColorUtils"
+// import * as d3_fisheye from "./utils/fisheye"
 import { EnterElement } from "d3"
 
 interface Margin {
@@ -154,6 +156,46 @@ export class EntityScatter {
             this.drawAxis(emit)
         if (this.show_offset)
             this.updateSegmentationOffset(this.props.adjust_offset)
+        const fisheye = d3_fisheye.circular()
+            .radius(200)
+            .distortion(2)
+        const svg = d3.select(`#${this.props.id}`).select("svg")
+        let self = this
+        svg.on("mousemove", function(e) {
+            fisheye.focus(d3.pointer(e));
+            d3.selectAll("circle").each(function(d: any) {
+                d.fisheye = fisheye([d.x, d.y])
+                d3.select(this)
+                    .attr("cx", d.fisheye[0])
+                    .attr("cy", d.fisheye[1])
+                    .attr("r", d.fisheye[2]*self.node_circle_radius)
+            })
+
+            // const circle_group = d3.selectAll("g.entity").filter(d => self.checkProximity(d, d3.pointer(e)))
+            // console.log(d3.selectAll("g.entity").nodes())
+            // const circle_group = d3.selectAll("g.entity")
+            //     .each(function(d: any) { 
+            //         // d.fisheye = fisheye([self.xScale(d.pos_sst), self.yScale(Math.abs(d.neg_sst))])
+            //         d.fisheye = fisheye([d.x, d.y])
+            //         d3.select(this).select("circle.entity_circle")
+            //             // .transition().duration(1)
+            //             .attr("cx", d.fisheye[0])
+            //             .attr("cy", d.fisheye[1])
+            //             .attr("r", d.fisheye[2]*self.node_circle_radius)
+            //         d3.select(this).select("circle.expand_circle")
+            //             // .transition().duration(1)
+            //             .attr("cx", d.fisheye[0])
+            //             .attr("cy", d.fisheye[1])
+            //             .attr("r", d.fisheye[2]*self.node_circle_radius)
+            //     })
+
+        });
+    }
+
+    checkProximity(d: any, focus_point: any, range: number=100) {
+        const x = this.xScale(d.pos_sst)
+        const y = this.yScale(Math.abs(d.neg_sst))
+        return Math.abs(x - focus_point[0]) < range && Math.abs(y - focus_point[1]) < range
     }
 
     /* Exposed for event handling */
@@ -545,7 +587,11 @@ export class EntityScatter {
 
 
         node_group.selectAll("g.entity")
-            .data(bind_data, function (d: any) { return d.text })
+            .data(bind_data, function (d: any) { 
+                d.x = self.xScale(d.pos_sst)
+                d.y = self.yScale(Math.abs(d.neg_sst))
+                return d.text 
+            })
             .join(
                 enter =>  this.enterEntityScatter(enter, colorScale),
                 update => {
