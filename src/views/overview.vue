@@ -578,7 +578,7 @@ function toggleTutorial(e: MouseEvent) {
             <div class='entity-scatter-content'>
               <Splitter class='table-scatter-splitter'>
                 <SplitterPanel class="entity-table-panel" :size="table_panel_size">
-                  <div id="entityTableWrapper">
+                  <div id="entityTableWrapper" class='entityTableWrapper'>
                     <EntityTable v-if="overall_scatter_view" :view="overall_scatter_view" :article_num_threshold="article_num_threshold" 
                       v-model:selected_entity_name='selected_entity_name'
                     />
@@ -794,6 +794,10 @@ main {
 .entity-scatter-panel {
   display: flex;
   flex-direction: column;
+}
+.entityTableWrapper {
+  height: 80%;
+  margin-left: 5%;
 }
 
 

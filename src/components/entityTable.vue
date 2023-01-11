@@ -1,11 +1,15 @@
 <template>
     <div id="entityList" class="entityList">
-        <DataTable :value="entityList" :paginator="true" :rows="8" :rowHover="true" sortField="frequency" :sortOrder="-1" 
-         :scrollable="true" scrollHeight="flex" 
-         v-model:selection="table_selection" paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink ">
-            <Column selectionMode="single" header="Selection"></Column>
+        <!-- <DataTable :value="entityList" :paginator="true" :rows="8" :rowHover="true" sortField="frequency" :sortOrder="-1"  -->
+        <DataTable :value="entityList" 
+        :rowHover="true" sortField="frequency" :sortOrder="-1" 
+        :scrollable="true" scrollHeight="flex" 
+        class="p-datatable-sm"
+        v-model:selection="table_selection" selectionMode='single' dataKey='entity'
+        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink ">
+            <!-- <Column selectionMode="single" header="Selection"></Column> -->
             <Column sortable field="entity" header="Topic"></Column>
-            <Column sortable field="frequency" header="Frequency"></Column>
+            <Column sortable field="frequency" header="Frequency" bodyStyle='padding-left: 20%'></Column>
         </DataTable>
     </div>
 </template>
@@ -58,3 +62,13 @@ console.log("Entity List", entityList)
 
 
 </script>
+
+<style scoped>
+.entityList {
+    height: 100%;
+}
+:deep(.p-datatable-tbody) {
+    font-size: 0.8rem;
+}
+
+</style>
