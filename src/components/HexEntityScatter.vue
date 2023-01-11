@@ -1,10 +1,11 @@
 <template>
     <div :id="id" class="hex-entity-scatter" >
-        <svg :id="svgId" class="hex-entity-scatterplot" ></svg>
-        <pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
-            <rect x="0" y="0" width="10" height="10" style="fill:#baf0f5"/>
-            <line x1="0" y1="0" x2="0" y2="10" style="stroke:#f4c49c; stroke-width:8" />
-        </pattern>
+        <svg :id="svgId" class="hex-entity-scatterplot" >
+            <pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+                <rect x="0" y="0" width="10" height="10" style="fill:#baf0f5"/>
+                <line x1="0" y1="0" x2="0" y2="10" style="stroke:#f4c49c; stroke-width:8" />
+            </pattern>
+        </svg>
         <!-- <NodeInfo class='nodeinfo' :node="hovered_node_info" :total_articles="total_articles" style="position:absolute; z-index:1000;pointer-events: none;"></NodeInfo> -->
     </div>
 </template>
