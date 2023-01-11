@@ -159,36 +159,19 @@ export class EntityScatter {
         const fisheye = d3_fisheye.circular()
             .radius(200)
             .distortion(2)
+            .smoothing(0.5);
+
         const svg = d3.select(`#${this.props.id}`).select("svg")
-        let self = this
         svg.on("mousemove", function(e) {
             fisheye.focus(d3.pointer(e));
-            d3.selectAll("circle").each(function(d: any) {
-                d.fisheye = fisheye([d.x, d.y])
+            svg.selectAll("circle").each(function(d: any) {
+                const fisheye_coord = fisheye([d.x, d.y])
                 d3.select(this)
-                    .attr("cx", d.fisheye[0])
-                    .attr("cy", d.fisheye[1])
-                    .attr("r", d.fisheye[2]*self.node_circle_radius)
+                    .transition().duration(0)
+                    .attr("cx", fisheye_coord[0])
+                    .attr("cy", fisheye_coord[1])
+                    // .attr("r", fisheye_coord[2]*self.node_circle_radius)
             })
-
-            // const circle_group = d3.selectAll("g.entity").filter(d => self.checkProximity(d, d3.pointer(e)))
-            // console.log(d3.selectAll("g.entity").nodes())
-            // const circle_group = d3.selectAll("g.entity")
-            //     .each(function(d: any) { 
-            //         // d.fisheye = fisheye([self.xScale(d.pos_sst), self.yScale(Math.abs(d.neg_sst))])
-            //         d.fisheye = fisheye([d.x, d.y])
-            //         d3.select(this).select("circle.entity_circle")
-            //             // .transition().duration(1)
-            //             .attr("cx", d.fisheye[0])
-            //             .attr("cy", d.fisheye[1])
-            //             .attr("r", d.fisheye[2]*self.node_circle_radius)
-            //         d3.select(this).select("circle.expand_circle")
-            //             // .transition().duration(1)
-            //             .attr("cx", d.fisheye[0])
-            //             .attr("cy", d.fisheye[1])
-            //             .attr("r", d.fisheye[2]*self.node_circle_radius)
-            //     })
-
         });
     }
 
