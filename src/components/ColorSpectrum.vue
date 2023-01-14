@@ -7,7 +7,7 @@ const props = defineProps({
     colorScale: Object as () => Function,
 })
 
-const viewBox = [300, 25]
+const viewBox = [300, 300]
 const steps = 11
 const interpolation =  [1,3572] //[...Array(steps).keys()].map(p => p/(steps-1))
 const colorScale =  d3.scaleLog().domain([1,3572]).range(["#FFFFFF","#5e0053"]); // hardcoded sorry :( pass article max via a store 
@@ -47,6 +47,6 @@ onMounted(() => {
 <style scoped lang="scss">
 .spectrum-container {
     width: 100%;
-    height: 100%;
+    height: auto;
 }
 </style>

@@ -69,6 +69,7 @@ function handleDecrease() {
 .color-spectrum {
   height: 25px;
   width: 100%;
+  overflow: hidden;
 }
 .indicator-container {
   display: flex;
