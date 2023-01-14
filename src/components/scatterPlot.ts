@@ -678,7 +678,6 @@ export class EntityScatter {
             })
             .on("click", function (e, d) {
                 if (!cvThis.node_clickable) return
-                // if(tutorial_mode.value && tutorial_step.value < 7) { return }
                 if (cvThis.clicked_node_element.value !== undefined) {
                     const parentNode: any = (cvThis.clicked_node_element.value as HTMLElement).parentNode
                     const container: any = d3.select(parentNode)
@@ -724,7 +723,6 @@ export class EntityScatter {
 
     setHighlightNode(node_text, emit) {
         if (!this.node_clickable) return
-        // if(tutorial_mode.value && tutorial_step.value < 7) { return }
         if (this.clicked_node_element.value !== undefined) {
             const parentNode: any = (this.clicked_node_element.value as HTMLElement).parentNode
             const container: any = d3.select(parentNode)

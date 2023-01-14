@@ -24,7 +24,6 @@ import { useUserDataStore } from '../store/userStore'
  */
 import * as typeUtils from "../types"
 import * as SstColors from "../components/utils/ColorUtils"
-import * as tutorial from "../components/utils/TutorialUtils"
 
 /**
  * vue components
@@ -135,25 +134,12 @@ const article_num_threshold: Ref<number> = ref(20)
 const highlight_outlet: Ref<string[]> = ref([])
 
 
+
+
 /**
  * flag for tutorial mode.
  */
 const tutorial_mode: Ref<boolean> = ref(false)
-/**
- * tutorial step: start from 0.
- */
-const tutorial_step: Ref<number> = ref(0)
-vue.provide('tutorial_mode', tutorial_mode)
-vue.provide('tutorial_step', tutorial_step)
-
-/**
- * Array of displaying text in each step. \
- * Referenced by tutorial_step. \
- * Each item can be embedded html. \
- * Raw data stored in src/assets/tutorial_intro.json. 
- */
-// const tutorial_intro: Ref<string[]> = ref(tutorial_intro_json.map(step => _.sum(step.content))) 
-
 /**
  * Array of highlighted node titles. \
  * Used in search feature.
@@ -199,25 +185,8 @@ const constraint_dict = vue.computed(() => store.constraints)
 const segmentation = vue.computed(() => store.segmentation)
 const setSegmentation = (segmentation) => store.setSegmentation(segmentation)
 
-
-
-vue.watch(overview_constructed, (new_value, old_value) => {
-  if (tutorial_mode.value) {
-    tutorial.updateOverviewGrid()
-  }
-})
-
-
-vue.watch(tutorial_mode, (new_value, old_value) => {
-  if (old_value === true && new_value === false) {
-    tutorial.handleSkipTutorial()
-  }
-})
-
-
 // prepare for tutorial
 vue.onMounted(async () => {
-  tutorial.prepareComponentsForTutorial({ tutorial_mode, tutorial_step })
   const promiseArray: any[] = []
   promiseArray.push(new Promise((resolve) => {
     fetch(`${server_address}/overview/scatter/overall/data`)
@@ -317,10 +286,6 @@ vue.onMounted(async () => {
     })
 })
 
-// tutorial setups
-vue.watch(tutorial_step, (new_value, old_value) => {
-  tutorial.handleNextStep({ tutorial_mode, tutorial_step })
-})
 
 // handlers
 // send data
@@ -442,6 +407,7 @@ function updateSegmentation({ pos, neg }) {
 function toggleTutorial(e: MouseEvent) {
   showTutorial.value = false
 }
+
 
 </script>
 
@@ -619,10 +585,6 @@ function toggleTutorial(e: MouseEvent) {
         </Splitter>
       </SplitterPanel>
     </Splitter>
-    <!-- Tooltip for tutorial -->
-    <!-- <Tooltip v-if="tutorial_mode" class="tutorial_tooltip" :content="tutorial_intro[tutorial_step]"></Tooltip>
-    <span v-if="tutorial_mode" class="skip-button" style='text-decoration:underline;'
-      @click="tutorial_mode = false">Skip</span> -->
   </main>
 </template>
 
