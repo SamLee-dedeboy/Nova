@@ -15,7 +15,7 @@ import Dialog from 'primevue/dialog';
 import * as vue from "vue"
 import { Ref, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { useStore } from 'vuex'
+import { useUserDataStore } from '../store/userStore'
 
 /**
  * types & utils
@@ -34,26 +34,28 @@ import Legend from '../components/Legend.vue';
 import HexEntityScatter from '../components/HexEntityScatter.vue';
 
 const route = useRoute()
-const store = useStore()
+// const store = useStore()
+const store = useUserDataStore()
 /**
  * vuex store objects
  */
-const segmentation = vue.computed(() => store.state.segmentation)
-const setSegmentation = (segmentation) => store.commit("setSegmentation", segmentation)
-const selected_entity = vue.computed(() => store.state.selected_entity)
-const setEntity = (entity) => store.commit("setEntity", entity)
-const selected_cooccurr_entity = vue.computed(() => store.state.selected_cooccurr_entity)
-const setCooccurrEntity = (cooccurr_entity) => store.commit("setCooccurrEntity", cooccurr_entity)
-const clicked_hexview = vue.computed(() => store.state.clicked_hexview)
-const setClickedHexView = (hexview) => store.commit("setClickedHexView", hexview)
-const hexview_grid = vue.computed(() => store.state.hexview_grid)
-const setHexViewGrid = (grid) => store.commit("setHexViewGrid", grid)
-const outlet_weight_dict = vue.computed(() => store.state.outlet_weight_dict)
+console.log(store)
+const segmentation = vue.computed(() => store.segmentation)
+const setSegmentation = (segmentation) => store.setSegmentation(segmentation)
+const selected_entity = vue.computed(() => store.selected_entity)
+const setEntity = (entity) => store.setEntity(entity)
+const selected_cooccurr_entity = vue.computed(() => store.selected_cooccurr_entity)
+const setCooccurrEntity = (cooccurr_entity) => store.setCooccurrEntity(cooccurr_entity)
+const clicked_hexview = vue.computed(() => store.clicked_hexview)
+const setClickedHexView = (hexview) => store.setClickedHexView(hexview)
+const hexview_grid = vue.computed(() => store.hexview_grid)
+const setHexViewGrid = (grid) => store.setHexViewGrid(grid)
+const outlet_weight_dict = vue.computed(() => store.outlet_weight_dict)
 
 const hex_entity_scatter_view: Ref<any> = ref(undefined)
 const highlight_hex_entity: Ref<string> = ref("")
-const notes = vue.computed(() => store.state.notes)
-const setNotes = (e) => store.commit("setNotes", e.target.value)
+const notes = vue.computed(() => store.notes)
+const setNotes = (e) => store.setNotes(e.target.value)
 const selected_outlet = vue.computed(() => selected_entity.value?.outlet === "Overall"? "ABC News" :selected_entity.value?.outlet)
 
 
@@ -295,10 +297,10 @@ function outletIconHeaderStyle(name: string) {
                         </router-link>
                     </div>
                 </div>
-                <div class="topic-bar-container" v-if="selected_outlet !== 'Overall'">
+                <!-- <div class="topic-bar-container" v-if="selected_outlet !== 'Overall'">
                     <TopicBars id="cooccurr_topic_bars" :targetTopicBins="selected_entity?.articles_topic_dict"
                         :cooccurrTopicBins="selected_cooccurr_entity?.articles_topic_dict"></TopicBars>
-                </div>
+                </div> -->
                 <div class="legend-utils" v-if="selected_entity">
                     <h2 class="component-header legend-header">
                         <div class="journalSent">
@@ -463,7 +465,7 @@ function outletIconHeaderStyle(name: string) {
     margin: 1%;
     display: flex;
     flex-direction: column;
-    height: 40%;
+    height: 45%;
 }
 
 .segment-legend {
@@ -472,6 +474,7 @@ function outletIconHeaderStyle(name: string) {
 
 .notes-section {
     margin-left: 1%;
+    margin-top: 10%;
     flex: 1 1 0;
     height: 20%;
 }

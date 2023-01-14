@@ -94,15 +94,30 @@ vue.onMounted(() => {
         const svg = d3.select(`#${props.id}`).select("svg")
             // const svg = d3.select(`#test-id`).select("svg")
             .attr("viewBox", `0 0 ${viewBox[0]} ${viewBox[1]}`)
-        const hex_group = svg.append("g").attr("class", "hex-group")
-        const hex_paths = hex_group.append("g").attr("class", "hex-paths")
-        const hex_labels = hex_group.append("g").attr("class", "hex-labels")
+        // const hex_group = svg.append("g").attr("class", "hex-group")
+        // const hex_paths = hex_group.append("g").attr("class", "hex-paths")
+        // const hex_labels = hex_group.append("g").attr("class", "hex-labels")
+        // init()
         updateHexBins()
     })
 })
 
+function init() {
+    const svg = d3.select(`#${props.id}`).select("svg")
+    const hex_group = svg.append("g").attr("class", "hex-group")
+    const hex_paths = hex_group.append("g").attr("class", "hex-paths")
+    const hex_labels = hex_group.append("g").attr("class", "hex-labels")
+}
+
 function updateHexBins() {
     const svg = d3.select(`#${props.id}`).select("svg")
+    // delete everything to avoid blinking bug
+    svg.selectAll("*").remove()
+
+    // append everything back
+    init()
+
+    // update begins
     const hex_group = svg.select("g.hex-group")
         .style("cursor", "pointer")
 

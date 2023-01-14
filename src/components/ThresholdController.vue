@@ -20,12 +20,12 @@ vue.watch(() => props.article_num_threshold, (new_value, old_value) => {
     emit("update:article_num_threshold", props.article_num_threshold)
 })
 function handleIncrement() {
-    const tmp = Math.min(props.article_num_threshold!+10, props.max_articles||100)
+    const tmp = Math.min(+props.article_num_threshold!+10, props.max_articles||100)
     emit("update:article_num_threshold", tmp)
 }
 
 function handleDecrease() {
-    const tmp = Math.max(props.article_num_threshold!-10, 0)
+    const tmp = Math.max(+props.article_num_threshold!-10, 0)
     emit("update:article_num_threshold", tmp)
 }
 </script>

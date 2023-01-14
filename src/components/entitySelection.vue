@@ -35,16 +35,26 @@
     import {EntityScatter} from "./scatterPlot"
 
 
+
+
+
     // initialization
     const props = defineProps({
         view: Object as () => EntityScatterView,
         view_index: Number,
         id: String,
+        selected_entity_name: String,
         article_num_threshold: Number,
         segment_mode: Boolean,
         segmentation: Sentiment2D
     })
-    const emit = defineEmits(['node_clicked', 'update:segmentation', 'show_temporal', 'update-weight-ended'])
+    const emit = defineEmits([
+        // 'node_clicked', 
+        'update:segmentation', 
+        'show_temporal', 
+        'update-weight-ended',
+        'update:selected_entity_name',
+        ])
     const tooltip_content: Ref<string> = ref("") 
     const hovered_node_info: Ref<OutletNodeInfo> = ref(new OutletNodeInfo())
 
@@ -59,11 +69,12 @@
         )
     })
 
-    const filtered_data: Ref<ScatterNode[]> = computed( () => props.view?.data.nodes.filter((node: ScatterNode) => node.article_ids.length > (props.article_num_threshold || 0)))
+    const filtered_data = computed( () => props.view?.data.nodes.filter((node: ScatterNode) => node.article_ids.length > (props.article_num_threshold || 0))) as  Ref<ScatterNode[]>
     const clicked_node: Ref<ScatterNode> = ref(new ScatterNode())
     const clicked_node_element: Ref<any> = ref(undefined)
     const viewBox: [number, number] = [1000, 1000]
-    const margin = {top: 60, bottom: 60, right:40, left: 80} 
+    // const margin = {top: 60, bottom: 120, right:40, left: 80} 
+    const margin = {top: 10, bottom: 50, right:50, left: 50} 
     const node_radius = 10
     const segment_controller_width = 12
     const show_axes = true
@@ -98,7 +109,6 @@
         manualTooltipID
     );
     
-    
     vue.watch(() => props.view, (new_view, old_view) => {
         entityScatterPlot.updateCanvas(emit) 
     }, {deep: true})
@@ -114,14 +124,28 @@
         const svg = d3.select(`#${props.id}`).select("svg")
         svg.select("rect.segment-controller").style("opacity", new_value?1:0).raise()
     })
+    vue.watch(() => props.selected_entity_name, () => {
+        setHighlightNode(props.selected_entity_name)
+    })
+
     
     onMounted(() => {
         // Render Scatter
         entityScatterPlot.draw(emit);
     })
+
+    function setHighlightNode(node_text) {
+        console.log('set highlight node', node_text)
+        entityScatterPlot.setHighlightNode(node_text, emit)
+    }
+
     function resetZoom() {
         entityScatterPlot.resetView()
     }
+
+    defineExpose({
+        setHighlightNode,
+    })
     
 </script>
 
@@ -136,7 +160,7 @@
 .entity-scatterplot {
     // overflow: hidden;
     // height: inherit;
-    max-height: 100%;
+    // max-height: 100%;
     aspect-ratio: 1;
     // overflow: hidden;
     // height: auto;

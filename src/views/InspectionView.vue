@@ -17,7 +17,7 @@ import Textarea from 'primevue/textarea'
  */
 import * as vue from "vue"
 import { Ref, ref } from 'vue'
-import { useStore } from 'vuex'
+import { useUserDataStore } from '../store/userStore'
 import * as d3 from 'd3'
 
 /**
@@ -31,25 +31,25 @@ import { Article, SentimentType, Constraint } from "../types"
 import ArticleView from "../components/ArticleView.vue";
 import HexCooccurrence from "../components/HexCooccurrence.vue"
 
-const store = useStore()
+const store = useUserDataStore()
 
 const left_section_size = 60
 const right_section_size = vue.computed(() => 100 - left_section_size)
 const server_address = vue.inject("server_address")
 const data_fetched: Ref<boolean> = ref(false)
 
-const selected_entity = vue.computed(() => store.state.selected_entity)
-const setEntity = (entity) => store.commit("setEntity", entity)
-const selected_cooccurr_entity = vue.computed(() => store.state.selected_cooccurr_entity)
-const setCooccurrEntity = (cooccurr_entity) => store.commit("setCooccurrEntity", cooccurr_entity)
-const segmentation = vue.computed(() => store.state.segmentation)
+const selected_entity = vue.computed(() => store.selected_entity)
+const setEntity = (entity) => store.setEntity(entity)
+const selected_cooccurr_entity = vue.computed(() => store.selected_cooccurr_entity)
+const setCooccurrEntity = (cooccurr_entity) => store.setCooccurrEntity(cooccurr_entity)
+const segmentation = vue.computed(() => store.segmentation)
 const original_segmentation = segmentation.value
-const outlet_weight_dict = vue.computed(() => store.state.outlet_weight_dict)
-const clicked_hexview = vue.computed(() => store.state.clicked_hexview)
+const outlet_weight_dict = vue.computed(() => store.outlet_weight_dict)
+const clicked_hexview = vue.computed(() => store.clicked_hexview)
 const highlight_hex_entity: Ref<string> = ref("")
-const setClickedHexView = (hexview) => store.commit("setClickedHexView", hexview)
-const hexview_grid = vue.computed(() => store.state.hexview_grid)
-const constraint_dict = vue.computed(() => store.state.constraints)
+const setClickedHexView = (hexview) => store.setClickedHexView(hexview)
+const hexview_grid = vue.computed(() => store.hexview_grid)
+const constraint_dict = vue.computed(() => store.constraints)
 const ranked_outlets = vue.computed(() => {
     return Object.keys(outlet_weight_dict.value).sort(
         (o1, o2) => outlet_weight_dict.value[o1] - outlet_weight_dict.value[o2]
@@ -59,7 +59,7 @@ const ranked_outlets = vue.computed(() => {
 const selected_outlet: Ref<string> = ref("")
 const target_articles: Ref<Article[]> = ref([])
 const target_article_highlights: Ref<any> = ref({})
-const marked_articles_ids_with_outlet = vue.computed(() => store.state.marked_articles)
+const marked_articles_ids_with_outlet = vue.computed(() => store.marked_articles)
 const marked_article_info_grouped = vue.computed(() => {
     const res = {}
     marked_articles_ids_with_outlet.value.forEach((article_info) => {
@@ -249,11 +249,11 @@ async function handleArticleIconClicked(article_info) {
             :size="right_section_size">
             <div class="entity-info-container">
                 <div class="target-cooccurr-container">
-                    <div v-if="marked_articles_ids_with_outlet.length > 0"
+                    <!-- <div v-if="marked_articles_ids_with_outlet.length > 0"
                         class="navigate-container">
                         <router-link class="goNext" :to="{ name: 'summary', params: { entity: selected_entity.name }}">
                             Summary Report </router-link>
-                    </div>
+                    </div> -->
                     <h2 class="component-header cooccurr-info-header">
                         Outlet Coverage
                     </h2>
@@ -286,7 +286,7 @@ async function handleArticleIconClicked(article_info) {
                     <HexCooccurrence v-if="data_fetched" class="compare-co-hexview" :title="clicked_hexview.title"
                         :id="`compare-co-hex-inpection`" :entity_cooccurrences="clicked_hexview.data"
                         :segmentation="original_segmentation" :highlight_hex_entity="highlight_hex_entity"
-                        :show_blink="false"
+                        :show_blink="true"
                         @hex-clicked="handleHexClicked">
                     </HexCooccurrence>
                 </div>

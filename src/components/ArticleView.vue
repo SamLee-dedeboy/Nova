@@ -8,21 +8,21 @@ import * as _ from "lodash"
 import * as SstColors from "./utils/ColorUtils"
 import { Ref, ref, nextTick } from "vue"
 import { Article } from "../types"
-import { useStore } from 'vuex'
+import { useUserDataStore } from '../store/userStore'
 
 
-const store = useStore()
+const store = useUserDataStore()
 const props = defineProps({
     articles: Object as () => Article[],
     article_highlights: Object as () => any,
     entity_pair: Object as () => String[],
 })
-const marked_articles = vue.computed(() => store.state.marked_articles)
-const setMarkedArticle = (article_info) => store.commit("setMarkedArticle", article_info)
-const removeMarkedArticle = (article_id) => store.commit("removeMarkedArticle", article_id)
+const marked_articles = vue.computed(() => store.marked_articles)
+const setMarkedArticle = (article_info) => store.setMarkedArticle(article_info)
+const removeMarkedArticle = (article_id) => store.removeMarkedArticle(article_id)
 // const notes: Ref<string> = ref("")
-const notes = vue.computed(() => store.state.notes)
-const setNotes = (e) => store.commit("setNotes", e.target.value)
+const notes = vue.computed(() => store.notes)
+const setNotes = (e) => store.setNotes(e.target.value)
 
 vue.onMounted(() => {
     addHeaderClickEvent()
