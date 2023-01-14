@@ -1,10 +1,21 @@
 <script setup lang="ts">
 import * as vue from "vue"
-import Slider from "primevue/slider"
+import SelectButton from "primevue/selectbutton"
 const props = defineProps({
-    outlet_set: Object as () => Set<String>,
+    outlet_leaning: Object as () => { [id: string]: number},
     fontSize: String
 })
+
+const outlet_list = vue.computed(() => {
+    if(props.outlet_leaning == undefined) return []
+    return Object.keys(props.outlet_leaning)
+})
+
+const mark_options = [
+  {leaning: 'Left', value: 0},
+  {leaning: 'Neutral', value: 1},
+  {leaning: 'Right', value: 2},
+]
 
 function outletIconStyle(name: string) {
     let className = name.replaceAll(' ', '-') + '-icon';
@@ -16,25 +27,17 @@ function outletIconStyle(name: string) {
 
 <template>
     <div class="outlet-weight-grid-container">
-        <div class="outlet-weight-grid-cell" v-for="outlet in outlet_set" >
-            <div class="wrapper">
-                <div :class="['journal-style']">
-                    <img :src="`/${outlet}.png`"
-                    :class="['journal-image',`${outletIconStyle(outlet)}`]" />
-                </div>
-                <span class="outletName" :style="{'font-size':fontSize}">{{outlet}}</span>
+        <div class="outlet-weight-grid-cell" v-for="outlet in outlet_list" >
+            <div :class="['journal-style']">
+                <img :src="`/${outlet}.png`"
+                :class="['journal-image',`${outletIconStyle(outlet)}`]" />
             </div>
-
-            <!-- <slider 
-            v-model="outlet_set![outlet]"
-            :step="0.01"
-            :min="0"
-            :max="1"
-            @mouseup="handleChange(outlet)"
-            />
-            <span class=slider-label>
-                {{ outlet_set![outlet]}}
-            </span> -->
+            <div class="wrapper">
+                <span class="outletName" :style="{'font-size':fontSize}">{{outlet}}</span>
+                <SelectButton v-model="outlet_leaning[outlet]" 
+                    class='leaning-button'
+                    optionValue="value" optionLabel="leaning" :options="mark_options"/>
+            </div>
         </div>
     </div>
 </template>
@@ -52,19 +55,21 @@ text-align: center;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(2, auto);
-  grid-column-gap: 22px;
+  /* grid-column-gap: 22px; */
   height: max-content;
 }
 .outlet-weight-grid-cell {
   display: flex;
-  flex-direction: column;
-  margin: 5%;
+  flex-direction: row;
+  align-items: center;
+  text-align: center;
+  /* margin: 5%; */
 }
 
 
 .journal-style {
-    width: 30px;
-    height: 30px;
+    width: 40px;
+    height: 40px;
     position: relative;
     overflow: hidden;
     border-radius: 50%;
@@ -89,6 +94,10 @@ text-align: center;
 
 .wrapper{
     display: flex;
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+    margin-left: 3px;
 }
 
 .outletName{
@@ -96,6 +105,14 @@ text-align: center;
     width: 70%;
     color: black;
     text-align: center;
+    margin-bottom: -5px;
 }
 
+/**
+    leaning button
+ */
+:deep(.p-button) {
+    padding: 0rem 0.3rem;
+    font-size: 0.7rem;
+}
 </style>

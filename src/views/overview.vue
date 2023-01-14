@@ -93,6 +93,7 @@ const showTutorial: Ref<boolean> = ref(true)
  * set of outlet names extracted from dataset.
  */
 const enabled_outlet_set: Ref<Set<string>> = ref(new Set())
+const outlet_leaning: Ref<Any> = ref({})
 
 
 /**
@@ -285,7 +286,11 @@ vue.onMounted(async () => {
       .then(res => res.json())
       .then(json => {
         enabled_outlet_set.value = json
-        console.log("outlet_set fetched")
+        // update outlet leaning dict
+        enabled_outlet_set.value.forEach(outlet => {
+            outlet_leaning.value[outlet] = 1
+        });
+        console.log("outlet_set fetched", outlet_leaning.value)
         resolve("success")
       })
   }))
@@ -643,8 +648,8 @@ function toggleTutorial(e: MouseEvent) {
                     </span>
                   </i>
                 </h3>
-                <OutletWeightSlider v-if="overview_constructed" :outlet_set="enabled_outlet_set"
-                  @update_outlet_weight="handleUpdateOutletWeight" fontSize="0.75em">
+                <OutletWeightSlider v-if="overview_constructed" :outlet_leaning="outlet_leaning"
+                  @update_outlet_weight="handleUpdateOutletWeight" fontSize="0.65em">
                 </OutletWeightSlider>
               </div>
             </div>
