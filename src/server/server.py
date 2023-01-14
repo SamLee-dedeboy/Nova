@@ -54,12 +54,12 @@ def get_entity_list():
 def get_outlet_set():
     return json.dumps(list(processed_data.outlet_set))
 
-@app.route("/hexview/overall/<title>", methods=['POST'])
+@app.route("/hexview/overall/<title>")
 def get_overall_hexview(title):
-    outlet_weight_dict = request.json
-    updated_node_dict = scatter_data.updateOutletWeight(overview_scatter_overall_data, sentiment_processor.overall_metadata, processed_data, outlet_weight_dict, return_format="dict")
+    node_list = overview_scatter_overall_data.nodes
+    node_dict = {node.text: node for node in node_list}
     cooccurrences = raw_data.entity_cooccurrences[title]
-    request_data = hexview_data.constructHexData(title, cooccurrences, updated_node_dict)
+    request_data = hexview_data.constructHexData(title, cooccurrences, node_dict)
     return json.dumps(request_data, default=vars)
 
 @app.route("/hexview/grouped/<title>")

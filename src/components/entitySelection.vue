@@ -52,7 +52,6 @@
         // 'node_clicked', 
         'update:segmentation', 
         'show_temporal', 
-        'update-weight-ended',
         'update:selected_entity_name',
         ])
     const tooltip_content: Ref<string> = ref("") 

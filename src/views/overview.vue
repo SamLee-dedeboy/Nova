@@ -296,14 +296,7 @@ vue.onMounted(async () => {
   }))
   if (selected_entity.value) {
     promiseArray.push(new Promise((resolve) => {
-      fetch(`${server_address}/hexview/overall/${selected_entity.value.name}`, {
-        method: "POST",
-        headers: {
-          "Accept": "application/json",
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(outlet_weight_dict.value)
-      })
+      fetch(`${server_address}/hexview/overall/${selected_entity.value.name}`)
         .then(res => res.json())
         .then(json => {
           const cooccurrences = json
@@ -374,14 +367,7 @@ async function handleEntityClicked(entity: string) {
   }))
   promiseArray.push(new Promise((resolve) => {
     hex_constructed.value = false
-    fetch(`${server_address}/hexview/overall/${entity}`, {
-      method: "POST",
-      headers: {
-        "Accept": "application/json",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(outlet_weight_dict.value)
-    })
+    fetch(`${server_address}/hexview/overall/${entity}`)
       .then(res => res.json())
       .then(json => {
         const cooccurrences = json
@@ -407,26 +393,6 @@ function highlightChanged(new_value) {
 
 function handleSearch(item) {
   highlight_nodes.value.push(item)
-}
-
-async function updateHexViewData() {
-  await fetch(`${server_address}/hexview/overall/${selected_entity.value.name}`, {
-    method: "POST",
-    headers: {
-      "Accept": "application/json",
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(outlet_weight_dict.value)
-  })
-    .then(res => res.json())
-    .then(json => {
-      const cooccurrences = json
-      const hex_view: typeUtils.CooccurrHexView = {
-        title: `co-${selected_entity.value.name}`,
-        data: cooccurrences,
-      }
-      overall_selected_hexview.value = hex_view
-    })
 }
 
 async function fetch_topic_bins(target, callback) {
@@ -467,10 +433,6 @@ async function handleHexClicked({ target, co_occurr_entity }: { target: string, 
       }
       setCooccurrEntity(co_occurr_entity)
     })
-}
-
-function handleUpdateWeightEnded() {
-  overall_co_hexview.value.updateHexColor(overall_entity_dict.value)
 }
 
 function updateSegmentation({ pos, neg }) {
@@ -516,8 +478,9 @@ function toggleTutorial(e: MouseEvent) {
       </div>
 
       <div class="initialWeights">
-        <OutletWeightSlider v-if="overview_constructed" :outlet_weight_dict="outlet_weight_dict"
-          @update_outlet_weight="handleUpdateOutletWeight" fontSize="1.0em" />
+        <OutletWeightSlider v-if="overview_constructed" :outlet_leaning="outlet_leaning"
+          @update_outlet_weight="handleUpdateOutletWeight" fontSize="0.65em">
+        </OutletWeightSlider>
       </div>
       <template #footer>
         <Button label="Ready" icon="pi pi-check" @click="toggleTutorial" autofocus />
@@ -561,8 +524,7 @@ function toggleTutorial(e: MouseEvent) {
                       ref='overview_scatter'
                       :article_num_threshold="article_num_threshold" :segment_mode="segment_mode" :segmentation="segmentation"
                       v-model:selected_entity_name='selected_entity_name'
-                      @update:segmentation="updateSegmentation" 
-                      @update-weight-ended="$emit('update-weight-ended')"/>
+                      @update:segmentation="updateSegmentation" />
                   </div>
                       <!-- @node_clicked="handleEntityClicked" -->
                 </SplitterPanel>

@@ -588,9 +588,7 @@ export class EntityScatter {
                                 return self.xScale(d.pos_sst)
                             })
                             .attr("cy", (d: any) => this.yScale(Math.abs(d.neg_sst)))
-                            .on("end", function () {
-                                emit("update-weight-ended")
-                            }))
+                        )
                         .call(g => g.selectAll("circle.entity_circle")
                             .attr("fill", (d: any) => d.article_ids.length === 0 ? "white" : colorScale(d.article_ids.length))
                         )
