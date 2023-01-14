@@ -2,20 +2,9 @@
 import * as vue from "vue"
 import Slider from "primevue/slider"
 const props = defineProps({
-    outlet_weight_dict: Object as () => { [id: string]: number},
+    outlet_set: Object as () => Set<String>,
     fontSize: String
 })
-let dragging = false;
-const emit = defineEmits(["update_outlet_weight"])
-
-const outlet_list = vue.computed(() => {
-    if(!props.outlet_weight_dict) return undefined
-    return Object.keys(props.outlet_weight_dict)
-})
-
-function handleChange(outlet) {
-    emit("update_outlet_weight", {outlet: outlet, value: props.outlet_weight_dict![outlet] })
-}
 
 function outletIconStyle(name: string) {
     let className = name.replaceAll(' ', '-') + '-icon';
@@ -27,7 +16,7 @@ function outletIconStyle(name: string) {
 
 <template>
     <div class="outlet-weight-grid-container">
-        <div class="outlet-weight-grid-cell" v-for="outlet in outlet_list" >
+        <div class="outlet-weight-grid-cell" v-for="outlet in outlet_set" >
             <div class="wrapper">
                 <div :class="['journal-style']">
                     <img :src="`/${outlet}.png`"
@@ -36,16 +25,16 @@ function outletIconStyle(name: string) {
                 <span class="outletName" :style="{'font-size':fontSize}">{{outlet}}</span>
             </div>
 
-            <slider 
-            v-model="outlet_weight_dict![outlet]"
+            <!-- <slider 
+            v-model="outlet_set![outlet]"
             :step="0.01"
             :min="0"
             :max="1"
             @mouseup="handleChange(outlet)"
             />
             <span class=slider-label>
-                {{ outlet_weight_dict![outlet]}}
-            </span>
+                {{ outlet_set![outlet]}}
+            </span> -->
         </div>
     </div>
 </template>

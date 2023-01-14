@@ -193,13 +193,6 @@ const overall_selected_hexview: Ref<typeUtils.CooccurrHexView | undefined> = ref
 const constraint_dict = vue.computed(() => store.constraints)
 
 /**
- * dict of outlet weight. \
- * { [id: string]: number }
- */
-const outlet_weight_dict = vue.computed(() => store.outlet_weight_dict)
-const resetOutletWeight = (outlet_weight_dict) => store.resetOutletWeight(outlet_weight_dict)
-const setOutletWeight = ({ outlet, weight }) => store.setOutletWeight(outlet, weight)
-/**
  * segmentation threshold of sentiment value.
  */
 const segmentation = vue.computed(() => store.segmentation)
@@ -292,11 +285,6 @@ vue.onMounted(async () => {
       .then(res => res.json())
       .then(json => {
         enabled_outlet_set.value = json
-        const tmp_weight_dict = {}
-        enabled_outlet_set.value.forEach(outlet => {
-          tmp_weight_dict[outlet] = 1
-        })
-        resetOutletWeight(tmp_weight_dict)
         console.log("outlet_set fetched")
         resolve("success")
       })
@@ -414,36 +402,6 @@ function highlightChanged(new_value) {
 
 function handleSearch(item) {
   highlight_nodes.value.push(item)
-}
-
-function handleUpdateOutletWeight({ outlet, value }) {
-  console.log(outlet_weight_dict.value)
-  setOutletWeight({ outlet: outlet, weight: value })
-  updateOverallEntityNode({ outlet, value })
-  if (!showTutorial)
-    updateHexViewData()
-}
-
-async function updateOverallEntityNode({ outlet, value }) {
-  overall_scatter_data_loading.value = true
-  await fetch(`${server_address}/processed_data/updateOutletWeight`, {
-    method: "POST",
-    headers: {
-      "Accept": "application/json",
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(outlet_weight_dict.value)
-  })
-    .then(res => res.json())
-    .then(json => {
-      console.log("update outlet weight done")
-      overall_scatter_view.value!.data = json
-      overall_scatter_view.value?.data.nodes.forEach(node => {
-        overall_entity_dict.value[node.text] = node
-      })
-      // console.log(overall_entity_dict.value)
-      overall_scatter_data_loading.value = false
-    })
 }
 
 async function updateHexViewData() {
@@ -685,7 +643,7 @@ function toggleTutorial(e: MouseEvent) {
                     </span>
                   </i>
                 </h3>
-                <OutletWeightSlider v-if="overview_constructed" :outlet_weight_dict="outlet_weight_dict"
+                <OutletWeightSlider v-if="overview_constructed" :outlet_set="enabled_outlet_set"
                   @update_outlet_weight="handleUpdateOutletWeight" fontSize="0.75em">
                 </OutletWeightSlider>
               </div>

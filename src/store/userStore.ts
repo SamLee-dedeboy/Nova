@@ -23,12 +23,6 @@ export const useUserDataStore = defineStore('userData', {
         setCooccurrEntity(cooccurr_entity) {
             this.selected_cooccurr_entity = cooccurr_entity
         },
-        resetOutletWeight(weight_dict) {
-            this.outlet_weight_dict = weight_dict
-        },
-        setOutletWeight(outlet, weight) {
-            this.outlet_weight_dict[outlet] = weight
-        },
         setSegmentation(segmentation) {
             this.segmentation = segmentation
         },
