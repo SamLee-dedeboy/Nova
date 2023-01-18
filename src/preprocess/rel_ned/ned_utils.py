@@ -8,11 +8,13 @@ from REL.utils import process_results
 
 
 wiki_version = "wiki_2019"
-base_url = "/Users/samytlee/Documents/mediabias/src/preprocess/rel_ned"
+model_path = 'ed-wiki-2019'
+base_url = '/Users/samytlee/Documents/MediaBias/src/preprocess/rel_ned'
 
 config = {
     "mode": "eval",
-    "model_path": "{}/{}/generated/model".format(base_url, wiki_version),
+    # "model_path": "{}/{}/generated/model".format(base_url, wiki_version),
+    "model_path": "{}/{}/model".format(base_url, model_path),
 }
 salience_threshold = 0.5
 
@@ -35,6 +37,14 @@ class REL_NedAnalyzer:
         print("analyze_entity(): processing results")
         results = process_results(mentions_dataset, predictions, dataset)
         print("analyze_entity(): process result done")
+        print(dataset)
+        print(results)
+        for id, sentence_entity in results.items():
+            sentence_entity = sentence_entity[0]
+            start_pos = sentence_entity[0]
+            len = sentence_entity[1]
+            # print(dataset[id][0])
+            print(dataset[id][0][start_pos: start_pos + len])
         return results
         # doc_entity_dict = {} 
         # print("analyze_entity(): summarizing entities...")
@@ -49,8 +59,23 @@ class REL_NedAnalyzer:
 def format_dataset(dataset, preprocess_func=None):
     # dataset should have format [article], article = {"id":xxx, "content":xxx}
     processed = {}
-    attribute_name = "summary"
+    # attribute_name = "summary"
+    attribute_name = "content"
     # user does some stuff, which results in the format below.
-    for article in dataset:
-        processed[article["id"]] = [article[attribute_name] if preprocess_func == None else preprocess_func(article[attribute_name]), []]
+    for sentence in dataset:
+        processed[sentence["id"]] = [sentence[attribute_name] if preprocess_func == None else preprocess_func(sentence[attribute_name]), []]
     return processed
+
+if __name__ == "__main__":
+    rel_analyzer = REL_NedAnalyzer()
+    sentences = [
+        {
+            "id": 0, 
+            "content": "I like Trump but I don't like Biden." 
+        },
+        {
+            "id": 1, 
+            "content": "I like Biden but I don't like Trump." 
+        },
+    ]
+    sentence_entities = rel_analyzer.analyze_entity(sentences)

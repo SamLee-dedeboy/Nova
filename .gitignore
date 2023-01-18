@@ -38,3 +38,4 @@ src/preprocess/rel_ned/*
 public/*.json
 src/server/__pycache__/
 src/server/data/
+*.txt

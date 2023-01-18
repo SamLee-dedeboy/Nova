@@ -257,4 +257,5 @@ def extract_candidate_entities(filepath='data/processed_articles_with_summary.js
     # dict_to_json(article_list, filepath='data/processed_articles_summary_normalized_entity_candidates.json')
 
 
-entities_groupy_outlet()
+if __name__ == '__main__':
+    entities_groupy_outlet()
