@@ -856,8 +856,8 @@ main {
   display: flex;
   height: 5%;
   position: absolute;
-  top: 34%;
-  left: 85%;
+  top: 63%;
+  left: 86%;
   z-index: 999;
 }
 
