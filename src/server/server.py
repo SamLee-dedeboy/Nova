@@ -3,12 +3,16 @@ from multiprocessing.dummy import Process
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import json
+
+from transformers import PLBART_PRETRAINED_MODEL_ARCHIVE_LIST
 from RawDataManager import RawDataManager
 import scatter_data
 import hexview_data
 from ProcessedDataManager import ProcessedDataManager
 from data_types import *
 from sentiment_processor import SentimentProcessor
+import random
+import copy
 
 app = Flask(__name__)
 CORS(app)
@@ -64,16 +68,7 @@ def get_overall_hexview(title):
 
 @app.route("/hexview/grouped/<title>")
 def get_grouped_hexview(title):
-    res = []
-    merged_entities = []
-    for outlet, cooccurrences_dict in raw_data.entity_cooccurrences_grouped.items():
-        cooccurrences = cooccurrences_dict[title]
-        hex_data = hexview_data.constructGroupedHexData(title, cooccurrences, grouped_node_dict[outlet], processed_data, sentiment_processor.grouped_metadata)
-        res.append({"entity": title, "outlet": outlet, "cooccurrences_data": hex_data})
-        entities = list(map(lambda hex_entity: hex_entity.entity, hex_data.sorted_cooccurrences_list))
-        merged_entities = list(set(merged_entities + entities))
-        # sort by freq in overall scatter
-    merged_entities.sort(reverse=True, key=lambda entity: len(overall_node_dict[entity].article_ids))
+    res, merged_entities = hexview_data.get_entity_candidates(title, raw_data.entity_cooccurrences_grouped, grouped_node_dict, processed_data, overall_node_dict, sentiment_processor)
     for hex_data in res: 
         blanked_list = []
         for entity in merged_entities:
@@ -89,10 +84,6 @@ def get_grouped_hexview(title):
                     sst=Sentiment2D(0,0)
                 ))
 
-        # blanked_list = [None for i in range(len(merged_entities))]
-        # for hex_entity in hex_data['sorted_cooccurrences_list']:
-        #     index = merged_entities.index(hex_entity.entity)
-        #     blanked_list[index] = hex_entity
         hex_data['cooccurrences_data'].sorted_cooccurrences_list = blanked_list[0:36]
 
     return json.dumps(res, default=vars)
@@ -184,6 +175,38 @@ def getHexCandidateGroupedNodes(outlet):
             node.text = node.text.split("-")[0]
             nodes.append(node)
     return json.dumps(nodes, default=vars)
+
+@app.route("/hex/random", methods=["POST"])
+def generate_random_hex():
+    outlet = request.json['outlet']
+    center_entity = request.json['center_entity']
+    # num - 1 because one of the hex is true data
+    num = request.json['num'] - 1
+    cooccurrences_dict = raw_data.entity_cooccurrences_grouped[outlet][center_entity]
+
+    # true data
+    all_hex_data = json.loads(get_grouped_hexview(center_entity))
+    target_hex = next(hex_data for hex_data in all_hex_data if hex_data['outlet'] == outlet)
+
+    # randomize entity article & sst
+    random_hex = [{
+        'title': 'true_hex',
+        'data': target_hex['cooccurrences_data'],
+    }]
+    for index in range(4):
+        new_candidate_data = copy.deepcopy(target_hex['cooccurrences_data'])
+        # randomly assign sst
+        for entity_data in new_candidate_data['sorted_cooccurrences_list']:
+            entity_data['sst']['pos'] = random.uniform(0, 1)
+            entity_data['sst']['neg'] = random.uniform(0, 1)
+            entity_data['article_ids'] = [0]
+        new_random_hex = {
+            'title': 'random_hex_{}'.format(index),
+            'data': new_candidate_data
+        }
+        random_hex.append(new_random_hex)
+
+    return json.dumps(random_hex, default=vars)
 
 @app.route("/test")
 def test():
