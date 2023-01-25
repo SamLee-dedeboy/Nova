@@ -251,6 +251,13 @@ function outletIconHeaderStyle(name: string) {
                             :class="['journal-image',`${outletIconStyle(view.title)}`]" />
                     </div>
                 </div>
+                <svg>
+                    <pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)"
+                        patternUnits="userSpaceOnUse">
+                        <rect x="0" y="0" width="10" height="10" style="fill:#baf0f5" />
+                        <line x1="0" y1="0" x2="0" y2="10" style="stroke:#f4c49c; stroke-width:8" />
+                    </pattern>
+                </svg>
             </div>
         </SplitterPanel>
         <SplitterPanel id="entity_info_section" class="entity-info-panel flex align-items-center justify-content-center"
