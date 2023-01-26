@@ -5,20 +5,57 @@ import { Ref, ref } from "vue"
 import * as vue from "vue"
 
 import RadioButton from 'primevue/radiobutton';
+import Slider from 'primevue/slider';
 import HexCooccurrence from "../components/HexCooccurrence.vue";
 
 
 const store = useUserDataStore()
 const server_address = vue.inject("server_address")
-const segmentation = vue.computed(() => store.segmentation)
 
 const selected_hex: Ref<string> = ref("") 
-const random_hex_data: Ref<Any> = ref() 
-const cells = [0, 1, 2, 3, 4]
+const true_hex_data: Ref<Any> = ref() 
+const true_hex_fetched: Ref<Boolean> = ref(false)
+const offset: Ref<number> = ref(0)
+const segmentations = vue.computed(() => {
+    const pos_center = 0.5
+    const neg_center = 0.5
+    // const pos_offset = 0.25
+    // const neg_offset = 0.25
+    const pos_offset = offset.value
+    const neg_offset = offset.value
+    return [
+        // center
+        {
+            "pos": pos_center,
+            "neg": neg_center,
+        },
+        // top left
+        {
+            "pos": pos_center - pos_offset,
+            "neg": neg_center + neg_offset,
+        },
+        // bottom left
+        {
+            "pos": pos_center - pos_offset,
+            "neg": neg_center - neg_offset,
+        },
+        // top right
+        {
+            "pos": pos_center + pos_offset,
+            "neg": neg_center + neg_offset,
+        },
+        // bottom right
+        {
+            "pos": pos_center + pos_offset,
+            "neg": neg_center - neg_offset,
+        },
+    ]
+})
 
 vue.watch(selected_hex, () => {
     console.log("selected hex changed: ", selected_hex.value)
 })
+
 vue.onMounted(() => {
     fetch_random_hex("CNN", "Donald_Trump")
 })
@@ -39,7 +76,8 @@ async function fetch_random_hex(outlet, center_entity, num=5) {
     })
         .then(res => res.json())
         .then(json => {
-            random_hex_data.value = json
+            true_hex_data.value = json
+            true_hex_fetched.value = true
             console.log("random hex fetched", json)
         })
 }
@@ -48,10 +86,10 @@ async function fetch_random_hex(outlet, center_entity, num=5) {
 </script>
 <template>
     <div class='selection-grid'>
-        <div class=hex-cell v-for="(hex, index) in random_hex_data"> 
-            <div class=test-hex> {{ hex.title }}</div>
+        <div v-if="true_hex_fetched" class=hex-cell v-for="(segmentation, index) in segmentations"> 
+            <!-- <div class=test-hex> {{ index }}</div> -->
             <HexCooccurrence class="belief-hexview" title="belief-hexview" :id="`belief-hex-${index}`"
-                :entity_cooccurrences="hex.data" :segmentation="segmentation"
+                :entity_cooccurrences="true_hex_data.data" :segmentation="segmentation"
                 :show_blink="true">
             </HexCooccurrence>
             <RadioButton :value="index" v-model="selected_hex" />
@@ -64,6 +102,11 @@ async function fetch_random_hex(outlet, center_entity, num=5) {
             </svg>
         </div>
     </div>
+    <div class=test-slider-container>
+        <div class=slider-label> {{offset}}</div>
+        <Slider class='test-slider' v-model="offset" :step="0.01" :min="0" :max="0.25" />
+    </div>
+
 </template>
 
 <style scoped>
@@ -99,5 +142,14 @@ async function fetch_random_hex(outlet, center_entity, num=5) {
   text-align: center;
   top: 3%;
   z-index: 100;
+}
+.test-slider-container {
+    position:absolute;
+    left:3%;
+    top:80%;
+    width:200px;
+}
+.test-slider {
+    width: inherit;
 }
 </style>

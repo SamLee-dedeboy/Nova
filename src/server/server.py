@@ -189,24 +189,26 @@ def generate_random_hex():
     target_hex = next(hex_data for hex_data in all_hex_data if hex_data['outlet'] == outlet)
 
     # randomize entity article & sst
-    random_hex = [{
+    random_hex_target = {
         'title': 'true_hex',
         'data': target_hex['cooccurrences_data'],
-    }]
-    for index in range(4):
-        new_candidate_data = copy.deepcopy(target_hex['cooccurrences_data'])
-        # randomly assign sst
-        for entity_data in new_candidate_data['sorted_cooccurrences_list']:
-            entity_data['sst']['pos'] = random.uniform(0, 1)
-            entity_data['sst']['neg'] = random.uniform(0, 1)
-            entity_data['article_ids'] = [0]
-        new_random_hex = {
-            'title': 'random_hex_{}'.format(index),
-            'data': new_candidate_data
-        }
-        random_hex.append(new_random_hex)
+    }
+    return json.dumps(random_hex_target, default=vars)
 
-    return json.dumps(random_hex, default=vars)
+    # for index in range(4):
+    #     new_candidate_data = copy.deepcopy(target_hex['cooccurrences_data'])
+    #     # randomly assign sst
+    #     for entity_data in new_candidate_data['sorted_cooccurrences_list']:
+    #         entity_data['sst']['pos'] = random.uniform(0, 1)
+    #         entity_data['sst']['neg'] = random.uniform(0, 1)
+    #         entity_data['article_ids'] = [0]
+    #     new_random_hex = {
+    #         'title': 'random_hex_{}'.format(index),
+    #         'data': new_candidate_data
+    #     }
+    #     random_hex.append(new_random_hex)
+
+    # return json.dumps(random_hex, default=vars)
 
 @app.route("/test")
 def test():
