@@ -12,10 +12,11 @@ import HexCooccurrence from "../components/HexCooccurrence.vue";
 const store = useUserDataStore()
 const server_address = vue.inject("server_address")
 
+const target_outlet: Ref<string> = ref("CNN")
 const selected_hex: Ref<string> = ref("") 
 const true_hex_data: Ref<Any> = ref() 
 const true_hex_fetched: Ref<Boolean> = ref(false)
-const offset: Ref<number> = ref(0)
+const offset: Ref<number> = ref(0.1)
 const segmentations = vue.computed(() => {
     const pos_center = 0.5
     const neg_center = 0.5
@@ -82,17 +83,35 @@ async function fetch_random_hex(outlet, center_entity, num=5) {
         })
 }
 
+function handleCellClicked(e, segmentation, index) {
+    document.querySelectorAll(".hex-cell").forEach(cell => {
+        cell.classList.remove("clicked-cell")
+    })
+    e.target.classList.add("clicked-cell")
+    console.log(e.target, segmentation) // or segmentations.value[index]
+}
+
+
+function outletIconStyle(name: string) {
+    let className = name + '-icon';
+    className = (className.includes("FoxNews") || className.includes("Breitbart")) ? className : 'icon';
+    return className;
+}
 
 </script>
 <template>
     <div class='selection-grid'>
-        <div v-if="true_hex_fetched" class=hex-cell v-for="(segmentation, index) in segmentations"> 
+        <img :src="`/${target_outlet}.png`"
+            :class="['journal-image',`${outletIconStyle(target_outlet)}`]" />
+        <div v-if="true_hex_fetched" class=hex-cell 
+        v-for="(segmentation, index) in segmentations"
+        @click='handleCellClicked($event, index)'> 
             <!-- <div class=test-hex> {{ index }}</div> -->
             <HexCooccurrence class="belief-hexview" title="belief-hexview" :id="`belief-hex-${index}`"
                 :entity_cooccurrences="true_hex_data.data" :segmentation="segmentation"
                 :show_blink="true">
             </HexCooccurrence>
-            <RadioButton :value="index" v-model="selected_hex" />
+            <!-- <RadioButton :value="index" v-model="selected_hex" /> -->
             <svg>
                 <pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)"
                     patternUnits="userSpaceOnUse">
@@ -112,9 +131,9 @@ async function fetch_random_hex(outlet, center_entity, num=5) {
 <style scoped>
 .selection-grid {
   width: 100%;
-  height: 100%;
+  height: 99%;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: wrap-reverse;
   justify-content: center;
 }
 
@@ -126,9 +145,27 @@ async function fetch_random_hex(outlet, center_entity, num=5) {
   flex-direction: column;
   border: solid 1px black;
   margin: 0px 1px;
+  cursor:pointer;
+}
+.hex-cell:hover {
+    border: solid 5px black;
+}
+.clicked-cell {
+    border: solid 5px black;
 }
 
-.p-radiobutton {
+
+.belief-hexview {
+    pointer-events: none;
+}
+
+.journal-image {
+    display: inline;
+    margin: 0 auto;
+    width: auto;
+}
+
+/* .p-radiobutton {
  display:inline-flex;
  cursor:pointer;
  user-select:none;
@@ -136,17 +173,12 @@ async function fetch_random_hex(outlet, center_entity, num=5) {
  position: absolute;
  top: 94%;
  left: 48%;
-}
+} */
 
-.test-hex {
-  text-align: center;
-  top: 3%;
-  z-index: 100;
-}
 .test-slider-container {
     position:absolute;
     left:3%;
-    top:80%;
+    top:31%;
     width:200px;
 }
 .test-slider {
