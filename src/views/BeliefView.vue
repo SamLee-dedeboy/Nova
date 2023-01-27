@@ -1,5 +1,6 @@
 <script setup lang=ts>
 import { useUserDataStore } from '../store/userStore'
+import { useRoute } from 'vue-router'
 
 import { Ref, ref } from "vue"
 import * as vue from "vue"
@@ -10,9 +11,10 @@ import HexCooccurrence from "../components/HexCooccurrence.vue";
 
 
 const store = useUserDataStore()
+const route = useRoute()
 const server_address = vue.inject("server_address")
 
-const target_outlet: Ref<string> = ref("CNN")
+const target_outlet: Ref<string> = ref()
 const selected_hex: Ref<string> = ref("") 
 const true_hex_data: Ref<Any> = ref() 
 const true_hex_fetched: Ref<Boolean> = ref(false)
@@ -58,7 +60,9 @@ vue.watch(selected_hex, () => {
 })
 
 vue.onMounted(() => {
-    fetch_random_hex("CNN", "Donald_Trump")
+    const target_entity: string = route.params.entity as string
+    target_outlet.value = route.params.outlet as string
+    fetch_random_hex(target_outlet.value, target_entity)
 })
 async function fetch_random_hex(outlet, center_entity, num=5) {
     console.log('fetching random hex of: ', outlet, center_entity)
@@ -163,6 +167,10 @@ function outletIconStyle(name: string) {
     display: inline;
     margin: 0 auto;
     width: auto;
+    height: 50px;
+    position: absolute;
+    left: 4%;
+    top: 17%;
 }
 
 /* .p-radiobutton {
