@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import Overview from "../views/overview.vue"
+import BeliefView from "../views/BeliefView.vue"
 import CompareView from "../views/CompareView.vue";
 import InspectionView from "../views/InspectionView.vue"
 import SummaryView from "../views/SummaryView.vue"
@@ -11,6 +12,11 @@ const router = createRouter({
       path: "/",
       name: "home",
       component: Overview,
+    },
+    {
+      path: "/belief/:outlet/:entity",
+      name: "belief",
+      component: BeliefView,
     },
     {
       path: "/compare/:entity/:cooccurr_entity",
