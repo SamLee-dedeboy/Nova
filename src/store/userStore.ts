@@ -13,7 +13,9 @@ export const useUserDataStore = defineStore('userData', {
         clicked_hexview: undefined,
         constraints: {},
         notes: "",
-        marked_articles: []
+        marked_articles: [],
+        left_leaning_segmentation: { pos: 0.5, neg: 0.5 },
+        right_leaning_segmentation: { pos: 0.5, neg: 0.5 },
     }),
     getters: {},
     actions: {
@@ -23,8 +25,13 @@ export const useUserDataStore = defineStore('userData', {
         setCooccurrEntity(cooccurr_entity) {
             this.selected_cooccurr_entity = cooccurr_entity
         },
-        setSegmentation(segmentation) {
-            this.segmentation = segmentation
+        setSegmentation(segmentation, leaning='general') {
+            if(leaning == "general")
+                this.segmentation = segmentation
+            else if (leaning == 'left')
+                this.left_leaning_segmentation = segmentation
+            else if (leaning == 'right')
+                this.right_leaning_segmentation = segmentation
         },
         setHexViewGrid(grid) {
             this.hexview_grid = grid

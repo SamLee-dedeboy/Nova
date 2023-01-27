@@ -26,6 +26,8 @@ app.use(PrimeVue, {ripple:true})
 app.use(pinia)
 app.component('Button', Button);
 app.provide('server_address', "http://127.0.0.1:5000")
+app.provide('left_most_outlet', "New York Times")
+app.provide('right_most_outlet', "Breitbart")
 
 
 
