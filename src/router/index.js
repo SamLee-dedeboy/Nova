@@ -19,7 +19,7 @@ const router = createRouter({
       component: BeliefView,
     },
     {
-      path: "/compare/:entity/:cooccurr_entity",
+      path: "/compare/:entity/",
       name: "compare",
       component: CompareView,
     },

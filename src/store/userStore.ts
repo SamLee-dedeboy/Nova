@@ -14,8 +14,7 @@ export const useUserDataStore = defineStore('userData', {
         constraints: {},
         notes: "",
         marked_articles: [],
-        left_leaning_segmentation: { pos: 0.5, neg: 0.5 },
-        right_leaning_segmentation: { pos: 0.5, neg: 0.5 },
+        user_outlet_segmentations: {},
     }),
     getters: {},
     actions: {
@@ -32,6 +31,9 @@ export const useUserDataStore = defineStore('userData', {
                 this.left_leaning_segmentation = segmentation
             else if (leaning == 'right')
                 this.right_leaning_segmentation = segmentation
+        },
+        setUserOutletSegmentations(segmentation, outlet) {
+            this.user_outlet_segmentations[outlet] = segmentation
         },
         setHexViewGrid(grid) {
             this.hexview_grid = grid

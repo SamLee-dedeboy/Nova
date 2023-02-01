@@ -179,6 +179,9 @@ const setCooccurrEntity = (cooccurr_entity) => store.setCooccurrEntity(cooccurr_
 const overall_selected_hexview: Ref<typeUtils.CooccurrHexView | undefined> = ref(undefined)
 const constraint_dict = vue.computed(() => store.constraints)
 
+const left_most_outlet = vue.inject("left_most_outlet")
+const right_most_outlet = vue.inject("right_most_outlet")
+
 /**
  * segmentation threshold of sentiment value.
  */
@@ -414,9 +417,14 @@ function toggleTutorial(e: MouseEvent) {
 
 <template>
   <main>
-    <div v-if="selected_cooccurr_entity" class="navigate-container">
+    <div v-if="selected_entity" class="navigate-container">
+      <!-- <router-link class="goNext"
+        :to="{ name: 'compare', params: { entity: selected_entity.name } }">
+        After finding a topic, <span class="clickNext">click here</span> to assess how each outlet covered it.
+        <p class="next"><i class="pi pi-arrow-right " /></p>
+      </router-link> -->
       <router-link class="goNext"
-        :to="{ name: 'compare', params: { entity: selected_entity.name, cooccurr_entity: selected_cooccurr_entity.name } }">
+        :to="{ name: 'belief', params: { leaning: 'left', outlet: left_most_outlet, entity: selected_entity.name } }">
         After finding a topic, <span class="clickNext">click here</span> to assess how each outlet covered it.
         <p class="next"><i class="pi pi-arrow-right " /></p>
       </router-link>

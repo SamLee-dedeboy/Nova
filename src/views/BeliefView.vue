@@ -11,10 +11,14 @@ import HexCooccurrence from "../components/HexCooccurrence.vue";
 
 
 const store = useUserDataStore()
-const setSegmentation = (segmentation, leaning) => store.setSegmentation(segmentation, leaning)
+const selected_entity = vue.computed(() => store.selected_entity)
+const selected_cooccurr_entity = vue.computed(() => store.selected_cooccurr_entity)
+const setUserOutletSegmentations = (segmentation, outlet) => store.setUserOutletSegmentations(segmentation, outlet)
 const route = useRoute()
 const server_address = vue.inject("server_address")
+const left_most_outlet = vue.inject("left_most_outlet")
 const right_most_outlet = vue.inject("right_most_outlet")
+const outlet_leaning_scale = vue.inject("outlet_leaning_scale")
 
 const target_outlet = vue.computed(() => route.params.outlet as string)
 const target_entity = vue.computed(() => route.params.entity as string)
@@ -58,12 +62,13 @@ const segmentations = vue.computed(() => {
     ]
 })
 
-vue.watch(leaning, () => {
+vue.watch(leaning, (old_value, new_value) => {
     document.querySelectorAll(".hex-cell").forEach(cell => {
         cell.classList.remove("clicked-cell")
     })
     // target outlet should have changed
-    fetch_random_hex(target_outlet.value, target_entity.value)
+    // add 'if' to avoid extra fetching
+    if(leaning.value) fetch_random_hex(target_outlet.value, target_entity.value)
 })
 
 vue.onBeforeMount(() => {
@@ -99,7 +104,22 @@ function handleCellClicked(e, segmentation, index) {
     })
     e.target.classList.add("clicked-cell")
     console.log(e.target, segmentation) // or segmentations.value[index]
-    setSegmentation(segmentation, route.params.leaning as string)
+    setUserOutletSegmentations(segmentation, route.params.outlet as string)
+    if(route.params.leaning == "right") {
+        // begin interpolation 
+        const left_most_segmentation = store.user_outlet_segmentations[left_most_outlet]
+        const right_most_segmentation = store.user_outlet_segmentations[right_most_outlet]
+        outlet_leaning_scale.forEach(outlet_leaning => {
+            const outlet = outlet_leaning.outlet
+            const leaning_score = outlet_leaning.leaning
+            // linear interpolation
+            const interpolated_segmentation = {
+                pos: left_most_segmentation.pos * (1-leaning_score) + right_most_segmentation.pos * leaning_score, 
+                neg: left_most_segmentation.neg * (1-leaning_score) + right_most_segmentation.neg * leaning_score, 
+            }
+            setUserOutletSegmentations(interpolated_segmentation, outlet)
+        })
+    }
 }
 
 
@@ -137,7 +157,13 @@ function outletIconStyle(name: string) {
     </div>
     <div class=navigate-container>
         <router-link class="goNext"
+            v-if="route.params.leaning == 'left'"
             :to="{ name: 'belief', params: { leaning: 'right', outlet: right_most_outlet, entity: target_entity } }">
+            <p class="next">go next</p>
+        </router-link>
+        <router-link class="goNext"
+            v-else
+            :to="{ name: 'compare', params: { entity: selected_entity.name, cooccurr_entity: selected_cooccurr_entity?.name || '' } }">
             <p class="next">go next</p>
         </router-link>
     </div>
