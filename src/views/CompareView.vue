@@ -7,6 +7,8 @@ import SplitterPanel from "primevue/splitterpanel"
 import Divider from "primevue/divider"
 import Textarea from 'primevue/textarea';
 import Dialog from 'primevue/dialog';
+import InputSwitch from 'primevue/inputswitch';
+
 
 
 /**
@@ -42,7 +44,7 @@ const store = useUserDataStore()
 console.log(store)
 const segmentation = vue.computed(() => store.segmentation)
 const setSegmentation = (segmentation) => store.setSegmentation(segmentation)
-const user_outlet_segmentation = vue.computed(() => store.user_outlet_segmentation)
+const user_outlet_segmentations = vue.computed(() => store.user_outlet_segmentations)
 const selected_entity = vue.computed(() => store.selected_entity)
 const setEntity = (entity) => store.setEntity(entity)
 const selected_cooccurr_entity = vue.computed(() => store.selected_cooccurr_entity )
@@ -51,13 +53,16 @@ const clicked_hexview = vue.computed(() => store.clicked_hexview)
 const setClickedHexView = (hexview) => store.setClickedHexView(hexview)
 const hexview_grid = vue.computed(() => store.hexview_grid)
 const setHexViewGrid = (grid) => store.setHexViewGrid(grid)
-const outlet_weight_dict = vue.computed(() => store.outlet_weight_dict)
 
 const hex_entity_scatter_view: Ref<any> = ref(undefined)
 const highlight_hex_entity: Ref<string> = ref("")
 const notes = vue.computed(() => store.notes)
 const setNotes = (e) => store.setNotes(e.target.value)
 const selected_outlet = vue.computed(() => selected_entity.value?.outlet === "Overall"? "ABC News" :selected_entity.value?.outlet)
+const outlet_leaning_scale = vue.inject("outlet_leaning_scale")
+const flipHex: Ref<Any> = ref(outlet_leaning_scale.map(scale_obj => scale_obj.outlet).map(outlet => { return { outlet: false } }))
+
+
 
 
 /**
@@ -193,7 +198,7 @@ function outletIconStyle(name: string) {
     className = (className.includes("FoxNews") || className.includes("Breitbart")) ? className : 'icon';
     return className;
 }
-
+  
 function outletIconHeaderStyle(name: string) {
     let className = name.replaceAll(' ', '-') + '-icon';
     className = (className.includes("FoxNews") || className.includes("Breitbart")) ? className : 'icon';
@@ -243,8 +248,21 @@ function outletIconHeaderStyle(name: string) {
             </h2>
             <div class="hexview-grid-container">
                 <div class="hexview-grid-cell-container" v-if="data_fetched" v-for="view, index in hexview_grid">
-                    <HexCooccurrence class="compare-co-hexview" :title="view.title" :id="`compare-co-hex-${index}`"
+                    <InputSwitch class="flip-switch" 
+                        v-model="flipHex[view.title.split('-')[2]]"
+                        style="position:absolute;z-index:2"
+                     ></InputSwitch>
+                    <HexCooccurrence class="compare-co-hexview" 
+                        v-if="flipHex[view.title.split('-')[2]]"
+                        :title="view.title" :id="`compare-co-hex-${index}`"
                         :entity_cooccurrences="view.data" :segmentation="segmentation"
+                        :show_blink="true"
+                        :highlight_hex_entity="highlight_hex_entity" v-on:hex-clicked="handleHexClicked($event, view)">
+                    </HexCooccurrence>
+                    <HexCooccurrence class="compare-co-hexview" 
+                        v-else
+                        :title="view.title" :id="`compare-co-hex-${index}`"
+                        :entity_cooccurrences="view.data" :segmentation="user_outlet_segmentations[view.title.split('-')[2]]"
                         :show_blink="true"
                         :highlight_hex_entity="highlight_hex_entity" v-on:hex-clicked="handleHexClicked($event, view)">
                     </HexCooccurrence>
