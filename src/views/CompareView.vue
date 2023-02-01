@@ -250,8 +250,19 @@ function outletIconHeaderStyle(name: string) {
                 <div class="hexview-grid-cell-container" v-if="data_fetched" v-for="view, index in hexview_grid">
                     <InputSwitch class="flip-switch" 
                         v-model="flipHex[view.title.split('-')[2]]"
-                        style="position:absolute;z-index:2"
-                     ></InputSwitch>
+                        style="position:absolute;z-index:2">
+                    </InputSwitch>
+                    <span class="switch-label" 
+                        style="
+                            position: absolute;
+                            left: 14%;
+                            z-index: 2;
+                            font-size: 1rem;
+                            font-weight: lighter;
+                            /* background: white; */
+                            padding: 1px;"> 
+                        {{ flipHex[view.title.split('-')[2]] ? "True Data" : "Your selection"}}
+                    </span>
                     <HexCooccurrence class="compare-co-hexview" 
                         v-if="flipHex[view.title.split('-')[2]]"
                         :title="view.title" :id="`compare-co-hex-${index}`"
