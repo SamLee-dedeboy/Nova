@@ -8,6 +8,7 @@ export const useUserDataStore = defineStore('userData', {
         selected_entity: undefined,
         selected_cooccurr_entity: undefined,
         outlet_weight_dict: { "CNN": 1, "Washington Post": 1, "FoxNews": 1, "New York Times": 1, "Breitbart": 1, "ABC News": 1 },
+        article_num_threshold: 20,
         segmentation: { pos: 0.5, neg: 0.5 },
         hexview_grid: undefined,
         clicked_hexview: undefined,
@@ -23,6 +24,9 @@ export const useUserDataStore = defineStore('userData', {
         },
         setCooccurrEntity(cooccurr_entity) {
             this.selected_cooccurr_entity = cooccurr_entity
+        },
+        setArticleNumThreshold(threshold) {
+            this.article_num_threshold = threshold
         },
         setSegmentation(segmentation, leaning='general') {
             if(leaning == "general")

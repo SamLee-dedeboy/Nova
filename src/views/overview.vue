@@ -126,6 +126,11 @@ const segment_options = [
  * threshold for filtering on count(articles).
  */
 const article_num_threshold: Ref<number> = ref(20)
+const article_num_threshold_global: Ref<number> = vue.computed(() => store.article_num_threshold_global)
+const setArticleNumThreshold = (threshold) => store.setArticleNumThreshold(threshold)
+vue.watch(article_num_threshold, () => {
+  setArticleNumThreshold(article_num_threshold.value)
+})
 
 /**
  * Array of highlighted outlet names.
@@ -179,6 +184,8 @@ const setCooccurrEntity = (cooccurr_entity) => store.setCooccurrEntity(cooccurr_
 const overall_selected_hexview: Ref<typeUtils.CooccurrHexView | undefined> = ref(undefined)
 const constraint_dict = vue.computed(() => store.constraints)
 
+const overall_entity_data = vue.computed(() => overall_scatter_view.value?.data?.nodes)
+
 // const left_most_outlet = vue.inject("left_most_outlet")
 // const right_most_outlet = vue.inject("right_most_outlet")
 const random_outlet = vue.inject("random_outlet")
@@ -201,10 +208,13 @@ vue.onMounted(async () => {
           title: "Overall",
           data: overview_overall_scatter_data.value
         }
-        console.log("overall scatter fetched")
+
+        // create dict of nodes for hex view
         overall_scatter_view.value.data.nodes.forEach(node => {
           overall_entity_dict.value[node.text] = node
         })
+
+        // turn flags
         overall_scatter_data_loading.value = false
         resolve("success")
       })
@@ -292,13 +302,6 @@ vue.onMounted(async () => {
 
 
 // handlers
-// send data
-async function handleTableEntityClicked(entity: string) {
-  console.log(overview_scatter)
-  overview_scatter.value.setHighlightNode(entity)
-  await handleEntityClicked(entity)
-}
-
 async function handleEntityClicked(entity: string) {
   console.log("Enity Selection", entity)
   const metadata = overview_overall_scatter_metadata.value
@@ -307,7 +310,7 @@ async function handleEntityClicked(entity: string) {
   legendInput.value[entity] = "white";
   legendInput.value["Co-Occuring Topic"] = "#4baaf5";
 
-
+  // clear co-occur entity selection in hex
   setCooccurrEntity(undefined)
   const promiseArray: any[] = []
   promiseArray.push(new Promise((resolve) => {
@@ -480,10 +483,9 @@ function toggleTutorial(e: MouseEvent) {
               <Splitter class='table-scatter-splitter'>
                 <SplitterPanel class="entity-table-panel" :size="table_panel_size">
                   <div id="entityTableWrapper" class='entityTableWrapper'>
-                    <EntityTable v-if="overall_scatter_view" :view="overall_scatter_view" :article_num_threshold="article_num_threshold" 
+                    <EntityTable v-if="overall_entity_data" :entity_nodes="overall_entity_data" :article_num_threshold="article_num_threshold" 
                       v-model:selected_entity_name='selected_entity_name'
                     />
-                    <!-- @topic_selected="handleTableEntityClicked" -->
                   </div>
                 </SplitterPanel>
                 <SplitterPanel class='entity-scatter-panel'>

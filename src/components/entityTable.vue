@@ -44,20 +44,19 @@ watch(table_selection, () => {
 })
 
 const props = defineProps({
-    view: Object as () => EntityScatterView,
+    entity_nodes: Object as () => ScatterNode[],
     article_num_threshold: Number,
     selected_entity_name: Object as () => Any,
 })
 
-const filtered_data = computed(() => props.view?.data.nodes.filter((node: ScatterNode) => node.article_ids.length > (props.article_num_threshold || 0))) as Ref<ScatterNode[]>
-const entityList = filtered_data.value.map(data => {
+const filtered_data = computed(() => props.entity_nodes.filter((node: ScatterNode) => node.article_ids.length > (props.article_num_threshold || 0))) as Ref<ScatterNode[]>
+const entityList = computed(() => filtered_data.value.map(data => {
     return {
         'entity': data.text.replaceAll("_", " "),
         'frequency': data.article_ids.length
     }
-})
+}))
 
-console.log("Entity List", entityList)
 
 
 

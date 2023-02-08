@@ -210,6 +210,14 @@ def generate_random_hex():
 
     # return json.dumps(random_hex, default=vars)
 
+@app.route("/overall/table/data", methods=["POST"])
+def entity_table_data():
+    article_num_threshold = request.json['article_num_threshold']
+    filtered_nodes = [node for node in overview_scatter_overall_data.nodes if len(node.article_ids) >= article_num_threshold] 
+    return json.dumps(filtered_nodes, default=vars)
+    
+
+
 @app.route("/test")
 def test():
     return get_overall_scatter_data()
