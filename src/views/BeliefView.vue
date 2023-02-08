@@ -16,13 +16,15 @@ const selected_cooccurr_entity = vue.computed(() => store.selected_cooccurr_enti
 const setUserOutletSegmentations = (segmentation, outlet) => store.setUserOutletSegmentations(segmentation, outlet)
 const route = useRoute()
 const server_address = vue.inject("server_address")
-const left_most_outlet = vue.inject("left_most_outlet")
-const right_most_outlet = vue.inject("right_most_outlet")
+// const left_most_outlet = vue.inject("left_most_outlet")
+// const right_most_outlet = vue.inject("right_most_outlet")
+const random_outlet = vue.inject("random_outlet")
 const outlet_leaning_scale = vue.inject("outlet_leaning_scale")
+const outlet_leaning_scale_dict = vue.inject("outlet_leaning_scale_dict")
 
 const target_outlet = vue.computed(() => route.params.outlet as string)
 const target_entity = vue.computed(() => route.params.entity as string)
-const leaning = vue.computed(() => route.params.leaning as string)
+const order = vue.computed(() => route.params.order as string)
 const true_hex_data: Ref<Any> = ref() 
 const true_hex_fetched: Ref<Boolean> = ref(false)
 const offset: Ref<number> = ref(0.1)
@@ -62,13 +64,13 @@ const segmentations = vue.computed(() => {
     ]
 })
 
-vue.watch(leaning, (old_value, new_value) => {
+vue.watch(order, (old_value, new_value) => {
     document.querySelectorAll(".hex-cell").forEach(cell => {
         cell.classList.remove("clicked-cell")
     })
     // target outlet should have changed
     // add 'if' to avoid extra fetching
-    if(leaning.value) fetch_random_hex(target_outlet.value, target_entity.value)
+    if(order.value) fetch_random_hex(target_outlet.value, target_entity.value)
 })
 
 vue.onBeforeMount(() => {
@@ -105,17 +107,20 @@ function handleCellClicked(e, segmentation, index) {
     e.target.classList.add("clicked-cell")
     console.log(e.target, segmentation) // or segmentations.value[index]
     setUserOutletSegmentations(segmentation, route.params.outlet as string)
-    if(route.params.leaning == "right") {
-        // begin interpolation 
-        const left_most_segmentation = store.user_outlet_segmentations[left_most_outlet]
-        const right_most_segmentation = store.user_outlet_segmentations[right_most_outlet]
-        outlet_leaning_scale.forEach(outlet_leaning => {
-            const outlet = outlet_leaning.outlet
-            const leaning_score = outlet_leaning.leaning
-            // linear interpolation
+    if(route.params.order == "second") {
+        // begin interpolation / extrapolation
+        const first_segmentation = store.user_outlet_segmentations[random_outlet[0]]
+        const second_segmentation = store.user_outlet_segmentations[random_outlet[1]]
+        const first_base_score = outlet_leaning_scale_dict[random_outlet[0]]
+        const second_base_score = outlet_leaning_scale_dict[random_outlet[1]]
+        const unit_pos = (first_segmentation.pos - second_segmentation.pos) / (first_base_score - second_base_score)
+        const unit_neg = (first_segmentation.neg - second_segmentation.neg) / (first_base_score - second_base_score)
+        Object.keys(outlet_leaning_scale_dict).forEach(outlet => {
+            const leaning_score = outlet_leaning_scale_dict[outlet]
+            // interpolation / extrapolation
             const interpolated_segmentation = {
-                pos: left_most_segmentation.pos * (1-leaning_score) + right_most_segmentation.pos * leaning_score, 
-                neg: left_most_segmentation.neg * (1-leaning_score) + right_most_segmentation.neg * leaning_score, 
+                pos: unit_pos * (leaning_score - first_base_score) + first_segmentation.pos,
+                neg: unit_neg * (leaning_score - first_base_score) + first_segmentation.neg
             }
             setUserOutletSegmentations(interpolated_segmentation, outlet)
         })
@@ -157,8 +162,8 @@ function outletIconStyle(name: string) {
     </div>
     <div class=navigate-container>
         <router-link class="goNext"
-            v-if="route.params.leaning == 'left'"
-            :to="{ name: 'belief', params: { leaning: 'right', outlet: right_most_outlet, entity: target_entity } }">
+            v-if="route.params.order == 'first'"
+            :to="{ name: 'belief', params: { order: 'second', outlet: random_outlet[1], entity: target_entity } }">
             <p class="next">go next</p>
         </router-link>
         <router-link class="goNext"

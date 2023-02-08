@@ -14,7 +14,7 @@ const router = createRouter({
       component: Overview,
     },
     {
-      path: "/belief/:leaning/:outlet/:entity",
+      path: "/belief/:order/:outlet/:entity",
       name: "belief",
       component: BeliefView,
     },
