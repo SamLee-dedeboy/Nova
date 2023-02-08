@@ -10,6 +10,7 @@ import json
 # pp = pprint.PrettyPrinter(indent=4)
 import numpy as np
 from collections import defaultdict
+import utils
 
 def getRawDataset():
     file = open("data/articles.json")
@@ -256,6 +257,29 @@ def extract_candidate_entities(filepath='data/processed_articles_with_summary.js
             
     # dict_to_json(article_list, filepath='data/processed_articles_summary_normalized_entity_candidates.json')
 
+def mentions_to_document_sentiment(filepath=r'data/articles_w_entities_sentiment.json'):
+    articles = json.load(open(filepath))
+    for article in articles:
+        entity_dict = article['entities']
+        # [entity] => { pos_mentions: num, neg_mentions: num, neu_mentions: num }
+        entity_mentions = defaultdict(lambda : defaultdict(int))
+        for sentence_index, entity_list in entity_dict.items():
+            for entity in entity_list:
+                sentiment = entity['sentiment']
+                wiki_id = entity['wiki_id']
+                entity_mentions[wiki_id][sentiment] += 1
+        doc_level_sentiment = [] 
+        for entity_id, entity_mention in entity_mentions.items():
+            sentiment = max(entity_mention, key=entity_mention.get)
+            doc_level_sentiment.append({
+                "entity": entity_id,
+                "sentiment": sentiment,
+            })
+        article['doc_level_sentiment'] = doc_level_sentiment
+    utils.save_json(articles, r'data/articles_w_doc_sentiment.json')
+            
+
+
 
 if __name__ == '__main__':
-    entities_groupy_outlet()
+    mentions_to_document_sentiment()
