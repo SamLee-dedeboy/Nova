@@ -268,13 +268,10 @@ def mentions_to_document_sentiment(filepath=r'data/articles_w_entities_sentiment
                 sentiment = entity['sentiment']
                 wiki_id = entity['wiki_id']
                 entity_mentions[wiki_id][sentiment] += 1
-        doc_level_sentiment = [] 
+        doc_level_sentiment = {} 
         for entity_id, entity_mention in entity_mentions.items():
             sentiment = max(entity_mention, key=entity_mention.get)
-            doc_level_sentiment.append({
-                "entity": entity_id,
-                "sentiment": sentiment,
-            })
+            doc_level_sentiment[entity_id] = sentiment
         article['doc_level_sentiment'] = doc_level_sentiment
     utils.save_json(articles, r'data/articles_w_doc_sentiment.json')
             

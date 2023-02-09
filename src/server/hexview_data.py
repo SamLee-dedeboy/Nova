@@ -1,5 +1,5 @@
 import scatter_data
-import sentiment_processor as SentimentProcessor
+import sentimentUtils
 from data_types import *
 def constructHexData(target_entity, cooccurrences, entity_data_dict, top_k=36):
     hex_data = EntityCooccurrences(target=None, sorted_cooccurrences_list=[])
@@ -28,7 +28,7 @@ def constructGroupedHexData(target_entity, cooccurrences, entity_data_dict, proc
             hex_data.target = HexEntity( entity=entity2, article_ids=cooccurr_ids, sst=sst)
             continue
         articles = processed_data.idsToArticles(cooccurr_ids)
-        pos, neg, pos_articles, neg_articles = SentimentProcessor.generate_sst_score(
+        pos, neg, pos_articles, neg_articles = sentimentUtils.generate_sst_score(
             articles,
             metadata.pos_max, metadata.pos_min,
             metadata.neg_max, metadata.neg_min,
@@ -44,12 +44,12 @@ def constructGroupedHexData(target_entity, cooccurrences, entity_data_dict, proc
     hex_data.sorted_cooccurrences_list = target_cooccurrences[0:top_k]
     return hex_data
 
-def get_entity_candidates(center_entity, entity_cooccurrences_grouped, grouped_node_dict, processed_data, overall_node_dict, sentiment_processor):
+def get_entity_candidates(center_entity, entity_cooccurrences_grouped, grouped_node_dict, processed_data, overall_node_dict, grouped_metadata):
     res = []
     merged_entities = []
     for outlet, cooccurrences_dict in entity_cooccurrences_grouped.items():
         cooccurrences = cooccurrences_dict[center_entity]
-        hex_data = constructGroupedHexData(center_entity, cooccurrences, grouped_node_dict[outlet], processed_data, sentiment_processor.grouped_metadata)
+        hex_data = constructGroupedHexData(center_entity, cooccurrences, grouped_node_dict[outlet], processed_data, grouped_metadata)
         res.append({"entity": center_entity, "outlet": outlet, "cooccurrences_data": hex_data})
         entities = list(map(lambda hex_entity: hex_entity.entity, hex_data.sorted_cooccurrences_list))
         merged_entities = list(set(merged_entities + entities))

@@ -1,6 +1,8 @@
 from collections import defaultdict
 from datetime import datetime
 import itertools
+import processUtils
+
 class ProcessedDataManager:
     def __init__(self, raw_data):
         self.outlet_set, \
@@ -16,7 +18,9 @@ class ProcessedDataManager:
         self.summary_entities_dict = object_to_dict(raw_data.summary_entities, "id", "summary_entities")
 
         # NewsSentiment
-        self.scatter_raw_data, self.cooccurrences_dict, self.metadata = processRawData(raw_data.raw_data)
+        # self.scatter_raw_data, self.cooccurrences_dict, self.metadata = processRawData(raw_data.raw_data)
+        self.entity_mention_articles, self.metadata = index_by_entities(raw_data.article_data)
+        self.article_dict = processUtils.list_to_dict(raw_data.article_data, key=lambda article: article['id'])
 
     def idsToArticles(self, id_list):
         return [self.article_dict[id] for id in id_list]
@@ -30,44 +34,41 @@ class ProcessedDataManager:
             if article['sentiment']['label'] == 'NEGATIVE': topicBins[topic]["neg"] += 1
         return topicBins
     
-def processRawData(article_list):
+def index_by_entities(article_list):
     # scatter data grouped
-    entity_mentioned_articles_dict = defaultdict(lambda : defaultdict(list))
-    cooccurrences_dict = defaultdict(lambda : defaultdict(lambda : defaultdict(list)))
+    entity_mentioned_articles_dict = defaultdict(list)
+    # entity_mentioned_articles_dict = defaultdict(lambda : defaultdict(list))
+    # cooccurrences_dict = defaultdict(lambda : defaultdict(lambda : defaultdict(list)))
     outlet_set = set()
 
     for article in article_list:
         article_id = article['id']
-        outlet = article['outlet']
+        outlet = article['journal']
         outlet_set.add(outlet)
         entity_sentiments = article['doc_level_sentiment']
-        for entity1_sentiment in entity_sentiments:
-            entity1 = entity1_sentiment['entity']
-            sentiment1 = entity1_sentiment['sentiment']
-            # add to scatter data 
-            entity_mentioned_articles_dict[entity1][outlet].append({
-                "article_id": article_id,
-                "sentiment": sentiment1,
-            })
-            # add co-occurrences
-            for entity2_sentiment in entity_sentiments:
-                entity2 = entity2_sentiment['entity']
-                sentiment2 = entity2_sentiment['sentiment']
-                # add to co-occurrences data 
-                cooccurrences_dict[entity1][entity2][outlet].append({
-                    "article_id": article_id,
-                    "sentiment": {
-                        "entity1": entity1,
-                        "sentiment1": sentiment1,
-                        "entity2": entity2,
-                        "sentiment2": sentiment2,
-                    },
-                })
+        for entity1, sentiment1 in entity_sentiments.items():
+            # add pos/neg mentions to scatter data 
+            if sentiment1 != "neutral":
+                entity_mentioned_articles_dict[entity1].append(article_id)
+            # # add co-occurrences
+            # for entity2_sentiment in entity_sentiments:
+            #     entity2 = entity2_sentiment['entity']
+            #     sentiment2 = entity2_sentiment['sentiment']
+            #     # add to co-occurrences data 
+            #     cooccurrences_dict[entity1][entity2][outlet].append({
+            #         "article_id": article_id,
+            #         "sentiment": {
+            #             "entity1": entity1,
+            #             "sentiment1": sentiment1,
+            #             "entity2": entity2,
+            #             "sentiment2": sentiment2,
+            #         },
+            #     })
     metadata = {
         "total_articles": len(article_list),
         "outlet_list": list(outlet_set)
     }
-    return entity_mentioned_articles_dict, cooccurrences_dict, metadata
+    return entity_mentioned_articles_dict, metadata
 
 def processArticleDict(outlet_article_dict):
     date_str_template = '%Y-%m-%d'

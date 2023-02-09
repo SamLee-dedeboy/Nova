@@ -599,7 +599,6 @@ export class EntityScatter {
             const highlight_outlet = this.props.highlight_node_text
             const highlight_node = svg.selectAll("g.entity").filter((d: any) => { return highlight_outlet === d.text })
                 .raise()
-            console.log(highlight_outlet)
             const other_nodes = svg.selectAll("g.entity").filter((d: any) => highlight_outlet !== d.text)
             svg.select("g.node_group").raise()
             // svg.selectAll("rect.segment-controller").lower()
@@ -637,7 +636,6 @@ export class EntityScatter {
                 applyExpandStyle(container)
 
                 if (cvThis.manualTooltip) {
-                    console.log(container)
                     const text = container.data()[0].text
                     d3.select(cvThis.manualTooltipID).text(text.replaceAll("_", " "))
                     return true;

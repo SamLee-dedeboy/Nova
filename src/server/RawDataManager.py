@@ -1,7 +1,7 @@
 import json
 class RawDataManager():
     def __init__(self):
-        self.raw_data = load_raw_data()
+        self.article_data = load_raw_data()
         self.outlet_article_dict = load_articles()
         self.candidate_entity = load_candidate_entities()
         self.candidate_entity_grouped = load_candidate_entities_grouped()

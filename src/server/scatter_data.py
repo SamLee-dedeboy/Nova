@@ -4,10 +4,59 @@ from collections import defaultdict
 from re import I
 from data_types import *
 from ProcessedDataManager import *
-import sentiment_processor
+import sentimentUtils
 import functools
+import math
 
-def overall_entity_scatter(entity_mentions, processed_data_manager: ProcessedDataManager ):
+def overall_entity_scatter(entity_mentions, processed_data_manager: ProcessedDataManager):
+    data = EntityScatterData( nodes=[], max_articles=0, min_articles=0,)
+    # all_pos_article_ids, all_neg_article_ids = [], []
+    max_pos_articles, max_neg_articles = 0, 0
+    min_pos_articles, min_neg_articles = math.inf, math.inf
+
+    max_articles = 0
+    min_articles = math.inf
+    # generate meta data, e.g. max/min
+    for entity, mention_ids in entity_mentions.items():
+        # update max & min articles for color scaling in scatter
+        max_articles = max(max_articles, len(mention_ids))
+        min_articles = min(min_articles, len(mention_ids))
+
+        # divide pos and neg articles
+        mentioned_articles = processed_data_manager.idsToArticles(mention_ids)
+        pos_article_ids, neg_article_ids = [], []
+        for article in mentioned_articles:
+            (pos_article_ids if article['doc_level_sentiment'][entity] == 'positive' else neg_article_ids).append(article["id"])
+
+        max_pos_articles = max(max_pos_articles, len(pos_article_ids))
+        min_pos_articles = min(min_pos_articles, len(pos_article_ids))
+        max_neg_articles = max(max_neg_articles, len(neg_article_ids))
+        min_neg_articles = min(min_neg_articles, len(neg_article_ids))
+        # add pos & neg articles to be used for min_max_norm
+        # all_pos_article_ids += pos_article_ids
+        # all_neg_article_ids += neg_article_ids
+
+    # construct node
+    for entity, mention_ids in entity_mentions.items():
+        mentioned_articles = processed_data_manager.idsToArticles(mention_ids)
+        pos_article_ids, neg_article_ids = [], []
+        for article in mentioned_articles:
+            (pos_article_ids if article['doc_level_sentiment'][entity] == 'positive' else neg_article_ids).append(article["id"])
+        node = construct_node(
+            entity,
+            pos_article_ids, neg_article_ids, 
+            pos_max=max_pos_articles, pos_min=min_pos_articles,
+            neg_max=max_neg_articles, neg_min=min_neg_articles,
+            processed_data_manager=processed_data_manager,
+            # pos_max=len(all_pos_article_ids), pos_min=0,
+            # neg_max=len(all_pos_article_ids), neg_min=0,
+        )
+        data.nodes.append(node)
+    data.max_articles = max_articles
+    data.min_articles = min_articles
+    return data
+
+def overall_entity_scatter_depcrecated(entity_mentions, processed_data_manager: ProcessedDataManager ):
     min_articles = len(processed_data_manager.article_dict.keys())
     max_articles = 0
     pos_max_articles = []
@@ -64,9 +113,11 @@ def overall_entity_scatter(entity_mentions, processed_data_manager: ProcessedDat
             entity_pos_neg_mentions_grouped_dict["pos"][outlet] = len(pos_mentions)
             entity_pos_neg_mentions_grouped_dict["neg"][outlet] = len(neg_mentions)
         node = construct_node(
-            mentioned_articles, entity,
+            entity,
+            pos_mentions, neg_mentions,
             meta_data.pos_max, meta_data.pos_min,
             meta_data.neg_max, meta_data.neg_min,
+            processed_data_manager=processed_data_manager
         )
         node_dict[entity] = node
         data.nodes.append(node)
@@ -114,11 +165,16 @@ def grouped_entity_scatter(entity_mentions_grouped, processed_data_manager):
             entity = entity_mention["entity"]
             mention_ids = entity_mention['article_ids']
             mentioned_articles = processed_data_manager.idsToArticles(mention_ids)
+            pos_articles, neg_articles = [], []
+            for article in mentioned_articles:
+                (pos_articles if article['sentiment']['label'] == 'POSITIVE' else neg_articles).append(article["id"])
             label = "{}-{}".format(entity, outlet)
             node = construct_node(
-                mentioned_articles, label,
+                label,
+                pos_articles, neg_articles,
                 len(pos_max_articles), len(pos_min_articles),
-                len(neg_max_articles), len(neg_min_articles)
+                len(neg_max_articles), len(neg_min_articles),
+                processed_data_manager
             )
             node_dict[outlet][entity] = node
             data.nodes.append(node)
@@ -127,23 +183,19 @@ def grouped_entity_scatter(entity_mentions_grouped, processed_data_manager):
 
 
 
-def construct_node(articles, label, pos_max, pos_min, neg_max, neg_min):
-    if len(articles) == 0:
+def construct_node(label, pos_article_ids, neg_article_ids, pos_max, pos_min, neg_max, neg_min, processed_data_manager):
+    if len(pos_article_ids) + len(neg_article_ids) == 0:
         return ScatterNode(label, [], 0, 0, 0, 0, {})
-    topicBins = {}
-    article_ids = [article['id'] for article in articles]
-    for article in articles:
-        topic = article['top_level_topic']
-        if topic not in topicBins.keys():
-            topicBins[topic] = {"pos": 0, "neg": 0}
-        if article['sentiment']['label'] == 'POSITIVE': topicBins[topic]["pos"] += 1
-        if article['sentiment']['label'] == 'NEGATIVE': topicBins[topic]["neg"] += 1
-    pos, neg, pos_articles, neg_articles = sentiment_processor.generate_sst_score(
-        articles,
+    article_ids = pos_article_ids + neg_article_ids
+    pos, neg = sentimentUtils.generate_sst_score(
+        pos_article_ids,
+        neg_article_ids,
         pos_max, pos_min,
         neg_max, neg_min
     )
-    return ScatterNode(label, article_ids, pos_articles, neg_articles, pos, neg, topicBins)
+    # pos_articles = processed_data_manager.idsToArticles(pos_article_ids)
+    # neg_articles = processed_data_manager.idsToArticles(neg_article_ids)
+    return ScatterNode(label, article_ids, pos_article_ids, neg_article_ids, pos, neg)
 
 
 def article_num_groupby_outlet(articles_journals):

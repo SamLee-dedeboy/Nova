@@ -55,7 +55,7 @@ const overview_scatter = ref(null)
 const server_address = "http://127.0.0.1:5000"
 
 // overview data 
-const overview_overall_scatter_data: Ref<any> = ref({})
+// const overview_overall_scatter_data: Ref<any> = ref({})
 const overview_grouped_scatter_data: Ref<any> = ref({})
 const overview_grouped_scatter_metadata: Ref<any> = ref({})
 const overview_overall_scatter_metadata: Ref<any> = ref({})
@@ -126,7 +126,7 @@ const segment_options = [
  * threshold for filtering on count(articles).
  */
 const article_num_threshold: Ref<number> = ref(20)
-const article_num_threshold_global: Ref<number> = vue.computed(() => store.article_num_threshold_global)
+// const article_num_threshold_global: Ref<number> = vue.computed(() => store.article_num_threshold_global)
 const setArticleNumThreshold = (threshold) => store.setArticleNumThreshold(threshold)
 vue.watch(article_num_threshold, () => {
   setArticleNumThreshold(article_num_threshold.value)
@@ -200,14 +200,27 @@ const setSegmentation = (segmentation) => store.setSegmentation(segmentation)
 vue.onMounted(async () => {
   const promiseArray: any[] = []
   promiseArray.push(new Promise((resolve) => {
-    fetch(`${server_address}/overview/scatter/overall/data`)
+    fetch(`${server_address}/overview/scatter/overall/data`, {
+        method: "POST",
+        headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({article_num_threshold: article_num_threshold.value})
+    })
       .then(res => res.json())
       .then(json => {
-        overview_overall_scatter_data.value = json
+        // overview_overall_scatter_data.value = json
         overall_scatter_view.value = {
           title: "Overall",
-          data: overview_overall_scatter_data.value
+          data: json
         }
+        overview_overall_scatter_metadata.value = {
+          max_articles: json.max_articles,
+          min_articles: json.min_articles
+        }
+        console.log({json})
+        console.log("overall data fetched")
 
         // create dict of nodes for hex view
         overall_scatter_view.value.data.nodes.forEach(node => {
@@ -228,15 +241,15 @@ vue.onMounted(async () => {
         resolve("success")
       })
   }))
-  promiseArray.push(new Promise((resolve) => {
-    fetch(`${server_address}/overview/scatter/overall/metadata`)
-      .then(res => res.json())
-      .then(json => {
-        overview_overall_scatter_metadata.value = json
-        console.log("overall scatter metadata fetched")
-        resolve("success")
-      })
-  }))
+  // promiseArray.push(new Promise((resolve) => {
+  //   fetch(`${server_address}/overview/scatter/overall/metadata`)
+  //     .then(res => res.json())
+  //     .then(json => {
+  //       overview_overall_scatter_metadata.value = json
+  //       console.log("overall scatter metadata fetched")
+  //       resolve("success")
+  //     })
+  // }))
   promiseArray.push(new Promise((resolve) => {
     fetch(`${server_address}/overview/scatter/grouped/metadata`)
       .then(res => res.json())
@@ -288,6 +301,7 @@ vue.onMounted(async () => {
             data: cooccurrences,
           }
           overall_selected_hexview.value = hex_view
+          console.log("overall hexview fetched")
           resolve("success")
         })
     }))
@@ -297,6 +311,7 @@ vue.onMounted(async () => {
   await Promise.all(promiseArray)
     .then(res => {
       overview_constructed.value = true
+      console.log("all fetched")
     })
 })
 
@@ -317,21 +332,9 @@ async function handleEntityClicked(entity: string) {
     fetch(`${server_address}/overview/scatter/overall/node/${entity}`)
       .then(res => res.json())
       .then(json => {
-        const store_entity: typeUtils.EntityInfo = {
+        const store_entity  = {
           name: entity,
           outlet: "Overall",
-          num_of_mentions: json.article_ids.length,
-          sst_ratio: {
-            pos_artcs: json.pos_article_ids.length,
-            neg_artcs: json.neg_article_ids.length,
-            pos: json.pos_sst,
-            neg: json.neg_sst,
-            pos_max: metadata.pos_max,
-            pos_min: metadata.pos_min,
-            neg_max: metadata.neg_max,
-            neg_min: metadata.neg_min,
-          },
-          articles_topic_dict: json.topicBins
         }
         setEntity(store_entity)
         resolve("success")

@@ -10,7 +10,6 @@ class ScatterNode:
     neg_article_ids: list
     pos_sst: float
     neg_sst: float
-    topicBins: dict
 
 @dataclass
 class EntityScatterData:
