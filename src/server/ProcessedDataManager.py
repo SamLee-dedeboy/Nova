@@ -20,6 +20,7 @@ class ProcessedDataManager:
         # NewsSentiment
         # self.scatter_raw_data, self.cooccurrences_dict, self.metadata = processRawData(raw_data.raw_data)
         self.entity_mention_articles, self.metadata = index_by_entities(raw_data.article_data)
+        self.cooccurrences_dict = extract_cooccurrences_overall(raw_data.article_data)
         self.article_dict = processUtils.list_to_dict(raw_data.article_data, key=lambda article: article['id'])
 
     def idsToArticles(self, id_list):
@@ -34,11 +35,58 @@ class ProcessedDataManager:
             if article['sentiment']['label'] == 'NEGATIVE': topicBins[topic]["neg"] += 1
         return topicBins
     
+
+def extract_cooccurrences_overall(article_list):
+    cooccurrences_dict = defaultdict(lambda : defaultdict(list))
+    count = 0
+    for article in article_list:
+        count += 1
+        print('{}/{} articles done'.format(count, len(article_list)))
+        article_id = article['id']
+        outlet = article['journal']
+        entity_sentiments = article['doc_level_sentiment']
+        for entity1, sentiment1 in entity_sentiments.items():
+            if sentiment1 != "neutral":
+                # add co-occurrences
+                for entity2, sentiment2 in entity_sentiments.items():
+                    if sentiment2 != "neutral":
+                        # add to co-occurrences data 
+                        cooccurrences_dict[entity1][entity2].append(article_id) 
+                        # utils.save_json(cooccurrences_dict, 'cooccurrences.json')
+    return cooccurrences_dict
+
+def extract_cooccurrences_grouped(article_list):
+    cooccurrences_dict = defaultdict(lambda : defaultdict(lambda : defaultdict(list)))
+    count = 0
+    for article in article_list:
+        count += 1
+        print('{}/{} articles done'.format(count, len(article_list)))
+        article_id = article['id']
+        outlet = article['journal']
+        entity_sentiments = article['doc_level_sentiment']
+        for entity1, sentiment1 in entity_sentiments.items():
+            if sentiment1 != "neutral":
+                # add co-occurrences
+                for entity2, sentiment2 in entity_sentiments.items():
+                    if sentiment2 != "neutral":
+                        # add to co-occurrences data 
+                        cooccurrences_dict[entity1][entity2][outlet].append({
+                            "article_id": article_id,
+                            "sentiment": {
+                                "entity1": entity1,
+                                "sentiment1": sentiment1,
+                                "entity2": entity2,
+                                "sentiment2": sentiment2,
+                            },
+                        })
+    # utils.save_json(cooccurrences_dict, 'cooccurrences.json')
+    return cooccurrences_dict
+
+
 def index_by_entities(article_list):
     # scatter data grouped
     entity_mentioned_articles_dict = defaultdict(list)
     # entity_mentioned_articles_dict = defaultdict(lambda : defaultdict(list))
-    # cooccurrences_dict = defaultdict(lambda : defaultdict(lambda : defaultdict(list)))
     outlet_set = set()
 
     for article in article_list:
@@ -50,20 +98,6 @@ def index_by_entities(article_list):
             # add pos/neg mentions to scatter data 
             if sentiment1 != "neutral":
                 entity_mentioned_articles_dict[entity1].append(article_id)
-            # # add co-occurrences
-            # for entity2_sentiment in entity_sentiments:
-            #     entity2 = entity2_sentiment['entity']
-            #     sentiment2 = entity2_sentiment['sentiment']
-            #     # add to co-occurrences data 
-            #     cooccurrences_dict[entity1][entity2][outlet].append({
-            #         "article_id": article_id,
-            #         "sentiment": {
-            #             "entity1": entity1,
-            #             "sentiment1": sentiment1,
-            #             "entity2": entity2,
-            #             "sentiment2": sentiment2,
-            #         },
-            #     })
     metadata = {
         "total_articles": len(article_list),
         "outlet_list": list(outlet_set)

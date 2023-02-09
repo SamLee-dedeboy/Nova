@@ -37,9 +37,7 @@ watch(() => props.selected_entity_name, () => {
 })
 
 watch(table_selection, () => {
-    console.log("table_selection changed", table_selection.value)
     const entityName = table_selection.value.entity.replaceAll(" ", "_")
-    console.log(entityName)
     emit("update:selected_entity_name", entityName)
 })
 

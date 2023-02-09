@@ -352,7 +352,7 @@ async function handleEntityClicked(entity: string) {
         }
         overall_selected_hexview.value = hex_view
         hex_constructed.value = true
-        console.log("cooccurr hex fetched")
+        console.log("cooccurr hex fetched", cooccurrences)
         resolve("success")
       })
   }))

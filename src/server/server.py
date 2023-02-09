@@ -66,11 +66,11 @@ def get_outlet_set():
 
 @app.route("/hexview/overall/<title>")
 def get_overall_hexview(title):
-    # node_list = overview_scatter_overall_data.nodes
-    # node_dict = {node.text: node for node in node_list}
+    node_list = overview_scatter_overall_data.nodes
+    node_dict = {node.text: node for node in node_list}
     # cooccurrences = raw_data.entity_cooccurrences[title]
-    # request_data = hexview_data.constructHexData(title, cooccurrences, node_dict)
-    return json.dumps({}, default=vars)
+    cooccurrences = processed_data.cooccurrences_dict[title]
+    request_data = hexview_data.constructHexData_overall(title, cooccurrences, node_dict)
     return json.dumps(request_data, default=vars)
 
 @app.route("/hexview/grouped/<title>")
