@@ -70,33 +70,24 @@ vue.watch(order, (old_value, new_value) => {
     })
     // target outlet should have changed
     // add 'if' to avoid extra fetching
-    if(order.value) fetch_random_hex(target_outlet.value, target_entity.value)
+    if(order.value) fetch_outlet_hex(target_outlet.value, target_entity.value)
 })
 
 vue.onBeforeMount(() => {
-    fetch_random_hex(target_outlet.value, target_entity.value)
+    fetch_outlet_hex(target_outlet.value, target_entity.value)
 })
 
-async function fetch_random_hex(outlet, center_entity, num=5) {
-    console.log('fetching random hex of: ', outlet, center_entity)
+async function fetch_outlet_hex(outlet, center_entity) {
     const random_hex_parameters = {
         "outlet": outlet,
         "center_entity": center_entity,
-        "num": num,
     }
-    await fetch(`${server_address}/hex/random`, {
-        method: "POST",
-        headers: {
-            "Accept": "application/json",
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(random_hex_parameters)
-    })
+    await fetch(`${server_address}/hexview/grouped/${center_entity}/${outlet}`)
         .then(res => res.json())
         .then(json => {
             true_hex_data.value = json
             true_hex_fetched.value = true
-            console.log("random hex fetched", json)
+            console.log("hex fetched", json)
         })
 }
 
@@ -144,7 +135,7 @@ function outletIconStyle(name: string) {
         @click='handleCellClicked($event, segmentation, index)'> 
             <!-- <div class=test-hex> {{ index }}</div> -->
             <HexCooccurrence class="belief-hexview" title="belief-hexview" :id="`belief-hex-${index}`"
-                :entity_cooccurrences="true_hex_data.data" :segmentation="segmentation"
+                :entity_cooccurrences="true_hex_data.cooccurrences_data" :segmentation="segmentation"
                 :show_blink="true">
             </HexCooccurrence>
             <svg>

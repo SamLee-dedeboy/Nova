@@ -125,7 +125,7 @@ async function fetchSelectedEntityHex(target: string, co_occurr_entity: string="
     highlight_hex_entity.value = co_occurr_entity
     const promiseArray: any[] = []
     promiseArray.push(new Promise((resolve) => {
-        fetch(`${server_address}/hexview/grouped/${target}`)
+        fetch(`${server_address}/hexview/grouped/${target}/all`)
             .then(res => res.json())
             .then(json => {
                 const data_list = json

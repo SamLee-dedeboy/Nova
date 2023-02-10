@@ -20,7 +20,8 @@ class ProcessedDataManager:
         # NewsSentiment
         # self.scatter_raw_data, self.cooccurrences_dict, self.metadata = processRawData(raw_data.raw_data)
         self.entity_mention_articles, self.metadata = index_by_entities(raw_data.article_data)
-        self.cooccurrences_dict = extract_cooccurrences_overall(raw_data.article_data)
+        self.overall_cooccurrences_dict = extract_cooccurrences_overall(raw_data.article_data)
+        self.grouped_cooccurrences_dict = extract_cooccurrences_grouped(raw_data.article_data)
         self.article_dict = processUtils.list_to_dict(raw_data.article_data, key=lambda article: article['id'])
 
     def idsToArticles(self, id_list):
@@ -41,7 +42,6 @@ def extract_cooccurrences_overall(article_list):
     count = 0
     for article in article_list:
         count += 1
-        print('{}/{} articles done'.format(count, len(article_list)))
         article_id = article['id']
         outlet = article['journal']
         entity_sentiments = article['doc_level_sentiment']
@@ -70,7 +70,7 @@ def extract_cooccurrences_grouped(article_list):
                 for entity2, sentiment2 in entity_sentiments.items():
                     if sentiment2 != "neutral":
                         # add to co-occurrences data 
-                        cooccurrences_dict[entity1][entity2][outlet].append({
+                        cooccurrences_dict[outlet][entity1][entity2].append({
                             "article_id": article_id,
                             "sentiment": {
                                 "entity1": entity1,
