@@ -17,6 +17,7 @@ const props = defineProps({
     article_highlights: Object as () => any,
     entity_pair: Object as () => String[],
 })
+const server_address = vue.inject("server_address")
 const marked_articles = vue.computed(() => store.marked_articles)
 const setMarkedArticle = (article_info) => store.setMarkedArticle(article_info)
 const removeMarkedArticle = (article_id) => store.removeMarkedArticle(article_id)
@@ -73,6 +74,7 @@ const neg_marks: Ref<boolean[]> = ref(Array(neg_articles.value?.length || 0).fil
 const neg_article_notes: Ref<string[]> = ref(Array(neg_articles.value?.length || 0).fill(""))
 
 const selected_article: Ref<Article|undefined> = ref(undefined)
+const indexed_content: Ref<Any[]> = ref([])
 const mark_options = [
   {status: 'Fair', value: true},
   {status: 'Unfair', value: false},
@@ -152,14 +154,33 @@ function removeTags(content) {
     return res
 }
 
+// indexed_content: {0: s0, 1: s1, 2: s2 ...}
+// highlight: {0: entities, 1: entities}
+function addContentHighlights(indexed_content: any[], highlights: any) {
+    console.log(props.article_highlights)
+    console.log({highlights})
+    let res = ""
+    Object.keys(indexed_content).forEach(sentence_index => {
+        const sentence = indexed_content[sentence_index]
+        const entities = highlights[sentence_index] // list of entity data
+        if(entities) {
+            res += add_highlights(sentence, entities)
+        } else { // no entities to highlight
+            res += sentence
+        }
+    })
+    return res
+}
+
 function add_highlights(raw_text: string, highlights: any[]) {
+    console.log(raw_text, highlights)
     if(!highlights || highlights?.length === 0) return raw_text
     let non_highlight_start = 0
     let divided_text: any[] = []
     let divided_marks: any[] = []
     highlights.forEach(highlight => {
-        const highlight_start = highlight[0]
-        const highlight_end = highlight_start + highlight[1]
+        const highlight_start = highlight.start_pos
+        const highlight_end = highlight_start + highlight.length
         if(non_highlight_start !== highlight_start) {
             divided_text.push(raw_text.substring(non_highlight_start, highlight_start))
             divided_marks.push(0)
@@ -214,9 +235,26 @@ function removeSelectedArticleMark() {
     selected_article_mark.value = undefined
 }
 
-function handleArticleClicked(e, article: Article) {
+async function handleArticleClicked(e, article: Article) {
     selected_article.value = article
+    await splitArticleSentences(article.content)
     initAnalysisPanel(article.id)
+}
+
+async function splitArticleSentences(content) {
+    await fetch(`${server_address}/splitSentences`, {
+        method: "POST",
+        headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(content)
+    })
+        .then(res => res.json())
+        .then(json => {
+            indexed_content.value = json
+        })
+
 }
 
 function initAnalysisPanel(article_id: number|undefined=undefined) {
@@ -287,8 +325,12 @@ defineExpose({
                     <div class="articleHeadline">
                         <h4 class="selected-article-headline" v-html="add_highlights(selected_article.headline, props.article_highlights?.headline_entities?.[selected_article.id])"/>
                     </div>
-                    <div class="articleSummary">
+                    <!-- <div class="articleSummary">
                         <span class="selected-article-summary" v-html="removeTags(add_highlights(selected_article.summary, props.article_highlights?.summary_entities?.[selected_article.id]))"/>
+                        <span class="selected-article-summary" v-html="removeTags(selected_article.content)"/>
+                    </div> -->
+                    <div class="articleContent">
+                        <span class="selected-article-content" v-html="addContentHighlights(indexed_content, props.article_highlights?.content_entities?.[selected_article.id])"/>
                     </div>
                     <div class="options">
                         <SelectButton v-model="selected_article_mark" optionValue="value" optionLabel="status" :options="mark_options"/>
@@ -401,7 +443,7 @@ defineExpose({
     /* display: flex; */
     flex-direction: column;
 }
-.selected-article-summary {
+.selected-article-summary, .selected-article-content {
   margin-left: 1%;
 }
 :deep(.p-splitter-gutter) {
@@ -483,7 +525,7 @@ flex-direction: column;
     margin: 2% 2% 2% 2%;
 }
 
-.articleSummary {
+.articleSummary, .articleContent {
     margin-left: 8%;
     margin-right: 8%;
     font-style: italic;

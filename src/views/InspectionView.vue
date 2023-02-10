@@ -87,8 +87,9 @@ const journal_options = [
 ]
 
 function prepare_data() {
-    const article_ids = selected_cooccurr_entity.value.cooccurr_article_ids
-    highlight_hex_entity.value = selected_cooccurr_entity.value.name
+    console.log(selected_entity.value)
+    const article_ids = selected_cooccurr_entity.value?.cooccurr_article_ids || selected_entity.value.article_ids
+    highlight_hex_entity.value = selected_cooccurr_entity.value?.name
     // setSegmentation(selected_entity.value.sst_ratio)
     selected_outlet.value = selected_entity.value.outlet
     const promiseArray: any[] = []
@@ -109,6 +110,7 @@ function prepare_data() {
 }
 
 async function fetch_articles(article_ids) {
+    console.log({article_ids})
     await fetch(`${server_address}/processed_data/ids_to_articles`, {
         method: "POST",
         headers: {
@@ -120,7 +122,7 @@ async function fetch_articles(article_ids) {
         .then(res => res.json())
         .then(json => {
             target_articles.value = json
-            console.log("articles fetched")
+            console.log("articles fetched", json)
         })
 }
 
@@ -135,7 +137,7 @@ async function fetch_article_highlights(article_ids) {
     })
         .then(res => res.json())
         .then(json => {
-            console.log("highlights fetched")
+            console.log("highlights fetched", json)
             target_article_highlights.value = json
         })
 }
@@ -145,7 +147,7 @@ async function handleChangeJournal(e) {
     const outlet = e.value
     selected_outlet.value = outlet
     const entity = selected_entity.value.name
-    const co_occurr_entity = selected_cooccurr_entity.value.name
+    const co_occurr_entity = selected_cooccurr_entity.value?.name
     const view = hexview_grid.value.find(view => view.title.split("-")[2] === outlet)
     setClickedHexView(view)
     await fetch_cooccurr_into(outlet, entity, co_occurr_entity)
@@ -206,8 +208,8 @@ async function handleArticleIconClicked(article_info) {
         .then(res => res.json())
         .then(json => {
             target_article = json[0]
+            article_view.value.handleArticleClicked(null, target_article)
         })
-    article_view.value.handleArticleClicked(null, target_article)
 }
 
 </script>
@@ -241,9 +243,16 @@ async function handleArticleIconClicked(article_info) {
             </h2>
             <ArticleView class="article-view-container" v-if="data_fetched" v-model:sst_threshold="segmentation"
                 ref="article_view"
-                :articles="target_articles" :article_highlights="target_article_highlights"
+                :articles="target_articles" 
+                :article_highlights="target_article_highlights"
                 :entity_pair="[selected_entity?.name as string, selected_cooccurr_entity?.name as string]">
             </ArticleView>
+            <!-- <ArticleView class="article-view-container" v-if="data_fetched" v-model:sst_threshold="segmentation"
+                ref="article_view"
+                :articles="target_articles" 
+                :article_highlights="target_article_highlights"
+                :entity_pair="[selected_entity?.name as string, selected_cooccurr_entity?.name as string]">
+            </ArticleView> -->
         </SplitterPanel>
         <SplitterPanel id="entity_info_section" class="entity-info-panel flex align-items-center justify-content-center"
             :size="right_section_size">

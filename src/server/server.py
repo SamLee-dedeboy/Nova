@@ -196,15 +196,22 @@ def get_cooccurr_info_grouped(outlet, target, co_occurr_entity):
 def ids_to_article_highlights():
     ids = request.json
     headline_entities_dict = processed_data.headline_entities_dict
-    summary_entities_dict = processed_data.summary_entities_dict
+    content_entities_dict = processed_data.content_entities_dict
+    # summary_entities_dict = processed_data.summary_entities_dict
     target_headline_entities = {k:headline_entities_dict[k] for k in headline_entities_dict.keys() if k in ids}
-    target_summary_entities = {k:summary_entities_dict[k] for k in summary_entities_dict.keys() if k in ids}
+    target_content_entities = {k:content_entities_dict[k] for k in content_entities_dict.keys() if k in ids}
+    # target_summary_entities = {k:summary_entities_dict[k] for k in summary_entities_dict.keys() if k in ids}
     res = {
         "headline_entities": target_headline_entities,
-        "summary_entities": target_summary_entities
+        "content_entities": target_content_entities,
+        # "summary_entities": target_summary_entities
     }
     return json.dumps(res, default=vars)
 
+@app.route("/splitSentences", methods=['POST'])
+def splitSentences():
+    content = request.json
+    return processUtils.list_to_dict(processUtils.splitSentences(content))
 
 @app.route("/processed_data/scatter_node/grouped/hex_candidates/<outlet>", methods=["POST"])
 def getHexCandidateGroupedNodes(outlet): 

@@ -8,7 +8,7 @@ class RawDataManager():
         self.entity_cooccurrences = load_entity_cooccurrences()
         self.entity_cooccurrences_grouped = load_entity_cooccurrences_grouped()
         self.headline_entities = load_headline_entities()
-        self.summary_entities = load_summary_entities()
+        # self.summary_entities = load_summary_entities()
 
 
 def load_raw_data(filepath=r'data/articles_w_doc_sentiment.json'):

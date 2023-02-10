@@ -2,6 +2,7 @@ from collections import defaultdict
 from datetime import datetime
 import itertools
 import processUtils
+from pprint import pprint
 
 class ProcessedDataManager:
     def __init__(self, raw_data):
@@ -14,8 +15,10 @@ class ProcessedDataManager:
         self.outlet_article_classified_num_dict \
         = processArticleDict(raw_data.outlet_article_dict)
         self.entity_list = list(raw_data.candidate_entity.keys())
-        self.headline_entities_dict = object_to_dict(raw_data.headline_entities, "id", "headline_entities")
-        self.summary_entities_dict = object_to_dict(raw_data.summary_entities, "id", "summary_entities")
+        self.headline_entities_dict = object_to_dict(addNERFields(raw_data.headline_entities), "id", "headline_entities")
+        self.content_entities_dict = generate_content_entities(raw_data.article_data)
+        # self.sentence_index_dict = reverse_index_sentences(raw_data.article_data)
+        # self.summary_entities_dict = object_to_dict(raw_data.summary_entities, "id", "summary_entities")
 
         # NewsSentiment
         # self.scatter_raw_data, self.cooccurrences_dict, self.metadata = processRawData(raw_data.raw_data)
@@ -24,8 +27,10 @@ class ProcessedDataManager:
         self.grouped_cooccurrences_dict = extract_cooccurrences_grouped(raw_data.article_data)
         self.article_dict = processUtils.list_to_dict(raw_data.article_data, key=lambda article: article['id'])
 
+
     def idsToArticles(self, id_list):
         return [self.article_dict[id] for id in id_list]
+
     def binArticlesByTopic(self, articles):
         topicBins = {}
         for article in articles:
@@ -36,6 +41,36 @@ class ProcessedDataManager:
             if article['sentiment']['label'] == 'NEGATIVE': topicBins[topic]["neg"] += 1
         return topicBins
     
+# def reverse_index_sentences(article_list):
+#     sentence_dict = defaultdict(dict)
+#     for article in article_list:
+#         article_id = article['id']
+#         sentences = processUtils.splitSentences(article['content'])
+#         for sentence_index, sentence in enumerate(sentences):
+#             sentence_dict[article_id][sentence] = sentence_index
+#     return sentence_dict
+
+def addNERFields(ner_data):
+    for article_data in ner_data:
+        headline_entities = article_data['headline_entities'] 
+        for index, ner_res in enumerate(headline_entities):
+            headline_entities[index] = {
+                "start_pos": ner_res[0],
+                "length": ner_res[1],
+                "word": ner_res[2],
+                "wiki_id": ner_res[3],
+                "ner_confidence": ner_res[5],
+                "type": ner_res[6],
+            }
+    return ner_data
+
+def generate_content_entities(article_list):
+    res = {}
+    for article in article_list:
+        res[article['id']] = article['entities']
+    return res
+
+
 
 def extract_cooccurrences_overall(article_list):
     cooccurrences_dict = defaultdict(lambda : defaultdict(list))
@@ -60,7 +95,7 @@ def extract_cooccurrences_grouped(article_list):
     count = 0
     for article in article_list:
         count += 1
-        print('{}/{} articles done'.format(count, len(article_list)))
+        # print('{}/{} articles done'.format(count, len(article_list)))
         article_id = article['id']
         outlet = article['journal']
         entity_sentiments = article['doc_level_sentiment']

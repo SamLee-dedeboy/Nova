@@ -332,9 +332,11 @@ async function handleEntityClicked(entity: string) {
     fetch(`${server_address}/overview/scatter/overall/node/${entity}`)
       .then(res => res.json())
       .then(json => {
+        // console.log({json})
         const store_entity  = {
           name: entity,
           outlet: "Overall",
+          article_ids: json.article_ids 
         }
         setEntity(store_entity)
         resolve("success")

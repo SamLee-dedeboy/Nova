@@ -93,6 +93,7 @@ const data_fetched: Ref<boolean> = ref(false)
 
 
 vue.onMounted(async () => {
+    console.log({selected_outlet: selected_outlet.value})
     const promiseArray: any[] = []
     promiseArray.push(new Promise((resolve) => {
         fetchEntityTableData().then(() => resolve("success"))
@@ -139,6 +140,14 @@ async function fetchSelectedEntityHex(target: string, co_occurr_entity: string="
                 })
                 setHexViewGrid(hexview_grid_data)
                 hexview_grid.value = hexview_grid_data
+                setClickedHexView(hexview_grid.value[0])
+                console.log(hexview_grid.value[0])
+                const target_entity = {
+                    name: selected_entity.value.name, 
+                    outlet: "ABC News",
+                    article_ids: selected_entity.value.article_ids,
+                }
+                setEntity(target_entity)
                 const hex_candidates = hexview_grid.value[0].data.sorted_cooccurrences_list.map((hex_entity: typeUtils.HexEntity) => hex_entity.entity)
                 hex_candidates.push(target)
                 if (!selected_outlet.value.includes("Overall"))
@@ -303,7 +312,7 @@ function outletIconHeaderStyle(name: string) {
                         v-model="flipHexFlag"
                         style="position:absolute;z-index:2">
                     </InputSwitch>
-                    {{ flipHexFlag ? "True Data" : "Your selection"}}
+                    <!-- {{ flipHexFlag ? "True Data" : "Your selection"}} -->
                 </div>
             </h2>
             <div class="hexview-grid-container">
@@ -366,7 +375,7 @@ function outletIconHeaderStyle(name: string) {
                             </span>
                         </i>
                     </h2>
-                    <div class="cooccurr-info-content">
+                    <!-- <div class="cooccurr-info-content">
                         <div class="cooccurContent">
                             <h4>Articles with 
                                 <span class="topicStyle"> 
@@ -378,7 +387,7 @@ function outletIconHeaderStyle(name: string) {
                                 </span>
                             </h4>
                         </div>
-                    </div>
+                    </div> -->
 
                 </div>
                 <div id="table-section" class='entity-table'>
