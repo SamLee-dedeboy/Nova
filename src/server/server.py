@@ -141,22 +141,22 @@ def ids_to_articles():
     ids = request.json
     return json.dumps(processed_data.idsToArticles(ids))
 
-@app.route("/processed_data/scatter_node/<node_text>")
-def get_scatter_node(node_text):
-    split = node_text.split("-")
-    if len(split) == 1:
-        return json.dumps(overall_node_dict[split[0]], default=vars)
-    else:
-        return json.dumps(grouped_node_dict[split[1]][split[0]], default=vars)
+# @app.route("/processed_data/scatter_node/<node_text>")
+# def get_scatter_node(node_text):
+#     split = node_text.split("-")
+#     if len(split) == 1:
+#         return json.dumps(overall_node_dict[split[0]], default=vars)
+#     else:
+#         return json.dumps(grouped_node_dict[split[1]][split[0]], default=vars)
 
-@app.route("/processed_data/scatter_node/grouped/<node_text>")
-def get_scatter_node_grouped(node_text):
-    res = []
-    for outlet, outlet_dict in grouped_node_dict.items():
-        node = outlet_dict[node_text]
-        node.text = outlet
-        res.append(node)
-    return json.dumps(res, default=vars)
+# @app.route("/processed_data/scatter_node/grouped/<node_text>")
+# def get_scatter_node_grouped(node_text):
+#     res = []
+#     for outlet, outlet_dict in grouped_node_dict.items():
+#         node = outlet_dict[node_text]
+#         node.text = outlet
+#         res.append(node)
+#     return json.dumps(res, default=vars)
 
 @app.route("/processed_data/cooccurr_info/overall/<target>/<co_occurr_entity>")
 def get_cooccurr_info(target, co_occurr_entity):
@@ -173,21 +173,24 @@ def get_cooccurr_info(target, co_occurr_entity):
 
 @app.route("/processed_data/cooccurr_info/grouped/<outlet>/<target>/<co_occurr_entity>")
 def get_cooccurr_info_grouped(outlet, target, co_occurr_entity):
-    entity = target
-    target_article_ids = raw_data.entity_cooccurrences_grouped[outlet][entity][entity]
-    target_articles = processed_data.idsToArticles(target_article_ids)
-    target_articles_topic_dict = processed_data.binArticlesByTopic(target_articles)
-    cooccurr_article_ids = raw_data.entity_cooccurrences_grouped[outlet][entity][co_occurr_entity]
-    cooccurr_articles = processed_data.idsToArticles(cooccurr_article_ids)
-    cooccurr_articles_topic_dict = processed_data.binArticlesByTopic(cooccurr_articles)
+    entity = target + '-' + outlet
+    # target_article_ids = processed_data.grouped_cooccurrences_dict[outlet][entity][entity]
+    target_article_ids = grouped_node_dict[outlet][entity].article_ids
+    # target_articles = processed_data.idsToArticles(target_article_ids)
+    # target_articles_topic_dict = processed_data.binArticlesByTopic(target_articles)
+    cooccurr_article_ids = list(map(lambda data: data['article_id'],
+        processed_data.grouped_cooccurrences_dict[outlet][entity][co_occurr_entity])) or None
+    # cooccurr_articles = processed_data.idsToArticles(cooccurr_article_ids)
+    # cooccurr_articles_topic_dict = processed_data.binArticlesByTopic(cooccurr_articles)
     response = {
         "target": target,
-        "target_num": len(target_articles),
-        "target_articles_topic_dict": target_articles_topic_dict,
+        "target_article_ids": target_article_ids,
+        "outlet": outlet,
+        # "target_articles_topic_dict": target_articles_topic_dict,
         "cooccurr_entity": co_occurr_entity,
-        "cooccurr_num": len(cooccurr_articles),
-        "cooccurr_articles_topic_dict": cooccurr_articles_topic_dict,
         "cooccurr_article_ids": cooccurr_article_ids,
+        # "cooccurr_articles_topic_dict": cooccurr_articles_topic_dict,
+        # "cooccurr_article_ids": cooccurr_article_ids,
     }
     return json.dumps(response)
 
