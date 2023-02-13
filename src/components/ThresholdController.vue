@@ -31,13 +31,13 @@ function handleDecrease() {
 </script>
 <template>
     <div class="threshold-input-container">
-        <InputText class="threshold-input" v-model="article_num_threshold"></InputText>
+        <InputText class="threshold-input" v-model="props.article_num_threshold"></InputText>
         <Button class="increment-button p-button-secondary"  @click="handleIncrement"> <i class="pi pi-angle-up" style="font-size: 0.75rem"></i></Button>
         <Button class="decrement-button p-button-secondary " label="v"  @click="handleDecrease"> <i class="pi pi-angle-down" style="font-size: 0.75rem"></i></Button>
     </div>
     <div class="threshold-slider-container">
         <div class="slider-spectrum-container">
-            <Slider class="threshold-slider" v-model="article_num_threshold" :step="10" :min="props.min_articles" :max="props.max_articles"></Slider>
+            <Slider class="threshold-slider" v-model="props.article_num_threshold" :step="10" :min="props.min_articles" :max="props.max_articles"></Slider>
             <ColorSpectrum class="color-spectrum" :color-scale="SstColors.article_num_color_scale"></ColorSpectrum>
         </div>
         <div class="indicator-container">

@@ -29,15 +29,9 @@ import * as SstColors from "../components/utils/ColorUtils"
  * vue components
  */
 import OutletWeightSlider from "../components/OutletWeightSlider.vue";
-import Legend from "../components/Legend.vue";
-import Tooltip from "../components/Tooltip.vue";
-import SearchBar from "../components/SearchBar.vue";
-import EntityInfoView from "../components/EntityInfoView.vue"
 import HexCooccurrence from "../components/HexCooccurrence.vue";
-import TopicBars from "../components/TopicBars.vue"
 import EntitySelection from "../components/entitySelection.vue"
 import ThresholdController from "../components/ThresholdController.vue";
-import HorizontalTopicBars from "../components/HorizontalTopicBars.vue";
 import EntityTable from "../components/entityTable.vue";
 
 const store = useUserDataStore()
@@ -59,24 +53,11 @@ const server_address = "http://127.0.0.1:5000"
 const overview_grouped_scatter_data: Ref<any> = ref({})
 const overview_grouped_scatter_metadata: Ref<any> = ref({})
 const overview_overall_scatter_metadata: Ref<any> = ref({})
-const grouped_scatter_view_dict = vue.computed(() => {
-  if (!overview_grouped_scatter_data.value) return undefined
-  let res_dict: any = {}
-  Object.keys(overview_grouped_scatter_data.value).forEach(outlet => {
-    const scatter_data = overview_grouped_scatter_data.value[outlet]
-    const scatter_view: typeUtils.EntityScatterView = {
-      title: outlet,
-      data: scatter_data
-    }
-    res_dict[outlet] = scatter_view
-  })
-  return res_dict
-})
+
 
 const overall_scatter_view: Ref<typeUtils.EntityScatterView | undefined> = ref(undefined)
 const overall_entity_dict: Ref<any> = ref({})
 const overall_scatter_data_loading: Ref<boolean> = ref(true)
-const grouped_scatter_data_loaded: Ref<boolean> = ref(false)
 const overview_constructed: Ref<boolean> = ref(false)
 const hex_constructed: Ref<boolean> = ref(true)
 const overall_co_hexview: Ref<any> = ref(null)
@@ -91,8 +72,8 @@ const showTutorial: Ref<boolean> = ref(true)
 /**
  * set of outlet names extracted from dataset.
  */
-const enabled_outlet_set: Ref<Set<string>> = ref(new Set())
-const outlet_leaning: Ref<Any> = ref({})
+const enabled_outlet_set: Ref<Set<string>> = ref(new Set(""))
+const outlet_leaning: Ref<any> = ref({})
 
 
 /**
@@ -175,7 +156,7 @@ const hex_view_panel_size = vue.computed(() => 100 - entity_info_panel_size)
 // const selected_entity: Ref<typeUtils.EntityInfo|undefined> = ref(undefined)
 const selected_entity = vue.computed(() => store.selected_entity)
 const setEntity = (entity) => store.setEntity(entity)
-const selected_entity_name: Ref<String> = ref("")
+const selected_entity_name: Ref<string> = ref("")
 vue.watch(selected_entity_name, (new_value, old_value) => {
   handleEntityClicked(selected_entity_name.value)
 })
@@ -193,8 +174,8 @@ const random_outlet = vue.inject("random_outlet")
 /**
  * segmentation threshold of sentiment value.
  */
-const segmentation = vue.computed(() => store.segmentation)
-const setSegmentation = (segmentation) => store.setSegmentation(segmentation)
+const segmentation : Ref<typeUtils.Sentiment2D> = vue.computed(() => store.segmentation)
+const setSegmentation = (segmentation : typeUtils.Sentiment2D) => store.setSegmentation(segmentation)
 
 // prepare for tutorial
 vue.onMounted(async () => {
@@ -412,8 +393,9 @@ async function handleHexClicked({ target, co_occurr_entity }: { target: string, 
     })
 }
 
-function updateSegmentation({ pos, neg }) {
-  setSegmentation({ pos, neg })
+function updateSegmentation(segmentValue) {
+  let segmentation : typeUtils.Sentiment2D = segmentValue
+  setSegmentation(segmentation)
 }
 
 function toggleTutorial(e: MouseEvent) {
@@ -426,19 +408,6 @@ function toggleTutorial(e: MouseEvent) {
 
 <template>
   <main>
-    <div v-if="selected_entity" class="navigate-container">
-      <!-- <router-link class="goNext"
-        :to="{ name: 'compare', params: { entity: selected_entity.name } }">
-        After finding a topic, <span class="clickNext">click here</span> to assess how each outlet covered it.
-        <p class="next"><i class="pi pi-arrow-right " /></p>
-      </router-link> -->
-      <router-link class="goNext"
-        :to="{ name: 'belief', params: { order: 'first', outlet: random_outlet[0], entity: selected_entity.name } }">
-        After finding a topic, <span class="clickNext">click here</span> to assess how each outlet covered it.
-        <p class="next"><i class="pi pi-arrow-right " /></p>
-      </router-link>
-    </div>
-
     <Dialog v-model:visible="showTutorial" class="tutorialStyle" position="right" :modal="true">
       <template #header>
         <h3> <i class="pi pi-compass" /> U.S. News Media Coverage Assessment</h3>
@@ -451,7 +420,7 @@ function toggleTutorial(e: MouseEvent) {
         To demonstrate the system, let's see how these outlets covered the start of the COVID-19 Pandemic (Feb-June
         2020).
       </p>
-      <p class="tutorialInstructions">
+      <!-- <p class="tutorialInstructions">
         Before we begin, please adjust the sliders below for how fair you believe each of corresponding outlets are.
         The scale is from 0 to 1, where 1 is fair. If you believe they are all fair you may leave them as is.
       </p>
@@ -462,9 +431,9 @@ function toggleTutorial(e: MouseEvent) {
 
       <div class="initialWeights">
         <OutletWeightSlider v-if="overview_constructed" :outlet_leaning="outlet_leaning"
-          @update_outlet_weight="handleUpdateOutletWeight" fontSize="0.65em">
+         fontSize="0.65em">
         </OutletWeightSlider>
-      </div>
+      </div> -->
       <template #footer>
         <Button label="Ready" icon="pi pi-check" @click="toggleTutorial" autofocus />
       </template>
@@ -502,9 +471,9 @@ function toggleTutorial(e: MouseEvent) {
                         font-size: 3rem;
                         z-index: 1000">
                     </i>
-                    <EntitySelection v-if="overall_scatter_view" :view="overall_scatter_view" id="overview-scatter"
+                    <EntitySelection v-if="overall_scatter_view" :segmentation="segmentation" :view="overall_scatter_view" id="overview-scatter"
                       ref='overview_scatter'
-                      :article_num_threshold="article_num_threshold" :segment_mode="segment_mode" :segmentation="segmentation"
+                      :article_num_threshold="article_num_threshold" :segment_mode="segment_mode" 
                       v-model:selected_entity_name='selected_entity_name'
                       @update:segmentation="updateSegmentation" />
                   </div>
@@ -581,8 +550,16 @@ function toggleTutorial(e: MouseEvent) {
                     :max_articles="overview_overall_scatter_metadata.max_articles"
                     :min_articles="overview_overall_scatter_metadata.min_articles"></ThresholdController>
                 </div>
+
+                <div v-if="selected_entity" class="navigate-container">
+                  <router-link class="goNext"
+                    :to="{ name: 'belief', params: { order: 'first', outlet: random_outlet[0], entity: selected_entity.name } }">
+                    After finding a topic, <span class="clickNext">click here</span> to assess how each outlet covered it.
+                    <p class="next"><i class="pi pi-arrow-right " /></p>
+                  </router-link>
+                </div>
                 <!-- outlet weight slider -->
-                <h3 class="threshold-title">
+                <!-- <h3 class="threshold-title">
                   News Outlet Fairness
                   <i class='pi pi-info-circle tooltip'>
                     <span class="tooltiptext right-tooltiptext" style="width: 300px">
@@ -593,8 +570,8 @@ function toggleTutorial(e: MouseEvent) {
                   </i>
                 </h3>
                 <OutletWeightSlider v-if="overview_constructed" :outlet_leaning="outlet_leaning"
-                  @update_outlet_weight="handleUpdateOutletWeight" fontSize="0.65em">
-                </OutletWeightSlider>
+                  fontSize="0.65em">
+                </OutletWeightSlider> -->
               </div>
             </div>
           </SplitterPanel>
@@ -867,13 +844,9 @@ main {
 }
 
 .navigate-container {
-  width: 12%;
-  text-align: left;
-  display: flex;
+  width: 100%;
+  text-align: center;
   height: 5%;
-  position: absolute;
-  top: 63%;
-  left: 86%;
   z-index: 999;
 }
 

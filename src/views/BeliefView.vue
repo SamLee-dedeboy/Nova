@@ -1,6 +1,6 @@
 <script setup lang=ts>
 import { useUserDataStore } from '../store/userStore'
-import { useRoute } from 'vue-router'
+import { useRoute , useRouter} from 'vue-router'
 
 import { Ref, ref } from "vue"
 import * as vue from "vue"
@@ -15,6 +15,7 @@ const selected_entity = vue.computed(() => store.selected_entity)
 const selected_cooccurr_entity = vue.computed(() => store.selected_cooccurr_entity)
 const setUserOutletSegmentations = (segmentation, outlet) => store.setUserOutletSegmentations(segmentation, outlet)
 const route = useRoute()
+const router = useRouter()
 const server_address = vue.inject("server_address")
 // const left_most_outlet = vue.inject("left_most_outlet")
 // const right_most_outlet = vue.inject("right_most_outlet")
@@ -115,6 +116,15 @@ function handleCellClicked(e, segmentation, index) {
             }
             setUserOutletSegmentations(interpolated_segmentation, outlet)
         })
+        //Route to Comparision Page
+        const ccEntity = selected_cooccurr_entity?.value.name || '';
+        const entityName : string = selected_entity.value.name;
+        console.log("ROUTER PARAMS to Compare",{ entity: entityName, cooccurr_entity: ccEntity } )
+        router.push({name:'compare', params:  { entity: selected_entity.value.name, cooccurr_entity: ccEntity} })
+    }else{
+        const randomOutlet : string = random_outlet[1]; //selected_cooccurr_entity?.name || '';
+        const entityName : string = selected_entity.value.name;
+        router.push({name:'belief', params: { order: 'second', outlet: randomOutlet, entity: target_entity.value } } )
     }
 }
 
@@ -150,18 +160,6 @@ function outletIconStyle(name: string) {
     <div class=test-slider-container>
         <div class=slider-label> {{offset}}</div>
         <Slider class='test-slider' v-model="offset" :step="0.01" :min="0" :max="0.25" />
-    </div>
-    <div class=navigate-container>
-        <router-link class="goNext"
-            v-if="route.params.order == 'first'"
-            :to="{ name: 'belief', params: { order: 'second', outlet: random_outlet[1], entity: target_entity } }">
-            <p class="next">go next</p>
-        </router-link>
-        <router-link class="goNext"
-            v-else
-            :to="{ name: 'compare', params: { entity: selected_entity.name, cooccurr_entity: selected_cooccurr_entity?.name || '' } }">
-            <p class="next">go next</p>
-        </router-link>
     </div>
 
 </template>

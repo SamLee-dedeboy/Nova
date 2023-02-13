@@ -303,16 +303,10 @@ function outletIconHeaderStyle(name: string) {
                         Try to discover outlet coverage differences and common grounds.
                     </span>
                 </i>
-                <!-- <InputSwitch class="flip-switch" 
-                    v-model="flipHex[view.title.split('-')[2]]"
-                    style="position:absolute;z-index:2">
-                </InputSwitch> -->
                 <div class=flip-hex-container>
                     <InputSwitch class="flip-switch" 
-                        v-model="flipHexFlag"
-                        style="position:absolute;z-index:2">
-                    </InputSwitch>
-                    <!-- {{ flipHexFlag ? "True Data" : "Your selection"}} -->
+                        v-model="flipHexFlag"/>
+                    
                 </div>
             </h2>
             <div class="hexview-grid-container">
@@ -414,12 +408,12 @@ function outletIconHeaderStyle(name: string) {
                         placeholder="Write down any observations..." />
 
                 </div> -->
-                <div v-if="selected_outlet !== 'Overall'" class="navigate-container">
+                <!-- <div v-if="selected_outlet !== 'Overall'" class="navigate-container">
                     <router-link class="goNext"
                         :to="{ name: 'inspection', params: { entity: selected_entity?.name || 'undefined' }}">
                         <Button label="Review Articles" icon="pi pi-file" />
                     </router-link>
-                </div>
+                </div> -->
                 <div class="legend-utils" v-if="selected_entity">
                     <h2 class="component-header legend-header">
                         <div class="journalSent">
@@ -516,6 +510,13 @@ function outletIconHeaderStyle(name: string) {
 
 .icon {
     height: 100%;
+}
+
+.flip-hex-container{
+    display: inline-flex;
+    top: 6px;
+    left: 70%;
+    z-index: 99999;
 }
 
 .hiveSelect {
@@ -697,7 +698,7 @@ a.goNext {
 }
 
 .cooccurr-info-header {
-    height: 59%;
+    height: 55%;
 }
 
 .toolTipStyle {

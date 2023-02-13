@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<!-- <script setup lang="ts">
 import OutletWeightSlider from "../components/OutletWeightSlider.vue";
 import Filter from "../components/deprecated/Filter.vue";
 import Slider from "primevue/slider"
@@ -1284,4 +1284,4 @@ function handleUpdateWeightEnded() {
 }
 
  </style>
-
+ -->

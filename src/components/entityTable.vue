@@ -44,7 +44,7 @@ watch(table_selection, () => {
 const props = defineProps({
     entity_nodes: Object as () => ScatterNode[],
     article_num_threshold: Number,
-    selected_entity_name: Object as () => Any,
+    selected_entity_name: String,
 })
 
 const filtered_data = computed(() => props.entity_nodes.filter((node: ScatterNode) => node.article_ids.length > (props.article_num_threshold || 0))) as Ref<ScatterNode[]>

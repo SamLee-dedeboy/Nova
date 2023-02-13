@@ -15,7 +15,7 @@
 </template>
 
 <script setup lang="ts">
-    /**
+    /**ƒ
      * libraries
      */
     import * as vue from 'vue'

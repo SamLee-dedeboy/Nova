@@ -1,4 +1,4 @@
-import { ScatterNode, OutletNodeInfo } from "../types"
+import { ScatterNode, OutletNodeInfo, Sentiment2D } from "../types"
 import { ComputedRef, Ref } from "vue"
 import * as d3 from "d3"
 import * as d3_fisheye from "d3-fisheye"
@@ -473,12 +473,18 @@ export class EntityScatter {
                 // console.log({pos: self.xScale.invert(self.segment_point.x), neg: self.yScale.invert(self.segment_point.y)})
                 // self.setSegmentation({pos: self.xScale.invert(self.segment_point.x), neg: self.yScale.invert(self.segment_point.y)})
                 if (!self.emit_at_end)
-                    emit("update:segmentation", { pos: self.xScale.invert(self.segment_point.x), neg: self.yScale.invert(self.segment_point.y) })
+                {
+                  let segementPoint : Sentiment2D =  { pos: self.xScale.invert(self.segment_point.x), neg: self.yScale.invert(self.segment_point.y) }
+                  emit("update:segmentation", segementPoint) 
+                }  
+                   
             })
             .on("end", function (e, d) {
                 d3.select(this).attr("stroke", null)
-                if (self.emit_at_end)
-                    emit("update:segmentation", { pos: self.xScale.invert(self.segment_point.x), neg: self.yScale.invert(self.segment_point.y) })
+                if (self.emit_at_end){
+                    let segementPoint : Sentiment2D = { pos: self.xScale.invert(self.segment_point.x), neg: self.yScale.invert(self.segment_point.y) }
+                    emit("update:segmentation", segementPoint)
+                }
             })
 
         //Segment Controller Rect

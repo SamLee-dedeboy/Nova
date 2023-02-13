@@ -1,4 +1,5 @@
 import { defineStore } from "pinia"
+import * as typeUtils from "../types"
 
 // selected_entity: typeUtils.EntityInfo,
 // selected_cooccurr_entity: typeUtils.CooccurrEntityInfo,
@@ -9,7 +10,7 @@ export const useUserDataStore = defineStore('userData', {
         selected_cooccurr_entity: undefined,
         outlet_weight_dict: { "CNN": 1, "Washington Post": 1, "FoxNews": 1, "New York Times": 1, "Breitbart": 1, "ABC News": 1 },
         article_num_threshold: 20,
-        segmentation: { pos: 0.5, neg: 0.5 },
+        segmentation: { pos: 0.5, neg: 0.5 } as typeUtils.Sentiment2D,
         hexview_grid: undefined,
         clicked_hexview: undefined,
         constraints: {},
@@ -20,6 +21,7 @@ export const useUserDataStore = defineStore('userData', {
     getters: {},
     actions: {
         setEntity(entity) {
+            // console.log("UPDATED STATE", entity)
             this.selected_entity = entity
         },
         setCooccurrEntity(cooccurr_entity) {
@@ -28,7 +30,7 @@ export const useUserDataStore = defineStore('userData', {
         setArticleNumThreshold(threshold) {
             this.article_num_threshold = threshold
         },
-        setSegmentation(segmentation, leaning='general') {
+        setSegmentation(segmentation : typeUtils.Sentiment2D, leaning='general')  {
             if(leaning == "general")
                 this.segmentation = segmentation
             else if (leaning == 'left')

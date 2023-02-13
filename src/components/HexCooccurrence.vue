@@ -1,11 +1,7 @@
 <template>
     <div :id="id" class="hex-container">
         <svg :id="id+'-svg'" class="hex-svg">
-            <!-- <pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)"
-                patternUnits="userSpaceOnUse">
-                <rect x="0" y="0" width="10" height="10" style="fill:#baf0f5" />
-                <line x1="0" y1="0" x2="0" y2="10" style="stroke:#f4c49c; stroke-width:8" />
-            </pattern> -->
+
         </svg>
     </div>
 </template>
@@ -175,8 +171,10 @@ function updateHexBins() {
             else return 0.2
         })
         .attr("fill", (d: any) => {
+            // #dddddd
+            // #baf0f5
             const sst = d[0].sst;
-            return SstColors.enum_color_dict[categorizeHex(sst, props.segmentation!)]
+            return (d[0].exists) ? SstColors.enum_color_dict[categorizeHex(sst, props.segmentation!)] : '#dddddd'
         })
     // add looped animation for center hex
     const center_entity = hex_data[0][0].entity
@@ -385,6 +383,17 @@ function find_level(index) {
 defineExpose({
     updateHexColor
 })
+
+
+
+/* 
+            <!-- <pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)"
+                patternUnits="userSpaceOnUse">
+                <rect x="0" y="0" width="10" height="10" style="fill:#baf0f5" />
+                <line x1="0" y1="0" x2="0" y2="10" style="stroke:#f4c49c; stroke-width:8" />
+            </pattern> -->
+
+*/
 
 </script>
 
