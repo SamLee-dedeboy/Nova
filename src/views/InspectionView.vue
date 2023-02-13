@@ -18,6 +18,7 @@ import Textarea from 'primevue/textarea'
 import * as vue from "vue"
 import { Ref, ref } from 'vue'
 import { useUserDataStore } from '../store/userStore'
+import { useRoute } from 'vue-router'
 import * as d3 from 'd3'
 
 /**
@@ -29,9 +30,11 @@ import { Article, SentimentType, Constraint } from "../types"
  * vue components
  */
 import ArticleView from "../components/ArticleView.vue";
+import ArticleAnalysis from "../components/ArticleAnalysis.vue";
 import HexCooccurrence from "../components/HexCooccurrence.vue"
 
 const store = useUserDataStore()
+const route = useRoute()
 
 const left_section_size = 60
 const right_section_size = vue.computed(() => 100 - left_section_size)
@@ -56,7 +59,8 @@ const ranked_outlets = vue.computed(() => {
     )
 })
 
-const selected_outlet: Ref<string> = ref("")
+// const selected_outlet: Ref<string> = ref("ABC News")
+const selected_article: Ref<Article> = ref()
 const target_articles: Ref<Article[]> = ref([])
 const target_article_highlights: Ref<any> = ref({})
 const marked_articles_ids_with_outlet = vue.computed(() => store.marked_articles)
@@ -73,6 +77,15 @@ const marked_article_info_grouped = vue.computed(() => {
 
 const article_view = ref(null)
 
+vue.onBeforeMount(() => {
+    if(selected_entity.value == undefined) {
+        setEntity({
+            name: route.params.entity,
+            outlet: "ABC News",
+            article_ids: [1]
+        })
+    }
+})
 vue.onMounted(() => {
     prepare_data()
 })
@@ -88,10 +101,11 @@ const journal_options = [
 
 function prepare_data() {
     console.log(selected_entity.value)
-    const article_ids = selected_cooccurr_entity.value?.cooccurr_article_ids || selected_entity.value.article_ids
+    const article_ids = selected_cooccurr_entity.value?.article_ids || selected_entity.value.article_ids
+    // const article_ids = article_ids_w_sentiment.map(obj => obj.article_id)
     highlight_hex_entity.value = selected_cooccurr_entity.value?.name
     // setSegmentation(selected_entity.value.sst_ratio)
-    selected_outlet.value = selected_entity.value.outlet
+    // selected_outlet.value = selected_entity.value.outlet
     const promiseArray: any[] = []
     promiseArray.push(new Promise(async (resolve) => {
         await fetch_articles(article_ids)
@@ -145,7 +159,7 @@ async function fetch_article_highlights(article_ids) {
 async function handleChangeJournal(e) {
     // const outlet = e.target.value
     const outlet = e.value
-    selected_outlet.value = outlet
+    // selected_outlet.value = outlet
     const entity = selected_entity.value.name
     const co_occurr_entity = selected_cooccurr_entity.value?.name
     const view = hexview_grid.value.find(view => view.title.split("-")[2] === outlet)
@@ -171,19 +185,21 @@ async function fetch_cooccurr_into(outlet, entity, co_occurr_entity) {
             const target_entity = {
                 name: json.target,
                 outlet: outlet,
-                num_of_mentions: json.target_num,
-                articles_topic_dict: json.target_articles_topic_dict,
-                sst_ratio: clicked_hexview.value.data.target.sst
+                article_ids: json.target_article_ids,
+                // num_of_mentions: json.target_num,
+                // articles_topic_dict: json.target_articles_topic_dict,
+                // sst_ratio: clicked_hexview.value.data.target.sst
             }
             setEntity(target_entity)
             const cooccurr_entity = {
                 target: json.target,
-                name: json.cooccurr_entity,
                 outlet: outlet,
-                num_of_mentions: json.cooccurr_num,
-                target_num_of_mentions: json.target_num_of_mentions,
-                articles_topic_dict: json.cooccurr_articles_topic_dict,
-                cooccurr_article_ids: json.cooccurr_article_ids
+                name: json.target,
+                outlet: outlet,
+                article_ids: json.target_article_ids,
+                // num_of_mentions: json.cooccurr_num,
+                // target_num_of_mentions: json.target_num_of_mentions,
+                // articles_topic_dict: json.cooccurr_articles_topic_dict,
             }
             setCooccurrEntity(cooccurr_entity)
         })
@@ -231,7 +247,8 @@ async function handleArticleIconClicked(article_info) {
                 &
                 <span> {{selected_cooccurr_entity?.name.replaceAll("_"," ")}} </span>
                 by
-                <span> {{selected_entity?.outlet}}</span>
+                <span> {{selected_entity.outlet}}</span>
+                <!-- <span> {{selected_outlet}}</span> -->
                 &nbsp
                 <i class='pi pi-info-circle tooltip'>
                     <span class="tooltiptext right-tooltiptext" style="width: 400px">
@@ -245,14 +262,49 @@ async function handleArticleIconClicked(article_info) {
                 ref="article_view"
                 :articles="target_articles" 
                 :article_highlights="target_article_highlights"
+                @article-selected="(article) => selected_article=article"
                 :entity_pair="[selected_entity?.name as string, selected_cooccurr_entity?.name as string]">
             </ArticleView>
-            <!-- <ArticleView class="article-view-container" v-if="data_fetched" v-model:sst_threshold="segmentation"
-                ref="article_view"
-                :articles="target_articles" 
-                :article_highlights="target_article_highlights"
-                :entity_pair="[selected_entity?.name as string, selected_cooccurr_entity?.name as string]">
-            </ArticleView> -->
+            <div class="hexview-container">
+                <div class="cooccurr-info-content">
+                    <div class=journal-icon-container>
+                        <div :class="['journal-style']">
+                            <img :src="`/${selected_entity.outlet}.png`"
+                                :class="['journal-image',`${outletIconStyle(selected_entity.outlet)}`]" />
+                        </div>
+                        <div class="journal-info-container" style="font-size:small; z-index:99;">
+                            <Dropdown :modelValue="selected_entity.outlet" :options="journal_options"
+                                placeholder="Select an journal" @change="handleChangeJournal" />
+                        </div>
+                    </div>
+                    <div class="num_of_articles">
+                        Number of articles about
+                        <span style="font-weight:bolder" :title="selected_entity?.name"> {{selected_entity?.name.replaceAll("_"," ")}}
+                        </span>
+                        <span v-if="selected_cooccurr_entity">
+                            and
+                            <span style="font-weight:bolder" :title="selected_cooccurr_entity.name">
+                                {{selected_cooccurr_entity.name.replaceAll("_"," ")}}
+                            </span>
+                        </span>
+                        is {{ selected_cooccurr_entity? selected_cooccurr_entity.article_ids.length :
+                        selected_entity.article_ids.length }}
+                    </div>
+                </div>
+                <HexCooccurrence v-if="clicked_hexview" class="compare-co-hexview" :title="clicked_hexview.title"
+                    :id="`compare-co-hex-inpection`" :entity_cooccurrences="clicked_hexview.data"
+                    :segmentation="original_segmentation" :highlight_hex_entity="highlight_hex_entity"
+                    :show_blink="true"
+                    @hex-clicked="handleHexClicked">
+                </HexCooccurrence>
+                <svg style='position:absolute'>
+                    <pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)"
+                        patternUnits="userSpaceOnUse">
+                        <rect x="0" y="0" width="10" height="10" style="fill:#baf0f5" />
+                        <line x1="0" y1="0" x2="0" y2="10" style="stroke:#f4c49c; stroke-width:8" />
+                    </pattern>
+                </svg>
+            </div>
         </SplitterPanel>
         <SplitterPanel id="entity_info_section" class="entity-info-panel flex align-items-center justify-content-center"
             :size="right_section_size">
@@ -263,10 +315,10 @@ async function handleArticleIconClicked(article_info) {
                         <router-link class="goNext" :to="{ name: 'summary', params: { entity: selected_entity.name }}">
                             Summary Report </router-link>
                     </div> -->
-                    <h2 class="component-header cooccurr-info-header">
+                    <!-- <h2 class="component-header cooccurr-info-header">
                         Outlet Coverage
-                    </h2>
-                    <div class="cooccurr-info-content">
+                    </h2> -->
+                    <!-- <div class="cooccurr-info-content">
                         <div :class="['journal-style']">
                             <img :src="`/${selected_entity.outlet}.png`"
                                 :class="['journal-image',`${outletIconStyle(selected_entity.outlet)}`]" />
@@ -284,23 +336,16 @@ async function handleArticleIconClicked(article_info) {
                             is {{ selected_cooccurr_entity? selected_cooccurr_entity.num_of_mentions :
                             selected_entity.num_of_mentions }}
                         </div>
+                    </div> -->
+                </div>
+                <ArticleAnalysis class="article_analysis_panel"
+                    :entity_pair="[selected_entity?.name as string, selected_cooccurr_entity?.name as string]"
+                    :selected_article="selected_article"
+                    :article_highlights="target_article_highlights">
+                </ArticleAnalysis>
 
-                    </div>
-                </div>
-                <div class="hexview-container">
-                    <div class="journal-info-container" style="font-size:small; z-index:99;">
-                        <Dropdown :modelValue="selected_outlet" :options="journal_options"
-                            placeholder="Select an journal" @change="handleChangeJournal" />
-                    </div>
-                    <HexCooccurrence v-if="data_fetched" class="compare-co-hexview" :title="clicked_hexview.title"
-                        :id="`compare-co-hex-inpection`" :entity_cooccurrences="clicked_hexview.data"
-                        :segmentation="original_segmentation" :highlight_hex_entity="highlight_hex_entity"
-                        :show_blink="true"
-                        @hex-clicked="handleHexClicked">
-                    </HexCooccurrence>
-                </div>
-                <div class="document-container">
-                    <div class="marked-articles-container">
+                <!-- <div class="document-container"> -->
+                    <!-- <div class="marked-articles-container">
                         <h2 class="component-header marked-articles-header">
                             Marked Articles
                         </h2>
@@ -320,7 +365,6 @@ async function handleArticleIconClicked(article_info) {
                                             {{outlet}} 
                                         </div>
                                     </td>
-                                    <!-- <td> {{constraint_dict[selected_entity.name]?.[outlet] || "unset"}} </td> -->
                                     <td>
                                         <i v-for="article_info in marked_article_info_grouped[outlet]"
                                             class="pi pi-file conclusion-icon tooltip" :class="{fair_icon: article_info.mark, unfair_icon: !article_info.mark}"
@@ -337,7 +381,7 @@ async function handleArticleIconClicked(article_info) {
 
                         
                     </div>
-                </div>
+                </div> -->
             </div>
         </SplitterPanel>
     </Splitter>
@@ -414,6 +458,7 @@ async function handleArticleIconClicked(article_info) {
 
 .cooccurr-info-content {
     display: flex;
+    flex-direction: column;
     font-size: 0.8rem;
     width: 100%;
 }
@@ -442,7 +487,8 @@ li {
 
 .num_of_articles {
     width: 50%;
-    margin-left: 5%;
+    margin-left: 2%;
+    font-size: 1rem;
 }
 
 // ---------------------
@@ -476,6 +522,7 @@ li {
 //  Hexview section
 // ---------------------
 .hexview-container {
+    display: flex;
     max-height: 49%;
 }
 
@@ -533,13 +580,6 @@ li {
     padding-left: 1%;
 }
 
-.journal-info-container {
-  width: fit-content;
-  right:0;
-  position: absolute;
-    white-space: nowrap;
-    margin: 0.3rem 0rem;
-}
 
 .notes {
     display: flex;
@@ -689,8 +729,8 @@ a.goNext {
     overflow: hidden;
     border-radius: 50%;
     border: #d7d7d7 3px solid;
-    bottom: 10%;
-    left: 2%;
+    // bottom: 10%;
+    // left: 2%;
 }
 
 .FoxNews-icon{
@@ -714,5 +754,18 @@ a.goNext {
   margin: 0 auto;
   width: auto;
 }
-
+:deep(.hex-svg) {
+    width: unset !important;
+}
+.journal-icon-container {
+  display: flex;
+  padding-left: 2%;
+}
+.journal-info-container {
+//   width: fit-content;
+//   right:0;
+//   position: absolute;
+    // white-space: nowrap;
+    margin: 0.5rem 1rem;
+}
 </style>

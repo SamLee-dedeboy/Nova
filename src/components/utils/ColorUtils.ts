@@ -25,6 +25,7 @@ export const hive_color_dict = {
         "positive": pos_color, //pos_color,
         "negative": neg_color,
         "neutral": neu_color,
+        "error": neu_color,
         "mixed": mixed_color, 
         "not covered": "white"
     } 
