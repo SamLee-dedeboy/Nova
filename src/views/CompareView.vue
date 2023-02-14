@@ -288,9 +288,9 @@ function outletIconHeaderStyle(name: string) {
     <Splitter class="splitter-outmost">
         <SplitterPanel id="hexview_section" class="hexview-section flex align-items-center justify-content-center"
             :size="left_section_size" :min-size="left_section_size">
-            <div class="reminder-click-hex">
+            <!-- <div class="reminder-click-hex">
                 <p class="reminderBody">Do you see any differences among outlets for their coverage?</p>
-            </div>
+            </div> -->
             <h2 class="component-header hexview-grid-header">
                 Topic Co-occurrence Hives for
                 <span class="mainTopicStyle"> {{ selected_entity.name.replaceAll("_"," ") }} </span>

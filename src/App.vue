@@ -1,11 +1,13 @@
 <script setup>
 import { RouterLink, RouterView } from "vue-router";
+import stageSelect from "./components/stageSelect.vue";
+
 </script>
 
 <template>
   <header>
   </header> 
-
+  <stageSelect class='page-steps'/>
   <RouterView />
 </template>
 
@@ -107,4 +109,12 @@ a {
   }
 
 } */
+
+.page-steps {
+  position: absolute;
+  top: 2%;
+  width: 50%;
+  z-index: 1;
+
+}
 </style>

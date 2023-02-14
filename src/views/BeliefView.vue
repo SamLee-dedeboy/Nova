@@ -117,8 +117,8 @@ function handleCellClicked(e, segmentation, index) {
             setUserOutletSegmentations(interpolated_segmentation, outlet)
         })
         //Route to Comparision Page
-        const ccEntity = selected_cooccurr_entity?.value.name || '';
-        const entityName : string = selected_entity.value.name;
+        const ccEntity = selected_cooccurr_entity.value?.name || '';
+        const entityName : string = selected_entity.value?.name;
         console.log("ROUTER PARAMS to Compare",{ entity: entityName, cooccurr_entity: ccEntity } )
         router.push({name:'compare', params:  { entity: selected_entity.value.name, cooccurr_entity: ccEntity} })
     }else{
