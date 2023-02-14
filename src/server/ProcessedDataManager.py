@@ -3,6 +3,7 @@ from datetime import datetime
 import itertools
 import processUtils
 from pprint import pprint
+import copy
 
 class ProcessedDataManager:
     def __init__(self, raw_data):
@@ -26,10 +27,14 @@ class ProcessedDataManager:
         self.overall_cooccurrences_dict = extract_cooccurrences_overall(raw_data.article_data)
         self.grouped_cooccurrences_dict = extract_cooccurrences_grouped(raw_data.article_data)
         self.article_dict = processUtils.list_to_dict(raw_data.article_data, key=lambda article: article['id'])
+        self.article_metadata_dict = processUtils.list_to_dict(removeContent(raw_data.article_data), key=lambda article: article['id'])
 
 
-    def idsToArticles(self, id_list):
-        return [self.article_dict[id] for id in id_list]
+    def idsToArticles(self, id_list, no_content=False):
+        if no_content:
+            return [self.article_metadata_dict[id] for id in id_list]
+        else:
+            return [self.article_dict[id] for id in id_list]
 
     def binArticlesByTopic(self, articles):
         topicBins = {}
@@ -49,6 +54,12 @@ class ProcessedDataManager:
 #         for sentence_index, sentence in enumerate(sentences):
 #             sentence_dict[article_id][sentence] = sentence_index
 #     return sentence_dict
+
+def removeContent(articles):
+    copy_articles = copy.deepcopy(articles)
+    for article in copy_articles:
+        article.pop('content', None)
+    return copy_articles
 
 def addNERFields(ner_data):
     for article_data in ner_data:
