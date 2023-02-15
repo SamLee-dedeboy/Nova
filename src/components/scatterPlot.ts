@@ -160,18 +160,27 @@ export class EntityScatter {
             .radius(200)
             .distortion(2)
             .smoothing(0.5);
-
+        var self = this
         const svg = d3.select(`#${this.props.id}`).select("svg")
+        const fisheye_indicator = svg.append("circle").attr("class", "fisheye") 
         svg.on("mousemove", function(e) {
+            console.log(d3.pointer(e))
             fisheye.focus(d3.pointer(e));
-            svg.selectAll("circle").each(function(d: any) {
+            svg.selectAll("circle.entity_circle, .expand_circle").each(function(d: any) {
                 const fisheye_coord = fisheye([d.x, d.y])
                 d3.select(this)
                     .transition().duration(0)
                     .attr("cx", fisheye_coord[0])
                     .attr("cy", fisheye_coord[1])
-                    // .attr("r", fisheye_coord[2]*self.node_circle_radius)
+                    .attr("r", (1+(fisheye_coord[2]-1)/2)*self.node_circle_radius)
             })
+            fisheye_indicator
+                .attr("cx", d3.pointer(e)[0])
+                .attr("cy", d3.pointer(e)[1])
+                .attr("r", 100)
+                .attr("stroke", "black")
+                .attr("stroke-width", "1")
+                .attr("fill", "none")
         });
     }
 
