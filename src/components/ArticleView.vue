@@ -129,30 +129,26 @@ vue.watch(neg_articles, (new_value, old_value) => {
 })
 
 
-function handleMark(mark, index: number, type: string) {
-    const outlet = props.articles?.[0].journal
-    console.log(mark)
+// function handleMark(mark, index: number, type: string) {
+//     const outlet = props.articles?.[0].journal
+//     console.log(mark)
 
-    // if(type === "pos") {
-    //     pos_marks.value[index] = mark
-    //     const article_id: number = pos_articles.value![index].id
-    //     const description = `positive #${index+1}` 
-    //     if(mark) addMarkedArticle({article_id, outlet, description})
-    //     else removeMarkedArticle(article_id)
-    // }
-    // if(type === "neg") {
-    //     neg_marks.value[index] = mark
-    //     const article_id: number = neg_articles.value![index].id
-    //     const description = `negative #${index+1}` 
-    //     if(mark) addMarkedArticle({article_id, outlet, description})
-    //     else removeMarkedArticle(article_id)
-    // }
-}
+//     // if(type === "pos") {
+//     //     pos_marks.value[index] = mark
+//     //     const article_id: number = pos_articles.value![index].id
+//     //     const description = `positive #${index+1}` 
+//     //     if(mark) addMarkedArticle({article_id, outlet, description})
+//     //     else removeMarkedArticle(article_id)
+//     // }
+//     // if(type === "neg") {
+//     //     neg_marks.value[index] = mark
+//     //     const article_id: number = neg_articles.value![index].id
+//     //     const description = `negative #${index+1}` 
+//     //     if(mark) addMarkedArticle({article_id, outlet, description})
+//     //     else removeMarkedArticle(article_id)
+//     // }
+// }
 
-
-async function handleArticleClicked(e, article: Article) {
-    emit("article-selected", article)
-}
 
 function add_highlights(raw_text: string, highlights: any[]) {
     if(!highlights || highlights?.length === 0) return raw_text
@@ -189,9 +185,9 @@ function highlight_element(text) {
     return `<span style='background-color:${highlight_color};'>${text}</span>`
 }
 
-defineExpose({
-    handleArticleClicked,
-})
+// defineExpose({
+//     handleArticleClicked,
+// })
 
 
 </script>
@@ -201,7 +197,7 @@ defineExpose({
     <div class="pos-cards-container">
         <div class="pos-panel-header"> positive-leaning articles: ({{pos_articles?.length || "0"}})</div>
         <ScrollPanel class="pos-article-list">
-            <div class="article-card" v-for="(article, index) in pos_panel_articles" @click="handleArticleClicked($event, article)">
+            <div class="article-card" v-for="(article, index) in pos_panel_articles" @click="handleArticleClicked($event, article.id)">
                 <div class="card-contents">
                     <div class="icon-container"> 
                         <i class="pi pi-file pos-icon"/>

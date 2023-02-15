@@ -138,8 +138,9 @@ def get_grouped_hexview(title, outlet):
 
 @app.route("/processed_data/ids_to_articles", methods=['POST'])
 def ids_to_articles():
-    ids = request.json
-    return json.dumps(processed_data.idsToArticles(ids))
+    ids = request.json['article_ids']
+    no_content = request.json['no_content']
+    return json.dumps(processed_data.idsToArticles(ids, no_content=no_content))
 
 # @app.route("/processed_data/scatter_node/<node_text>")
 # def get_scatter_node(node_text):
@@ -201,8 +202,10 @@ def ids_to_article_highlights():
     headline_entities_dict = processed_data.headline_entities_dict
     content_entities_dict = processed_data.content_entities_dict
     # summary_entities_dict = processed_data.summary_entities_dict
-    target_headline_entities = {k:headline_entities_dict[k] for k in headline_entities_dict.keys() if k in ids}
-    target_content_entities = {k:content_entities_dict[k] for k in content_entities_dict.keys() if k in ids}
+    # target_headline_entities = {k:headline_entities_dict[k] for k in headline_entities_dict.keys() if k in ids}
+    # target_content_entities = {k:content_entities_dict[k] for k in content_entities_dict.keys() if k in ids}
+    target_headline_entities = {k:headline_entities_dict[k] for k in ids} 
+    target_content_entities = {k:content_entities_dict[k] for k in ids}
     # target_summary_entities = {k:summary_entities_dict[k] for k in summary_entities_dict.keys() if k in ids}
     res = {
         "headline_entities": target_headline_entities,

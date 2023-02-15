@@ -124,18 +124,21 @@ function prepare_data() {
 }
 
 async function fetch_articles(article_ids) {
-    console.log({article_ids})
     await fetch(`${server_address}/processed_data/ids_to_articles`, {
         method: "POST",
         headers: {
             "Accept": "application/json",
             "Content-Type": "application/json"
         },
-        body: JSON.stringify(article_ids)
+        body: JSON.stringify({
+            no_content: true,
+            article_ids: article_ids,
+        })
     })
         .then(res => res.json())
         .then(json => {
             target_articles.value = json
+            console.log({json})
             console.log("articles fetched", json)
         })
 }
@@ -211,22 +214,22 @@ function outletIconStyle(name:string){
     return className;
 }
 
-async function handleArticleIconClicked(article_info) {
-    let target_article
-    await fetch(`${server_address}/processed_data/ids_to_articles`, {
-        method: "POST",
-        headers: {
-            "Accept": "application/json",
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify([article_info.article_id])
-    })
-        .then(res => res.json())
-        .then(json => {
-            target_article = json[0]
-            article_view.value.handleArticleClicked(null, target_article)
-        })
-}
+// async function handleArticleIconClicked(article_info) {
+//     let target_article
+//     await fetch(`${server_address}/processed_data/ids_to_articles`, {
+//         method: "POST",
+//         headers: {
+//             "Accept": "application/json",
+//             "Content-Type": "application/json"
+//         },
+//         body: JSON.stringify([article_info.article_id])
+//     })
+//         .then(res => res.json())
+//         .then(json => {
+//             target_article = json[0]
+//             article_view.value.handleArticleClicked(null, target_article)
+//         })
+// }
 
 </script>
 
