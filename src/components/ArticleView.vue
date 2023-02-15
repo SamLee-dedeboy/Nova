@@ -149,6 +149,24 @@ vue.watch(neg_articles, (new_value, old_value) => {
 //     // }
 // }
 
+async function handleArticleClicked(e, article_id) {
+    await fetch(`${server_address}/processed_data/ids_to_articles`, {
+        method: "POST",
+        headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            no_content: false,
+            article_ids: [article_id],
+        })
+    })
+        .then(res => res.json())
+        .then(json => {
+            emit("article-selected", json[0])
+            console.log("content fetched", json)
+        })
+}
 
 function add_highlights(raw_text: string, highlights: any[]) {
     if(!highlights || highlights?.length === 0) return raw_text
@@ -212,7 +230,7 @@ function highlight_element(text) {
     <div class="neg-cards-container">
         <div class="neg-panel-header"> negative-leaning articles: ({{neg_articles?.length || "0"}})</div>
         <ScrollPanel class="neg-article-list">
-            <div class="article-card" v-for="(article, index) in neg_panel_articles" @click="handleArticleClicked($event, article)">
+            <div class="article-card" v-for="(article, index) in neg_panel_articles" @click="handleArticleClicked($event, article.id)">
                 <div class="card-contents">
                     <div class="icon-container"> 
                         <i class="pi pi-file neg-icon"/>
