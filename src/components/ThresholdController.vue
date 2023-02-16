@@ -12,9 +12,9 @@ const props = defineProps({
 
 const emit = defineEmits(["update:article_num_threshold"])
 
-vue.onMounted(() => {
-    console.log(props.max_articles, props.min_articles)
-})
+// vue.onMounted(() => {
+//     console.log(props.max_articles, props.min_articles)
+// })
 
 vue.watch(() => props.article_num_threshold, (new_value, old_value) => {
     emit("update:article_num_threshold", props.article_num_threshold)

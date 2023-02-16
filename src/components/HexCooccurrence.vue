@@ -19,7 +19,7 @@ const props = defineProps({
     id: String,
     entity_cooccurrences: Object as () => EntityCooccurrences,
     highlight_hex_entity: String,
-    segmentation: Sentiment2D,
+    segmentation:  Object as () => Sentiment2D,
     show_blink: Boolean,
 })
 const emit = defineEmits(["hex-clicked"])
@@ -207,7 +207,7 @@ function updateHexBins() {
                 words[3] = "..."
                 words.length = 4
             }
-            // console.log(words.join(" "))
+            // //console.log(words.join(" "))
             return words.join(" ")
         })
         .call(wrap, 30)
@@ -218,7 +218,7 @@ function updateHexBins() {
 }
 
 function updateHighlightHex(target_entity) {
-    console.log(target_entity)
+    //console.log(target_entity)
     const svg = d3.select(`#${props.id}`).select("svg")
     const hex_group = svg.select("g.hex-group")
     loopedAnimateHex(hex_group, target_entity)
@@ -255,7 +255,7 @@ function loopedAnimateHex(hex_group, target_entity) {
     var target_path = hex_group.selectAll("path").filter(function (d:any) {
         return d[0].entity === center_entity || d[0].entity === co_entity
     })
-    // console.log(target_hex.data()[0][0].entity)
+    // //console.log(target_hex.data()[0][0].entity)
     // expand Hex
     // if(target_path.nodes().length != 0)
     repeat()

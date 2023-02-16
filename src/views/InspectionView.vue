@@ -71,7 +71,7 @@ const marked_article_info_grouped = vue.computed(() => {
         if (!res[outlet]) res[outlet] = []
         res[outlet].push(article_info)
     })
-    console.log(res)
+    //console.log(res)
     return res
 })
 
@@ -100,7 +100,7 @@ const journal_options = [
 ]
 
 function prepare_data() {
-    console.log(selected_entity.value)
+    //console.log(selected_entity.value)
     const article_ids = selected_cooccurr_entity.value?.article_ids || selected_entity.value.article_ids
     // const article_ids = article_ids_w_sentiment.map(obj => obj.article_id)
     highlight_hex_entity.value = selected_cooccurr_entity.value?.name
@@ -118,7 +118,7 @@ function prepare_data() {
     Promise.all(promiseArray)
         .then(() => {
             data_fetched.value = true
-            console.log('fetched new articles')
+            //console.log('fetched new articles')
         })
 
 }
@@ -138,8 +138,8 @@ async function fetch_articles(article_ids) {
         .then(res => res.json())
         .then(json => {
             target_articles.value = json
-            console.log({json})
-            console.log("articles fetched", json)
+            //console.log({json})
+            //console.log("articles fetched", json)
         })
 }
 
@@ -154,7 +154,7 @@ async function fetch_article_highlights(article_ids) {
     })
         .then(res => res.json())
         .then(json => {
-            console.log("highlights fetched", json)
+            //console.log("highlights fetched", json)
             target_article_highlights.value = json
         })
 }
@@ -184,7 +184,7 @@ async function fetch_cooccurr_into(outlet, entity, co_occurr_entity) {
     await fetch(`${server_address}/processed_data/cooccurr_info/grouped/${outlet}/${entity}/${co_occurr_entity}`)
         .then(res => res.json())
         .then(json => {
-            console.log("cooccurr_info fetched")
+            //console.log("cooccurr_info fetched")
             const target_entity = {
                 name: json.target,
                 outlet: outlet,
@@ -230,6 +230,7 @@ function outletIconStyle(name:string){
 //             article_view.value.handleArticleClicked(null, target_article)
 //         })
 // }
+ 
 
 </script>
 
@@ -290,8 +291,8 @@ function outletIconStyle(name:string){
                                 {{selected_cooccurr_entity.name.replaceAll("_"," ")}}
                             </span>
                         </span>
-                        is {{ selected_cooccurr_entity? selected_cooccurr_entity.article_ids.length :
-                        selected_entity.article_ids.length }}
+                        is {{ selected_cooccurr_entity? selected_cooccurr_entity.article_ids?.length :
+                        selected_entity.article_ids?.length }}
                     </div>
                 </div>
                 <HexCooccurrence v-if="clicked_hexview" class="compare-co-hexview" :title="clicked_hexview.title"
@@ -300,7 +301,7 @@ function outletIconStyle(name:string){
                     :show_blink="true"
                     @hex-clicked="handleHexClicked">
                 </HexCooccurrence>
-                <svg style='position:absolute'>
+                <svg style='position:absolute;'>
                     <pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)"
                         patternUnits="userSpaceOnUse">
                         <rect x="0" y="0" width="10" height="10" style="fill:#baf0f5" />

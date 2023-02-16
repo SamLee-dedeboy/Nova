@@ -88,7 +88,7 @@ async function fetch_outlet_hex(outlet, center_entity) {
         .then(json => {
             true_hex_data.value = json
             true_hex_fetched.value = true
-            console.log("hex fetched", json)
+            //console.log("hex fetched", json)
         })
 }
 
@@ -97,7 +97,7 @@ function handleCellClicked(e, segmentation, index) {
         cell.classList.remove("clicked-cell")
     })
     e.target.classList.add("clicked-cell")
-    console.log(e.target, segmentation) // or segmentations.value[index]
+    //console.log(e.target, segmentation) // or segmentations.value[index]
     setUserOutletSegmentations(segmentation, route.params.outlet as string)
     if(route.params.order == "second") {
         // begin interpolation / extrapolation
@@ -119,7 +119,7 @@ function handleCellClicked(e, segmentation, index) {
         //Route to Comparision Page
         const ccEntity = selected_cooccurr_entity.value?.name || '';
         const entityName : string = selected_entity.value?.name;
-        console.log("ROUTER PARAMS to Compare",{ entity: entityName, cooccurr_entity: ccEntity } )
+        //console.log("ROUTER PARAMS to Compare",{ entity: entityName, cooccurr_entity: ccEntity } )
         router.push({name:'compare', params:  { entity: selected_entity.value.name, cooccurr_entity: ccEntity} })
     }else{
         const randomOutlet : string = random_outlet[1]; //selected_cooccurr_entity?.name || '';
