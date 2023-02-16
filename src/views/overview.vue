@@ -591,10 +591,10 @@ function toggleTutorial(e: MouseEvent) {
 
 main {
   display: flex;
-  justify-content: center;
-  align-items: center;
+  // justify-content: center;
+  // align-items: center;
   width: 99vw;
-  height: 98vh;
+  height: 95vh;
 }
 
 // ---------------------

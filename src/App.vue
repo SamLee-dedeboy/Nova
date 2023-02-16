@@ -1,13 +1,12 @@
-<script setup>
+<script lang="ts" setup >
 import { RouterLink, RouterView } from "vue-router";
-import stageSelect from "./components/stageSelect.vue";
+import Nav from "./components/Nav.vue";
 
 </script>
 
 <template>
-  <header>
-  </header> 
-  <stageSelect class='page-steps'/>
+  <Nav/>
+  <!-- <stageSelect class='page-steps'/> -->
   <RouterView />
 </template>
 
@@ -19,9 +18,9 @@ import stageSelect from "./components/stageSelect.vue";
 }
 
 .app-container {
-  display: flex;
+  /* display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: center; */
   height: 100vh;
 }
 body {
@@ -110,11 +109,4 @@ a {
 
 } */
 
-.page-steps {
-  position: absolute;
-  top: 2%;
-  width: 50%;
-  z-index: 1;
-
-}
 </style>
