@@ -102,6 +102,9 @@ vue.onMounted(async () => {
         fetchSelectedEntityHex(selected_entity.value.name, selected_cooccurr_entity.value?.name || "").then(() => resolve("success"))
     }))
 
+    if(selected_cooccurr_entity.value?.name) {
+        await fetch_cooccurr_into("ABC News", selected_entity.value.name, selected_cooccurr_entity.value.name)
+    }
     await Promise.all(promiseArray)
 })
 
@@ -119,6 +122,33 @@ async function fetchEntityTableData() {
             overall_entity_data.value = json
             //console.log("overall table data fetched", overall_entity_data.value)
             table_loading.value = false
+        })
+}
+
+async function fetch_cooccurr_into(outlet, entity, co_occurr_entity) {
+    await fetch(`${server_address}/processed_data/cooccurr_info/grouped/${outlet}/${entity}/${co_occurr_entity}`)
+        .then(res => res.json())
+        .then(json => {
+            const target_entity = {
+                name: json.target,
+                outlet: outlet,
+                article_ids: json.target_article_ids,
+                // num_of_mentions: json.target_num,
+                // articles_topic_dict: json.target_articles_topic_dict,
+                // sst_ratio: clicked_hexview.value.data.target.sst
+            }
+            setEntity(target_entity)
+            const cooccurr_entity = {
+                target: json.target,
+                outlet: outlet,
+                name: json.target,
+                outlet: outlet,
+                article_ids: json.target_article_ids,
+                // num_of_mentions: json.cooccurr_num,
+                // target_num_of_mentions: json.target_num_of_mentions,
+                // articles_topic_dict: json.cooccurr_articles_topic_dict,
+            }
+            setCooccurrEntity(cooccurr_entity)
         })
 }
 
@@ -212,24 +242,18 @@ async function handleHexClicked({ target, co_occurr_entity }, view) {
             const target_entity = {
                 name: json.target,
                 outlet: outlet,
-                num_of_mentions: json.target_num,
-                articles_topic_dict: json.target_articles_topic_dict,
-                sst_ratio: view.data.target.sst
+                article_ids: json.target_article_ids,
             }
             setEntity(target_entity)
             const cooccurr_entity = {
                 target: json.target,
                 name: json.cooccurr_entity,
                 outlet: outlet,
-                num_of_mentions: json.cooccurr_num,
-                target_num_of_mentions: json.target_num_of_mentions,
-                articles_topic_dict: json.cooccurr_articles_topic_dict,
-                cooccurr_article_ids: json.cooccurr_article_ids
+                article_ids: json.cooccurr_article_ids
             }
             const hex_cooccurr_entity = view.data.sorted_cooccurrences_list.find(hex_entity => hex_entity.entity === cooccurr_entity.name)
 
             setCooccurrEntity(cooccurr_entity)
-
         })
     const hex_candidates = hexview_grid.value[0].data.sorted_cooccurrences_list.map((hex_entity: typeUtils.HexEntity) => hex_entity.entity)
     hex_candidates.push(entity)

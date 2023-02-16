@@ -384,10 +384,6 @@ async function handleHexClicked({ target, co_occurr_entity }: { target: string, 
       const co_occurr_entity: typeUtils.CooccurrEntityInfo = {
         target: json.target,
         name: json.cooccurr_entity,
-        outlet: outlet,
-        num_of_mentions: json.cooccurr_num,
-        target_num_of_mentions: json.target_num_of_mentions,
-        articles_topic_dict: json.articles_topic_dict
       }
       setCooccurrEntity(co_occurr_entity)
     })

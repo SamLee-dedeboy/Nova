@@ -108,12 +108,14 @@ function prepare_data() {
     // selected_outlet.value = selected_entity.value.outlet
     const promiseArray: any[] = []
     promiseArray.push(new Promise(async (resolve) => {
-        await fetch_articles(article_ids)
-        resolve("success")
+        fetch_articles(article_ids).then(
+            resolve("success")
+        )
     }))
     promiseArray.push(new Promise(async (resolve) => {
-        await fetch_article_highlights(article_ids)
-        resolve("success")
+        fetch_article_highlights(article_ids).then(
+            resolve("success")
+        )
     }))
     Promise.all(promiseArray)
         .then(() => {
@@ -173,6 +175,7 @@ async function handleChangeJournal(e) {
 }
 
 async function handleHexClicked({ target, co_occurr_entity }, view) {
+    console.log(target, co_occurr_entity)
     const entity = target.split("-")[0]
     const outlet = target.split("-")[1]
     highlight_hex_entity.value = co_occurr_entity
@@ -197,7 +200,7 @@ async function fetch_cooccurr_into(outlet, entity, co_occurr_entity) {
             const cooccurr_entity = {
                 target: json.target,
                 outlet: outlet,
-                name: json.target,
+                name: json.cooccurr_entity,
                 outlet: outlet,
                 article_ids: json.target_article_ids,
                 // num_of_mentions: json.cooccurr_num,
@@ -205,6 +208,7 @@ async function fetch_cooccurr_into(outlet, entity, co_occurr_entity) {
                 // articles_topic_dict: json.cooccurr_articles_topic_dict,
             }
             setCooccurrEntity(cooccurr_entity)
+            console.log(selected_cooccurr_entity.value)
         })
 }
 
@@ -270,7 +274,7 @@ function outletIconStyle(name:string){
                 :entity_pair="[selected_entity?.name as string, selected_cooccurr_entity?.name as string]">
             </ArticleView>
             <div class="hexview-container">
-                <div class="cooccurr-info-content">
+                <div v-if="data_fetched" class="cooccurr-info-content">
                     <div class=journal-icon-container>
                         <div :class="['journal-style']">
                             <img :src="`/${selected_entity.outlet}.png`"
@@ -290,12 +294,12 @@ function outletIconStyle(name:string){
                             <span style="font-weight:bolder" :title="selected_cooccurr_entity.name">
                                 {{selected_cooccurr_entity.name.replaceAll("_"," ")}}
                             </span>
+                        is {{ selected_cooccurr_entity? selected_cooccurr_entity.article_ids.length :
+                        selected_entity.article_ids.length }}
                         </span>
-                        is {{ selected_cooccurr_entity? selected_cooccurr_entity.article_ids?.length :
-                        selected_entity.article_ids?.length }}
                     </div>
                 </div>
-                <HexCooccurrence v-if="clicked_hexview" class="compare-co-hexview" :title="clicked_hexview.title"
+                <HexCooccurrence v-if="data_fetched" class="compare-co-hexview" :title="clicked_hexview.title"
                     :id="`compare-co-hex-inpection`" :entity_cooccurrences="clicked_hexview.data"
                     :segmentation="original_segmentation" :highlight_hex_entity="highlight_hex_entity"
                     :show_blink="true"
