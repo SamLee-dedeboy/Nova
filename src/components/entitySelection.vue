@@ -46,7 +46,7 @@
         selected_entity_name: String,
         article_num_threshold: Number,
         segment_mode: Boolean,
-        segmentation: Sentiment2D
+        segmentation: Object as () => Sentiment2D,
     })
     const emit = defineEmits([
         // 'node_clicked', 
