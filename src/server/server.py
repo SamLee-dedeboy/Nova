@@ -163,12 +163,14 @@ def ids_to_articles():
 def get_cooccurr_info(target, co_occurr_entity):
     cooccurr_article_ids = raw_data.entity_cooccurrences[target][co_occurr_entity]
     cooccurr_articles = processed_data.idsToArticles(cooccurr_article_ids)
-    articles_topic_dict = processed_data.binArticlesByTopic(cooccurr_articles)
+    # articles_topic_dict = processed_data.binArticlesByTopic(cooccurr_articles)
     response = {
         "target": target,
         "cooccurr_entity": co_occurr_entity,
         "cooccurr_num": len(cooccurr_articles),
-        "articles_topic_dict": articles_topic_dict
+        "outlet": outlet,
+        "cooccurr_entity": co_occurr_entity,
+        "cooccurr_article_ids": cooccurr_article_ids,
     }
     return json.dumps(response)
 
@@ -180,18 +182,18 @@ def get_cooccurr_info_grouped(outlet, target, co_occurr_entity):
     # target_articles = processed_data.idsToArticles(target_article_ids)
     # target_articles_topic_dict = processed_data.binArticlesByTopic(target_articles)
     cooccurr_article_ids = list(map(lambda data: data['article_id'],
-        processed_data.grouped_cooccurrences_dict[outlet][entity][co_occurr_entity])) or None
+        processed_data.grouped_cooccurrences_dict[outlet][target][co_occurr_entity]))
+    # cooccurr_article_ids = list(map(lambda data: data['article_id'],
+    #     processed_data.grouped_cooccurrences_dict[outlet][entity][co_occurr_entity])) or None
+
     # cooccurr_articles = processed_data.idsToArticles(cooccurr_article_ids)
     # cooccurr_articles_topic_dict = processed_data.binArticlesByTopic(cooccurr_articles)
     response = {
         "target": target,
         "target_article_ids": target_article_ids,
         "outlet": outlet,
-        # "target_articles_topic_dict": target_articles_topic_dict,
         "cooccurr_entity": co_occurr_entity,
         "cooccurr_article_ids": cooccurr_article_ids,
-        # "cooccurr_articles_topic_dict": cooccurr_articles_topic_dict,
-        # "cooccurr_article_ids": cooccurr_article_ids,
     }
     return json.dumps(response)
 

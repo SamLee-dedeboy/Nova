@@ -101,6 +101,7 @@ const journal_options = [
 
 function prepare_data() {
     console.log(selected_entity.value)
+    console.log(selected_cooccurr_entity.value)
     const article_ids = selected_cooccurr_entity.value?.article_ids || selected_entity.value.article_ids
     // const article_ids = article_ids_w_sentiment.map(obj => obj.article_id)
     highlight_hex_entity.value = selected_cooccurr_entity.value?.name
@@ -205,6 +206,7 @@ async function fetch_cooccurr_into(outlet, entity, co_occurr_entity) {
                 // articles_topic_dict: json.cooccurr_articles_topic_dict,
             }
             setCooccurrEntity(cooccurr_entity)
+            console.log(selected_cooccurr_entity.value)
         })
 }
 
@@ -269,7 +271,7 @@ function outletIconStyle(name:string){
                 :entity_pair="[selected_entity?.name as string, selected_cooccurr_entity?.name as string]">
             </ArticleView>
             <div class="hexview-container">
-                <div class="cooccurr-info-content">
+                <div v-if="data_fetched" class="cooccurr-info-content">
                     <div class=journal-icon-container>
                         <div :class="['journal-style']">
                             <img :src="`/${selected_entity.outlet}.png`"
@@ -289,12 +291,12 @@ function outletIconStyle(name:string){
                             <span style="font-weight:bolder" :title="selected_cooccurr_entity.name">
                                 {{selected_cooccurr_entity.name.replaceAll("_"," ")}}
                             </span>
-                        </span>
                         is {{ selected_cooccurr_entity? selected_cooccurr_entity.article_ids.length :
                         selected_entity.article_ids.length }}
+                        </span>
                     </div>
                 </div>
-                <HexCooccurrence v-if="clicked_hexview" class="compare-co-hexview" :title="clicked_hexview.title"
+                <HexCooccurrence v-if="data_fetched" class="compare-co-hexview" :title="clicked_hexview.title"
                     :id="`compare-co-hex-inpection`" :entity_cooccurrences="clicked_hexview.data"
                     :segmentation="original_segmentation" :highlight_hex_entity="highlight_hex_entity"
                     :show_blink="true"
