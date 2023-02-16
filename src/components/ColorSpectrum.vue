@@ -4,7 +4,7 @@ import { watch, onMounted, PropType, computed, Ref, ref} from 'vue'
 
 
 const props = defineProps({
-    colorScale: Object as () => Function,
+    colorScale: Function,
 })
 
 const viewBox = [300, 300]

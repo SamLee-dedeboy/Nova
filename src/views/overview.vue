@@ -200,8 +200,8 @@ vue.onMounted(async () => {
           max_articles: json.max_articles,
           min_articles: json.min_articles
         }
-        console.log({json})
-        console.log("overall data fetched")
+        // console.log({json})
+        // console.log("overall data fetched")
 
         // create dict of nodes for hex view
         overall_scatter_view.value.data.nodes.forEach(node => {
@@ -218,7 +218,7 @@ vue.onMounted(async () => {
       .then(res => res.json())
       .then(json => {
         overview_grouped_scatter_data.value = json
-        console.log("grouped scatter fetched")
+        // console.log("grouped scatter fetched")
         resolve("success")
       })
   }))
@@ -236,7 +236,7 @@ vue.onMounted(async () => {
       .then(res => res.json())
       .then(json => {
         overview_grouped_scatter_metadata.value = json
-        console.log("grouped scatter metadata fetched")
+        // console.log("grouped scatter metadata fetched")
         resolve("success")
       })
   }))
@@ -245,7 +245,7 @@ vue.onMounted(async () => {
       .then(res => res.json())
       .then(json => {
         outlet_article_num_dict.value = json
-        console.log("outlet article num dict fetched")
+        // console.log("outlet article num dict fetched")
         resolve("success")
       })
   }))
@@ -254,7 +254,7 @@ vue.onMounted(async () => {
       .then(res => res.json())
       .then(json => {
         entity_list.value = json
-        console.log("entity_list fetched")
+        // console.log("entity_list fetched")
         resolve("success")
       })
   }))
@@ -267,7 +267,7 @@ vue.onMounted(async () => {
         enabled_outlet_set.value.forEach(outlet => {
             outlet_leaning.value[outlet] = 1
         });
-        console.log("outlet_set fetched", outlet_leaning.value)
+        // console.log("outlet_set fetched", outlet_leaning.value)
         resolve("success")
       })
   }))
@@ -282,7 +282,7 @@ vue.onMounted(async () => {
             data: cooccurrences,
           }
           overall_selected_hexview.value = hex_view
-          console.log("overall hexview fetched")
+          // console.log("overall hexview fetched")
           resolve("success")
         })
     }))
@@ -292,14 +292,14 @@ vue.onMounted(async () => {
   await Promise.all(promiseArray)
     .then(res => {
       overview_constructed.value = true
-      console.log("all fetched")
+      // console.log("all fetched")
     })
 })
 
 
 // handlers
 async function handleEntityClicked(entity: string) {
-  console.log("Enity Selection", entity)
+  // console.log("Enity Selection", entity)
   const metadata = overview_overall_scatter_metadata.value
 
   legendInput.value = {}
@@ -335,7 +335,7 @@ async function handleEntityClicked(entity: string) {
         }
         overall_selected_hexview.value = hex_view
         hex_constructed.value = true
-        console.log("cooccurr hex fetched", cooccurrences)
+        // console.log("cooccurr hex fetched", cooccurrences)
         resolve("success")
       })
   }))
@@ -378,7 +378,7 @@ async function handleHexClicked({ target, co_occurr_entity }: { target: string, 
   await fetch(`${server_address}/processed_data/cooccurr_info/overall/${target}/${co_occurr_entity}`)
     .then(res => res.json())
     .then(json => {
-      console.log("cooccurr_info fetched", json)
+      // console.log("cooccurr_info fetched", json)
       const overall_flag = target.split("-")[1] === undefined
       const outlet = overall_flag ? "Overall" : target.split("-")[1]
       const co_occurr_entity: typeUtils.CooccurrEntityInfo = {
@@ -404,16 +404,16 @@ function toggleTutorial(e: MouseEvent) {
 
 <template>
   <main>
-    <Dialog v-model:visible="showTutorial" class="tutorialStyle" position="right" :modal="true">
+    <Dialog v-model:visible="showTutorial" class="tutorialStyle" position="center" :modal="true">
       <template #header>
         <h3> <i class="pi pi-compass" /> U.S. News Media Coverage Assessment</h3>
       </template>
 
       <p class="introTutorial">
-        This application's purpose is to help you assess if your expectations of how fair mainstream news media cover
+        NOVA's purpose is to help you assess if your expectations of how mainstream news media cover
         topics align with their reporting.
         We gathered articles centered around COVID-19 from 6 U.S. mainstream media outlets.
-        To demonstrate the system, let's see how these outlets covered the start of the COVID-19 Pandemic (Feb-June
+        To demonstrate the system, let's see deleve into what topics these outlets covered during start of the COVID-19 Pandemic (Feb-June
         2020).
       </p>
       <!-- <p class="tutorialInstructions">
@@ -453,7 +453,13 @@ function toggleTutorial(e: MouseEvent) {
               <Splitter class='table-scatter-splitter'>
                 <SplitterPanel class="entity-table-panel" :size="table_panel_size">
                   <div id="entityTableWrapper" class='entityTableWrapper'>
-                    <EntityTable v-if="overall_entity_data" :entity_nodes="overall_entity_data" :article_num_threshold="article_num_threshold" 
+                    <i v-if="overall_scatter_data_loading" class="pi pi-spin pi-spinner" style="position:absolute;
+                        left: 45%;
+                        top: 30%;
+                        font-size: 3rem;
+                        z-index: 1000">
+                    </i>
+                    <EntityTable v-else :entity_nodes="overall_entity_data" :article_num_threshold="article_num_threshold" 
                       v-model:selected_entity_name='selected_entity_name'
                     />
                   </div>
@@ -467,27 +473,23 @@ function toggleTutorial(e: MouseEvent) {
                         font-size: 3rem;
                         z-index: 1000">
                     </i>
-                    <EntitySelection v-if="overall_scatter_view" :segmentation="segmentation" :view="overall_scatter_view" id="overview-scatter"
+                    <EntitySelection v-else :segmentation="segmentation" :view="overall_scatter_view" id="overview-scatter"
                       ref='overview_scatter'
                       :article_num_threshold="article_num_threshold" :segment_mode="segment_mode" 
                       v-model:selected_entity_name='selected_entity_name'
                       @update:segmentation="updateSegmentation" />
                   </div>
-                      <!-- @node_clicked="handleEntityClicked" -->
                 </SplitterPanel>
               </Splitter>
             </div>
-            <!-- overview scatter -->
           </SplitterPanel>
-          <!-- overview table -->
-        
         </Splitter>
       </SplitterPanel>
       <SplitterPanel class="right-section-panel" :size="right_section_panel_size">
         <Splitter layout="vertical">
           <SplitterPanel class="overview-hex-panel" :size="hex_view_panel_size">
             <div class="reminder-click-entity" v-if="!selected_entity && overview_constructed"> Click on one of the news
-              topic points. </div>
+              topic points or row in the table. </div>
             <!-- Hex view -->
             <h2 class="component-header hexview-header" v-if="selected_entity">
               Topic Co-occurrence Hive for
@@ -504,13 +506,8 @@ function toggleTutorial(e: MouseEvent) {
             </h2>
             <div class="overview-hex-container" v-if="overview_constructed">
               <!-- load icon -->
-              <i v-if="!hex_constructed" class="pi pi-spin pi-spinner" style="position:absolute;
-                    left: 45%;
-                    top: 30%;
-                    font-size: 3rem;
-                    z-index: 1000
-                    "></i>
-              <HexCooccurrence ref="overall_co_hexview" v-if="overall_selected_hexview" class="overall-co-hexview"
+              <i v-if="!overall_selected_hexview" class="pi pi-spin pi-spinner" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/>
+              <HexCooccurrence v-else ref="overall_co_hexview" class="overall-co-hexview"
                 :title="overall_selected_hexview.title" :id="`overall-co-hex`"
                 :entity_cooccurrences="overall_selected_hexview.data" :segmentation="segmentation"
                 :highlight_hex_entity="highlight_hex_entity" :show_blink="true"
@@ -766,12 +763,12 @@ main {
   font-family: Lato;
   font-size: x-large;
   position: absolute;
-  top: 40%;
-  left: 30%;
-
-  box-shadow: 0 0 0 0 rgba(0, 0, 0, 1);
-  transform: scale(1);
-  animation: pulse 2s infinite;
+  top: 15%;
+  left: 20%;
+  font-style: italic;
+  // box-shadow: 0 0 0 0 rgba(0, 0, 0, 1);
+  // transform: scale(1);
+  // animation: pulse 2s infinite;
 
 }
 

@@ -164,7 +164,7 @@ export class EntityScatter {
         const svg = d3.select(`#${this.props.id}`).select("svg")
         const fisheye_indicator = svg.append("circle").attr("class", "fisheye") 
         svg.on("mousemove", function(e) {
-            console.log(d3.pointer(e))
+            // //console.log(d3.pointer(e))
             fisheye.focus(d3.pointer(e));
             svg.selectAll("circle.entity_circle, .expand_circle").each(function(d: any) {
                 const fisheye_coord = fisheye([d.x, d.y])
@@ -479,7 +479,7 @@ export class EntityScatter {
                 let segment_point = { x: Math.max(self.margin.left, Math.min(end_x, self.vbWidth + self.margin.left)), y: Math.max(self.margin.top, Math.min(end_y, self.vbHeight)) }
                 // let segment_point = {x: end_x, y: end_y}
                 self.updateSegmentation(segment_point.x, segment_point.y)
-                // console.log({pos: self.xScale.invert(self.segment_point.x), neg: self.yScale.invert(self.segment_point.y)})
+                // //console.log({pos: self.xScale.invert(self.segment_point.x), neg: self.yScale.invert(self.segment_point.y)})
                 // self.setSegmentation({pos: self.xScale.invert(self.segment_point.x), neg: self.yScale.invert(self.segment_point.y)})
                 if (!self.emit_at_end)
                 {
@@ -574,7 +574,7 @@ export class EntityScatter {
         const svg = d3.select(`#${this.props.id}`).select("svg")
 
         let bind_data: ScatterNode[] = this.filtered_data.value
-        // console.log(bind_data)
+        // //console.log(bind_data)
         var self = this
 
         const colorScale = d3.scaleLog().domain([1, this.max_articles.value]).range(['#FFFFFF', '#5e0053']);

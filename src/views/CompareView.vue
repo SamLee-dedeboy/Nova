@@ -93,7 +93,7 @@ const data_fetched: Ref<boolean> = ref(false)
 
 
 vue.onMounted(async () => {
-    console.log({selected_outlet: selected_outlet.value})
+    //console.log({selected_outlet: selected_outlet.value})
     const promiseArray: any[] = []
     promiseArray.push(new Promise((resolve) => {
         fetchEntityTableData().then(() => resolve("success"))
@@ -120,7 +120,7 @@ async function fetchEntityTableData() {
         .then(res => res.json())
         .then(json => {
             overall_entity_data.value = json
-            console.log("overall table data fetched", overall_entity_data.value)
+            //console.log("overall table data fetched", overall_entity_data.value)
             table_loading.value = false
         })
 }
@@ -172,7 +172,7 @@ async function fetchSelectedEntityHex(target: string, co_occurr_entity: string="
                 setHexViewGrid(hexview_grid_data)
                 hexview_grid.value = hexview_grid_data
                 setClickedHexView(hexview_grid.value[0])
-                console.log(hexview_grid.value[0])
+                //console.log(hexview_grid.value[0])
                 const target_entity = {
                     name: selected_entity.value.name, 
                     outlet: "ABC News",
@@ -190,7 +190,7 @@ async function fetchSelectedEntityHex(target: string, co_occurr_entity: string="
     await Promise.all(promiseArray)
         .then(res => {
             data_fetched.value = true
-            console.log("all fetched")
+            //console.log("all fetched")
         })
     // handle user return page
     if(co_occurr_entity != "") handleHexClicked({target: target + "-"+selected_outlet.value, co_occurr_entity} , hexview_grid.value[0]) 
@@ -207,7 +207,7 @@ function handleTableEntityClicked(selected_entity_name: string) {
 }
 
 async function fetch_entity_grouped_node(hex_candidates, outlet) {
-    console.log(hex_candidates)
+    //console.log(hex_candidates)
     await fetch(`${server_address}/processed_data/scatter_node/grouped/hex_candidates/${outlet}`, {
         method: "POST",
         headers: {
@@ -226,8 +226,8 @@ async function fetch_entity_grouped_node(hex_candidates, outlet) {
                     min_articles: Math.min(...json.map(node => node.article_ids.length)),
                 }
             }
-            console.log(hex_entity_scatter_view.value)
-            console.log("hex entity scatter view fetched")
+            //console.log(hex_entity_scatter_view.value)
+            //console.log("hex entity scatter view fetched")
         })
 }
 
@@ -239,7 +239,7 @@ async function handleHexClicked({ target, co_occurr_entity }, view) {
     await fetch(`${server_address}/processed_data/cooccurr_info/grouped/${outlet}/${entity}/${co_occurr_entity}`)
         .then(res => res.json())
         .then(json => {
-            console.log("cooccurr_info fetched", json)
+            //console.log("cooccurr_info fetched")
             const target_entity = {
                 name: json.target,
                 outlet: outlet,
@@ -298,10 +298,10 @@ function outletIconHeaderStyle(name: string) {
       <p class="introTutorial">
         Try to spot some similarities and difference between the outlets for how they covered {{ selected_entity.name.replaceAll("_"," ") }}.
         For example, some outlets discuss different topics when mentioning {{ selected_entity.name.replaceAll("_"," ") }}.
+        Hex cells with a <span style="color: #f8f8f8; background-color: #c0c0c0;">light grey</span> background are topics not mentioned alongside {{ selected_entity.name.replaceAll("_"," ") }}.
       </p>
       <p class="tutorialInstructions">
-        Use the notes block to keep track of any general observations you may find here.
-        Click <span class="bold"> review articles </span> after selecting a hexagon to see articles that contain that topic and {{ selected_entity.name.replaceAll("_"," ") }}.
+        Click <span class="bold"> Inspection </span> after selecting a hexagon to view articles that contain that topic and {{ selected_entity.name.replaceAll("_"," ") }}.
       </p>
 
       <template #footer>

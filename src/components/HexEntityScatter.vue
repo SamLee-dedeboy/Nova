@@ -34,12 +34,12 @@
 
     // initialization
     const props = defineProps({
-        view: EntityScatterView,
+        view: Object as () => EntityScatterView,
         highlight_node_text: String,
         adjust_offset: Number,
         id: String,
         segment_mode: Boolean,
-        segmentation: Sentiment2D
+        segmentation: Object as () => Sentiment2D,
     })
     const emit = defineEmits(['node_clicked', 'update:segmentation', 'show_temporal', 'update-weight-ended'])
     const tooltip_content: Ref<string> = ref("") 
@@ -48,13 +48,14 @@
 
     const max_articles = vue.computed(() => props.view?.data.max_articles)
     const min_articles = vue.computed(() => props.view?.data.min_articles)
-    const outlet_article_num_dict: Ref<any> = vue.inject("outlet_article_num_dict") || ref({})
+    const outlet_article_num_dict: Ref<any> =  ref({})
     const total_articles = computed(() => {
         return _.sumBy( 
             Object.keys(outlet_article_num_dict.value), 
             (outlet) => (outlet_article_num_dict.value[outlet])
         )
     })
+    //console.log("TOTAL ARTCILES HES ", total_articles);
 
     const filtered_data: Ref<ScatterNode[]> = computed( () => props.view?.data.nodes.filter((node: ScatterNode) => node.article_ids.length > (props.article_num_threshold || 0)))
     const clicked_node: Ref<ScatterNode> = ref(new ScatterNode())
@@ -112,7 +113,7 @@
     // }, {deep: true}) 
     // vue.watch(() => segmentation.value, (new_value, old_value) => {
     //     if(new_value.pos !== old_value.pos && new_value.neg !== old_value.neg) {
-    //         console.log(new_value.pos, old_value.pos, new_value.neg, old_value.neg)
+    //         //console.log(new_value.pos, old_value.pos, new_value.neg, old_value.neg)
     //         let segment_point = {x: entityScatterPlot.xScale(new_value.pos), y: entityScatterPlot.yScale(new_value.neg)}
     //         entityScatterPlot.updateSegmentation(segment_point.x,segment_point.y, true)
     //     }

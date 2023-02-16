@@ -46,7 +46,7 @@
         selected_entity_name: String,
         article_num_threshold: Number,
         segment_mode: Boolean,
-        segmentation: Object as () => Sentiment2D,
+        segmentation: Object as () => Sentiment2D
     })
     const emit = defineEmits([
         // 'node_clicked', 
@@ -134,7 +134,7 @@
     })
 
     function setHighlightNode(node_text) {
-        console.log('set highlight node', node_text)
+        // console.log('set highlight node', node_text)
         entityScatterPlot.setHighlightNode(node_text, emit)
     }
 
