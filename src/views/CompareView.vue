@@ -140,10 +140,9 @@ async function fetch_cooccurr_into(outlet, entity, co_occurr_entity) {
             setEntity(target_entity)
             const cooccurr_entity = {
                 target: json.target,
+                name: json.cooccurr_entity,
                 outlet: outlet,
-                name: json.target,
-                outlet: outlet,
-                article_ids: json.target_article_ids,
+                article_ids: json.cooccurr_article_ids,
                 // num_of_mentions: json.cooccurr_num,
                 // target_num_of_mentions: json.target_num_of_mentions,
                 // articles_topic_dict: json.cooccurr_articles_topic_dict,

@@ -187,7 +187,7 @@ async function fetch_cooccurr_into(outlet, entity, co_occurr_entity) {
     await fetch(`${server_address}/processed_data/cooccurr_info/grouped/${outlet}/${entity}/${co_occurr_entity}`)
         .then(res => res.json())
         .then(json => {
-            //console.log("cooccurr_info fetched")
+            console.log("cooccurr_info fetched", json)
             const target_entity = {
                 name: json.target,
                 outlet: outlet,
@@ -199,10 +199,9 @@ async function fetch_cooccurr_into(outlet, entity, co_occurr_entity) {
             setEntity(target_entity)
             const cooccurr_entity = {
                 target: json.target,
-                outlet: outlet,
                 name: json.cooccurr_entity,
                 outlet: outlet,
-                article_ids: json.target_article_ids,
+                article_ids: json.cooccurr_article_ids,
                 // num_of_mentions: json.cooccurr_num,
                 // target_num_of_mentions: json.target_num_of_mentions,
                 // articles_topic_dict: json.cooccurr_articles_topic_dict,
@@ -274,6 +273,12 @@ function outletIconStyle(name:string){
                 :entity_pair="[selected_entity?.name as string, selected_cooccurr_entity?.name as string]">
             </ArticleView>
             <div class="hexview-container">
+                <HexCooccurrence v-if="data_fetched" class="compare-co-hexview" :title="clicked_hexview.title"
+                    :id="`compare-co-hex-inpection`" :entity_cooccurrences="clicked_hexview.data"
+                    :segmentation="original_segmentation" :highlight_hex_entity="highlight_hex_entity"
+                    :show_blink="true"
+                    @hex-clicked="handleHexClicked">
+                </HexCooccurrence>
                 <div v-if="data_fetched" class="cooccurr-info-content">
                     <div class=journal-icon-container>
                         <div :class="['journal-style']">
@@ -294,17 +299,11 @@ function outletIconStyle(name:string){
                             <span style="font-weight:bolder" :title="selected_cooccurr_entity.name">
                                 {{selected_cooccurr_entity.name.replaceAll("_"," ")}}
                             </span>
-                        is {{ selected_cooccurr_entity? selected_cooccurr_entity.article_ids.length :
-                        selected_entity.article_ids.length }}
                         </span>
+                            is {{ selected_cooccurr_entity? selected_cooccurr_entity.article_ids.length :
+                            selected_entity.article_ids.length }}
                     </div>
                 </div>
-                <HexCooccurrence v-if="data_fetched" class="compare-co-hexview" :title="clicked_hexview.title"
-                    :id="`compare-co-hex-inpection`" :entity_cooccurrences="clicked_hexview.data"
-                    :segmentation="original_segmentation" :highlight_hex_entity="highlight_hex_entity"
-                    :show_blink="true"
-                    @hex-clicked="handleHexClicked">
-                </HexCooccurrence>
                 <svg style='position:absolute;'>
                     <pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)"
                         patternUnits="userSpaceOnUse">
