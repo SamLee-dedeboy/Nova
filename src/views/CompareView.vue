@@ -102,7 +102,7 @@ vue.onMounted(async () => {
         fetchSelectedEntityHex(selected_entity.value.name, selected_cooccurr_entity.value?.name || "").then(() => resolve("success"))
     }))
 
-    if(selected_cooccurr_entity.value.name) {
+    if(selected_cooccurr_entity.value?.name) {
         await fetch_cooccurr_into("ABC News", selected_entity.value.name, selected_cooccurr_entity.value.name)
     }
     await Promise.all(promiseArray)
@@ -129,7 +129,6 @@ async function fetch_cooccurr_into(outlet, entity, co_occurr_entity) {
     await fetch(`${server_address}/processed_data/cooccurr_info/grouped/${outlet}/${entity}/${co_occurr_entity}`)
         .then(res => res.json())
         .then(json => {
-            console.log("cooccurr_info fetched")
             const target_entity = {
                 name: json.target,
                 outlet: outlet,
@@ -255,8 +254,6 @@ async function handleHexClicked({ target, co_occurr_entity }, view) {
             const hex_cooccurr_entity = view.data.sorted_cooccurrences_list.find(hex_entity => hex_entity.entity === cooccurr_entity.name)
 
             setCooccurrEntity(cooccurr_entity)
-            console.log(selected_cooccurr_entity.value)
-
         })
     const hex_candidates = hexview_grid.value[0].data.sorted_cooccurrences_list.map((hex_entity: typeUtils.HexEntity) => hex_entity.entity)
     hex_candidates.push(entity)

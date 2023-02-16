@@ -108,12 +108,14 @@ function prepare_data() {
     // selected_outlet.value = selected_entity.value.outlet
     const promiseArray: any[] = []
     promiseArray.push(new Promise(async (resolve) => {
-        await fetch_articles(article_ids)
-        resolve("success")
+        fetch_articles(article_ids).then(
+            resolve("success")
+        )
     }))
     promiseArray.push(new Promise(async (resolve) => {
-        await fetch_article_highlights(article_ids)
-        resolve("success")
+        fetch_article_highlights(article_ids).then(
+            resolve("success")
+        )
     }))
     Promise.all(promiseArray)
         .then(() => {
@@ -173,6 +175,7 @@ async function handleChangeJournal(e) {
 }
 
 async function handleHexClicked({ target, co_occurr_entity }, view) {
+    console.log(target, co_occurr_entity)
     const entity = target.split("-")[0]
     const outlet = target.split("-")[1]
     highlight_hex_entity.value = co_occurr_entity
@@ -197,7 +200,7 @@ async function fetch_cooccurr_into(outlet, entity, co_occurr_entity) {
             const cooccurr_entity = {
                 target: json.target,
                 outlet: outlet,
-                name: json.target,
+                name: json.cooccurr_entity,
                 outlet: outlet,
                 article_ids: json.target_article_ids,
                 // num_of_mentions: json.cooccurr_num,
