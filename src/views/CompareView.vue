@@ -465,8 +465,8 @@ function outletIconHeaderStyle(name: string) {
 // general
 // ---------------------
 .splitter-outmost {
-    width: 99vw;
-    height: 98vh;
+    width: 100vw;
+    height: 95vh;
     display: flex;
 }
 
@@ -535,9 +535,10 @@ function outletIconHeaderStyle(name: string) {
 
 .flip-hex-container{
     display: inline-flex;
-    top: 6px;
-    left: 70%;
-    z-index: 99999;
+    top: 25%;
+    left: 96%;
+    z-index: 999;
+    position: absolute;
 }
 
 .hiveSelect {

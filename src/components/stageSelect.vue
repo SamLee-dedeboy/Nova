@@ -29,7 +29,7 @@ const stages = vue.computed(() => [
   {
     to: `/`,
     label: "Home",
-    disabled: disabled_item_array.value[0],
+    // disabled: disabled_item_array.value[0],
   },
   {
     to: `/belief/first/${random_outlet[0]}/${selected_entity.value?.name}`,

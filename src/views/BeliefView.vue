@@ -138,8 +138,11 @@ function outletIconStyle(name: string) {
 </script>
 <template>
     <div class='selection-grid'>
-        <img :src="`/${target_outlet}.png`"
+        <div class="journal-style">
+            <img :src="`/${target_outlet}.png`"
             :class="['journal-image',`${outletIconStyle(target_outlet)}`]" />
+        </div>
+
         <div v-if="true_hex_fetched" class=hex-cell 
         v-for="(segmentation, index) in segmentations"
         @click='handleCellClicked($event, segmentation, index)'> 
@@ -167,10 +170,11 @@ function outletIconStyle(name: string) {
 <style scoped>
 .selection-grid {
   width: 100%;
-  height: 99%;
+  padding: 1%;
+  height: 95vh;
   display: flex;
   flex-wrap: wrap-reverse;
-  justify-content: center;
+  justify-content: space-between;
 }
 
 .hex-cell {
@@ -179,15 +183,16 @@ function outletIconStyle(name: string) {
   justify-content: center;
   display: flex;
   flex-direction: column;
-  border: solid 1px black;
   margin: 0px 1px;
+  box-shadow: rgba(0, 0, 0, 0.05) 0px 0px 0px 1px;
   cursor:pointer;
+  background-color: white;
 }
 .hex-cell:hover {
-    border: solid 5px black;
+    box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
 }
 .clicked-cell {
-    border: solid 5px black;
+    box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
 }
 
 
@@ -195,14 +200,37 @@ function outletIconStyle(name: string) {
     pointer-events: none;
 }
 
+.journal-style {
+    width: 200px;
+    height: 200px;
+    position: absolute;
+    bottom: 68%;
+    left: 45%;
+    overflow: hidden;
+    border-radius: 50%;
+    border: #d7d7d7 3px solid;
+}
+
 .journal-image {
     display: inline;
     margin: 0 auto;
     width: auto;
-    height: 50px;
-    position: absolute;
-    left: 4%;
-    top: 17%;
+}
+
+.icon {
+    height: 100%;
+}
+
+.FoxNews-icon {
+    height: 85%;
+    right: 30%;
+    bottom: 2%;
+}
+
+.Breitbart-icon {
+    height: 65%;
+    top: 20%;
+    left: 10%;
 }
 
 /* .p-radiobutton {
@@ -216,10 +244,10 @@ function outletIconStyle(name: string) {
 } */
 
 .test-slider-container {
-    position:absolute;
-    left:3%;
-    top:31%;
-    width:200px;
+    position: absolute;
+    right: 25%;
+    top: 38%;
+    width: 30%;
 }
 .test-slider {
     width: inherit;

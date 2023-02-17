@@ -19,6 +19,9 @@ import StageSelect from "./stageSelect.vue";
     height: 5vh;
     display: flex;
     justify-content: space-between;
+    background: #f8f9fa;
+    z-index: 99;
+    box-shadow: rgb(0 0 0 / 20%) 0px 25px 20px -20px;
 }
 
 #nova-logo {
