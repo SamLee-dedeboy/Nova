@@ -78,6 +78,9 @@ vue.onBeforeMount(() => {
     fetch_outlet_hex(target_outlet.value, target_entity.value)
 })
 
+function shuffle(list) {
+    return list.map(value => ({ value, sort: Math.random() })).sort((a, b) => a.sort - b.sort).map(({ value }) => value)
+}
 async function fetch_outlet_hex(outlet, center_entity) {
     const random_hex_parameters = {
         "outlet": outlet,
@@ -144,7 +147,7 @@ function outletIconStyle(name: string) {
         </div>
 
         <div v-if="true_hex_fetched" class=hex-cell 
-        v-for="(segmentation, index) in segmentations"
+        v-for="(segmentation, index) in shuffle(segmentations)"
         @click='handleCellClicked($event, segmentation, index)'> 
             <!-- <div class=test-hex> {{ index }}</div> -->
             <HexCooccurrence class="belief-hexview" title="belief-hexview" :id="`belief-hex-${index}`"
