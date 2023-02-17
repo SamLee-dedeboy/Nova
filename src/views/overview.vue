@@ -506,7 +506,8 @@ function toggleTutorial(e: MouseEvent) {
             </h2>
             <div class="overview-hex-container" v-if="overview_constructed">
               <!-- load icon -->
-              <i v-if="!overall_selected_hexview" class="pi pi-spin pi-spinner" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/>
+              <!-- <i v-if="!overall_selected_hexview" class="pi pi-spin pi-spinner" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/> -->
+              <i v-if="!overall_selected_hexview" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/>
               <HexCooccurrence v-else ref="overall_co_hexview" class="overall-co-hexview"
                 :title="overall_selected_hexview.title" :id="`overall-co-hex`"
                 :entity_cooccurrences="overall_selected_hexview.data" :segmentation="segmentation"

@@ -141,7 +141,8 @@ async function fetch_articles(article_ids) {
         .then(json => {
             target_articles.value = json
             //console.log({json})
-            //console.log("articles fetched", json)
+            console.log("articles fetched", article_ids)
+            console.log("articles fetched", json)
         })
 }
 

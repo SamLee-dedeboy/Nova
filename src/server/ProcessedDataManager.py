@@ -125,15 +125,6 @@ def extract_cooccurrences_grouped(article_list):
                                 "sentiment2": sentiment2,
                             },
                         })
-                        cooccurrences_dict[outlet][entity2][entity1].append({
-                            "article_id": article_id,
-                            "sentiment": {
-                                "entity1": entity1,
-                                "sentiment1": sentiment1,
-                                "entity2": entity2,
-                                "sentiment2": sentiment2,
-                            },
-                        })
     # utils.save_json(cooccurrences_dict, 'cooccurrences.json')
     return cooccurrences_dict
 
