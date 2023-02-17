@@ -399,8 +399,8 @@ function outletIconStyle(name:string){
 // css for split-panel layout
 // ---------------------
 .splitter-outmost {
-    width: 99vw;
-    height: 98vh;
+    width: 100vw;
+    height: 95vh;
     display: flex;
 }
 
