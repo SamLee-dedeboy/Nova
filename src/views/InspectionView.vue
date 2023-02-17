@@ -291,7 +291,9 @@ function outletIconStyle(name:string){
                         </div>
                     </div>
                     <div class="num_of_articles">
-                        Number of articles about
+                        A total of  {{ selected_cooccurr_entity? selected_cooccurr_entity.article_ids.length :
+                            selected_entity.article_ids.length }}
+                            articles are found related to
                         <span style="font-weight:bolder" :title="selected_entity?.name"> {{selected_entity?.name.replaceAll("_"," ")}}
                         </span>
                         <span v-if="selected_cooccurr_entity">
@@ -300,8 +302,21 @@ function outletIconStyle(name:string){
                                 {{selected_cooccurr_entity.name.replaceAll("_"," ")}}
                             </span>
                         </span>
-                            is {{ selected_cooccurr_entity? selected_cooccurr_entity.article_ids.length :
-                            selected_entity.article_ids.length }}
+                     </div>
+                    <div class="notes" >
+                        <h2 class="component-header notes-header">
+                            Notes
+                            <i class='pi pi-info-circle tooltip'>
+                                <span class="tooltiptext right-tooltiptext" style="width: 145px">
+                                    Write down any hypothesis or questions you have.
+                                    The system will document that for you.
+                                </span>
+                            </i>
+                        </h2>
+                        <textarea class="notes-style"
+                        :value="notes"
+                        placeholder="Write down any thoughts you have..." 
+                        @input="setNotes" />
                     </div>
                 </div>
                 <svg style='position:absolute;'>
@@ -493,7 +508,7 @@ li {
 }
 
 .num_of_articles {
-    width: 50%;
+    width: 100%;
     margin-left: 2%;
     font-size: 1rem;
 }
@@ -531,6 +546,7 @@ li {
 .hexview-container {
     display: flex;
     max-height: 49%;
+    overflow: hidden;
 }
 
 // ---------------------
@@ -588,13 +604,23 @@ li {
 }
 
 
+.component-header.notes-header {
+    background: #f7f7f7;
+    margin: 3% 1% 1% 0%;
+    padding-left: 2%;
+}
+
 .notes {
-    display: flex;
-    flex-direction: column;
+  width: 100%;
+  height: 100%;
+  padding-bottom: 1%;
+  display: flex;
+  flex-direction: column;
 }
 
 .notes-style {
-    height: 100%;
+  width: 100%;
+  height: 100%;
 }
 
 .document-container {
