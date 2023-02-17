@@ -319,6 +319,21 @@ function outletIconStyle(name:string){
                         placeholder="Write down any thoughts you have..." 
                         @input="setNotes" />
                     </div>
+                    <div class="notes" >
+                        <h2 class="component-header notes-header">
+                            Notes
+                            <i class='pi pi-info-circle tooltip'>
+                                <span class="tooltiptext right-tooltiptext" style="width: 145px">
+                                    Write down any hypothesis or questions you have.
+                                    The system will document that for you.
+                                </span>
+                            </i>
+                        </h2>
+                        <textarea class="notes-style"
+                        :value="notes"
+                        placeholder="Write down any thoughts you have..." 
+                        @input="setNotes" />
+                    </div>
                 </div>
                 <svg style='position:absolute;'>
                     <pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)"
