@@ -39,5 +39,3 @@ public/*.json
 src/server/__pycache__/
 src/server/data/
 *.txt
-
-data/
