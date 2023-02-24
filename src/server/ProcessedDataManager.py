@@ -9,20 +9,16 @@ class ProcessedDataManager:
     def __init__(self, raw_data):
         self.outlet_set, \
         self.article_dict, \
-        self.article_bins_dict, \
+        self.entity_article_dict, \
         self.min_timestamp, \
         self.max_timestamp, \
         self.outlet_article_num_dict, \
-        self.outlet_article_classified_num_dict \
-        = processArticleDict(raw_data.outlet_article_dict)
-        self.entity_list = list(raw_data.candidate_entity.keys())
-        self.headline_entities_dict = object_to_dict(addNERFields(raw_data.headline_entities), "id", "headline_entities")
+        = processRawData(raw_data.article_data)
+        self.entity_list = list(self.entity_article_dict.keys())
+        self.headline_entities_dict = object_to_dict(raw_data.article_data, "id", "headline_entities")
         self.content_entities_dict = generate_content_entities(raw_data.article_data)
-        # self.sentence_index_dict = reverse_index_sentences(raw_data.article_data)
-        # self.summary_entities_dict = object_to_dict(raw_data.summary_entities, "id", "summary_entities")
 
         # NewsSentiment
-        # self.scatter_raw_data, self.cooccurrences_dict, self.metadata = processRawData(raw_data.raw_data)
         self.entity_mention_articles, self.metadata = index_by_entities(raw_data.article_data)
         self.overall_cooccurrences_dict = extract_cooccurrences_overall(raw_data.article_data)
         self.grouped_cooccurrences_dict = extract_cooccurrences_grouped(raw_data.article_data)
@@ -150,35 +146,60 @@ def index_by_entities(article_list):
     }
     return entity_mentioned_articles_dict, metadata
 
-def processArticleDict(outlet_article_dict):
+def processRawData(articles):
+    # group articles by outlet
+    outlet_article_dict = defaultdict(list)
+    for article in articles:
+        outlet_article_dict[article['journal']].append(article)
+
+    # timestamps init
     date_str_template = '%Y-%m-%d'
     min_timestamp = datetime.strptime('3000-10-10', date_str_template)
     max_timestamp = datetime.strptime('1000-10-10', date_str_template)
+
+    # init return values
     article_dict = {}
-    article_bins_dict = {}
+    entity_article_dict = defaultdict(list)
     outlet_article_num_dict = {}
-    outlet_article_classified_num_dict = defaultdict(dict)
+    # outlet_article_classified_num_dict = defaultdict(dict)
+
     for outlet, articles in outlet_article_dict.items():
         for article in articles:
-            if(article["sentiment"]["label"] == "NEGATIVE"):
-                article["sentiment"]['score'] *= -1
+            # collect timestamp
             timestamp = datetime.strptime(article['timestamp'].split(" ")[0], date_str_template)
             if(timestamp < min_timestamp): min_timestamp = timestamp
             if(timestamp > max_timestamp): max_timestamp = timestamp
+            # index by id
             article_dict[article["id"]] = article
-        article_bins_dict[outlet] = binArticlesByMonth(articles)
+
+            # entities
+            mentioned_entities = extract_entities(article)
+            for mentioned_entity in mentioned_entities:
+                entity_article_dict[mentioned_entity].append(article['id'])
         outlet_article_num_dict[outlet] = len(articles)
-        pos_articles, neg_articles = [], []
-        for article in articles:
-            (pos_articles if article['sentiment']['label'] == 'POSITIVE' else neg_articles).append(article["id"])
-        outlet_article_classified_num_dict[outlet]["pos"] = len(pos_articles)
-        outlet_article_classified_num_dict[outlet]["neg"] = len(neg_articles)
+
+        # pos_articles, neg_articles = [], []
+        # for article in articles:
+        #     (pos_articles if article['sentiment']['label'] == 'POSITIVE' else neg_articles).append(article["id"])
+        # # record pos & neg article
+        # outlet_article_classified_num_dict[outlet]["pos"] = len(pos_articles)
+        # outlet_article_classified_num_dict[outlet]["neg"] = len(neg_articles)
 
 
     min_timestamp = min_timestamp.isoformat()
     max_timestamp = max_timestamp.isoformat()
     outlet_set = set(outlet_article_dict.keys())
-    return outlet_set, article_dict, article_bins_dict, min_timestamp, max_timestamp, outlet_article_num_dict, outlet_article_classified_num_dict
+    return outlet_set, article_dict, entity_article_dict, min_timestamp, max_timestamp, outlet_article_num_dict
+
+def extract_entities(article):
+    entities_field = article['entities']
+    entity_set = set()
+    for sentence_index, entity_mentions in entities_field.items():
+        entity_wiki_ids = list(map(lambda entity_mention: entity_mention['wiki_id'], entity_mentions))
+        entity_set.update(entity_wiki_ids)
+    return list(entity_set)
+
+
 
 def binArticlesByMonth(articles):
     article_bin_dict = defaultdict(list)

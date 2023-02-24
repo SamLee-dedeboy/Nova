@@ -161,7 +161,7 @@ def ids_to_articles():
 
 @app.route("/processed_data/cooccurr_info/overall/<target>/<co_occurr_entity>")
 def get_cooccurr_info(target, co_occurr_entity):
-    cooccurr_article_ids = raw_data.entity_cooccurrences[target][co_occurr_entity]
+    cooccurr_article_ids = processed_data.overall_cooccurrences_dict[target][co_occurr_entity]
     cooccurr_articles = processed_data.idsToArticles(cooccurr_article_ids)
     # articles_topic_dict = processed_data.binArticlesByTopic(cooccurr_articles)
     response = {
