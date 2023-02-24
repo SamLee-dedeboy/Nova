@@ -37,14 +37,12 @@ class REL_NedAnalyzer:
         print("analyze_entity(): processing results")
         results = process_results(mentions_dataset, predictions, dataset)
         print("analyze_entity(): process result done")
-        print(dataset)
-        print(results)
-        for id, sentence_entity in results.items():
-            sentence_entity = sentence_entity[0]
-            start_pos = sentence_entity[0]
-            len = sentence_entity[1]
-            # print(dataset[id][0])
-            print(dataset[id][0][start_pos: start_pos + len])
+        # for id, sentence_entity in results.items():
+        #     sentence_entity = sentence_entity[0]
+        #     start_pos = sentence_entity[0]
+        #     len = sentence_entity[1]
+        #     # print(dataset[id][0])
+        #     print(dataset[id][0][start_pos: start_pos + len])
         return results
         # doc_entity_dict = {} 
         # print("analyze_entity(): summarizing entities...")

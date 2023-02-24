@@ -12,4 +12,13 @@ def splitSentences(content):
 def _splitSentences(content, post_process=lambda x:x):
     return list(map(post_process, tokenize.sent_tokenize(content)))
 
+def getDataset(relative_path):
+    file = open(relative_path)
+    data = json.load(file)
+    return data
 
+def dict_to_json(dict, filepath="data/new_dict.json"):
+    dirname = os.path.dirname(__file__)
+    relative_path = os.path.join(dirname, filepath)
+    with open(relative_path, 'w') as fp:
+        json.dump(dict, fp, indent=4)

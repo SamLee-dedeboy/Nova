@@ -1,5 +1,4 @@
 from tracemalloc import start
-import preprocess
 import json
 # import textblob_sa
 from hugging_face_sa import hugFace
@@ -11,7 +10,7 @@ from NewsSentiment import TargetSentimentClassifier
 
 def add_sentiment(src_dataset_path, dst_dataset_path, subset=None):
     # init
-    dataset = preprocess.getDataset(src_dataset_path)
+    dataset = utils.getDataset(src_dataset_path)
     hugging_face_analyzer =  hugFace()
     articles = dataset if subset == None else dataset[0:subset]
     # process sentiment 
@@ -36,7 +35,7 @@ def add_sentiment(src_dataset_path, dst_dataset_path, subset=None):
     print("-------------------------------")
     print("Sentiemnt Processing Done! Saving....")
     print("-------------------------------")
-    preprocess.dict_to_json(articles, filepath=dst_dataset_path)
+    utils.dict_to_json(articles, filepath=dst_dataset_path)
 
 
 # add_sentiment(
@@ -60,24 +59,22 @@ def NewsSentiment_analysis(src_dataset_path=r'data/articles_w_entities.json', ds
             sentence = sentences[int(sentence_index)]
             sentence_sentiment_res = []
             for entity in sentence_entities:
-                start_pos = entity[0]
-                length = entity[1]
-                word = entity[2]
-                wiki_id = entity[3]
-                confidence = entity[5]
-                type = entity[6]
+                start_pos = entity['start_pos']
+                length = entity['length']
                 left, target, right = generate_triplet(start_pos, length, sentence)
                 sentiment = tsc.infer_from_text(left, target, right)[0]
-                entity = {
-                    "start_pos": start_pos,
-                    "length": length,
-                    "word": word,
-                    "wiki_id": wiki_id,
-                    "ner_confidence": confidence,
-                    "type": type,
-                    "sentiment": sentiment['class_label'],
-                    "sentiment_prob": sentiment['class_prob'],
-                }
+                # entity = {
+                #     "start_pos": entity.start_pos,
+                #     "length": entity.length,
+                #     "word": entity.word,
+                #     "wiki_id": entity.wiki_id,
+                #     "ner_confidence": entity.ner_confidence,
+                #     "type": entity.type,
+                #     "sentiment": sentiment['class_label'],
+                #     "sentiment_prob": sentiment['class_prob'],
+                # }
+                entity["sentiment"] = sentiment['class_label']
+                entity["sentiment_prob"] = sentiment['class_prob']
                 sentence_sentiment_res.append(entity)
                 sentence_entities_dict[sentence_index] = sentence_sentiment_res
         res.append(article)
