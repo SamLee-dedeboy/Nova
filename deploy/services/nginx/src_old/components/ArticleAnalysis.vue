@@ -11,7 +11,7 @@ const server_address = vue.inject("server_address")
 const store = useUserDataStore()
 const props = defineProps({
     entity_pair: Object as () => String[],
-    selected_article: Object as () => Article,
+    selected_article: Article,
     article_highlights: Object as () => any,
 })
 
@@ -26,7 +26,7 @@ vue.watch(() => props.selected_article, async () => {
 })
 
 async function splitArticleSentences(content) {
-    await fetch("http://localhost:3040/" + `${server_address}/splitSentences`, {
+    await fetch(`${server_address}/splitSentences`, {
         method: "POST",
         headers: {
             "Accept": "application/json",
@@ -163,6 +163,21 @@ defineExpose({
             </ScrollPanel>
         </div>
     </div>
+    <div class="notes" >
+        <h2 class="component-header notes-header">
+            Notes
+            <i class='pi pi-info-circle tooltip'>
+                <span class="tooltiptext right-tooltiptext" style="width: 145px">
+                    Write down any hypothesis or questions you have.
+                    The system will document that for you.
+                </span>
+            </i>
+        </h2>
+        <textarea class="notes-style"
+         :value="notes"
+         placeholder="Write down any thoughts you have..." 
+         @input="setNotes" />
+    </div>
 </div>
 </template>
 
@@ -186,10 +201,26 @@ defineExpose({
     margin: 1%
 }
 .analysis-left {
-    width: 100%;
+    width: 75%;
     overflow: hidden;
-    display: flex;
-    flex-direction: column;
+display: flex;
+flex-direction: column;
+}
+.component-header.notes-header {
+    background: #f7f7f7;
+    margin: 3% 1% 1% 0%;
+    padding-left: 2%;
+}
+.notes {
+  width: 25%;
+  /* height: 100%; */
+  padding-bottom: 1%;
+  display: flex;
+  flex-direction: column;
+}
+.notes-style {
+  width: 100%;
+  height: 100%;
 }
 
 .articleHeadline {

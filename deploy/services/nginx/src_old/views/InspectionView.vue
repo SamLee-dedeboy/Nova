@@ -141,8 +141,7 @@ async function fetch_articles(article_ids) {
         .then(json => {
             target_articles.value = json
             //console.log({json})
-            console.log("articles fetched", article_ids)
-            console.log("articles fetched", json)
+            //console.log("articles fetched", json)
         })
 }
 
@@ -157,7 +156,7 @@ async function fetch_article_highlights(article_ids) {
     })
         .then(res => res.json())
         .then(json => {
-            console.log("highlights fetched", json)
+            //console.log("highlights fetched", json)
             target_article_highlights.value = json
         })
 }
@@ -266,13 +265,6 @@ function outletIconStyle(name:string){
                     </span>
                 </i>
             </h2>
-            <ArticleView class="article-view-container" v-if="data_fetched" v-model:sst_threshold="segmentation"
-                ref="article_view"
-                :articles="target_articles" 
-                :article_highlights="target_article_highlights"
-                @article-selected="(article) => selected_article=article"
-                :entity_pair="[selected_entity?.name as string, selected_cooccurr_entity?.name as string]">
-            </ArticleView>
             <div class="hexview-container">
                 <HexCooccurrence v-if="data_fetched" class="compare-co-hexview" :title="clicked_hexview.title"
                     :id="`compare-co-hex-inpection`" :entity_cooccurrences="clicked_hexview.data"
@@ -292,9 +284,7 @@ function outletIconStyle(name:string){
                         </div>
                     </div>
                     <div class="num_of_articles">
-                        A total of  {{ selected_cooccurr_entity? selected_cooccurr_entity.article_ids.length :
-                            selected_entity.article_ids.length }}
-                            articles are found related to
+                        Number of articles about
                         <span style="font-weight:bolder" :title="selected_entity?.name"> {{selected_entity?.name.replaceAll("_"," ")}}
                         </span>
                         <span v-if="selected_cooccurr_entity">
@@ -303,21 +293,8 @@ function outletIconStyle(name:string){
                                 {{selected_cooccurr_entity.name.replaceAll("_"," ")}}
                             </span>
                         </span>
-                     </div>
-                    <div class="notes" >
-                        <h2 class="component-header notes-header">
-                            Notes
-                            <i class='pi pi-info-circle tooltip'>
-                                <span class="tooltiptext right-tooltiptext" style="width: 145px">
-                                    Write down any hypothesis or questions you have.
-                                    The system will document that for you.
-                                </span>
-                            </i>
-                        </h2>
-                        <textarea class="notes-style"
-                        :value="notes"
-                        placeholder="Write down any thoughts you have..." 
-                        @input="setNotes" />
+                            is {{ selected_cooccurr_entity? selected_cooccurr_entity.article_ids.length :
+                            selected_entity.article_ids.length }}
                     </div>
                 </div>
                 <svg style='position:absolute;'>
@@ -328,6 +305,14 @@ function outletIconStyle(name:string){
                     </pattern>
                 </svg>
             </div>
+            <ArticleView class="article-view-container" v-if="data_fetched" v-model:sst_threshold="segmentation"
+                ref="article_view"
+                :articles="target_articles" 
+                :article_highlights="target_article_highlights"
+                @article-selected="(article) => selected_article=article"
+                :entity_pair="[selected_entity?.name as string, selected_cooccurr_entity?.name as string]">
+            </ArticleView>
+
         </SplitterPanel>
         <SplitterPanel id="entity_info_section" class="entity-info-panel flex align-items-center justify-content-center"
             :size="right_section_size">
@@ -509,7 +494,7 @@ li {
 }
 
 .num_of_articles {
-    width: 100%;
+    width: 50%;
     margin-left: 2%;
     font-size: 1rem;
 }
@@ -547,7 +532,6 @@ li {
 .hexview-container {
     display: flex;
     max-height: 49%;
-    overflow: hidden;
 }
 
 // ---------------------
@@ -605,23 +589,13 @@ li {
 }
 
 
-.component-header.notes-header {
-    background: #f7f7f7;
-    margin: 3% 1% 1% 0%;
-    padding-left: 2%;
-}
-
 .notes {
-  width: 100%;
-  height: 100%;
-  padding-bottom: 1%;
-  display: flex;
-  flex-direction: column;
+    display: flex;
+    flex-direction: column;
 }
 
 .notes-style {
-  width: 100%;
-  height: 100%;
+    height: 100%;
 }
 
 .document-container {

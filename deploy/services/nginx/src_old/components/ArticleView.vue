@@ -150,7 +150,7 @@ vue.watch(neg_articles, (new_value, old_value) => {
 // }
 
 async function handleArticleClicked(e, article_id) {
-    await fetch("http://localhost:3040/" + `${server_address}/processed_data/ids_to_articles`, {
+    await fetch(`${server_address}/processed_data/ids_to_articles`, {
         method: "POST",
         headers: {
             "Accept": "application/json",

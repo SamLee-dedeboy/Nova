@@ -78,15 +78,15 @@ vue.onBeforeMount(() => {
     fetch_outlet_hex(target_outlet.value, target_entity.value)
 })
 
-function shuffle(list) {
-    return list.map(value => ({ value, sort: Math.random() })).sort((a, b) => a.sort - b.sort).map(({ value }) => value)
-}
+
+
 async function fetch_outlet_hex(outlet, center_entity) {
     const random_hex_parameters = {
         "outlet": outlet,
         "center_entity": center_entity,
     }
-    await fetch("http://localhost:3040/" + `${server_address}/hexview/grouped/${center_entity}/${outlet}`)
+    console.log(`${server_address}/hexview/grouped/${center_entity}/${outlet}`)
+    return fetch("http://localhost:3040/" + `${server_address}/hexview/grouped/${center_entity}/${outlet}`)
         .then(res => res.json())
         .then(json => {
             true_hex_data.value = json
@@ -147,7 +147,7 @@ function outletIconStyle(name: string) {
         </div>
 
         <div v-if="true_hex_fetched" class=hex-cell 
-        v-for="(segmentation, index) in shuffle(segmentations)"
+        v-for="(segmentation, index) in segmentations"
         @click='handleCellClicked($event, segmentation, index)'> 
             <!-- <div class=test-hex> {{ index }}</div> -->
             <HexCooccurrence class="belief-hexview" title="belief-hexview" :id="`belief-hex-${index}`"
