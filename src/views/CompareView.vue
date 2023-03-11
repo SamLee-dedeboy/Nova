@@ -3,10 +3,12 @@
  * primevue components
  */
 import Splitter from 'primevue/splitter';
-import SplitterPanel from "primevue/splitterpanel"
-import Divider from "primevue/divider"
+import SplitterPanel from "primevue/splitterpanel";
+import Divider from "primevue/divider";
 import Textarea from 'primevue/textarea';
 import Dialog from 'primevue/dialog';
+import InputSwitch from 'primevue/inputswitch';
+
 
 
 /**
@@ -32,6 +34,7 @@ import TopicBars from "../components/TopicBars.vue";
 import HorizontalTopicBars from '../components/HorizontalTopicBars.vue';
 import Legend from '../components/Legend.vue';
 import HexEntityScatter from '../components/HexEntityScatter.vue';
+import EntityTable from "../components/entityTable.vue";
 
 const route = useRoute()
 // const store = useStore()
@@ -39,24 +42,38 @@ const store = useUserDataStore()
 /**
  * vuex store objects
  */
-console.log(store)
+const article_num_threshold = vue.computed(() => store.article_num_threshold)
 const segmentation = vue.computed(() => store.segmentation)
 const setSegmentation = (segmentation) => store.setSegmentation(segmentation)
+const user_outlet_segmentations = vue.computed(() => store.user_outlet_segmentations)
 const selected_entity = vue.computed(() => store.selected_entity)
 const setEntity = (entity) => store.setEntity(entity)
-const selected_cooccurr_entity = vue.computed(() => store.selected_cooccurr_entity)
+const selected_cooccurr_entity = vue.computed(() => store.selected_cooccurr_entity )
 const setCooccurrEntity = (cooccurr_entity) => store.setCooccurrEntity(cooccurr_entity)
 const clicked_hexview = vue.computed(() => store.clicked_hexview)
 const setClickedHexView = (hexview) => store.setClickedHexView(hexview)
-const hexview_grid = vue.computed(() => store.hexview_grid)
+// const hexview_grid = vue.computed(() => store.hexview_grid)
+const hexview_grid: Ref<Any> = ref(undefined)
 const setHexViewGrid = (grid) => store.setHexViewGrid(grid)
-const outlet_weight_dict = vue.computed(() => store.outlet_weight_dict)
+const overall_entity_data: Ref<ScatterNode[]> = ref([])
+const setEntityData = (entity_data) => store.setEntityData(entity_data)
 
+const selected_entity_name: Ref<String> = ref("")
+vue.watch(selected_entity_name, (new_value, old_value) => {
+  handleTableEntityClicked(selected_entity_name.value)
+})
 const hex_entity_scatter_view: Ref<any> = ref(undefined)
 const highlight_hex_entity: Ref<string> = ref("")
 const notes = vue.computed(() => store.notes)
 const setNotes = (e) => store.setNotes(e.target.value)
 const selected_outlet = vue.computed(() => selected_entity.value?.outlet === "Overall"? "ABC News" :selected_entity.value?.outlet)
+const outlet_leaning_scale = vue.inject("outlet_leaning_scale")
+// const flipHex: Ref<Any> = ref(outlet_leaning_scale.map(scale_obj => scale_obj.outlet).map(outlet => { return { outlet: false } }))
+const flipHexFlag: Ref<Boolean> = ref(false)
+const hexview_loading: Ref<Boolean> = ref(true)
+const table_loading: Ref<Boolean> = ref(true)
+
+
 
 
 /**
@@ -76,12 +93,69 @@ const data_fetched: Ref<boolean> = ref(false)
 
 
 vue.onMounted(async () => {
-    const target: string = route.params.entity as string
-    const co_occurr_entity = route.params.cooccurr_entity as string
+    //console.log({selected_outlet: selected_outlet.value})
+    const promiseArray: any[] = []
+    promiseArray.push(new Promise((resolve) => {
+        fetchEntityTableData().then(() => resolve("success"))
+    }))
+    promiseArray.push(new Promise((resolve) => {
+        fetchSelectedEntityHex(selected_entity.value.name, selected_cooccurr_entity.value?.name || "").then(() => resolve("success"))
+    }))
+
+    if(selected_cooccurr_entity.value?.name) {
+        await fetch_cooccurr_into("ABC News", selected_entity.value.name, selected_cooccurr_entity.value.name)
+    }
+    await Promise.all(promiseArray)
+})
+
+async function fetchEntityTableData() {
+    await fetch(`${server_address}/overall/table/data`, {
+        method: "POST",
+        headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({article_num_threshold: article_num_threshold.value})
+    })
+        .then(res => res.json())
+        .then(json => {
+            overall_entity_data.value = json
+            //console.log("overall table data fetched", overall_entity_data.value)
+            table_loading.value = false
+        })
+}
+
+async function fetch_cooccurr_into(outlet, entity, co_occurr_entity) {
+    await fetch(`${server_address}/processed_data/cooccurr_info/grouped/${outlet}/${entity}/${co_occurr_entity}`)
+        .then(res => res.json())
+        .then(json => {
+            const target_entity = {
+                name: json.target,
+                outlet: outlet,
+                article_ids: json.target_article_ids,
+                // num_of_mentions: json.target_num,
+                // articles_topic_dict: json.target_articles_topic_dict,
+                // sst_ratio: clicked_hexview.value.data.target.sst
+            }
+            setEntity(target_entity)
+            const cooccurr_entity = {
+                target: json.target,
+                name: json.cooccurr_entity,
+                outlet: outlet,
+                article_ids: json.cooccurr_article_ids,
+                // num_of_mentions: json.cooccurr_num,
+                // target_num_of_mentions: json.target_num_of_mentions,
+                // articles_topic_dict: json.cooccurr_articles_topic_dict,
+            }
+            setCooccurrEntity(cooccurr_entity)
+        })
+}
+
+async function fetchSelectedEntityHex(target: string, co_occurr_entity: string="") {
     highlight_hex_entity.value = co_occurr_entity
     const promiseArray: any[] = []
     promiseArray.push(new Promise((resolve) => {
-        fetch(`${server_address}/hexview/grouped/${target}`)
+        fetch(`${server_address}/hexview/grouped/${target}/all`)
             .then(res => res.json())
             .then(json => {
                 const data_list = json
@@ -94,24 +168,44 @@ vue.onMounted(async () => {
                     hexview_grid_data.push(hex_view)
                 })
                 setHexViewGrid(hexview_grid_data)
-                console.log(data_list)
+                hexview_grid.value = hexview_grid_data
+                setClickedHexView(hexview_grid.value[0])
+                //console.log(hexview_grid.value[0])
+                const target_entity = {
+                    name: selected_entity.value.name, 
+                    outlet: "ABC News",
+                    article_ids: selected_entity.value.article_ids,
+                }
+                setEntity(target_entity)
                 const hex_candidates = hexview_grid.value[0].data.sorted_cooccurrences_list.map((hex_entity: typeUtils.HexEntity) => hex_entity.entity)
                 hex_candidates.push(target)
                 if (!selected_outlet.value.includes("Overall"))
                     fetch_entity_grouped_node(hex_candidates, selected_outlet.value)
                 resolve("success")
+                hexview_loading.value = false
             })
     }))
     await Promise.all(promiseArray)
         .then(res => {
             data_fetched.value = true
-            console.log("all fetched")
+            //console.log("all fetched")
         })
-    handleHexClicked({target: target + "-"+selected_outlet.value, co_occurr_entity} , hexview_grid.value[0]) 
-})
+    // handle user return page
+    if(co_occurr_entity != "") handleHexClicked({target: target + "-"+selected_outlet.value, co_occurr_entity} , hexview_grid.value[0]) 
+}
+
+function handleTableEntityClicked(selected_entity_name: string) {
+    hexview_loading.value = true
+    setHexViewGrid(undefined)
+    setCooccurrEntity(undefined)
+    fetchSelectedEntityHex(selected_entity_name)
+    // setTimeout(() => {
+    //     fetchSelectedEntityHex(selected_entity_name)
+    // }, 1)
+}
 
 async function fetch_entity_grouped_node(hex_candidates, outlet) {
-    console.log(hex_candidates)
+    //console.log(hex_candidates)
     await fetch(`${server_address}/processed_data/scatter_node/grouped/hex_candidates/${outlet}`, {
         method: "POST",
         headers: {
@@ -130,8 +224,8 @@ async function fetch_entity_grouped_node(hex_candidates, outlet) {
                     min_articles: Math.min(...json.map(node => node.article_ids.length)),
                 }
             }
-            console.log(hex_entity_scatter_view.value)
-            console.log("hex entity scatter view fetched")
+            //console.log(hex_entity_scatter_view.value)
+            //console.log("hex entity scatter view fetched")
         })
 }
 
@@ -143,31 +237,22 @@ async function handleHexClicked({ target, co_occurr_entity }, view) {
     await fetch(`${server_address}/processed_data/cooccurr_info/grouped/${outlet}/${entity}/${co_occurr_entity}`)
         .then(res => res.json())
         .then(json => {
-            console.log("cooccurr_info fetched")
+            //console.log("cooccurr_info fetched")
             const target_entity = {
                 name: json.target,
                 outlet: outlet,
-                num_of_mentions: json.target_num,
-                articles_topic_dict: json.target_articles_topic_dict,
-                sst_ratio: view.data.target.sst
+                article_ids: json.target_article_ids,
             }
             setEntity(target_entity)
             const cooccurr_entity = {
                 target: json.target,
                 name: json.cooccurr_entity,
                 outlet: outlet,
-                num_of_mentions: json.cooccurr_num,
-                target_num_of_mentions: json.target_num_of_mentions,
-                articles_topic_dict: json.cooccurr_articles_topic_dict,
-                cooccurr_article_ids: json.cooccurr_article_ids
+                article_ids: json.cooccurr_article_ids
             }
             const hex_cooccurr_entity = view.data.sorted_cooccurrences_list.find(hex_entity => hex_entity.entity === cooccurr_entity.name)
-            if (hex_cooccurr_entity.article_ids.length === 0) {
-                cooccurr_entity.articles_topic_dict = undefined
-            }
 
             setCooccurrEntity(cooccurr_entity)
-
         })
     const hex_candidates = hexview_grid.value[0].data.sorted_cooccurrences_list.map((hex_entity: typeUtils.HexEntity) => hex_entity.entity)
     hex_candidates.push(entity)
@@ -191,7 +276,7 @@ function outletIconStyle(name: string) {
     className = (className.includes("FoxNews") || className.includes("Breitbart")) ? className : 'icon';
     return className;
 }
-
+  
 function outletIconHeaderStyle(name: string) {
     let className = name.replaceAll(' ', '-') + '-icon';
     className = (className.includes("FoxNews") || className.includes("Breitbart")) ? className : 'icon';
@@ -203,16 +288,16 @@ function outletIconHeaderStyle(name: string) {
 <template>
     <Dialog v-model:visible="showTutorial" class="tutorialStyle" position="center" :modal="true">
       <template #header>
-        <h3> <i class="pi pi-compass"/> Compare Coverage for {{ route.params.entity.replaceAll("_"," ") }} </h3>
+        <h3> <i class="pi pi-compass"/> Compare Coverage for {{ selected_entity.name.replaceAll("_"," ") }} </h3>
       </template>
 
       <p class="introTutorial">
-        Try to spot some similarities and difference between the outlets for how they covered {{ route.params.entity.replaceAll("_"," ") }}.
-        For example, some outlets discuss different topics when mentioning {{ route.params.entity.replaceAll("_"," ") }}.
+        Try to spot some similarities and difference between the outlets for how they covered {{ selected_entity.name.replaceAll("_"," ") }}.
+        For example, some outlets discuss different topics when mentioning {{ selected_entity.name.replaceAll("_"," ") }}.
+        Hex cells with a <span style="color: #f8f8f8; background-color: #c0c0c0;">light grey</span> background are topics not mentioned alongside {{ selected_entity.name.replaceAll("_"," ") }}.
       </p>
       <p class="tutorialInstructions">
-        Use the notes block to keep track of any general observations you may find here.
-        Click <span class="bold"> review articles </span> after selecting a hexagon to see articles that contain that topic and {{ route.params.entity.replaceAll("_"," ") }}.
+        Click <span class="bold"> Inspection </span> after selecting a hexagon to view articles that contain that topic and {{ selected_entity.name.replaceAll("_"," ") }}.
       </p>
 
       <template #footer>
@@ -223,12 +308,12 @@ function outletIconHeaderStyle(name: string) {
     <Splitter class="splitter-outmost">
         <SplitterPanel id="hexview_section" class="hexview-section flex align-items-center justify-content-center"
             :size="left_section_size" :min-size="left_section_size">
-            <div class="reminder-click-hex">
+            <!-- <div class="reminder-click-hex">
                 <p class="reminderBody">Do you see any differences among outlets for their coverage?</p>
-            </div>
+            </div> -->
             <h2 class="component-header hexview-grid-header">
                 Topic Co-occurrence Hives for
-                <span class="mainTopicStyle"> {{ route.params.entity.replaceAll("_"," ") }} </span>
+                <span class="mainTopicStyle"> {{ selected_entity.name.replaceAll("_"," ") }} </span>
                 &nbsp
                 <i class='pi pi-info-circle tooltip'>
                     <span class="tooltiptext right-tooltiptext" style="width: 500px">
@@ -238,11 +323,42 @@ function outletIconHeaderStyle(name: string) {
                         Try to discover outlet coverage differences and common grounds.
                     </span>
                 </i>
+                <div class=flip-hex-container>
+                    <InputSwitch class="flip-switch" 
+                        v-model="flipHexFlag"/>
+                    
+                </div>
             </h2>
             <div class="hexview-grid-container">
+                <!-- load icon -->
+                <i v-if="hexview_loading" class="pi pi-spin pi-spinner" style="position:absolute;
+                    left: 45%;
+                    top: 30%;
+                    font-size: 3rem;
+                    z-index: 1000">
+                </i>
                 <div class="hexview-grid-cell-container" v-if="data_fetched" v-for="view, index in hexview_grid">
-                    <HexCooccurrence class="compare-co-hexview" :title="view.title" :id="`compare-co-hex-${index}`"
+                    <span class="switch-label" 
+                        style="
+                            position: absolute;
+                            left: 14%;
+                            z-index: 2;
+                            font-size: 1rem;
+                            font-weight: lighter;
+                            /* background: white; */
+                            padding: 1px;"> 
+                    </span>
+                    <HexCooccurrence class="compare-co-hexview" 
+                        v-if="flipHexFlag"
+                        :title="view.title" :id="`compare-co-hex-${index}`"
                         :entity_cooccurrences="view.data" :segmentation="segmentation"
+                        :show_blink="true"
+                        :highlight_hex_entity="highlight_hex_entity" v-on:hex-clicked="handleHexClicked($event, view)">
+                    </HexCooccurrence>
+                    <HexCooccurrence class="compare-co-hexview" 
+                        v-else
+                        :title="view.title" :id="`compare-co-hex-${index}`"
+                        :entity_cooccurrences="view.data" :segmentation="user_outlet_segmentations[view.title.split('-')[2]]"
                         :show_blink="true"
                         :highlight_hex_entity="highlight_hex_entity" v-on:hex-clicked="handleHexClicked($event, view)">
                     </HexCooccurrence>
@@ -251,6 +367,13 @@ function outletIconHeaderStyle(name: string) {
                             :class="['journal-image',`${outletIconStyle(view.title)}`]" />
                     </div>
                 </div>
+                <svg style='position:absolute'>
+                    <pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)"
+                        patternUnits="userSpaceOnUse">
+                        <rect x="0" y="0" width="10" height="10" style="fill:#baf0f5" />
+                        <line x1="0" y1="0" x2="0" y2="10" style="stroke:#f4c49c; stroke-width:8" />
+                    </pattern>
+                </svg>
             </div>
         </SplitterPanel>
         <SplitterPanel id="entity_info_section" class="entity-info-panel flex align-items-center justify-content-center"
@@ -266,19 +389,33 @@ function outletIconHeaderStyle(name: string) {
                             </span>
                         </i>
                     </h2>
-                    <div class="cooccurr-info-content">
+                    <!-- <div class="cooccurr-info-content">
                         <div class="cooccurContent">
-                            <h4>Articles with <span class="topicStyle"> {{ selected_entity.name.replaceAll("_"," ") }}
-                                </span> &
-                                <span v-if='selected_cooccurr_entity' class="topicStyle"> {{
-                                selected_cooccurr_entity.name.replaceAll("_"," ") }} </span>
+                            <h4>Articles with 
+                                <span class="topicStyle"> 
+                                    {{ selected_entity.name.replaceAll("_"," ") }}
+                                </span> 
+                                <span v-if='selected_cooccurr_entity' class="topicStyle"> 
+                                    &
+                                    {{ selected_cooccurr_entity.name.replaceAll("_"," ") }} 
+                                </span>
                             </h4>
-
                         </div>
-                    </div>
+                    </div> -->
 
                 </div>
-                <div class="notes-section" v-if="selected_entity">
+                <div id="table-section" class='entity-table'>
+                    <!-- load icon -->
+                    <i v-if="table_loading" class="pi pi-spin pi-spinner" style="position:absolute;
+                        left: 45%;
+                        top: 30%;
+                        font-size: 3rem;
+                        z-index: 1000">
+                    </i>
+                    <EntityTable v-if="overall_entity_data" :entity_nodes="overall_entity_data" :article_num_threshold="article_num_threshold" 
+                        v-model:selected_entity_name='selected_entity_name'/>
+                </div>
+                <!-- <div class="notes-section" v-if="selected_entity">
                     <h2 class="component-header notes-header">
                         Notes
                         <i class='pi pi-info-circle tooltip'>
@@ -290,16 +427,12 @@ function outletIconHeaderStyle(name: string) {
                     <textarea class="notes-style" :value="notes" @input="setNotes"
                         placeholder="Write down any observations..." />
 
-                    <div v-if="selected_outlet !== 'Overall'" class="navigate-container">
-                        <router-link class="goNext"
-                            :to="{ name: 'inspection', params: { entity: selected_entity?.name || 'undefined' }}">
-                            <Button label="Review Articles" icon="pi pi-file" />
-                        </router-link>
-                    </div>
-                </div>
-                <!-- <div class="topic-bar-container" v-if="selected_outlet !== 'Overall'">
-                    <TopicBars id="cooccurr_topic_bars" :targetTopicBins="selected_entity?.articles_topic_dict"
-                        :cooccurrTopicBins="selected_cooccurr_entity?.articles_topic_dict"></TopicBars>
+                </div> -->
+                <!-- <div v-if="selected_outlet !== 'Overall'" class="navigate-container">
+                    <router-link class="goNext"
+                        :to="{ name: 'inspection', params: { entity: selected_entity?.name || 'undefined' }}">
+                        <Button label="Review Articles" icon="pi pi-file" />
+                    </router-link>
                 </div> -->
                 <div class="legend-utils" v-if="selected_entity">
                     <h2 class="component-header legend-header">
@@ -313,7 +446,7 @@ function outletIconHeaderStyle(name: string) {
                     </h2>
                     <HexEntityScatter ref="hex_entity_scatter" v-if="hex_entity_scatter_view"
                         :view="hex_entity_scatter_view" :highlight_node_text="selected_entity.name"
-                        :highlight_cooccurr="selected_cooccurr_entity.name"
+                        :highlight_cooccurr="selected_cooccurr_entity?.name"
                         id="hex_entity_scatter" :segment_mode="true" :segmentation="segmentation"
                         @update:segmentation="setSegmentation">
                     </HexEntityScatter>
@@ -331,8 +464,8 @@ function outletIconHeaderStyle(name: string) {
 // general
 // ---------------------
 .splitter-outmost {
-    width: 99vw;
-    height: 98vh;
+    width: 100vw;
+    height: 95vh;
     display: flex;
 }
 
@@ -399,6 +532,14 @@ function outletIconHeaderStyle(name: string) {
     height: 100%;
 }
 
+.flip-hex-container{
+    display: inline-flex;
+    top: 25%;
+    left: 96%;
+    z-index: 999;
+    position: absolute;
+}
+
 .hiveSelect {
     box-shadow: 0 0 0 0 rgba(0, 0, 0, 1);
     transform: scale(1);
@@ -456,6 +597,9 @@ function outletIconHeaderStyle(name: string) {
 .topicStyle {
     font-style: italic;
     font-weight: 700;
+}
+.entity-table {
+    height: 48%;
 }
 
 // ---------------------
@@ -575,7 +719,7 @@ a.goNext {
 }
 
 .cooccurr-info-header {
-    height: 59%;
+    height: 55%;
 }
 
 .toolTipStyle {

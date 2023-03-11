@@ -24,21 +24,14 @@ import { useUserDataStore } from '../store/userStore'
  */
 import * as typeUtils from "../types"
 import * as SstColors from "../components/utils/ColorUtils"
-import * as tutorial from "../components/utils/TutorialUtils"
 
 /**
  * vue components
  */
 import OutletWeightSlider from "../components/OutletWeightSlider.vue";
-import Legend from "../components/Legend.vue";
-import Tooltip from "../components/Tooltip.vue";
-import SearchBar from "../components/SearchBar.vue";
-import EntityInfoView from "../components/EntityInfoView.vue"
 import HexCooccurrence from "../components/HexCooccurrence.vue";
-import TopicBars from "../components/TopicBars.vue"
 import EntitySelection from "../components/entitySelection.vue"
 import ThresholdController from "../components/ThresholdController.vue";
-import HorizontalTopicBars from "../components/HorizontalTopicBars.vue";
 import EntityTable from "../components/entityTable.vue";
 
 const store = useUserDataStore()
@@ -53,31 +46,18 @@ const overview_scatter = ref(null)
 //
 // raw data
 //
-const server_address = "http://127.0.0.1:5000"
+const server_address = vue.inject("server_address")
 
 // overview data 
-const overview_overall_scatter_data: Ref<any> = ref({})
+// const overview_overall_scatter_data: Ref<any> = ref({})
 const overview_grouped_scatter_data: Ref<any> = ref({})
 const overview_grouped_scatter_metadata: Ref<any> = ref({})
 const overview_overall_scatter_metadata: Ref<any> = ref({})
-const grouped_scatter_view_dict = vue.computed(() => {
-  if (!overview_grouped_scatter_data.value) return undefined
-  let res_dict: any = {}
-  Object.keys(overview_grouped_scatter_data.value).forEach(outlet => {
-    const scatter_data = overview_grouped_scatter_data.value[outlet]
-    const scatter_view: typeUtils.EntityScatterView = {
-      title: outlet,
-      data: scatter_data
-    }
-    res_dict[outlet] = scatter_view
-  })
-  return res_dict
-})
+
 
 const overall_scatter_view: Ref<typeUtils.EntityScatterView | undefined> = ref(undefined)
 const overall_entity_dict: Ref<any> = ref({})
 const overall_scatter_data_loading: Ref<boolean> = ref(true)
-const grouped_scatter_data_loaded: Ref<boolean> = ref(false)
 const overview_constructed: Ref<boolean> = ref(false)
 const hex_constructed: Ref<boolean> = ref(true)
 const overall_co_hexview: Ref<any> = ref(null)
@@ -92,7 +72,8 @@ const showTutorial: Ref<boolean> = ref(true)
 /**
  * set of outlet names extracted from dataset.
  */
-const enabled_outlet_set: Ref<Set<string>> = ref(new Set())
+const enabled_outlet_set: Ref<Set<string>> = ref(new Set(""))
+const outlet_leaning: Ref<any> = ref({})
 
 
 /**
@@ -126,6 +107,11 @@ const segment_options = [
  * threshold for filtering on count(articles).
  */
 const article_num_threshold: Ref<number> = ref(20)
+// const article_num_threshold_global: Ref<number> = vue.computed(() => store.article_num_threshold_global)
+const setArticleNumThreshold = (threshold) => store.setArticleNumThreshold(threshold)
+vue.watch(article_num_threshold, () => {
+  setArticleNumThreshold(article_num_threshold.value)
+})
 
 /**
  * Array of highlighted outlet names.
@@ -134,25 +120,12 @@ const article_num_threshold: Ref<number> = ref(20)
 const highlight_outlet: Ref<string[]> = ref([])
 
 
+
+
 /**
  * flag for tutorial mode.
  */
 const tutorial_mode: Ref<boolean> = ref(false)
-/**
- * tutorial step: start from 0.
- */
-const tutorial_step: Ref<number> = ref(0)
-vue.provide('tutorial_mode', tutorial_mode)
-vue.provide('tutorial_step', tutorial_step)
-
-/**
- * Array of displaying text in each step. \
- * Referenced by tutorial_step. \
- * Each item can be embedded html. \
- * Raw data stored in src/assets/tutorial_intro.json. 
- */
-// const tutorial_intro: Ref<string[]> = ref(tutorial_intro_json.map(step => _.sum(step.content))) 
-
 /**
  * Array of highlighted node titles. \
  * Used in search feature.
@@ -183,7 +156,7 @@ const hex_view_panel_size = vue.computed(() => 100 - entity_info_panel_size)
 // const selected_entity: Ref<typeUtils.EntityInfo|undefined> = ref(undefined)
 const selected_entity = vue.computed(() => store.selected_entity)
 const setEntity = (entity) => store.setEntity(entity)
-const selected_entity_name: Ref<String> = ref("")
+const selected_entity_name: Ref<string> = ref("")
 vue.watch(selected_entity_name, (new_value, old_value) => {
   handleEntityClicked(selected_entity_name.value)
 })
@@ -192,61 +165,49 @@ const setCooccurrEntity = (cooccurr_entity) => store.setCooccurrEntity(cooccurr_
 const overall_selected_hexview: Ref<typeUtils.CooccurrHexView | undefined> = ref(undefined)
 const constraint_dict = vue.computed(() => store.constraints)
 
-/**
- * dict of outlet weight. \
- * { [id: string]: number }
- */
-const outlet_weight_dict = vue.computed(() => store.outlet_weight_dict)
-const resetOutletWeight = (outlet_weight_dict) => store.resetOutletWeight(outlet_weight_dict)
-const setOutletWeight = ({ outlet, weight }) => store.setOutletWeight(outlet, weight)
+const overall_entity_data = vue.computed(() => overall_scatter_view.value?.data?.nodes)
+
+// const left_most_outlet = vue.inject("left_most_outlet")
+// const right_most_outlet = vue.inject("right_most_outlet")
+const random_outlet = vue.inject("random_outlet")
+
 /**
  * segmentation threshold of sentiment value.
  */
-const segmentation = vue.computed(() => store.segmentation)
-const setSegmentation = (segmentation) => store.setSegmentation(segmentation)
-
-
-
-/**
- * init tutorial
- */
-vue.watch(overview_constructed, (new_value, old_value) => {
-  if (tutorial_mode.value) {
-    tutorial.updateOverviewGrid()
-  }
-})
-
-
-/**
- * handle skip tutorial
- */
-vue.watch(tutorial_mode, (new_value, old_value) => {
-  if (old_value === true && new_value === false) {
-    tutorial.handleSkipTutorial()
-  }
-})
-
+const segmentation : Ref<typeUtils.Sentiment2D> = vue.computed(() => store.segmentation)
+const setSegmentation = (segmentation : typeUtils.Sentiment2D) => store.setSegmentation(segmentation)
 
 vue.onMounted(async () => {
-  // prepare for tutorial
-  tutorial.prepareComponentsForTutorial({ tutorial_mode, tutorial_step })
-
-  // request data from server
   const promiseArray: any[] = []
   promiseArray.push(new Promise((resolve) => {
-    // overview overall scatter data 
-    fetch(`${server_address}/overview/scatter/overall/data`)
+    fetch(`${server_address}/overview/scatter/overall/data`, {
+        method: "POST",
+        headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({article_num_threshold: article_num_threshold.value})
+    })
       .then(res => res.json())
       .then(json => {
-        overview_overall_scatter_data.value = json
+        // overview_overall_scatter_data.value = json
         overall_scatter_view.value = {
           title: "Overall",
-          data: overview_overall_scatter_data.value
+          data: json
         }
-        console.log("overall scatter fetched")
+        overview_overall_scatter_metadata.value = {
+          max_articles: json.max_articles,
+          min_articles: json.min_articles
+        }
+        // console.log({json})
+        // console.log("overall data fetched")
+
+        // create dict of nodes for hex view
         overall_scatter_view.value.data.nodes.forEach(node => {
           overall_entity_dict.value[node.text] = node
         })
+
+        // turn flags
         overall_scatter_data_loading.value = false
         resolve("success")
       })
@@ -257,27 +218,26 @@ vue.onMounted(async () => {
       .then(res => res.json())
       .then(json => {
         overview_grouped_scatter_data.value = json
-        console.log("grouped scatter fetched")
+        // console.log("grouped scatter fetched")
         resolve("success")
       })
   }))
-  promiseArray.push(new Promise((resolve) => {
-    // overview overall scatter metadata
-    fetch(`${server_address}/overview/scatter/overall/metadata`)
-      .then(res => res.json())
-      .then(json => {
-        overview_overall_scatter_metadata.value = json
-        console.log("overall scatter metadata fetched")
-        resolve("success")
-      })
-  }))
+  // promiseArray.push(new Promise((resolve) => {
+  //   fetch(`${server_address}/overview/scatter/overall/metadata`)
+  //     .then(res => res.json())
+  //     .then(json => {
+  //       overview_overall_scatter_metadata.value = json
+  //       console.log("overall scatter metadata fetched")
+  //       resolve("success")
+  //     })
+  // }))
   promiseArray.push(new Promise((resolve) => {
     // overview grouped scatter metadata
     fetch(`${server_address}/overview/scatter/grouped/metadata`)
       .then(res => res.json())
       .then(json => {
         overview_grouped_scatter_metadata.value = json
-        console.log("grouped scatter metadata fetched")
+        // console.log("grouped scatter metadata fetched")
         resolve("success")
       })
   }))
@@ -287,7 +247,7 @@ vue.onMounted(async () => {
       .then(res => res.json())
       .then(json => {
         outlet_article_num_dict.value = json
-        console.log("outlet article num dict fetched")
+        // console.log("outlet article num dict fetched")
         resolve("success")
       })
   }))
@@ -297,7 +257,7 @@ vue.onMounted(async () => {
       .then(res => res.json())
       .then(json => {
         entity_list.value = json
-        console.log("entity_list fetched")
+        // console.log("entity_list fetched")
         resolve("success")
       })
   }))
@@ -307,26 +267,18 @@ vue.onMounted(async () => {
       .then(res => res.json())
       .then(json => {
         enabled_outlet_set.value = json
-        const tmp_weight_dict = {}
+        // update outlet leaning dict
         enabled_outlet_set.value.forEach(outlet => {
-          tmp_weight_dict[outlet] = 1
-        })
-        resetOutletWeight(tmp_weight_dict)
-        console.log("outlet_set fetched")
+            outlet_leaning.value[outlet] = 1
+        });
+        // console.log("outlet_set fetched", outlet_leaning.value)
         resolve("success")
       })
   }))
   if (selected_entity.value) {
     // request selected entity data (happens when user use back button)
     promiseArray.push(new Promise((resolve) => {
-      fetch(`${server_address}/hexview/overall/${selected_entity.value.name}`, {
-        method: "POST",
-        headers: {
-          "Accept": "application/json",
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(outlet_weight_dict.value)
-      })
+      fetch(`${server_address}/hexview/overall/${selected_entity.value.name}`)
         .then(res => res.json())
         .then(json => {
           const cooccurrences = json
@@ -335,6 +287,7 @@ vue.onMounted(async () => {
             data: cooccurrences,
           }
           overall_selected_hexview.value = hex_view
+          // console.log("overall hexview fetched")
           resolve("success")
         })
     }))
@@ -345,32 +298,21 @@ vue.onMounted(async () => {
   await Promise.all(promiseArray)
     .then(res => {
       overview_constructed.value = true
+      // console.log("all fetched")
     })
 })
 
-// tutorial setups
-vue.watch(tutorial_step, (new_value, old_value) => {
-  tutorial.handleNextStep({ tutorial_mode, tutorial_step })
-})
 
 // handlers
-// send data
-async function handleTableEntityClicked(entity: string) {
-  console.log(overview_scatter)
-  overview_scatter.value.setHighlightNode(entity)
-  await handleEntityClicked(entity)
-}
-
 async function handleEntityClicked(entity: string) {
-  console.log("Enity Selection", entity)
+  // console.log("Enity Selection", entity)
   const metadata = overview_overall_scatter_metadata.value
 
   legendInput.value = {}
   legendInput.value[entity] = "white";
   legendInput.value["Co-Occuring Topic"] = "#4baaf5";
 
-
-  // reset co-occur entity
+  // clear co-occur entity selection in hex
   setCooccurrEntity(undefined)
 
   // request entity-related data
@@ -380,21 +322,11 @@ async function handleEntityClicked(entity: string) {
     fetch(`${server_address}/overview/scatter/overall/node/${entity}`)
       .then(res => res.json())
       .then(json => {
-        const store_entity: typeUtils.EntityInfo = {
+        // console.log({json})
+        const store_entity  = {
           name: entity,
           outlet: "Overall",
-          num_of_mentions: json.article_ids.length,
-          sst_ratio: {
-            pos_artcs: json.pos_article_ids.length,
-            neg_artcs: json.neg_article_ids.length,
-            pos: json.pos_sst,
-            neg: json.neg_sst,
-            pos_max: metadata.pos_max,
-            pos_min: metadata.pos_min,
-            neg_max: metadata.neg_max,
-            neg_min: metadata.neg_min,
-          },
-          articles_topic_dict: json.topicBins
+          article_ids: json.article_ids 
         }
         setEntity(store_entity)
         resolve("success")
@@ -402,15 +334,7 @@ async function handleEntityClicked(entity: string) {
   }))
   promiseArray.push(new Promise((resolve) => {
     hex_constructed.value = false
-    // hex view data 
-    fetch(`${server_address}/hexview/overall/${entity}`, {
-      method: "POST",
-      headers: {
-        "Accept": "application/json",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(outlet_weight_dict.value)
-    })
+    fetch(`${server_address}/hexview/overall/${entity}`)
       .then(res => res.json())
       .then(json => {
         // update hex view data
@@ -421,7 +345,7 @@ async function handleEntityClicked(entity: string) {
         }
         overall_selected_hexview.value = hex_view
         hex_constructed.value = true
-        console.log("cooccurr hex fetched")
+        // console.log("cooccurr hex fetched", cooccurrences)
         resolve("success")
       })
   }))
@@ -437,59 +361,6 @@ function highlightChanged(new_value) {
 
 function handleSearch(item) {
   highlight_nodes.value.push(item)
-}
-
-// send updated outlet weights to server and request updated scatter data
-function handleUpdateOutletWeight({ outlet, value }) {
-  console.log(outlet_weight_dict.value)
-  setOutletWeight({ outlet: outlet, weight: value })
-  updateOverallEntityNode({ outlet, value })
-  if (!showTutorial)
-    updateHexViewData()
-}
-
-// update overall scatter positions because of outlet weight change
-async function updateOverallEntityNode({ outlet, value }) {
-  overall_scatter_data_loading.value = true
-  await fetch(`${server_address}/processed_data/updateOutletWeight`, {
-    method: "POST",
-    headers: {
-      "Accept": "application/json",
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(outlet_weight_dict.value)
-  })
-    .then(res => res.json())
-    .then(json => {
-      console.log("update outlet weight done")
-      overall_scatter_view.value!.data = json
-      overall_scatter_view.value?.data.nodes.forEach(node => {
-        overall_entity_dict.value[node.text] = node
-      })
-      // console.log(overall_entity_dict.value)
-      overall_scatter_data_loading.value = false
-    })
-}
-
-async function updateHexViewData() {
-  // request hex view data by selected entity 
-  await fetch(`${server_address}/hexview/overall/${selected_entity.value.name}`, {
-    method: "POST",
-    headers: {
-      "Accept": "application/json",
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(outlet_weight_dict.value)
-  })
-    .then(res => res.json())
-    .then(json => {
-      const cooccurrences = json
-      const hex_view: typeUtils.CooccurrHexView = {
-        title: `co-${selected_entity.value.name}`,
-        data: cooccurrences,
-      }
-      overall_selected_hexview.value = hex_view
-    })
 }
 
 async function fetch_topic_bins(target, callback) {
@@ -517,59 +388,45 @@ async function handleHexClicked({ target, co_occurr_entity }: { target: string, 
   await fetch(`${server_address}/processed_data/cooccurr_info/overall/${target}/${co_occurr_entity}`)
     .then(res => res.json())
     .then(json => {
-      console.log("cooccurr_info fetched", json)
+      // console.log("cooccurr_info fetched", json)
       const overall_flag = target.split("-")[1] === undefined
       const outlet = overall_flag ? "Overall" : target.split("-")[1]
       const co_occurr_entity: typeUtils.CooccurrEntityInfo = {
         target: json.target,
         name: json.cooccurr_entity,
-        outlet: outlet,
-        num_of_mentions: json.cooccurr_num,
-        target_num_of_mentions: json.target_num_of_mentions,
-        articles_topic_dict: json.articles_topic_dict
       }
       setCooccurrEntity(co_occurr_entity)
     })
 }
 
-function handleUpdateWeightEnded() {
-  overall_co_hexview.value.updateHexColor(overall_entity_dict.value)
-}
-
-function updateSegmentation({ pos, neg }) {
-  setSegmentation({ pos, neg })
+function updateSegmentation(segmentValue) {
+  let segmentation : typeUtils.Sentiment2D = segmentValue
+  setSegmentation(segmentation)
 }
 
 function toggleTutorial(e: MouseEvent) {
   showTutorial.value = false
 }
 
+
 </script>
 
 
 <template>
   <main>
-    <div v-if="selected_cooccurr_entity" class="navigate-container">
-      <router-link class="goNext"
-        :to="{ name: 'compare', params: { entity: selected_entity.name, cooccurr_entity: selected_cooccurr_entity.name } }">
-        After finding a topic, <span class="clickNext">click here</span> to assess how each outlet covered it.
-        <p class="next"><i class="pi pi-arrow-right " /></p>
-      </router-link>
-    </div>
-
-    <Dialog v-model:visible="showTutorial" class="tutorialStyle" position="right" :modal="true">
+    <Dialog v-model:visible="showTutorial" class="tutorialStyle" position="center" :modal="true">
       <template #header>
         <h3> <i class="pi pi-compass" /> U.S. News Media Coverage Assessment</h3>
       </template>
 
       <p class="introTutorial">
-        This application's purpose is to help you assess if your expectations of how fair mainstream news media cover
+        NOVA's purpose is to help you assess if your expectations of how mainstream news media cover
         topics align with their reporting.
         We gathered articles centered around COVID-19 from 6 U.S. mainstream media outlets.
-        To demonstrate the system, let's see how these outlets covered the start of the COVID-19 Pandemic (Feb-June
+        To demonstrate the system, let's see deleve into what topics these outlets covered during start of the COVID-19 Pandemic (Feb-June
         2020).
       </p>
-      <p class="tutorialInstructions">
+      <!-- <p class="tutorialInstructions">
         Before we begin, please adjust the sliders below for how fair you believe each of corresponding outlets are.
         The scale is from 0 to 1, where 1 is fair. If you believe they are all fair you may leave them as is.
       </p>
@@ -579,9 +436,10 @@ function toggleTutorial(e: MouseEvent) {
       </div>
 
       <div class="initialWeights">
-        <OutletWeightSlider v-if="overview_constructed" :outlet_weight_dict="outlet_weight_dict"
-          @update_outlet_weight="handleUpdateOutletWeight" fontSize="1.0em" />
-      </div>
+        <OutletWeightSlider v-if="overview_constructed" :outlet_leaning="outlet_leaning"
+         fontSize="0.65em">
+        </OutletWeightSlider>
+      </div> -->
       <template #footer>
         <Button label="Ready" icon="pi pi-check" @click="toggleTutorial" autofocus />
       </template>
@@ -605,10 +463,15 @@ function toggleTutorial(e: MouseEvent) {
               <Splitter class='table-scatter-splitter'>
                 <SplitterPanel class="entity-table-panel" :size="table_panel_size">
                   <div id="entityTableWrapper" class='entityTableWrapper'>
-                    <EntityTable v-if="overall_scatter_view" :view="overall_scatter_view" :article_num_threshold="article_num_threshold" 
+                    <i v-if="overall_scatter_data_loading" class="pi pi-spin pi-spinner" style="position:absolute;
+                        left: 45%;
+                        top: 30%;
+                        font-size: 3rem;
+                        z-index: 1000">
+                    </i>
+                    <EntityTable v-else :entity_nodes="overall_entity_data" :article_num_threshold="article_num_threshold" 
                       v-model:selected_entity_name='selected_entity_name'
                     />
-                    <!-- @topic_selected="handleTableEntityClicked" -->
                   </div>
                 </SplitterPanel>
                 <SplitterPanel class='entity-scatter-panel'>
@@ -620,28 +483,23 @@ function toggleTutorial(e: MouseEvent) {
                         font-size: 3rem;
                         z-index: 1000">
                     </i>
-                    <EntitySelection v-if="overall_scatter_view" :view="overall_scatter_view" id="overview-scatter"
+                    <EntitySelection v-else :segmentation="segmentation" :view="overall_scatter_view" id="overview-scatter"
                       ref='overview_scatter'
-                      :article_num_threshold="article_num_threshold" :segment_mode="segment_mode" :segmentation="segmentation"
+                      :article_num_threshold="article_num_threshold" :segment_mode="segment_mode" 
                       v-model:selected_entity_name='selected_entity_name'
-                      @update:segmentation="updateSegmentation" 
-                      @update-weight-ended="$emit('update-weight-ended')"/>
+                      @update:segmentation="updateSegmentation" />
                   </div>
-                      <!-- @node_clicked="handleEntityClicked" -->
                 </SplitterPanel>
               </Splitter>
             </div>
-            <!-- overview scatter -->
           </SplitterPanel>
-          <!-- overview table -->
-        
         </Splitter>
       </SplitterPanel>
       <SplitterPanel class="right-section-panel" :size="right_section_panel_size">
         <Splitter layout="vertical">
           <SplitterPanel class="overview-hex-panel" :size="hex_view_panel_size">
             <div class="reminder-click-entity" v-if="!selected_entity && overview_constructed"> Click on one of the news
-              topic points. </div>
+              topic points or row in the table. </div>
             <!-- Hex view -->
             <h2 class="component-header hexview-header" v-if="selected_entity">
               Topic Co-occurrence Hive for
@@ -658,13 +516,9 @@ function toggleTutorial(e: MouseEvent) {
             </h2>
             <div class="overview-hex-container" v-if="overview_constructed">
               <!-- load icon -->
-              <i v-if="!hex_constructed" class="pi pi-spin pi-spinner" style="position:absolute;
-                    left: 45%;
-                    top: 30%;
-                    font-size: 3rem;
-                    z-index: 1000
-                    "></i>
-              <HexCooccurrence ref="overall_co_hexview" v-if="overall_selected_hexview" class="overall-co-hexview"
+              <!-- <i v-if="!overall_selected_hexview" class="pi pi-spin pi-spinner" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/> -->
+              <i v-if="!overall_selected_hexview" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/>
+              <HexCooccurrence v-else ref="overall_co_hexview" class="overall-co-hexview"
                 :title="overall_selected_hexview.title" :id="`overall-co-hex`"
                 :entity_cooccurrences="overall_selected_hexview.data" :segmentation="segmentation"
                 :highlight_hex_entity="highlight_hex_entity" :show_blink="true"
@@ -700,8 +554,16 @@ function toggleTutorial(e: MouseEvent) {
                     :max_articles="overview_overall_scatter_metadata.max_articles"
                     :min_articles="overview_overall_scatter_metadata.min_articles"></ThresholdController>
                 </div>
+
+                <div v-if="selected_entity" class="navigate-container">
+                  <router-link class="goNext"
+                    :to="{ name: 'belief', params: { order: 'first', outlet: random_outlet[0], entity: selected_entity.name } }">
+                    After finding a topic, <span class="clickNext">click here</span> to assess how each outlet covered it.
+                    <p class="next"><i class="pi pi-arrow-right " /></p>
+                  </router-link>
+                </div>
                 <!-- outlet weight slider -->
-                <h3 class="threshold-title">
+                <!-- <h3 class="threshold-title">
                   News Outlet Fairness
                   <i class='pi pi-info-circle tooltip'>
                     <span class="tooltiptext right-tooltiptext" style="width: 300px">
@@ -711,19 +573,15 @@ function toggleTutorial(e: MouseEvent) {
                     </span>
                   </i>
                 </h3>
-                <OutletWeightSlider v-if="overview_constructed" :outlet_weight_dict="outlet_weight_dict"
-                  @update_outlet_weight="handleUpdateOutletWeight" fontSize="0.75em">
-                </OutletWeightSlider>
+                <OutletWeightSlider v-if="overview_constructed" :outlet_leaning="outlet_leaning"
+                  fontSize="0.65em">
+                </OutletWeightSlider> -->
               </div>
             </div>
           </SplitterPanel>
         </Splitter>
       </SplitterPanel>
     </Splitter>
-    <!-- Tooltip for tutorial -->
-    <!-- <Tooltip v-if="tutorial_mode" class="tutorial_tooltip" :content="tutorial_intro[tutorial_step]"></Tooltip>
-    <span v-if="tutorial_mode" class="skip-button" style='text-decoration:underline;'
-      @click="tutorial_mode = false">Skip</span> -->
   </main>
 </template>
 
@@ -740,10 +598,10 @@ function toggleTutorial(e: MouseEvent) {
 
 main {
   display: flex;
-  justify-content: center;
-  align-items: center;
+  // justify-content: center;
+  // align-items: center;
   width: 99vw;
-  height: 98vh;
+  height: 95vh;
 }
 
 // ---------------------
@@ -916,12 +774,12 @@ main {
   font-family: Lato;
   font-size: x-large;
   position: absolute;
-  top: 40%;
-  left: 30%;
-
-  box-shadow: 0 0 0 0 rgba(0, 0, 0, 1);
-  transform: scale(1);
-  animation: pulse 2s infinite;
+  top: 15%;
+  left: 20%;
+  font-style: italic;
+  // box-shadow: 0 0 0 0 rgba(0, 0, 0, 1);
+  // transform: scale(1);
+  // animation: pulse 2s infinite;
 
 }
 
@@ -990,13 +848,9 @@ main {
 }
 
 .navigate-container {
-  width: 12%;
-  text-align: left;
-  display: flex;
+  width: 100%;
+  text-align: center;
   height: 5%;
-  position: absolute;
-  top: 34%;
-  left: 85%;
   z-index: 999;
 }
 

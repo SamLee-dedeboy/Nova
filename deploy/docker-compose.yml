@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  gunicorn:
+    build: ./services/gunicorn
+    command: gunicorn --bind 0.0.0.0:5050 --worker-class=gevent --log-level=debug wsgi:app 
+    volumes:
+      - ./services/gunicorn:/code/
+    expose:
+      - 5050
+    env_file:
+      - ./.env.dev
+    # networks: 
+    #   - infovisnet
+  nginx:
+    build: ./services/nginx
+    container_name: nova-proxy
+    # volumes:
+    #   - ./services/nginx.conf:/etc/nginx/nginx.conf
+    #   - ./services/dist:/usr/share/nginx/html
+    ports: 
+     - 3040:80
+    depends_on:
+      - gunicorn
+#     networks: 
+#       - infovisnet
+
+# networks:
+#   infovisnet:
+#     name: infovisnet
+
+#Comment in network and comment out ports when deploying on infovis
