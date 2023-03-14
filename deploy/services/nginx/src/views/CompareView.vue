@@ -324,6 +324,9 @@ function outletIconHeaderStyle(name: string) {
                     </span>
                 </i>
                 <div class=flip-hex-container>
+                    <span class=flip-hex-label> 
+                        {{ flipHexFlag?  "Data suggested" : "Your Belief" }}
+                    </span>
                     <InputSwitch class="flip-switch" 
                         v-model="flipHexFlag"/>
                     

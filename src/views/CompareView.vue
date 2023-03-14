@@ -324,6 +324,9 @@ function outletIconHeaderStyle(name: string) {
                     </span>
                 </i>
                 <div class=flip-hex-container>
+                    <span class=flip-hex-label> 
+                        {{ flipHexFlag?  "Data suggested" : "Your Belief" }}
+                    </span>
                     <InputSwitch class="flip-switch" 
                         v-model="flipHexFlag"/>
                     
@@ -532,12 +535,19 @@ function outletIconHeaderStyle(name: string) {
     height: 100%;
 }
 
-.flip-hex-container{
+.flip-hex-container {
     display: inline-flex;
     top: 25%;
-    left: 96%;
     z-index: 999;
     position: absolute;
+    left: 90%;
+    font-size: small;
+    width: 100%;
+    align-items: center;
+}
+.flip-hex-label {
+    margin-right: 5px;
+
 }
 
 .hiveSelect {

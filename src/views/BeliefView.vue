@@ -11,6 +11,7 @@ import HexCooccurrence from "../components/HexCooccurrence.vue";
 
 
 const store = useUserDataStore()
+const segmentation : Ref<typeUtils.Sentiment2D> = vue.computed(() => store.segmentation)
 const selected_entity = vue.computed(() => store.selected_entity)
 const selected_cooccurr_entity = vue.computed(() => store.selected_cooccurr_entity)
 const setUserOutletSegmentations = (segmentation, outlet) => store.setUserOutletSegmentations(segmentation, outlet)
@@ -28,10 +29,10 @@ const target_entity = vue.computed(() => route.params.entity as string)
 const order = vue.computed(() => route.params.order as string)
 const true_hex_data: Ref<Any> = ref() 
 const true_hex_fetched: Ref<Boolean> = ref(false)
-const offset: Ref<number> = ref(0.1)
+const offset: Ref<number> = ref(0.15)
 const segmentations = vue.computed(() => {
-    const pos_center = 0.5
-    const neg_center = 0.5
+    const pos_center = segmentation.value.pos
+    const neg_center = segmentation.value.neg
     // const pos_offset = 0.25
     // const neg_offset = 0.25
     const pos_offset = offset.value
@@ -44,23 +45,23 @@ const segmentations = vue.computed(() => {
         },
         // top left
         {
-            "pos": pos_center - pos_offset,
-            "neg": neg_center + neg_offset,
+            "pos": Math.min(pos_center - pos_offset, 0),
+            "neg": Math.max(neg_center + neg_offset, 1),
         },
         // bottom left
         {
-            "pos": pos_center - pos_offset,
-            "neg": neg_center - neg_offset,
+            "pos": Math.min(pos_center - pos_offset, 0),
+            "neg": Math.min(neg_center - neg_offset, 0),
         },
         // top right
         {
-            "pos": pos_center + pos_offset,
-            "neg": neg_center + neg_offset,
+            "pos": Math.max(pos_center + pos_offset, 1),
+            "neg": Math.max(neg_center + neg_offset, 1),
         },
         // bottom right
         {
-            "pos": pos_center + pos_offset,
-            "neg": neg_center - neg_offset,
+            "pos": Math.max(pos_center + pos_offset, 1),
+            "neg": Math.min(neg_center - neg_offset, 0),
         },
     ]
 })
@@ -163,10 +164,10 @@ function outletIconStyle(name: string) {
             </svg>
         </div>
     </div>
-    <div class=test-slider-container>
+    <!-- <div class=test-slider-container>
         <div class=slider-label> {{offset}}</div>
         <Slider class='test-slider' v-model="offset" :step="0.01" :min="0" :max="0.25" />
-    </div>
+    </div> -->
 
 </template>
 

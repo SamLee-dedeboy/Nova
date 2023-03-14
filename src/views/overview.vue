@@ -451,7 +451,7 @@ function toggleTutorial(e: MouseEvent) {
           <SplitterPanel class="entity-scatter-panel" :size="entity_scatter_panel_size">
             <!-- left section header -->
             <h2 class="component-header scatter-header">
-              COVID-19 News Topics
+              News Topics
               <i class='pi pi-info-circle tooltip'>
                 <span class="tooltiptext right-tooltiptext" style="width: 200px;">
                   Each point is a topic with 2D sentiment score (pos, neg). <br />
