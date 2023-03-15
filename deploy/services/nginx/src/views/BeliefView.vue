@@ -5,8 +5,9 @@ import { useRoute , useRouter} from 'vue-router'
 import { Ref, ref } from "vue"
 import * as vue from "vue"
 
-import RadioButton from 'primevue/radiobutton';
-import Slider from 'primevue/slider';
+// import RadioButton from 'primevue/radiobutton';
+// import Slider from 'primevue/slider';
+import Dialog from 'primevue/dialog';
 import HexCooccurrence from "../components/HexCooccurrence.vue";
 
 
@@ -139,8 +140,29 @@ function outletIconStyle(name: string) {
     return className;
 }
 
+const showTutorial: Ref<boolean> = ref(true)
+
+function toggleTutorial(e: MouseEvent) {
+  showTutorial.value = false
+}
+
 </script>
 <template>
+    <Dialog v-model:visible="showTutorial" class="tutorialStyle" position="center" :modal="true">
+      <template #header>
+        <h3> <i class="pi pi-compass" /> How would {{target_outlet}} report on  {{ selected_entity.value?.name.replaceAll("_"," ") }}</h3>
+      </template>
+
+      <p class="introTutorial">
+        On this page, you will be presented an outlet, {{ target_outlet }} and 5 Co-Occurrence Hives. Based on your prior knowledge of the outlet, and selected topic, how do you believe {{ target_outlet }} reported on {{ selected_entity.value?.name.replaceAll("_"," ") }}?
+        That is, what would the overall sentiment be for articles that reference {{ selected_entity.value?.name.replaceAll("_"," ") }} (e.g., netural (grey), more negative (orange), postive (blue), or polarizing (striped)). 
+        <br />
+        As a reminder, the center hex is the selected topic and all other hexes are topics that frequently appeared with it across all outlets. Thus, if it is light grey it implies the selected outlet never reported on that topic alongside {{ selected_entity.value?.name.replaceAll("_"," ") }}.
+      </p>
+        <template #footer>
+        <Button label="Ready" icon="pi pi-check" @click="toggleTutorial" autofocus />
+      </template>
+    </Dialog>
     <div class='selection-grid'>
         <div class="journal-style">
             <img :src="`/${target_outlet}.png`"
