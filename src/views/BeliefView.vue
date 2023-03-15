@@ -1,17 +1,19 @@
 <script setup lang=ts>
 import { useUserDataStore } from '../store/userStore'
-import { useRoute , useRouter} from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import { Ref, ref } from "vue"
 import * as vue from "vue"
+import * as SstColors from "../components/utils/ColorUtils"
 
 import RadioButton from 'primevue/radiobutton';
 import Slider from 'primevue/slider';
+import Dialog from 'primevue/dialog';
 import HexCooccurrence from "../components/HexCooccurrence.vue";
-
+import Legend from '../components/Legend.vue';
 
 const store = useUserDataStore()
-const segmentation : Ref<typeUtils.Sentiment2D> = vue.computed(() => store.segmentation)
+const segmentation: Ref<typeUtils.Sentiment2D> = vue.computed(() => store.segmentation)
 const selected_entity = vue.computed(() => store.selected_entity)
 const selected_cooccurr_entity = vue.computed(() => store.selected_cooccurr_entity)
 const setUserOutletSegmentations = (segmentation, outlet) => store.setUserOutletSegmentations(segmentation, outlet)
@@ -27,7 +29,7 @@ const outlet_leaning_scale_dict = vue.inject("outlet_leaning_scale_dict")
 const target_outlet = vue.computed(() => route.params.outlet as string)
 const target_entity = vue.computed(() => route.params.entity as string)
 const order = vue.computed(() => route.params.order as string)
-const true_hex_data: Ref<Any> = ref() 
+const true_hex_data: Ref<Any> = ref()
 const true_hex_fetched: Ref<Boolean> = ref(false)
 const offset: Ref<number> = ref(0.15)
 const segmentations = vue.computed(() => {
@@ -72,7 +74,7 @@ vue.watch(order, (old_value, new_value) => {
     })
     // target outlet should have changed
     // add 'if' to avoid extra fetching
-    if(order.value) fetch_outlet_hex(target_outlet.value, target_entity.value)
+    if (order.value) fetch_outlet_hex(target_outlet.value, target_entity.value)
 })
 
 vue.onBeforeMount(() => {
@@ -103,7 +105,7 @@ function handleCellClicked(e, segmentation, index) {
     e.target.classList.add("clicked-cell")
     //console.log(e.target, segmentation) // or segmentations.value[index]
     setUserOutletSegmentations(segmentation, route.params.outlet as string)
-    if(route.params.order == "second") {
+    if (route.params.order == "second") {
         // begin interpolation / extrapolation
         const first_segmentation = store.user_outlet_segmentations[random_outlet[0]]
         const second_segmentation = store.user_outlet_segmentations[random_outlet[1]]
@@ -122,13 +124,13 @@ function handleCellClicked(e, segmentation, index) {
         })
         //Route to Comparision Page
         // const ccEntity = selected_cooccurr_entity.value?.name || '';
-        const entityName : string = selected_entity.value?.name;
+        const entityName: string = selected_entity.value?.name;
         // console.log("ROUTER PARAMS to Compare",{ entity: entityName, cooccurr_entity: ccEntity } )
-        router.push({name:'compare', params:  { entity: selected_entity.value.name } })
-    }else{
-        const randomOutlet : string = random_outlet[1]; //selected_cooccurr_entity?.name || '';
-        const entityName : string = selected_entity.value.name;
-        router.push({name:'belief', params: { order: 'second', outlet: randomOutlet, entity: target_entity.value } } )
+        router.push({ name: 'compare', params: { entity: selected_entity.value.name } })
+    } else {
+        const randomOutlet: string = random_outlet[1]; //selected_cooccurr_entity?.name || '';
+        const entityName: string = selected_entity.value.name;
+        router.push({ name: 'belief', params: { order: 'second', outlet: randomOutlet, entity: target_entity.value } })
     }
 }
 
@@ -139,21 +141,49 @@ function outletIconStyle(name: string) {
     return className;
 }
 
+const showTutorial_B: Ref<boolean> = ref(true)
+
+function toggleTutorial(e: MouseEvent) {
+    showTutorial_B.value = false
+}
+
 </script>
 <template>
     <div class='selection-grid'>
+        <Dialog v-model:visible="showTutorial_B" class="tutorialStyle" position="center" :modal="true">
+            <template #header>
+                <h3> <i class="pi pi-compass" /> How would {{ target_outlet }} report on {{target_entity.replaceAll("_", " ")}}? </h3>
+            </template>
+
+            <p class="introTutorial">
+                On this page, you will be presented an outlet, {{ target_outlet }}, and five Co-Occurrence Hives. Based on your
+                prior knowledge of the outlet, and selected topic, how do you believe {{ target_outlet }} reported on {{
+                    target_entity.replaceAll("_", " ") }}?
+                That is, what do you think the overall sentiment would be for articles written by {{ target_outlet }} that discuss {{
+                    target_entity.replaceAll("_", " ") }} alongside other topics.
+                Would it be mixed, neutral, negative, positive, or polarizing? 
+
+                <br />
+                <br />
+                As a reminder, the center hex is the selected topic and all other hexes are topics that frequently appeared
+                with it across all outlets. Thus, if it is light grey it implies the selected outlet never reported on that
+                topic alongside {{ target_entity.replaceAll("_", " ") }}.
+            </p>
+            <template #footer>
+                <Button label="Ready" icon="pi pi-check" @click="toggleTutorial" autofocus />
+            </template>
+        </Dialog>
+        <Legend id="legend-sentiment" :color_dict="SstColors.key_color_dict"/>
+
         <div class="journal-style">
-            <img :src="`/${target_outlet}.png`"
-            :class="['journal-image',`${outletIconStyle(target_outlet)}`]" />
+            <img :src="`/${target_outlet}.png`" :class="['journal-image', `${outletIconStyle(target_outlet)}`]" />
         </div>
 
-        <div v-if="true_hex_fetched" class=hex-cell 
-        v-for="(segmentation, index) in shuffle(segmentations)"
-        @click='handleCellClicked($event, segmentation, index)'> 
+        <div v-if="true_hex_fetched" class=hex-cell v-for="(segmentation, index) in shuffle(segmentations)"
+            @click='handleCellClicked($event, segmentation, index)'>
             <!-- <div class=test-hex> {{ index }}</div> -->
             <HexCooccurrence class="belief-hexview" title="belief-hexview" :id="`belief-hex-${index}`"
-                :entity_cooccurrences="true_hex_data.cooccurrences_data" :segmentation="segmentation"
-                :show_blink="true">
+                :entity_cooccurrences="true_hex_data.cooccurrences_data" :segmentation="segmentation" :show_blink="true">
             </HexCooccurrence>
             <svg>
                 <pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)"
@@ -164,37 +194,37 @@ function outletIconStyle(name: string) {
             </svg>
         </div>
     </div>
-    <!-- <div class=test-slider-container>
+<!-- <div class=test-slider-container>
         <div class=slider-label> {{offset}}</div>
         <Slider class='test-slider' v-model="offset" :step="0.01" :min="0" :max="0.25" />
-    </div> -->
-
-</template>
+    </div> --></template>
 
 <style scoped>
 .selection-grid {
-  width: 100%;
-  padding: 1%;
-  height: 95vh;
-  display: flex;
-  flex-wrap: wrap-reverse;
-  justify-content: space-between;
+    width: 100%;
+    padding: 1%;
+    height: 95vh;
+    display: flex;
+    flex-wrap: wrap-reverse;
+    justify-content: space-between;
 }
 
 .hex-cell {
-  width: 30%;
-  height: 48%;
-  justify-content: center;
-  display: flex;
-  flex-direction: column;
-  margin: 0px 1px;
-  box-shadow: rgba(0, 0, 0, 0.05) 0px 0px 0px 1px;
-  cursor:pointer;
-  background-color: white;
+    width: 30%;
+    height: 48%;
+    justify-content: center;
+    display: flex;
+    flex-direction: column;
+    margin: 0px 1px;
+    box-shadow: rgba(0, 0, 0, 0.05) 0px 0px 0px 1px;
+    cursor: pointer;
+    background-color: white;
 }
+
 .hex-cell:hover {
     box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
 }
+
 .clicked-cell {
     box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
 }
@@ -253,7 +283,7 @@ function outletIconStyle(name: string) {
     top: 38%;
     width: 30%;
 }
+
 .test-slider {
     width: inherit;
-}
-</style>
+}</style>
