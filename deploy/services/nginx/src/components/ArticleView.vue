@@ -56,16 +56,22 @@ vue.onMounted(() => {
     const neg_panel_togglers = document.querySelectorAll(".neg-article-list > .p-scrollpanel-wrapper > .p-scrollpanel-content > .p-panel-toggleable > .p-panel-header > .p-panel-icons > .p-panel-toggler")
     neg_panel_togglers.forEach(toggler => toggler.classList.add("neg-toggler"))
 })
+// const pos_articles = vue.computed(() => {
+//     return props.articles?.filter(article => article.sentiment.label === "POSITIVE").sort(sortByRelevance)
+// })
 const pos_articles = vue.computed(() => {
-    return props.articles?.filter(article => article.sentiment.label === "POSITIVE").sort(sortByRelevance)
+    return props.articles?.filter(article => article.doc_level_sentiment[entity_pair[0]] === "positive")
 })
 const pos_panel_articles: Ref<Article[]> = ref(pos_articles.value?.slice(0,10) || []) 
 const pos_marks: Ref<boolean[]> = ref(Array(pos_articles.value?.length || 0).fill(false))
 // const pos_article_notes: Ref<string[]> = ref(Array(pos_articles.value?.length || 0).fill(""))
 
 const neg_articles = vue.computed(() => {
-    return props.articles?.filter(article => article.sentiment.label === "NEGATIVE").sort(sortByRelevance)
+    return props.articles?.filter(article => article.doc_level_sentiment[entity_pair[0]] === "negative")
 })
+// const neg_articles = vue.computed(() => {
+//     return props.articles?.filter(article => article.sentiment.label === "NEGATIVE").sort(sortByRelevance)
+// })
 const neg_panel_articles: Ref<Article[]> = ref(neg_articles.value?.slice(0,10) || []) 
 const neg_marks: Ref<boolean[]> = ref(Array(neg_articles.value?.length || 0).fill(false))
 // const neg_article_notes: Ref<string[]> = ref(Array(neg_articles.value?.length || 0).fill(""))
@@ -150,6 +156,7 @@ vue.watch(neg_articles, (new_value, old_value) => {
 // }
 
 async function handleArticleClicked(e, article_id) {
+    console.log(pos_articles.value, neg_articles.value)
     await fetch("http://localhost:3040/" + `${server_address}/processed_data/ids_to_articles`, {
         method: "POST",
         headers: {
