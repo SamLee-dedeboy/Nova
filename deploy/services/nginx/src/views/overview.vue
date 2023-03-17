@@ -410,26 +410,8 @@ function toggleTutorial(e: MouseEvent) {
       </template>
 
       <p class="introTutorial">
-        NOVA's purpose is to help you assess if your expectations of how mainstream news media cover
-        topics align with their reporting.
-        We gathered articles centered around COVID-19 from 6 U.S. mainstream media outlets.
-        To demonstrate the system, let's see deleve into what topics these outlets covered during start of the COVID-19 Pandemic (Feb-June
-        2020).
+        NOVA's purpose is to help you assess if your expectations of how mainstream news media cover topics align with their reporting. We gathered articles centered around COVID-19 from 6 U.S. mainstream media outlets. To demonstrate the system, let's explore the topics these outlets covered during start of the COVID-19 Pandemic (Feb-June 2020).
       </p>
-      <!-- <p class="tutorialInstructions">
-        Before we begin, please adjust the sliders below for how fair you believe each of corresponding outlets are.
-        The scale is from 0 to 1, where 1 is fair. If you believe they are all fair you may leave them as is.
-      </p>
-      <div class="fairnessLegend">
-        <i class="pi pi-arrow-left" /> Unfair
-        Fair <i class="pi pi-arrow-right" />
-      </div>
-
-      <div class="initialWeights">
-        <OutletWeightSlider v-if="overview_constructed" :outlet_leaning="outlet_leaning"
-         fontSize="0.65em">
-        </OutletWeightSlider>
-      </div> -->
       <template #footer>
         <Button label="Ready" icon="pi pi-check" @click="toggleTutorial" autofocus />
       </template>
@@ -444,8 +426,8 @@ function toggleTutorial(e: MouseEvent) {
               News Topics
               <i class='pi pi-info-circle tooltip'>
                 <span class="tooltiptext right-tooltiptext" style="width: 200px;">
-                  Each point is a topic with 2D sentiment score (pos, neg). <br />
-                  The score represents how many positive and negatives articles they have.
+                  Each point is a topic with 2D-sentiment score (pos, neg). <br />
+                  The score represents how many positive and negatives articles that topic contains.
                 </span>
               </i>
             </h2>
@@ -488,8 +470,7 @@ function toggleTutorial(e: MouseEvent) {
       <SplitterPanel class="right-section-panel" :size="right_section_panel_size">
         <Splitter layout="vertical">
           <SplitterPanel class="overview-hex-panel" :size="hex_view_panel_size">
-            <div class="reminder-click-entity" v-if="!selected_entity && overview_constructed"> Click on one of the news
-              topic points or row in the table. </div>
+            <div class="reminder-click-entity" v-if="!selected_entity && overview_constructed"> Select either a bubble in the chart or click on  a row in the table. </div>
             <!-- Hex view -->
             <h2 class="component-header hexview-header" v-if="selected_entity">
               Topic Co-occurrence Hive for
@@ -524,9 +505,7 @@ function toggleTutorial(e: MouseEvent) {
                   Topic Settings
                   <i class='pi pi-info-circle tooltip'>
                     <span class="tooltiptext right-tooltiptext" style="width: 300px">
-                      The color spectrum slider helps filter topics by number or articles. <br />
-                      The six-sliders group lets you input your preception of each media outlet based on fairness and
-                      importance.
+                      The color spectrum slider helps filter topics by number or articles.
                     </span>
                   </i>
                 </h2>
@@ -534,7 +513,7 @@ function toggleTutorial(e: MouseEvent) {
                 <h3 class="threshold-title"> Number of Articles Threshold
                   <i class='pi pi-info-circle tooltip'>
                     <span class="tooltiptext right-tooltiptext" style="width: 300px">
-                      User the slider to set a threshold on topics' minimum articles.
+                      Use the slider to filter topics by how many articles they must contain.
                       Topics with less articles than the threshold will not appear in scatter plot.
                     </span>
                   </i>
@@ -548,7 +527,7 @@ function toggleTutorial(e: MouseEvent) {
                 <div v-if="selected_entity" class="navigate-container">
                   <router-link class="goNext"
                     :to="{ name: 'belief', params: { order: 'first', outlet: random_outlet[0], entity: selected_entity.name } }">
-                    After finding a topic, <span class="clickNext">click here</span> to assess how each outlet covered it.
+                    After finding a topic, <span class="clickNext">click here</span> to continue onwards or click (2) Belief in the navigation at the top.
                     <p class="next"><i class="pi pi-arrow-right " /></p>
                   </router-link>
                 </div>

@@ -15,7 +15,7 @@ import Dropdown from "primevue/dropdown"
  * vue components
  */
 import OutletWeightSlider from "../components/OutletWeightSlider.vue";
-import OutletScatterplot from '../components/OutletScatterplot.vue';
+// import OutletScatterplot from '../components/OutletScatterplot.vue';
 import HexCooccurrence from "../components/HexCooccurrence.vue"
 
 import * as SstColors from "../components/utils/ColorUtils"

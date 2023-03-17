@@ -29,9 +29,9 @@ import * as SstColors from "../components/utils/ColorUtils"
  * vue components
  */
 import HexCooccurrence from "../components/HexCooccurrence.vue";
-import EntityInfoView from "../components/EntityInfoView.vue";
-import TopicBars from "../components/TopicBars.vue";
-import HorizontalTopicBars from '../components/HorizontalTopicBars.vue';
+// import EntityInfoView from "../components/EntityInfoView.vue";
+// import TopicBars from "../components/TopicBars.vue";
+// import HorizontalTopicBars from '../components/HorizontalTopicBars.vue';
 import Legend from '../components/Legend.vue';
 import HexEntityScatter from '../components/HexEntityScatter.vue';
 import EntityTable from "../components/entityTable.vue";
@@ -292,12 +292,16 @@ function outletIconHeaderStyle(name: string) {
       </template>
 
       <p class="introTutorial">
+        The intial sentiment coloring you see right now is derived from your choices in the previous section.
+        These hives are colored to represent your perception of how each outlet would report on {{ selected_entity.name.replaceAll("_"," ") }}.
+        To see what sentiment the data suggests toggle the switch in the top right. 
+        <br>
         Try to spot some similarities and difference between the outlets for how they covered {{ selected_entity.name.replaceAll("_"," ") }}.
         For example, some outlets discuss different topics when mentioning {{ selected_entity.name.replaceAll("_"," ") }}.
         Hex cells with a <span style="color: #f8f8f8; background-color: #c0c0c0;">light grey</span> background are topics not mentioned alongside {{ selected_entity.name.replaceAll("_"," ") }}.
       </p>
       <p class="tutorialInstructions">
-        Click <span class="bold"> Inspection </span> after selecting a hexagon to view articles that contain that topic and {{ selected_entity.name.replaceAll("_"," ") }}.
+        Click <span class="bold"> Inspection </span> in the top right of the screen after selecting a hexagon to view articles that contain that topic and {{ selected_entity.name.replaceAll("_"," ") }}.
       </p>
 
       <template #footer>
@@ -319,13 +323,13 @@ function outletIconHeaderStyle(name: string) {
                     <span class="tooltiptext right-tooltiptext" style="width: 500px">
                         Each hive represents the coverage on {{ selected_entity?.name.replaceAll("_"," ") }} by that
                         outlet. <br />
-                        A hexagon is left blanked if the outlet does not cover that topic. <br />
+                        A hexagon is left light-grey if the outlet does not cover that topic. <br />
                         Try to discover outlet coverage differences and common grounds.
                     </span>
                 </i>
                 <div class=flip-hex-container>
                     <span class=flip-hex-label> 
-                        {{ flipHexFlag?  "Data suggested" : "Your Belief" }}
+                        {{ flipHexFlag?  "Data suggested" : "Your Perception" }}
                     </span>
                     <InputSwitch class="flip-switch" 
                         v-model="flipHexFlag"/>

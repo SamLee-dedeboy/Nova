@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import * as d3 from "d3";
-import * as SstColors from "./utils/ColorUtils"
 import * as vue from "vue"
 import { Legend } from "./Legend";
 
@@ -10,13 +9,12 @@ const props = defineProps({
     row_height: Number,
     font_size: Number,
 })
-
-const margin = {top: 15, bottom: 10, left:0,  right: 15, vertical: 20}
-const len = Object.keys(props.color_dict!).length
+const margin = {top: 15, bottom: 20, left:5,  right: 15, vertical: 20}
+// const len = Object.keys(props.color_dict!).length
 const row_height = vue.computed(() => props.row_height? props.row_height : 5)
 const font_size = vue.computed(() => props.font_size? props.font_size : 1.2)
 // const viewBox: [number, number] = [150, margin.top + margin.bottom + len*(margin.vertical + row_height.value)]
-const viewBox: [number, number] = [250, 100]
+const viewBox: [number, number] = [200, 200]
 const legend = new Legend(
     props,
     props.id!,
@@ -37,21 +35,17 @@ vue.watch(() => props.color_dict, () => {
 
 <template>
     <div class="legend-container">
-        <svg  class="legend-svg" viewBox="0 0 125 125" :id="id"></svg>
+        <svg  class="legend-svg" viewBox="-5 0 200 200" :id="id"></svg>
     </div>
 </template>
 
 <style scoped>
 .legend-container {
-    width: 100%;
-    /* height: 100%; */
-    /* background-color: #eee3cd;
-    border: solid;
-    border-width: 2px;
-    border-radius: 5px; */
-    /* padding: 5px; */
-    /* pointer-events: none; */
+    width: 8%;
     transform-origin: top left;
+    position: absolute;
+    left: 47%;
+    top: 33%;
 }
 .legend-svg {
     width: 100%;

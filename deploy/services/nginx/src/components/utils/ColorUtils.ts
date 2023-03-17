@@ -20,6 +20,7 @@ const key_color_dict = {
         "negative": neg_color,
         "neutral": neu_color,
         "mixed": mixed_color, 
+        "not covered": "white"
     } 
 export const hive_color_dict = {
         "positive": pos_color, //pos_color,
