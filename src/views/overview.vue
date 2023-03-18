@@ -456,6 +456,7 @@ function toggleTutorial(e: MouseEvent) {
                 <span class="tooltiptext right-tooltiptext" style="width: 200px;">
                   Each point is a topic with 2D sentiment score (pos, neg). <br />
                   The score represents how many positive and negatives articles they have.
+                  The articles are between Feb 2020 and June 2020.
                 </span>
               </i>
             </h2>
