@@ -35,6 +35,8 @@ const offset: Ref<number> = ref(0.15)
 const segmentations = vue.computed(() => {
     const pos_center = segmentation.value.pos
     const neg_center = segmentation.value.neg
+    // const pos_center = 0.5
+    // const neg_center = 0.5
     // const pos_offset = 0.25
     // const neg_offset = 0.25
     const pos_offset = offset.value
@@ -47,18 +49,18 @@ const segmentations = vue.computed(() => {
         },
         // top left
         {
-            "pos": Math.min(pos_center - pos_offset, 0),
-            "neg": Math.max(neg_center + neg_offset, 1),
+            "pos": Math.max(pos_center - pos_offset, 0),
+            "neg": Math.min(neg_center + neg_offset, 1),
         },
         // bottom left
         {
-            "pos": Math.min(pos_center - pos_offset, 0),
+            "pos": Math.max(pos_center - pos_offset, 0),
             "neg": Math.min(neg_center - neg_offset, 0),
         },
         // top right
         {
             "pos": Math.max(pos_center + pos_offset, 1),
-            "neg": Math.max(neg_center + neg_offset, 1),
+            "neg": Math.min(neg_center + neg_offset, 1),
         },
         // bottom right
         {
