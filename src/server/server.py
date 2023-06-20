@@ -75,7 +75,7 @@ def get_overall_hexview(title):
     node_dict = {node.text: node for node in node_list}
     # cooccurrences = raw_data.entity_cooccurrences[title]
     cooccurrences = processed_data.overall_cooccurrences_dict[title]
-    request_data = hexview_data.constructHexData_overall(title, cooccurrences, node_dict)
+    request_data = hexview_data.constructHexData_overall(title, cooccurrences, node_dict, top_k=10)
     return json.dumps(request_data, default=vars)
 
 @app.route("/hexview/grouped/<title>/<outlet>")

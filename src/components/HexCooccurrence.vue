@@ -36,13 +36,17 @@ const hex_width = radius * 2 * Math.sin(Math.PI / 3)
 const hex_height = radius * 3 / 2
 const max_height = viewBox_width / hex_width * hex_height
 
+const dragged_hex = ref()
+const entity_hex_index_dict = ref({})
+
 const sorted_cooccurrence_list = vue.computed(() => {
     const raw_data = props.entity_cooccurrences?.sorted_cooccurrences_list!
     const center_hex_entity: HexEntity = props.entity_cooccurrences?.target!
-    let res: any[] = [{ entity: center_hex_entity.entity, sst: center_hex_entity.sst, x: 0, y: 0, index: 0, exists: true }]
+    let res: any[] = [{ entity: center_hex_entity.entity, sst: center_hex_entity.sst, x: 0, y: 0, index: 0, exists: true, assigned_hex_index: -1 }]
     // let res:any[] = []
     raw_data.forEach((hex_entity, index) => {
-        const { x, y } = generate_hex_coord(index, hex_radius)
+        // const { x, y } = generate_hex_coord(hex_entity.sst, index, hex_radius)
+        const { x, y } = generate_hex_list_coord(hex_entity.sst, index, hex_radius)
         res.push({
             entity: hex_entity.entity,
             x: x,
@@ -50,9 +54,31 @@ const sorted_cooccurrence_list = vue.computed(() => {
             sst: hex_entity.sst,
             exists: hex_entity.article_ids.length !== 0,
             index: index + 1,
+            assigned_hex_index: -1,
         })
     })
+    console.log("sorted_cooccurrence_list", res)
     return res
+})
+
+const blank_hexbins = vue.computed(() => {
+    let bins: any = []
+    let length = 0
+    for(let count = 0; count < 18; count++) {
+        const { x, y } = generate_hex_coord(count, hex_radius)
+        if(count == 7 || count == 11 || count == 15) continue
+        const sst = index_to_sst(count)
+        bins.push({
+            x: x,
+            y: y,
+            i: length,
+            sst: sst,
+            index: count + 1,
+            level: find_level(count),
+        })
+        length += 1
+    }
+    return bins
 })
 // const hexbin = d3_hexbin.hexbin()
 //     .radius(radius) // size of the bin in px
@@ -69,6 +95,8 @@ const hexbin_ = d3_hexbin.hexbin()
     .y(d => y(d.y))
     .radius(radius) // size of the bin in px
     .extent([[0, 0], [viewBox_width, max_height]])
+
+const centers_indexed: any[] = []
 vue.watch(() => props.segmentation, (new_value, old_value) => {
     updateHexColor()
 }, { deep: true })
@@ -102,6 +130,7 @@ function init() {
     const svg = d3.select(`#${props.id}`).select("svg")
     const hex_group = svg.append("g").attr("class", "hex-group")
     const hex_paths = hex_group.append("g").attr("class", "hex-paths")
+    const hex_bins = hex_group.append("g").attr("class", "hex-bins")
     const hex_labels = hex_group.append("g").attr("class", "hex-labels")
 }
 
@@ -114,47 +143,59 @@ function updateHexBins() {
     init()
 
     // update begins
-    const hex_group = svg.select("g.hex-group")
-        .style("cursor", "pointer")
+    const hex_group = svg.select("g.hex-group").attr("transform", "translate(0, -80)")
 
     const hex_labels =  svg.select("g.hex-labels")
-
-
+    const blank_hex_data = hexbin_(blank_hexbins.value)
     const hex_data = hexbin_(sorted_cooccurrence_list.value)
-    // const centers = hexbin_.centers()
-    // svg.selectAll("circle.center")
-    //     .data(centers)
-    //     .join("circle")
-    //     .attr("class", "center")
-    //     .attr("cx", (d:any) => d[0])
-    //     .attr("cy", (d:any) => d[1])
-    //     .attr("r", 3)
-    //     .attr("fill", "blue")
+    console.log({hex_data})
+    hex_group.select("g.hex-bins")
+        .selectAll("path")
+        .data(blank_hex_data)
+        .join("path")
+        .attr("class", "hex-bins")
+        .attr("d", hexbin_.hexagon())
+        .attr("transform", function (d: any, index) {
+            if(index >= centers_indexed.length)
+                centers_indexed.push(d)
+            else
+                centers_indexed[index] = d
+            return `translate(${d.x},${d.y})`
+        })
+        .attr("stroke", "#444444")
+        .attr("stroke-width", 1)
+        .attr("fill", (d: any) => {
+            const sst = d[0].sst;
+            return SstColors.enum_color_dict[sst]
+        })
 
-    const centers_indexed: any[] = []
     hex_group.select("g.hex-paths")
         .selectAll("path")
         .data(hex_data)
         .join("path")
+        .style("cursor", "pointer")
+        .attr("class", "hexagon")
         .attr("d", hexbin_.hexagon())
         .attr("transform", function (d: any, index) {
-            centers_indexed.push(d)
+            // centers_indexed.push(d)
             return `translate(${d.x},${d.y})`
         })
         .attr("filter",(d, i) => i===0? "blur(1px)": "none")
-        .attr("stroke", (d,i) => i===0? "#444444": "white")
+        // .attr("stroke", (d,i) => i===0? "#444444": "white")
+        .attr("stroke", (d,i) => i===0? "#444444": "black")
         .attr("stroke-width", (d, i) => i === 0 ? 7 : 1)
-        .on("click", function (e, d: any) {
-            const target = props.title?.split("-").slice(1).join("-")
-            emit("hex-clicked", { target: target, co_occurr_entity: d[0].entity })
-            // loopedAnimateHex(hex_group, target)
-        })
+        // .on("click", function (e, d: any) {
+        //     const target = props.title?.split("-").slice(1).join("-")
+        //     emit("hex-clicked", { target: target, co_occurr_entity: d[0].entity })
+        //     // loopedAnimateHex(hex_group, target)
+        // })
         .on("mouseover", function (e, d: any) {
             if(d[0].entity === props.highlight_hex_entity) return
             if(d[0].index === 0) return
+            if(d[0].index === dragged_hex.value) return
             d3.select(this)
                 .transition().duration(100)
-                .attr("stroke-width", d[0].index === 0 ? 25 : 8)
+                .attr("stroke-width",  8)
             if(props.show_blink)
                 d3.select(this).raise()
             // emit("mouseover", d[0].entity)
@@ -164,18 +205,20 @@ function updateHexBins() {
             if(d[0].index === 0) return
             d3.select(this)
                 .transition().duration(500)
-                .attr("stroke-width", d[0].index === 0 ? 20 : 1)
+                .attr("stroke-width", 1)
         })
         .attr("opacity", (d: any) => {
             if (d[0].exists) return 1
             else return 0.2
         })
-        .attr("fill", (d: any) => {
-            // #dddddd
-            // #baf0f5
+        .attr("fill", (d: any, i) => {
+            if(i != 0) return "white"
             const sst = d[0].sst;
             return (d[0].exists) ? SstColors.enum_color_dict[categorizeHex(sst, props.segmentation!)] : '#dddddd'
         })
+        // define drag behavior
+        .call(drag)
+    
     // add looped animation for center hex
     const center_entity = hex_data[0][0].entity
     if(props.show_blink)
@@ -191,8 +234,10 @@ function updateHexBins() {
         .data(hex_data)
         .join("text")
         .attr("pointer-events", "none")
-        .attr("x", (d, i) => centers_indexed[i].x)
-        .attr("y", (d, i) => centers_indexed[i].y) //compute from num words and subtract from the y 
+        // .attr("x", (d, i) => centers_indexed[i].x)
+        // .attr("y", (d, i) => centers_indexed[i].y) //compute from num words and subtract from the y 
+        .attr("x", (d, i) => d.x)
+        .attr("y", (d, i) => d.y)
         .attr("text-anchor", "middle")
         .attr("dominant-baseline", "central")
         .attr("fill", "black")
@@ -279,13 +324,8 @@ function loopedAnimateHex(hex_group, target_entity) {
 }
 
 
-// function contractHex(hex_path) {
-//     hex_path.transition().duration(500)
-//         .attr("stroke-width", 20)
-//         .on("end", expandHex(hex_path))
-// }
-
 function wrap(text, width) {
+    console.log("wrapping")
     text.each(function (d, i) {
         var text = d3.select(this),
             words = text.text().split(/\s+/).reverse(),
@@ -323,18 +363,144 @@ function wrap(text, width) {
         text.selectAll("tspan").attr("y", parseFloat(y) - em_to_px / 2 * lineHeight * (line_num - 1) / 2)
     });
 }
+function drag(eles) {
+    function dragstarted(event, d) {
+        if(d3.select(this).attr("class") === "hex-bins") {
+            // find hexagon that was assigned to this hex-bin
+            const i = d[0].i
+            const hexagon = d3.selectAll("path.hexagon").filter((d) => d[0].assigned_hex_index === i)
+            dragged_hex.value = hexagon.data()[0][0].index
+            hexagon.raise().attr("stroke", "black").attr("stroke-width", 1)
+            // hexagon.call(drag)
+            return
+        }
+        dragged_hex.value = d[0].index
+        d3.select(this).raise().attr("stroke", "black").attr("stroke-width", 1);
+    }
+
+    function dragged(event, d) {
+        // reset previous highlighted hex
+        d3.select("g.hex-group").selectAll("path.hex-bins").attr("stroke-width", 1).style("z-index", (d, i) => i)
+        let dragged_selection: any = d3.select(this)
+        if(d3.select(this).attr("class") === "hex-bins") {
+            // find hexagon that was assigned to this hex-bin
+            const i = d[0].i
+            const hexagon = d3.selectAll("path.hexagon").filter((d) => d[0].assigned_hex_index === i)
+            // hexagon.attr("transform", "translate(" + event.x + "," + event.y + ")")
+            //                 .attr("stroke", "#444444").attr("stroke-width", 1)
+            dragged_selection = hexagon
+            d = hexagon.data()[0]
+        }
+        dragged_selection.attr("transform", "translate(" + event.x + "," + event.y + ")")
+                        .attr("stroke", "#444444").attr("stroke-width", 1)
+        
+        const closest_hex_index = find_closest_hex_index(event.x, event.y)
+        let closest_hex_center = {x: event.x, y: event.y}
+        // check if a hex is found
+        if(closest_hex_index === -1) {
+            console.log("no hex found")
+            dragged_selection.attr("stroke", "#444444").attr("stroke-width", 1)
+        } else {
+            closest_hex_center = centers_indexed[closest_hex_index]
+            // if found, remove the stroke of dragged hex
+            dragged_selection.attr("stroke", "none")
+            // highlight closest hex
+            const closest_hex = d3.select("g.hex-group").selectAll("path.hex-bins").filter(function (d, i) { return i === closest_hex_index;})
+            closest_hex.transition().duration(0).attr("stroke-width", 7).style("z-index", "100")
+        }
+        // adjust label position
+        const label = d3.select("g.hex-labels").selectAll("text").filter((ele: any) => ele[0].entity === d[0].entity)
+        label.attr("x", closest_hex_center.x)
+            .attr("y", closest_hex_center.y)
+        // adjust tspan
+        const line_num = label.selectAll("tspan").nodes().length
+        const lineHeight = 1.1 // ems
+        const em_to_px = 16
+        label.selectAll("tspan")
+            .attr("x", closest_hex_center.x)
+            // .attr("y", closest_hex_center.y)
+            .attr("y", parseFloat(closest_hex_center.y) - em_to_px / 2 * lineHeight * (line_num - 1) / 2) 
+        // console.log(closest_hex_center.y, parseFloat(closest_hex_center.y) - em_to_px / 2 * lineHeight * (line_num - 1) / 2)
+
+    }
+
+    function dragended(event, d) {
+        let dragged_selection: any = d3.select(this)
+        if(d3.select(this).attr("class") === "hex-bins") {
+            // find hexagon that was assigned to this hex-bin
+            const i = d[0].i
+            const hexagon = d3.selectAll("path.hexagon").filter((d) => d[0].assigned_hex_index === i)
+            dragged_selection = hexagon
+            d = hexagon.data()[0]
+        }
+        dragged_selection.raise().attr("stroke", "black").attr("stroke-width", 1);
+        const closest_hex_index = find_closest_hex_index(event.x, event.y)
+        if(closest_hex_index !== -1) {
+            // if found, remove the stroke of dragged hex
+            dragged_selection.attr("stroke", "none")
+            // highlight closest hex
+            const closest_hex = d3.select("g.hex-group").selectAll("path.hex-bins").filter(function (d, i) { return i === closest_hex_index;})
+            closest_hex.transition().duration(0).attr("stroke-width", 1)
+            entity_hex_index_dict.value[d[0].entity] = closest_hex_index
+            d[0].assigned_hex_index = closest_hex_index
+            // update draggable hexes
+            const entity_hexes = d3.select("g.hex-group").selectAll("path.hexagon").filter((d: any) => d[0].assigned_hex_index !== -1)
+            const assigned_hexes = entity_hexes.data().map((ele: any) => ele[0].assigned_hex_index)
+            d3.selectAll("path.hex-bins").filter((d, i) => assigned_hexes.includes(i))
+                .style("cursor", "pointer")
+                .on("mouseover", function(e, d) {
+                    d3.select(this).transition().duration(100).attr("stroke", "black").attr("stroke-width", 8)
+                })
+                .on("mouseout", function(e, d) {
+                    d3.select(this).transition().duration(100).attr("stroke", "#444444").attr("stroke-width", 1)
+                })
+                .call(drag)
+        } else {
+            dragged_selection.attr("transform", "translate(" + d.x + "," + d.y + ")")
+                        .attr("stroke", "#444444").attr("stroke-width", 1)
+            // adjust label position
+            const label = d3.select("g.hex-labels").selectAll("text").filter((ele: any) => ele[0].entity === d[0].entity)
+            label.attr("x", d.x)
+                .attr("y", d.y)
+            // adjust tspan
+            const line_num = label.selectAll("tspan").nodes().length
+            const lineHeight = 1.1 // ems
+            const em_to_px = 16
+            label.selectAll("tspan")
+                .attr("x", d.x)
+                // .attr("y", closest_hex_center.y)
+                .attr("y", parseFloat(d.y) - em_to_px / 2 * lineHeight * (line_num - 1) / 2) 
+            // console.log(closest_hex_center.y, parseFloat(closest_hex_center.y) - em_to_px / 2 * lineHeight * (line_num - 1) / 2)
+            }
+
+    }
+
+    const drag = d3.drag()
+        .on("start", dragstarted)
+        .on("drag", dragged)
+        .on("end", dragended);
+    d3.selectAll(eles).call(drag)
+}
 
 
 function updateHexColor(animation = true) {
     const svg = d3.select(`#${props.id}`).select("svg")
     const hex_path_group = svg.select("g.hex-group")
+    let sst_bin_dict = {
+        [SentimentType.neu]: [],
+        [SentimentType.neg]: [],
+        [SentimentType.pos]: [],
+        [SentimentType.mix]: [],
+    }
     const hex_bins: any = hex_path_group.selectAll("path")
         .attr("fill", function (d: any) {
             const sst = d[0].sst
-            return SstColors.enum_color_dict[categorizeHex(sst, props.segmentation!)]
+            const sst_categorized = categorizeHex(sst, props.segmentation!)
+            sst_bin_dict[sst_categorized].push(d)
+            return SstColors.enum_color_dict[sst_categorized]
         })
-
 }
+
 
 function categorizeHex(sst: Sentiment2D | undefined, segmentation: Sentiment2D) {
     if (sst === undefined) return SentimentType.unknown
@@ -345,6 +511,39 @@ function categorizeHex(sst: Sentiment2D | undefined, segmentation: Sentiment2D) 
     return SentimentType.neu
 }
 
+function find_closest_hex_index(x, y) {
+    let closest_index = -1
+    let min_dist = 1000000
+    blank_hexbins.value.forEach((bin, index) => {
+        const bin_x = centers_indexed[index].x
+        const bin_y = centers_indexed[index].y
+        const dist = (bin_x - x)**2 + (bin_y - y)**2
+        if(dist < hex_radius**2 && dist < min_dist) {
+            min_dist = dist
+            closest_index = index
+        }
+    })
+    return closest_index
+}
+
+function generate_hex_list_coord(sst, index, radius) {
+    const row_capacity = 5
+    const row_num = Math.floor(index / row_capacity)
+    const col_num = index % row_capacity
+    const x = -6*radius + col_num * radius * 2
+    const y = -6*radius + row_num * radius * 2
+    return {x, y}
+    
+}
+function index_to_sst(index) {
+    const mix_index = [1, 2, 8, 9, 10]
+    const neg_index = [3, 4, 12 ,13, 14]
+    const pos_index = [0, 5, 6, 16, 17]
+    if(mix_index.includes(index)) return SentimentType.mix
+    if(neg_index.includes(index)) return SentimentType.neg
+    if(pos_index.includes(index)) return SentimentType.pos
+}
+
 function distance_to_edge({ alpha, radius }) {
     const t = alpha % (Math.PI / 3)
     return Math.sqrt(3) * radius / (Math.sqrt(3) * Math.cos(t) + Math.sin(t))
@@ -352,9 +551,39 @@ function distance_to_edge({ alpha, radius }) {
 function generate_hex_coord(index, radius) {
     return polar_to_cartesian(generate_polar(index, radius))
 }
+function generate_sst_hex_coord(sst, index, radius) {
+    return polar_to_cartesian(generate_sst_polar(sst, index, radius))
+}
 function polar_to_cartesian({ alpha, r }) {
     return { x: r * Math.cos(alpha), y: r * Math.sin(alpha) }
 }
+function cartesian_to_polar({ x, y }) {
+    return { alpha: Math.atan2(y, x), radius: Math.sqrt(x*x + y*y)}
+}
+
+function generate_sst_polar(sentiment, index, radius) {
+    const sentiment_categorized = categorizeHex(sentiment, props.segmentation!)
+    let alpha_offset = 0
+    if(sentiment_categorized === SentimentType.mix) {
+        alpha_offset = Math.PI / 6
+    }
+    if(sentiment_categorized === SentimentType.pos) {
+        alpha_offset = Math.PI * 5 / 6
+    }
+    if(sentiment_categorized === SentimentType.neg) {
+        alpha_offset = Math.PI * 3 / 2
+    } 
+    if(sentiment_categorized === SentimentType.neu) {
+        alpha_offset = Math.PI * 3 / 2
+    } 
+    if(sentiment_categorized === SentimentType.unknown) {
+        alpha_offset = Math.PI * 3 / 2
+    } 
+    const alpha = alpha_offset + Math.PI / 6
+    const r = 2 * (distance_to_edge({ alpha, radius }))
+    return { alpha, r }
+}
+
 function generate_polar(index, radius) {
     const { level, M_l } = find_level(index)
     const d_alpha = 2 * Math.PI / (6 * (level + 1))
