@@ -56,7 +56,6 @@ const overview_overall_scatter_metadata: Ref<any> = ref({})
 
 
 const overall_scatter_view: Ref<typeUtils.EntityScatterView | undefined> = ref(undefined)
-const overall_entity_dict: Ref<any> = ref({})
 const overall_scatter_data_loading: Ref<boolean> = ref(true)
 const overview_constructed: Ref<boolean> = ref(false)
 const hex_constructed: Ref<boolean> = ref(true)
@@ -202,10 +201,6 @@ vue.onMounted(async () => {
         // console.log({json})
         // console.log("overall data fetched")
 
-        // create dict of nodes for hex view
-        overall_scatter_view.value.data.nodes.forEach(node => {
-          overall_entity_dict.value[node.text] = node
-        })
 
         // turn flags
         overall_scatter_data_loading.value = false
@@ -344,6 +339,7 @@ async function handleEntityClicked(entity: string) {
           data: cooccurrences,
         }
         overall_selected_hexview.value = hex_view
+        console.log({cooccurrences})
         hex_constructed.value = true
         // console.log("cooccurr hex fetched", cooccurrences)
         resolve("success")
@@ -474,6 +470,36 @@ function toggleTutorial(e: MouseEvent) {
                       v-model:selected_entity_name='selected_entity_name'
                     />
                   </div>
+                  <!-- Utilities -->
+                  <div class="utilities-container">
+                    <div id="entity-utility-container" class="entity-utils">
+                      <h2 class="component-header util-header">
+                        Topic Settings
+                        <i class='pi pi-info-circle tooltip'>
+                          <span class="tooltiptext right-tooltiptext" style="width: 300px">
+                            The color spectrum slider helps filter topics by number or articles. <br />
+                            The six-sliders group lets you input your preception of each media outlet based on fairness and
+                            importance.
+                          </span>
+                        </i>
+                      </h2>
+                      <!-- filter slider -->
+                      <h3 class="threshold-title"> Number of Articles Threshold
+                        <i class='pi pi-info-circle tooltip'>
+                          <span class="tooltiptext right-tooltiptext" style="width: 300px">
+                            User the slider to set a threshold on topics' minimum articles.
+                            Topics with less articles than the threshold will not appear in scatter plot.
+                          </span>
+                        </i>
+                      </h3>
+                      <div v-if="overview_constructed" class="slider-container">
+                        <ThresholdController v-model:article_num_threshold="article_num_threshold"
+                          :max_articles="overview_overall_scatter_metadata.max_articles"
+                          :min_articles="overview_overall_scatter_metadata.min_articles"></ThresholdController>
+                      </div>
+                    </div>
+                  </div>
+
                 </SplitterPanel>
                 <SplitterPanel class='entity-scatter-panel'>
                   <div class="overview-scatter-container">
@@ -503,7 +529,7 @@ function toggleTutorial(e: MouseEvent) {
               topic points or row in the table. </div>
             <!-- Hex view -->
             <h2 class="component-header hexview-header" v-if="selected_entity">
-              Topic Co-occurrence Hive for
+              Some information to show for 
               <span class="mainTopicStyle"> {{ selected_entity.name.replaceAll("_", " ") }} </span>
               &nbsp
               <i class='pi pi-info-circle tooltip'>
@@ -520,66 +546,23 @@ function toggleTutorial(e: MouseEvent) {
               <!-- <i v-if="!overall_selected_hexview" class="pi pi-spin pi-spinner" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/> -->
               <i v-if="!overall_selected_hexview" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/>
               <HexCooccurrence v-else ref="overall_co_hexview" class="overall-co-hexview"
+                mode="data"
                 :title="overall_selected_hexview.title" :id="`overall-co-hex`"
                 :entity_cooccurrences="overall_selected_hexview.data" :segmentation="segmentation"
                 :highlight_hex_entity="highlight_hex_entity" :show_blink="true"
-                :overall_entity_dict="overall_entity_dict" v-on:hex-clicked="handleHexClicked">
+                v-on:hex-clicked="handleHexClicked">
               </HexCooccurrence>
             </div>
           </SplitterPanel>
-          <SplitterPanel class="utilities-panel" :size="entity_info_panel_size">
-            <!-- Utilities -->
-            <div class="utilities-container">
-              <div id="entity-utility-container" class="entity-utils">
-                <h2 class="component-header util-header">
-                  Topic Settings
-                  <i class='pi pi-info-circle tooltip'>
-                    <span class="tooltiptext right-tooltiptext" style="width: 300px">
-                      The color spectrum slider helps filter topics by number or articles. <br />
-                      The six-sliders group lets you input your preception of each media outlet based on fairness and
-                      importance.
-                    </span>
-                  </i>
-                </h2>
-                <!-- filter slider -->
-                <h3 class="threshold-title"> Number of Articles Threshold
-                  <i class='pi pi-info-circle tooltip'>
-                    <span class="tooltiptext right-tooltiptext" style="width: 300px">
-                      User the slider to set a threshold on topics' minimum articles.
-                      Topics with less articles than the threshold will not appear in scatter plot.
-                    </span>
-                  </i>
-                </h3>
-                <div v-if="overview_constructed" class="slider-container">
-                  <ThresholdController v-model:article_num_threshold="article_num_threshold"
-                    :max_articles="overview_overall_scatter_metadata.max_articles"
-                    :min_articles="overview_overall_scatter_metadata.min_articles"></ThresholdController>
-                </div>
-
-                <div v-if="selected_entity" class="navigate-container">
-                  <router-link class="goNext"
-                    :to="{ name: 'belief', params: { order: 'first', outlet: random_outlet[0], entity: selected_entity.name } }">
-                    After finding a topic, <span class="clickNext">click here</span> to assess how each outlet covered it.
-                    <p class="next"><i class="pi pi-arrow-right " /></p>
-                  </router-link>
-                </div>
-                <!-- outlet weight slider -->
-                <!-- <h3 class="threshold-title">
-                  News Outlet Fairness
-                  <i class='pi pi-info-circle tooltip'>
-                    <span class="tooltiptext right-tooltiptext" style="width: 300px">
-                      How fair do you believe each of these outlets overall on their coverage of topics. <br />
-                      Provide a score between 0 and 1 <br />
-                      Sliding towards left indicates you feel the outlet is unfair.
-                    </span>
-                  </i>
-                </h3>
-                <OutletWeightSlider v-if="overview_constructed" :outlet_leaning="outlet_leaning"
-                  fontSize="0.65em">
-                </OutletWeightSlider> -->
-              </div>
+          <!-- <SplitterPanel class="utilities-panel" :size="entity_info_panel_size">
+            <div v-if="selected_entity" class="navigate-container">
+              <router-link class="goNext"
+                :to="{ name: 'belief', params: { order: 'first', outlet: random_outlet[0], entity: selected_entity.name } }">
+                After finding a topic, <span class="clickNext">click here</span> to assess how each outlet covered it.
+                <p class="next"><i class="pi pi-arrow-right " /></p>
+              </router-link>
             </div>
-          </SplitterPanel>
+          </SplitterPanel> -->
         </Splitter>
       </SplitterPanel>
     </Splitter>
@@ -658,6 +641,18 @@ main {
 }
 
 // ---------------------
+// entity table section
+// ---------------------
+.entity-table-panel {
+  display: flex;
+  flex-direction: column;
+}
+.entityTableWrapper {
+  height: 67%;
+  margin-left: 5%;
+}
+
+// ---------------------
 // entity scatter section
 // ---------------------
 
@@ -680,16 +675,21 @@ main {
   display: flex;
   flex-direction: column;
 }
-.entityTableWrapper {
-  height: 80%;
-  margin-left: 5%;
-}
 
 
 
 // ---------------------
 // utitlies section
 // ---------------------
+.entity-utils {
+  margin: 0.4%;
+  padding: 2%;
+  // height: 100%;
+  width: 100%;
+}
+.util-header {
+  background: #f7f7f7;
+}
 :deep(.p-slider .p-slider-handle) {
   height: 0.8rem;
   width: 0.8rem;
@@ -704,13 +704,6 @@ main {
   margin-top: 5%;
 }
 
-.entity-utils {
-  margin: 0.4%;
-  padding: 2%;
-  // height: 100%;
-  width: 100%;
-  background: #f7f7f7;
-}
 
 .segment-utils {
   margin: 1%;

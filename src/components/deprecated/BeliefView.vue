@@ -6,14 +6,16 @@ import { Ref, ref } from "vue"
 import * as vue from "vue"
 import * as SstColors from "../components/utils/ColorUtils"
 
+import RadioButton from 'primevue/radiobutton';
+import Slider from 'primevue/slider';
 import Dialog from 'primevue/dialog';
 import HexCooccurrence from "../components/HexCooccurrence.vue";
 import Legend from '../components/Legend.vue';
-import * as typeUtils from "../types"
 
 const store = useUserDataStore()
 const segmentation: Ref<typeUtils.Sentiment2D> = vue.computed(() => store.segmentation)
 const selected_entity = vue.computed(() => store.selected_entity)
+const selected_cooccurr_entity = vue.computed(() => store.selected_cooccurr_entity)
 const setUserOutletSegmentations = (segmentation, outlet) => store.setUserOutletSegmentations(segmentation, outlet)
 const route = useRoute()
 const router = useRouter()
@@ -29,11 +31,6 @@ const target_entity = vue.computed(() => route.params.entity as string)
 const order = vue.computed(() => route.params.order as string)
 const true_hex_data: Ref<Any> = ref()
 const true_hex_fetched: Ref<Boolean> = ref(false)
-const revealed: Ref<Boolean> = ref(false)
-const revealed_css = vue.computed(() => {
-    return revealed.value ? "revealed" : "hidden"
-})
-const outlet_hexview: Ref<typeUtils.CooccurrHexView | undefined> = ref(undefined)
 const offset: Ref<number> = ref(0.15)
 const segmentations = vue.computed(() => {
     const pos_center = segmentation.value.pos
@@ -86,19 +83,21 @@ vue.onBeforeMount(() => {
     fetch_outlet_hex(target_outlet.value, target_entity.value)
 })
 
+function shuffle(list) {
+    return list.map(value => ({ value, sort: Math.random() })).sort((a, b) => a.sort - b.sort).map(({ value }) => value)
+}
 async function fetch_outlet_hex(outlet, center_entity) {
+    const random_hex_parameters = {
+        "outlet": outlet,
+        "center_entity": center_entity,
+    }
     await fetch(`${server_address}/hexview/grouped/${center_entity}/${outlet}`)
         .then(res => res.json())
         .then(json => {
-            console.log({"true_hex_data": json})
             true_hex_data.value = json
             true_hex_fetched.value = true
-            const hex_view: typeUtils.CooccurrHexView = {
-                title: `co-${selected_entity.value.name}`,
-                data: json.cooccurrences_data,
-            }
-            outlet_hexview.value = hex_view
-            })
+            //console.log("hex fetched", json)
+        })
 }
 
 function handleCellClicked(e, segmentation, index) {
@@ -182,40 +181,12 @@ function toggleTutorial(e: MouseEvent) {
             <img :src="`/${target_outlet}.png`" :class="['journal-image', `${outletIconStyle(target_outlet)}`]" />
         </div>
 
-        <div class=hex-cell>
-            <i v-if="!true_hex_fetched" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/>
-            <div v-else class="belief-hex-container">
-                <div class="belief-user-hexview-overlay">
-                    <div class="border" ></div>
-                    <HexCooccurrence ref="belief_user_hexview" class="belief-user-hexview"
-                    mode="user"
-                    title="belief-user-hexview" :id="`belief_user_hexview`"
-                    :entity_cooccurrences="outlet_hexview.data" :segmentation="segmentation"
-                    :show_blink="true"
-                    :show_label="true">
-                    </HexCooccurrence>
-                </div>
-                <div class="belief-true-hexview-overlay">
-                    <div class="border" :class="revealed_css" @click="revealed=true"></div>
-                    <i v-if="!revealed" class="pi pi-question" 
-                    style="
-                        position:absolute; 
-                        left: 43%; top: 30%; 
-                        font-size: 8rem; 
-                        z-index:1000;
-                        pointer-events:none">
-                    </i>
-                    <HexCooccurrence ref="belief_true_hexview" class="belief-true-hexview"
-                    mode="data"
-                    :class="revealed_css"
-                    :title="outlet_hexview.title" :id="`overall-co-hex`"
-                    :entity_cooccurrences="outlet_hexview.data" :segmentation="segmentation"
-                    :show_blink="revealed"
-                    :show_label="revealed"
-                    >
-                    </HexCooccurrence>
-                </div>
-            </div>
+        <div v-if="true_hex_fetched" class=hex-cell v-for="(segmentation, index) in shuffle(segmentations)"
+            @click='handleCellClicked($event, segmentation, index)'>
+            <!-- <div class=test-hex> {{ index }}</div> -->
+            <HexCooccurrence class="belief-hexview" title="belief-hexview" :id="`belief-hex-${index}`"
+                :entity_cooccurrences="true_hex_data.cooccurrences_data" :segmentation="segmentation" :show_blink="true">
+            </HexCooccurrence>
             <svg>
                 <pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)"
                     patternUnits="userSpaceOnUse">
@@ -236,54 +207,33 @@ function toggleTutorial(e: MouseEvent) {
     padding: 1%;
     height: 95vh;
     display: flex;
-    /* flex-wrap: wrap-reverse;
-    justify-content: space-between; */
+    flex-wrap: wrap-reverse;
+    justify-content: space-between;
 }
+
 .hex-cell {
-  width: 100%;
-  height: 100%;
-  /*! display: flex; */
-}
-.belief-hex-container {
-  width: 100%;
-  height: 100%;
-  display: flex;
-}
-.border {
-    position:absolute;
-    border:1px solid black;
-    left: 12%;
-    right: 12%;
-    top: 12.7%;
-    bottom: 34%;
-    z-index: 100;
-}
-.belief-user-hexview-overlay, .belief-true-hexview-overlay {
-    width: 100%;
-    height: 100%;
-    padding: 6%;
-    /*! display: flex; */
-}
-.belief-true-hexview, .belief-user-hexview {
-    /* border: 1px solid black; */
-}
-/* .belief-true-hexview:hover {
+    width: 30%;
+    height: 48%;
+    justify-content: center;
+    display: flex;
+    flex-direction: column;
+    margin: 0px 1px;
+    box-shadow: rgba(0, 0, 0, 0.05) 0px 0px 0px 1px;
     cursor: pointer;
-    opacity: 0.8;
-} */
-.belief-user-hexview-overlay > .border {
-    z-index: 0 !important;
+    background-color: white;
 }
-.belief-true-hexview.hidden {
-    opacity: 0.3;
+
+.hex-cell:hover {
+    box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
 }
-.border.hidden {
-    opacity: 0.3;
-    background: #8a8787;
+
+.clicked-cell {
+    box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
 }
-.border.hidden:hover {
-    cursor: pointer;
-    opacity: 0.8;
+
+
+.belief-hexview {
+    pointer-events: none;
 }
 
 .journal-style {
@@ -295,10 +245,6 @@ function toggleTutorial(e: MouseEvent) {
     overflow: hidden;
     border-radius: 50%;
     border: #d7d7d7 3px solid;
-}
-:deep(.hex-svg) {
-    /* width: unset;
-    height: unset; */
 }
 
 .journal-image {
@@ -322,4 +268,24 @@ function toggleTutorial(e: MouseEvent) {
     top: 20%;
     left: 10%;
 }
-</style>
+
+/* .p-radiobutton {
+ display:inline-flex;
+ cursor:pointer;
+ user-select:none;
+ vertical-align:bottom;
+ position: absolute;
+ top: 94%;
+ left: 48%;
+} */
+
+.test-slider-container {
+    position: absolute;
+    right: 25%;
+    top: 38%;
+    width: 30%;
+}
+
+.test-slider {
+    width: inherit;
+}</style>

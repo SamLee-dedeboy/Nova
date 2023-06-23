@@ -58,8 +58,8 @@ export class Legend {
 
         for(const [title, color] of Object.entries(this.props.color_dict!)) {
             const circle = svg.append("circle")
-                .attr("cx", margin.left + index*(2*row_height + margin.vertical + row_height))
-                .attr("cy", margin.top )
+                .attr("cx", margin.left)
+                .attr("cy", margin.top + index*(2*row_height + margin.vertical + row_height) )
                 .attr("r", row_height)
                 .style("fill", color)
                 .style("stroke", 'black')

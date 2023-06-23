@@ -84,7 +84,7 @@ def get_grouped_hexview(title, outlet):
                                                               processed_data.grouped_cooccurrences_dict, 
                                                               grouped_node_dict, 
                                                               processed_data, 
-                                                              overall_node_dict, 
+                                                             overall_node_dict, 
                                                               grouped_metadata)
     for hex_data in res: 
         blanked_list = []
@@ -101,7 +101,8 @@ def get_grouped_hexview(title, outlet):
                     sst=Sentiment2D(0,0)
                 ))
 
-        hex_data['cooccurrences_data'].sorted_cooccurrences_list = blanked_list[0:36]
+        # hex_data['cooccurrences_data'].sorted_cooccurrences_list = blanked_list[0:36]
+        hex_data['cooccurrences_data'].sorted_cooccurrences_list = blanked_list[0:9]
 
     if outlet != "all":
         res = next((hex for hex in res if hex['outlet'] == outlet), None)
