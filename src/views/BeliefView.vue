@@ -176,45 +176,45 @@ function toggleTutorial(e: MouseEvent) {
                 <Button label="Ready" icon="pi pi-check" @click="toggleTutorial" autofocus />
             </template>
         </Dialog>
-        <Legend id="legend-sentiment" :color_dict="SstColors.key_color_dict"/>
 
-        <div class="journal-style">
-            <img :src="`/${target_outlet}.png`" :class="['journal-image', `${outletIconStyle(target_outlet)}`]" />
-        </div>
-
-        <div class=hex-cell>
+        <div class=page-container>
             <i v-if="!true_hex_fetched" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/>
-            <div v-else class="belief-hex-container">
-                <div class="belief-user-hexview-overlay">
-                    <div class="border" ></div>
-                    <HexCooccurrence ref="belief_user_hexview" class="belief-user-hexview"
-                    mode="user"
-                    title="belief-user-hexview" :id="`belief_user_hexview`"
-                    :entity_cooccurrences="outlet_hexview.data" :segmentation="segmentation"
-                    :show_blink="true"
-                    :show_label="true">
-                    </HexCooccurrence>
+            <div v-else class="belief-user-hexview-overlay">
+                <div class="border" ></div>
+                <HexCooccurrence ref="belief_user_hexview" class="belief-user-hexview"
+                mode="user"
+                title="belief-user-hexview" :id="`belief_user_hexview`"
+                :entity_cooccurrences="outlet_hexview.data" :segmentation="segmentation"
+                :show_blink="true"
+                :show_label="true">
+                </HexCooccurrence>
+            </div>
+            <div class="journal-style-container">
+                <div class="journal-style">
+                    <img :src="`/${target_outlet}.png`" :class="['journal-image', `${outletIconStyle(target_outlet)}`]" />
                 </div>
-                <div class="belief-true-hexview-overlay">
-                    <div class="border" :class="revealed_css" @click="revealed=true"></div>
-                    <i v-if="!revealed" class="pi pi-question" 
-                    style="
-                        position:absolute; 
-                        left: 43%; top: 30%; 
-                        font-size: 8rem; 
-                        z-index:1000;
-                        pointer-events:none">
-                    </i>
-                    <HexCooccurrence ref="belief_true_hexview" class="belief-true-hexview"
-                    mode="data"
-                    :class="revealed_css"
-                    :title="outlet_hexview.title" :id="`overall-co-hex`"
-                    :entity_cooccurrences="outlet_hexview.data" :segmentation="segmentation"
-                    :show_blink="revealed"
-                    :show_label="revealed"
-                    >
-                    </HexCooccurrence>
-                </div>
+                <Legend id="legend-sentiment" :color_dict="SstColors.key_color_dict"/>
+            </div>
+            <i v-if="!true_hex_fetched" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/>
+            <div v-else class="belief-true-hexview-overlay">
+                <div class="border" :class="revealed_css" @click="revealed=true"></div>
+                <i v-if="!revealed" class="pi pi-question" 
+                style="
+                    position:absolute; 
+                    left: 43%; top: 30%; 
+                    font-size: 8rem; 
+                    z-index:1000;
+                    pointer-events:none">
+                </i>
+                <HexCooccurrence ref="belief_true_hexview" class="belief-true-hexview"
+                mode="data"
+                :class="revealed_css"
+                :title="outlet_hexview.title" :id="`overall-co-hex`"
+                :entity_cooccurrences="outlet_hexview.data" :segmentation="segmentation"
+                :show_blink="revealed"
+                :show_label="revealed"
+                >
+                </HexCooccurrence>
             </div>
             <svg>
                 <pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)"
@@ -225,10 +225,7 @@ function toggleTutorial(e: MouseEvent) {
             </svg>
         </div>
     </div>
-<!-- <div class=test-slider-container>
-        <div class=slider-label> {{offset}}</div>
-        <Slider class='test-slider' v-model="offset" :step="0.01" :min="0" :max="0.25" />
-    </div> --></template>
+</template>
 
 <style scoped>
 .selection-grid {
@@ -239,29 +236,25 @@ function toggleTutorial(e: MouseEvent) {
     /* flex-wrap: wrap-reverse;
     justify-content: space-between; */
 }
-.hex-cell {
-  width: 100%;
-  height: 100%;
-  /*! display: flex; */
-}
-.belief-hex-container {
+.page-container {
   width: 100%;
   height: 100%;
   display: flex;
 }
+
 .border {
     position:absolute;
     border:1px solid black;
     left: 12%;
     right: 12%;
-    top: 12.7%;
-    bottom: 34%;
-    z-index: 100;
+    top: 5.7%;
+    bottom: 32%;
+    /* z-index: 100; */
 }
 .belief-user-hexview-overlay, .belief-true-hexview-overlay {
     width: 100%;
     height: 100%;
-    padding: 6%;
+    padding: 2%;
     /*! display: flex; */
 }
 .belief-true-hexview, .belief-user-hexview {
@@ -286,7 +279,24 @@ function toggleTutorial(e: MouseEvent) {
     opacity: 0.8;
 }
 
+/* Journal style */
+.journal-style-container {
+  /*! height: 100%; */
+  display: flex;
+  flex-direction: column;
+  width: 30%;
+  padding-top: 5%;
+}
 .journal-style {
+  width: 100%;
+  /*! height: 100%; */
+  aspect-ratio: 1;
+}
+.legend-container {
+    width: 85%;
+}
+
+/* .journal-style {
     width: 200px;
     height: 200px;
     position: absolute;
@@ -295,7 +305,7 @@ function toggleTutorial(e: MouseEvent) {
     overflow: hidden;
     border-radius: 50%;
     border: #d7d7d7 3px solid;
-}
+} */
 :deep(.hex-svg) {
     /* width: unset;
     height: unset; */
@@ -308,18 +318,15 @@ function toggleTutorial(e: MouseEvent) {
 }
 
 .icon {
-    height: 100%;
+    /* height: 100%; */
+    width: 100%;
 }
 
 .FoxNews-icon {
-    height: 85%;
-    right: 30%;
-    bottom: 2%;
+    width: 100%;
 }
 
 .Breitbart-icon {
-    height: 65%;
-    top: 20%;
-    left: 10%;
+    width: 100%;
 }
 </style>

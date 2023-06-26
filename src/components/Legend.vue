@@ -9,7 +9,7 @@ const props = defineProps({
     row_height: Number,
     font_size: Number,
 })
-const margin = {top: 15, bottom: 20, left:5,  right: 15, vertical: 20}
+const margin = {top: 15, bottom: 20, left:65,  right: 15, vertical: 20}
 // const len = Object.keys(props.color_dict!).length
 const row_height = vue.computed(() => props.row_height? props.row_height : 5)
 const font_size = vue.computed(() => props.font_size? props.font_size : 1.2)
@@ -41,11 +41,7 @@ vue.watch(() => props.color_dict, () => {
 
 <style scoped>
 .legend-container {
-    width: 8%;
-    transform-origin: top left;
-    position: absolute;
-    left: 47%;
-    top: 33%;
+    /* width: 85%; */
 }
 .legend-svg {
     width: 100%;
