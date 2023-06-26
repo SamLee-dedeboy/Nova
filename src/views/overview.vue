@@ -545,13 +545,13 @@ function toggleTutorial(e: MouseEvent) {
               <!-- load icon -->
               <!-- <i v-if="!overall_selected_hexview" class="pi pi-spin pi-spinner" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/> -->
               <i v-if="!overall_selected_hexview" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/>
-              <HexCooccurrence v-else ref="overall_co_hexview" class="overall-co-hexview"
+              <!-- <HexCooccurrence v-else ref="overall_co_hexview" class="overall-co-hexview"
                 mode="data"
                 :title="overall_selected_hexview.title" :id="`overall-co-hex`"
                 :entity_cooccurrences="overall_selected_hexview.data" :segmentation="segmentation"
                 :highlight_hex_entity="highlight_hex_entity" :show_blink="true"
                 v-on:hex-clicked="handleHexClicked">
-              </HexCooccurrence>
+              </HexCooccurrence> -->
             </div>
           </SplitterPanel>
           <!-- <SplitterPanel class="utilities-panel" :size="entity_info_panel_size">

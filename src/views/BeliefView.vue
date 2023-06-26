@@ -24,10 +24,13 @@ const random_outlet = vue.inject("random_outlet")
 const outlet_leaning_scale = vue.inject("outlet_leaning_scale")
 const outlet_leaning_scale_dict = vue.inject("outlet_leaning_scale_dict")
 
+const user_hex = ref(null)
+const data_hex = ref(null)
 const target_outlet = vue.computed(() => route.params.outlet as string)
 const target_entity = vue.computed(() => route.params.entity as string)
+const highlight_hex_entity: Ref<string> = ref()
 const order = vue.computed(() => route.params.order as string)
-const true_hex_data: Ref<Any> = ref()
+const true_hex_data: Ref<any> = ref()
 const true_hex_fetched: Ref<Boolean> = ref(false)
 const revealed: Ref<Boolean> = ref(false)
 const revealed_css = vue.computed(() => {
@@ -80,6 +83,11 @@ vue.watch(order, (old_value, new_value) => {
     // target outlet should have changed
     // add 'if' to avoid extra fetching
     if (order.value) fetch_outlet_hex(target_outlet.value, target_entity.value)
+})
+
+vue.watch(revealed, () => {
+   user_hex.value.updateHighlightHex() 
+   data_hex.value.updateHighlightHex()
 })
 
 vue.onBeforeMount(() => {
@@ -137,6 +145,10 @@ function handleCellClicked(e, segmentation, index) {
     }
 }
 
+function handleHexClicked({clickedEntity}) {
+    highlight_hex_entity.value = clickedEntity
+}
+
 
 function outletIconStyle(name: string) {
     let className = name + '-icon';
@@ -181,15 +193,18 @@ function toggleTutorial(e: MouseEvent) {
             <i v-if="!true_hex_fetched" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/>
             <div v-else class="belief-user-hexview-overlay">
                 <div class="border" ></div>
-                <HexCooccurrence ref="belief_user_hexview" class="belief-user-hexview"
+                <HexCooccurrence ref="user_hex" class="belief-user-hexview"
                 mode="user"
                 title="belief-user-hexview" :id="`belief_user_hexview`"
                 :entity_cooccurrences="outlet_hexview.data" :segmentation="segmentation"
+                :highlight_hex_entity="highlight_hex_entity"
+                @hex-clicked="handleHexClicked"
                 :show_blink="true"
                 :show_label="true">
                 </HexCooccurrence>
             </div>
-            <div class="journal-style-container">
+            <i v-if="!true_hex_fetched" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/>
+            <div v-else class="journal-style-container">
                 <div class="journal-style">
                     <img :src="`/${target_outlet}.png`" :class="['journal-image', `${outletIconStyle(target_outlet)}`]" />
                 </div>
@@ -206,11 +221,13 @@ function toggleTutorial(e: MouseEvent) {
                     z-index:1000;
                     pointer-events:none">
                 </i>
-                <HexCooccurrence ref="belief_true_hexview" class="belief-true-hexview"
+                <HexCooccurrence ref="data_hex" class="belief-true-hexview"
                 mode="data"
                 :class="revealed_css"
-                :title="outlet_hexview.title" :id="`overall-co-hex`"
+                :title="outlet_hexview.title" :id="`belief_data_hexview`"
                 :entity_cooccurrences="outlet_hexview.data" :segmentation="segmentation"
+                :highlight_hex_entity="highlight_hex_entity"
+                @hex-clicked="handleHexClicked"
                 :show_blink="revealed"
                 :show_label="revealed"
                 >
@@ -249,7 +266,10 @@ function toggleTutorial(e: MouseEvent) {
     right: 12%;
     top: 5.7%;
     bottom: 32%;
-    /* z-index: 100; */
+    z-index: 100;
+}
+.border.revealed {
+    z-index: 0 !important;
 }
 .belief-user-hexview-overlay, .belief-true-hexview-overlay {
     width: 100%;
