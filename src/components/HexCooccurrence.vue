@@ -53,6 +53,7 @@ const sorted_cooccurrence_list = vue.computed(() => {
         }
         sst_bins[sst_category].push(hex_entity.entity)
     })
+    let unknown_count = 0
     raw_data.forEach((hex_entity, index) => {
         let coord;
         if(props.mode === "user")
@@ -60,7 +61,11 @@ const sorted_cooccurrence_list = vue.computed(() => {
         else {
             const sst_category = categorizeHex(hex_entity.sst, props.segmentation)
             const sst_index = sst_bins[sst_category].indexOf(hex_entity.entity)
-            coord = generate_sst_hex_coord(sst_category, sst_index, hex_radius)
+            if(unknown_count < 0) {
+                coord = generate_sst_hex_coord(SentimentType.unknown, unknown_count, hex_radius)
+                unknown_count += 1
+            } else 
+                coord = generate_sst_hex_coord(sst_category, sst_index, hex_radius)
         }
         const { x, y } = coord
         res.push({
@@ -68,11 +73,13 @@ const sorted_cooccurrence_list = vue.computed(() => {
             x: x,
             y: y,
             sst: hex_entity.sst,
+            sst_category: categorizeHex(hex_entity.sst, props.segmentation),
             exists: hex_entity.article_ids.length !== 0,
             index: index + 1,
             assigned_hex_index: -1,
         })
     })
+    console.log(props.mode, res)
     return res
 })
 
@@ -684,7 +691,7 @@ function updateHexColor(animation = true) {
 
 
 function categorizeHex(sst: Sentiment2D | undefined, segmentation: Sentiment2D) {
-    if (sst === undefined) return SentimentType.unknown
+    if (sst.pos === 0 && sst.neg === 0) return SentimentType.unknown
     if (sst.pos < segmentation.pos && sst.neg < segmentation.neg) return SentimentType.neu
     if (sst.pos < segmentation.pos && sst.neg > segmentation.neg) return SentimentType.neg
     if (sst.pos > segmentation.pos && sst.neg < segmentation.neg) return SentimentType.pos
@@ -751,10 +758,15 @@ function generate_sst_polar(sst, index, radius) {
     const mix_index = [1, 2, 8, 9, 10]
     const neg_index = [3, 4, 12 ,13, 14]
     const pos_index = [0, 5, 6, 16, 17]
+    const neu_index = [15, 30, 31, 32, 33]
+    // const unknown_index = [62, 36, 88, 122]
+    const unknown_index = [62, 37, 36, 59, 88, 87]
     let hex_index = -1
     if(sst === "mixed") hex_index = mix_index[index]
     if(sst === "negative") hex_index = neg_index[index]
     if(sst === "positive") hex_index = pos_index[index]
+    if(sst === "neutral") hex_index = neu_index[index]
+    if(sst === "unknown") hex_index = unknown_index[index]
     const { level, M_l } = find_level(hex_index)
     const d_alpha = 2 * Math.PI / (6 * (level + 1))
     const d_index = hex_index - M_l
