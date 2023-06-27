@@ -26,6 +26,8 @@ export const useUserDataStore = defineStore('userData', {
         },
         setCooccurrEntity(cooccurr_entity) {
             this.selected_cooccurr_entity = cooccurr_entity
+            if(this.selected_cooccurr_entity && this.selected_cooccurr_entity.name === this.selected_entity.name)
+                this.selected_cooccurr_entity = undefined
         },
         setArticleNumThreshold(threshold) {
             this.article_num_threshold = threshold

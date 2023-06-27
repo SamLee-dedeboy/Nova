@@ -18,38 +18,38 @@ const random_outlet = vue.inject("random_outlet")
 
 const disabled_item_array = vue.computed(() => {
   switch (route.name) {
-    case "home": return [true, selected_entity.value == undefined, true, true, true]
-    case "belief": return [false, false, true, true, true]
-    case "compare": return [false, false, false, false, false]
-    case "inspection": return [false, false, false, false, false]
-    default: return [true, true, true, true, true]
+    case "home": return [true, selected_entity.value == undefined, true]
+    case "belief": return [false, false, false]
+    // case "compare": return [false, false, false, false, false]
+    case "inspection": return [false, false, false]
+    default: return [true, true, true]
   }
 })
 const stages = vue.computed(() => [
   {
     to: `/`,
     label: "Home",
-    // disabled: disabled_item_array.value[0],
+    disabled: disabled_item_array.value[0],
   },
   {
     to: `/belief/first/${random_outlet[0]}/${selected_entity.value?.name}`,
     label: "Belief",
     disabled: disabled_item_array.value[1],
   },
-  {
-    to: `/belief/second/${random_outlet[1]}/${selected_entity.value?.name}`,
-    label: "Belief",
-    disabled: disabled_item_array.value[2],
-  },
-  {
-    to: `/compare/${selected_entity.value?.name}/`,
-    label: "Compare",
-    disabled: disabled_item_array.value[3],
-  },
+  // {
+  //   to: `/belief/second/${random_outlet[1]}/${selected_entity.value?.name}`,
+  //   label: "Belief",
+  //   disabled: disabled_item_array.value[2],
+  // },
+  // {
+  //   to: `/compare/${selected_entity.value?.name}/`,
+  //   label: "Compare",
+  //   disabled: disabled_item_array.value[3],
+  // },
   {
     to: `/inspection/${selected_entity.value?.name}`,
     label: "Inspection",
-    disabled: disabled_item_array.value[4],
+    disabled: disabled_item_array.value[3],
   },
   // {
   //   to: `/summary/${selected_entity.value?.name}`,

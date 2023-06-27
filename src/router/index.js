@@ -19,23 +19,23 @@ const router = createRouter({
       component: BeliefView,
       meta: { order: 1 },
     },
+    // {
+    //   path: "/compare/:entity/",
+    //   name: "compare",
+    //   component: CompareView,
+    //   meta: { order: 2 },
+    // },
     {
-      path: "/compare/:entity/",
-      name: "compare",
-      component: CompareView,
-      meta: { order: 2 },
-    },
-    {
-      path: "/inspection/:entity",
+      path: "/inspection/:outlet/:entity",
       name: "inspection",
       component: InspectionView,
-      meta: { order: 3 },
+      meta: { order: 2 },
     },
     {
       path: "/summary/:entity",
       name: "summary",
       component: SummaryView,
-      meta: { order: 4 },
+      meta: { order: 3 },
     },
   ],
 });

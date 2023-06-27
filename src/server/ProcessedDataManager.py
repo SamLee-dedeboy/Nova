@@ -88,10 +88,10 @@ def extract_cooccurrences_overall(article_list):
         outlet = article['journal']
         entity_sentiments = article['doc_level_sentiment']
         for entity1, sentiment1 in entity_sentiments.items():
-            if sentiment1 != "neutral":
+            if sentiment1 != "neutral" and sentiment1 != "error":
                 # add co-occurrences
                 for entity2, sentiment2 in entity_sentiments.items():
-                    if sentiment2 != "neutral":
+                    if sentiment2 != "neutral" and sentiment2 != "error":
                         # add to co-occurrences data 
                         cooccurrences_dict[entity1][entity2].append(article_id) 
                         # utils.save_json(cooccurrences_dict, 'cooccurrences.json')
@@ -107,10 +107,10 @@ def extract_cooccurrences_grouped(article_list):
         outlet = article['journal']
         entity_sentiments = article['doc_level_sentiment']
         for entity1, sentiment1 in entity_sentiments.items():
-            if sentiment1 != "neutral":
+            if sentiment1 != "neutral" and sentiment1 != "error":
                 # add co-occurrences
                 for entity2, sentiment2 in entity_sentiments.items():
-                    if sentiment2 != "neutral":
+                    if sentiment2 != "neutral" and sentiment2 != "error":
                         # add to co-occurrences data 
                         cooccurrences_dict[outlet][entity1][entity2].append({
                             "article_id": article_id,
@@ -138,7 +138,7 @@ def index_by_entities(article_list):
         entity_sentiments = article['doc_level_sentiment']
         for entity1, sentiment1 in entity_sentiments.items():
             # add pos/neg mentions to scatter data 
-            if sentiment1 != "neutral":
+            if sentiment1 != "neutral" and sentiment1 != "error":
                 entity_mentioned_articles_dict[entity1].append(article_id)
     metadata = {
         "total_articles": len(article_list),

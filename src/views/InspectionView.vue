@@ -41,23 +41,17 @@ const right_section_size = vue.computed(() => 100 - left_section_size)
 const server_address = vue.inject("server_address")
 const data_fetched: Ref<boolean> = ref(false)
 
+const selected_outlet = route.params.outlet
 const selected_entity = vue.computed(() => store.selected_entity)
 const setEntity = (entity) => store.setEntity(entity)
 const selected_cooccurr_entity = vue.computed(() => store.selected_cooccurr_entity)
 const setCooccurrEntity = (cooccurr_entity) => store.setCooccurrEntity(cooccurr_entity)
 const segmentation = vue.computed(() => store.segmentation)
 const original_segmentation = segmentation.value
-const outlet_weight_dict = vue.computed(() => store.outlet_weight_dict)
 const clicked_hexview = vue.computed(() => store.clicked_hexview)
 const highlight_hex_entity: Ref<string> = ref("")
 const setClickedHexView = (hexview) => store.setClickedHexView(hexview)
 const hexview_grid = vue.computed(() => store.hexview_grid)
-const constraint_dict = vue.computed(() => store.constraints)
-const ranked_outlets = vue.computed(() => {
-    return Object.keys(outlet_weight_dict.value).sort(
-        (o1, o2) => outlet_weight_dict.value[o1] - outlet_weight_dict.value[o2]
-    )
-})
 
 // const selected_outlet: Ref<string> = ref("ABC News")
 const selected_article: Ref<Article> = ref()
@@ -99,9 +93,12 @@ const journal_options = [
     "Washington Post"
 ]
 
-function prepare_data() {
+async function prepare_data() {
+    const cooccurr_entity_name = selected_cooccurr_entity.value? selected_cooccurr_entity.value.name : selected_entity.value.name
+    await fetch_cooccurr_info(selected_outlet, selected_entity.value.name, cooccurr_entity_name)
     //console.log(selected_entity.value)
     const article_ids = selected_cooccurr_entity.value?.article_ids || selected_entity.value.article_ids
+    console.log({article_ids})
     // const article_ids = article_ids_w_sentiment.map(obj => obj.article_id)
     highlight_hex_entity.value = selected_cooccurr_entity.value?.name
     // setSegmentation(selected_entity.value.sst_ratio)
@@ -117,12 +114,7 @@ function prepare_data() {
             resolve("success")
         )
     }))
-    Promise.all(promiseArray)
-        .then(() => {
-            data_fetched.value = true
-            //console.log('fetched new articles')
-        })
-
+    await Promise.all(promiseArray)
 }
 
 async function fetch_articles(article_ids) {
@@ -140,9 +132,8 @@ async function fetch_articles(article_ids) {
         .then(res => res.json())
         .then(json => {
             target_articles.value = json
-            //console.log({json})
-            console.log("articles fetched", article_ids)
-            console.log("articles fetched", json)
+            console.log("articles", target_articles.value.length)
+            data_fetched.value = true
         })
 }
 
@@ -170,21 +161,24 @@ async function handleChangeJournal(e) {
     const co_occurr_entity = selected_cooccurr_entity.value?.name
     const view = hexview_grid.value.find(view => view.title.split("-")[2] === outlet)
     setClickedHexView(view)
-    await fetch_cooccurr_into(outlet, entity, co_occurr_entity)
+    await fetch_cooccurr_info(outlet, entity, co_occurr_entity)
     prepare_data()
     // selectedCategory.value = undefined
 }
 
-async function handleHexClicked({ target, co_occurr_entity }, view) {
-    console.log(target, co_occurr_entity)
-    const entity = target.split("-")[0]
-    const outlet = target.split("-")[1]
-    highlight_hex_entity.value = co_occurr_entity
-    await fetch_cooccurr_into(outlet, entity, co_occurr_entity)
+async function handleHexClicked({ clickedEntity }, view) {
+    if(clickedEntity === selected_entity.value.name) {
+        setCooccurrEntity(undefined)
+    } else {
+        highlight_hex_entity.value = clickedEntity
+    }
+    const entity = selected_entity.value.name
+    const outlet = selected_outlet
+    await fetch_cooccurr_info(outlet, entity, clickedEntity)
     prepare_data()
 }
 
-async function fetch_cooccurr_into(outlet, entity, co_occurr_entity) {
+async function fetch_cooccurr_info(outlet, entity, co_occurr_entity) {
     await fetch(`${server_address}/processed_data/cooccurr_info/grouped/${outlet}/${entity}/${co_occurr_entity}`)
         .then(res => res.json())
         .then(json => {
@@ -208,7 +202,6 @@ async function fetch_cooccurr_into(outlet, entity, co_occurr_entity) {
                 // articles_topic_dict: json.cooccurr_articles_topic_dict,
             }
             setCooccurrEntity(cooccurr_entity)
-            console.log(selected_cooccurr_entity.value)
         })
 }
 
@@ -217,24 +210,6 @@ function outletIconStyle(name:string){
     className = (className.includes("FoxNews") || className.includes("Breitbart")) ? className : 'icon';
     return className;
 }
-
-// async function handleArticleIconClicked(article_info) {
-//     let target_article
-//     await fetch(`${server_address}/processed_data/ids_to_articles`, {
-//         method: "POST",
-//         headers: {
-//             "Accept": "application/json",
-//             "Content-Type": "application/json"
-//         },
-//         body: JSON.stringify([article_info.article_id])
-//     })
-//         .then(res => res.json())
-//         .then(json => {
-//             target_article = json[0]
-//             article_view.value.handleArticleClicked(null, target_article)
-//         })
-// }
- 
 
 </script>
 
@@ -252,10 +227,12 @@ function outletIconStyle(name:string){
             <h2 class="component-header article-view-header">
                 Articles on
                 <span> {{selected_entity?.name.replaceAll("_"," ")}} </span>
-                &
-                <span> {{selected_cooccurr_entity?.name.replaceAll("_"," ")}} </span>
+                <span v-if="selected_cooccurr_entity">
+                    &
+                    <span> {{selected_cooccurr_entity?.name.replaceAll("_"," ")}} </span>
+                </span>
                 by
-                <span> {{selected_entity.outlet}}</span>
+                <span> {{selected_outlet}}</span>
                 <!-- <span> {{selected_outlet}}</span> -->
                 &nbsp
                 <i class='pi pi-info-circle tooltip'>
@@ -266,7 +243,8 @@ function outletIconStyle(name:string){
                     </span>
                 </i>
             </h2>
-            <ArticleView class="article-view-container" v-if="data_fetched" v-model:sst_threshold="segmentation"
+            <!-- <i v-if="!data_fetched" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/> -->
+            <ArticleView class="article-view-container" v-model:sst_threshold="segmentation"
                 ref="article_view"
                 :articles="target_articles" 
                 :article_highlights="target_article_highlights"
@@ -274,21 +252,25 @@ function outletIconStyle(name:string){
                 :entity_pair="[selected_entity?.name as string, selected_cooccurr_entity?.name as string]">
             </ArticleView>
             <div class="hexview-container">
-                <HexCooccurrence v-if="data_fetched" class="compare-co-hexview" :title="clicked_hexview.title"
-                    :id="`compare-co-hex-inpection`" :entity_cooccurrences="clicked_hexview.data"
+                <HexCooccurrence v-if="data_fetched" class="inpection-data-hexview" :title="clicked_hexview.title"
+                    :id="`inspection_data_hexview`" :entity_cooccurrences="clicked_hexview.data"
+                    mode="data"
+                    :p_margin="{top:0, right:0, bottom:0, left:0}"
                     :segmentation="original_segmentation" :highlight_hex_entity="highlight_hex_entity"
                     :show_blink="true"
+                    :show_label="true"
                     @hex-clicked="handleHexClicked">
                 </HexCooccurrence>
                 <div v-if="data_fetched" class="cooccurr-info-content">
                     <div class=journal-icon-container>
                         <div :class="['journal-style']">
-                            <img :src="`/${selected_entity.outlet}.png`"
-                                :class="['journal-image',`${outletIconStyle(selected_entity.outlet)}`]" />
+                            <img :src="`/${selected_outlet}.png`"
+                                :class="['journal-image',`${outletIconStyle(selected_outlet)}`]" />
                         </div>
                         <div class="journal-info-container" style="font-size:small; z-index:99;">
-                            <Dropdown :modelValue="selected_entity.outlet" :options="journal_options"
-                                placeholder="Select an journal" @change="handleChangeJournal" />
+                            <!-- <Dropdown :modelValue="selected_outlet" :options="journal_options"
+                                placeholder="Select an journal" @change="handleChangeJournal" /> -->
+                            {{  selected_outlet }}
                         </div>
                     </div>
                     <div class="num_of_articles">
@@ -320,7 +302,7 @@ function outletIconStyle(name:string){
                         @input="setNotes" />
                     </div>
                 </div>
-                <svg style='position:absolute;'>
+                <svg style='position:absolute;pointer-events:none'>
                     <pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)"
                         patternUnits="userSpaceOnUse">
                         <rect x="0" y="0" width="10" height="10" style="fill:#baf0f5" />
@@ -333,33 +315,6 @@ function outletIconStyle(name:string){
             :size="right_section_size">
             <div class="entity-info-container">
                 <div class="target-cooccurr-container">
-                    <!-- <div v-if="marked_articles_ids_with_outlet.length > 0"
-                        class="navigate-container">
-                        <router-link class="goNext" :to="{ name: 'summary', params: { entity: selected_entity.name }}">
-                            Summary Report </router-link>
-                    </div> -->
-                    <!-- <h2 class="component-header cooccurr-info-header">
-                        Outlet Coverage
-                    </h2> -->
-                    <!-- <div class="cooccurr-info-content">
-                        <div :class="['journal-style']">
-                            <img :src="`/${selected_entity.outlet}.png`"
-                                :class="['journal-image',`${outletIconStyle(selected_entity.outlet)}`]" />
-                        </div>
-                        <div class="num_of_articles">
-                            Number of articles about
-                            <span style="font-weight:bolder" :title="selected_entity?.name"> {{selected_entity?.name.replaceAll("_"," ")}}
-                            </span>
-                            <span v-if="selected_cooccurr_entity">
-                                and
-                                <span style="font-weight:bolder" :title="selected_cooccurr_entity.name">
-                                    {{selected_cooccurr_entity.name.replaceAll("_"," ")}}
-                                </span>
-                            </span>
-                            is {{ selected_cooccurr_entity? selected_cooccurr_entity.num_of_mentions :
-                            selected_entity.num_of_mentions }}
-                        </div>
-                    </div> -->
                 </div>
                 <ArticleAnalysis class="article_analysis_panel"
                     :entity_pair="[selected_entity?.name as string, selected_cooccurr_entity?.name as string]"
@@ -367,44 +322,6 @@ function outletIconStyle(name:string){
                     :article_highlights="target_article_highlights">
                 </ArticleAnalysis>
 
-                <!-- <div class="document-container"> -->
-                    <!-- <div class="marked-articles-container">
-                        <h2 class="component-header marked-articles-header">
-                            Marked Articles
-                        </h2>
-                        <table class="mark-table">
-                            <colgroup>
-                                <col span="1" style="width: 35%;">
-                                <col span="1" style="width: 65%;">
-                            </colgroup>
-                            <tbody style="height:100%;">
-                                <tr v-for="outlet in ranked_outlets" class="markedTr">
-                                    <td class="journal-image-text-cell"> 
-                                        <div :class="['journal-style', 'table-image' ]">
-                                            <img :src="`/${outlet}.png`"
-                                                :class="['journal-image',`${outletIconStyle(outlet)}`]" />
-                                        </div>
-                                        <div class="table-outlet-text">
-                                            {{outlet}} 
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <i v-for="article_info in marked_article_info_grouped[outlet]"
-                                            class="pi pi-file conclusion-icon tooltip" :class="{fair_icon: article_info.mark, unfair_icon: !article_info.mark}"
-                                            style="cursor:pointer;"
-                                            @click="handleArticleIconClicked(article_info)">
-                                            <span class="tooltiptext top-tooltiptext icon-description" style="width: 300px">
-                                                {{article_info.description}}
-                                            </span>
-                                        </i>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-
-                        
-                    </div>
-                </div> -->
             </div>
         </SplitterPanel>
     </Splitter>
@@ -549,6 +466,7 @@ li {
     max-height: 49%;
     overflow: hidden;
 }
+
 
 // ---------------------
 // Constraints & Outlet Scatterplot Section
@@ -787,9 +705,6 @@ a.goNext {
   display: inline;
   margin: 0 auto;
   width: auto;
-}
-:deep(.hex-svg) {
-    width: unset !important;
 }
 .journal-icon-container {
   display: flex;

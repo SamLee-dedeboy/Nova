@@ -159,8 +159,6 @@ const selected_entity_name: Ref<string> = ref("")
 vue.watch(selected_entity_name, (new_value, old_value) => {
   handleEntityClicked(selected_entity_name.value)
 })
-const selected_cooccurr_entity = vue.computed(() => store.selected_cooccurr_entity)
-const setCooccurrEntity = (cooccurr_entity) => store.setCooccurrEntity(cooccurr_entity)
 const overall_selected_hexview: Ref<typeUtils.CooccurrHexView | undefined> = ref(undefined)
 const constraint_dict = vue.computed(() => store.constraints)
 
@@ -307,8 +305,6 @@ async function handleEntityClicked(entity: string) {
   legendInput.value[entity] = "white";
   legendInput.value["Co-Occuring Topic"] = "#4baaf5";
 
-  // clear co-occur entity selection in hex
-  setCooccurrEntity(undefined)
 
   // request entity-related data
   const promiseArray: any[] = []
@@ -368,32 +364,6 @@ async function fetch_topic_bins(target, callback) {
 let legendInput = ref({});
 legendInput.value["main"] = "white";
 legendInput.value["co-occur"] = "#4baaf5";
-
-async function handleHexClicked({ target, co_occurr_entity }: { target: string, co_occurr_entity: string }) {
-
-  highlight_hex_entity.value = co_occurr_entity
-  let mainTopic = target;
-  let coOccurTopic = target + " & " + co_occurr_entity;
-
-  legendInput.value = {}
-
-  legendInput.value[mainTopic] = "white";
-  legendInput.value[coOccurTopic] = "#4baaf5";
-
-
-  await fetch(`${server_address}/processed_data/cooccurr_info/overall/${target}/${co_occurr_entity}`)
-    .then(res => res.json())
-    .then(json => {
-      // console.log("cooccurr_info fetched", json)
-      const overall_flag = target.split("-")[1] === undefined
-      const outlet = overall_flag ? "Overall" : target.split("-")[1]
-      const co_occurr_entity: typeUtils.CooccurrEntityInfo = {
-        target: json.target,
-        name: json.cooccurr_entity,
-      }
-      setCooccurrEntity(co_occurr_entity)
-    })
-}
 
 function updateSegmentation(segmentValue) {
   let segmentation : typeUtils.Sentiment2D = segmentValue

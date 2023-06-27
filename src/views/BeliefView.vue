@@ -11,10 +11,6 @@ import HexCooccurrence from "../components/HexCooccurrence.vue";
 import Legend from '../components/Legend.vue';
 import * as typeUtils from "../types"
 
-const store = useUserDataStore()
-const segmentation: Ref<typeUtils.Sentiment2D> = vue.computed(() => store.segmentation)
-const selected_entity = vue.computed(() => store.selected_entity)
-const setUserOutletSegmentations = (segmentation, outlet) => store.setUserOutletSegmentations(segmentation, outlet)
 const route = useRoute()
 const router = useRouter()
 const server_address = vue.inject("server_address")
@@ -37,45 +33,16 @@ const revealed_css = vue.computed(() => {
     return revealed.value ? "revealed" : "hidden"
 })
 const outlet_hexview: Ref<typeUtils.CooccurrHexView | undefined> = ref(undefined)
-const offset: Ref<number> = ref(0.15)
-const segmentations = vue.computed(() => {
-    const pos_center = segmentation.value.pos
-    const neg_center = segmentation.value.neg
-    // const pos_center = 0.5
-    // const neg_center = 0.5
-    // const pos_offset = 0.25
-    // const neg_offset = 0.25
-    const pos_offset = offset.value
-    const neg_offset = offset.value
-    return [
-        // center
-        {
-            "pos": pos_center,
-            "neg": neg_center,
-        },
-        // top left
-        {
-            "pos": Math.max(pos_center - pos_offset, 0),
-            "neg": Math.min(neg_center + neg_offset, 1),
-        },
-        // bottom left
-        {
-            "pos": Math.max(pos_center - pos_offset, 0),
-            "neg": Math.min(neg_center - neg_offset, 0),
-        },
-        // top right
-        {
-            "pos": Math.max(pos_center + pos_offset, 1),
-            "neg": Math.min(neg_center + neg_offset, 1),
-        },
-        // bottom right
-        {
-            "pos": Math.max(pos_center + pos_offset, 1),
-            "neg": Math.min(neg_center - neg_offset, 0),
-        },
-    ]
-})
-
+// store data for next stage
+const store = useUserDataStore()
+const segmentation: Ref<typeUtils.Sentiment2D> = vue.computed(() => store.segmentation)
+const setUserOutletSegmentations = (segmentation, outlet) => store.setUserOutletSegmentations(segmentation, outlet)
+const selected_entity = vue.computed(() => store.selected_entity)
+const setEntity = (entity) => store.setEntity(entity)
+const selected_cooccurr_entity = vue.computed(() => store.selected_cooccurr_entity )
+const setCooccurrEntity = (cooccurr_entity) => store.setCooccurrEntity(cooccurr_entity)
+const clicked_hexview = vue.computed(() => store.clicked_hexview)
+const setClickedHexView = (hexview) => store.setClickedHexView(hexview)
 vue.watch(order, (old_value, new_value) => {
     document.querySelectorAll(".hex-cell").forEach(cell => {
         cell.classList.remove("clicked-cell")
@@ -106,7 +73,8 @@ async function fetch_outlet_hex(outlet, center_entity) {
                 data: json.cooccurrences_data,
             }
             outlet_hexview.value = hex_view
-            })
+            setClickedHexView(hex_view)
+        })
 }
 
 function handleCellClicked(e, segmentation, index) {
@@ -146,9 +114,17 @@ function handleCellClicked(e, segmentation, index) {
 }
 
 function handleHexClicked({clickedEntity}) {
+    if(clickedEntity === selected_entity.value.name) return
     highlight_hex_entity.value = clickedEntity
+    setCooccurrEntity({
+        "name": clickedEntity
+    })
 }
 
+function goToNextStep() {
+    const randomOutlet: string = random_outlet[1]; //selected_cooccurr_entity?.name || '';
+    router.push({ name: 'inspection', params: { outlet: target_outlet.value, entity: target_entity.value } })
+}
 
 function outletIconStyle(name: string) {
     let className = name + '-icon';
@@ -233,6 +209,11 @@ function toggleTutorial(e: MouseEvent) {
                 >
                 </HexCooccurrence>
             </div>
+            <Button v-if="route.params.order == 'first'" 
+                class="next-page-button" 
+                @click="goToNextStep"
+                :disabled="!revealed"
+                > Next Page </Button>
             <svg>
                 <pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)"
                     patternUnits="userSpaceOnUse">
@@ -348,5 +329,11 @@ function toggleTutorial(e: MouseEvent) {
 
 .Breitbart-icon {
     width: 100%;
+}
+
+.next-page-button {
+    position: absolute;
+    top: 80%;
+    left: 70%;
 }
 </style>

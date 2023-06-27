@@ -22,14 +22,20 @@ const props = defineProps({
     mode: String,
     show_blink: Boolean,
     show_label: Boolean,
+    p_margin: Object as () => any,
 })
 const emit = defineEmits(["hex-clicked"])
 
 // const viewBox = [1000, 1000/(2*Math.sin(Math.PI/3))*3]
 const viewBox = [640, 680]
-const margin = { top: 0, bottom: 0, right: 0, left: 0 }
-const viewBox_width = viewBox[0] - margin.left - margin.right
-const viewBox_height = viewBox[1] - margin.top - margin.bottom
+const margin = vue.computed(() => {
+    if(props.p_margin === undefined)
+        return { top: -80, bottom: 0, right: 0, left: 0 }
+    else 
+        return props.p_margin
+})
+const viewBox_width = viewBox[0]
+const viewBox_height = viewBox[1]
 
 const hex_radius = 40
 const radius = hex_radius / (Math.sin(Math.PI / 3))
@@ -207,7 +213,8 @@ function updateDataHex() {
     init()
 
     // update begins
-    const hex_group = svg.select("g.hex-group").attr("transform", "translate(0, -80)")
+    console.log({margin: margin.value})
+    const hex_group = svg.select("g.hex-group").attr("transform", `translate(${margin.value.left}, ${margin.value.top})`)
 
     const hex_labels =  svg.select("g.hex-labels")
     const blank_hex_data = hexbin_(blank_hexbins.value)
@@ -245,7 +252,6 @@ function updateDataHex() {
             return `translate(${d.x},${d.y})`
         })
         .attr("filter",(d, i) => i===0? "blur(1px)": "none")
-        // .attr("stroke", (d,i) => i===0? "#444444": "white")
         .attr("stroke", (d,i) => i===0? "#444444": "black")
         .attr("stroke-width", (d, i) => i === 0 ? 7 : 1)
         .on("click", function (e, d: any) {
@@ -277,8 +283,6 @@ function updateDataHex() {
             const sst = d[0].sst;
             return (d[0].exists) ? SstColors.enum_color_dict[categorizeHex(sst, props.segmentation!)] : '#dddddd'
         })
-        // define drag behavior
-        .call(drag)
     
     // add looped animation for center hex
     const center_entity = hex_data[0][0].entity
@@ -333,7 +337,7 @@ function updateUserHex() {
     init()
 
     // update begins
-    const hex_group = svg.select("g.hex-group").attr("transform", "translate(0, -80)")
+    const hex_group = svg.select("g.hex-group").attr("transform", `translate(${margin.value.left}, ${margin.value.top})`)
 
     const hex_labels =  svg.select("g.hex-labels")
     const blank_hex_data = hexbin_(blank_hexbins.value)
@@ -370,7 +374,6 @@ function updateUserHex() {
             return `translate(${d.x},${d.y})`
         })
         .attr("filter",(d, i) => i===0? "blur(1px)": "none")
-        // .attr("stroke", (d,i) => i===0? "#444444": "white")
         .attr("stroke", (d,i) => i===0? "#444444": "black")
         .attr("stroke-width", (d, i) => i === 0 ? 7 : 1)
         .on("mouseover", function (e, d: any) {
@@ -544,6 +547,7 @@ function wrap(text, width) {
 }
 function drag(eles) {
     function dragstarted(event, d) {
+        if(d[0].index === 0) return
         if(d3.select(this).attr("class") === "hex-bins") {
             // find hexagon that was assigned to this hex-bin
             const i = d[0].i
@@ -553,11 +557,13 @@ function drag(eles) {
             // hexagon.call(drag)
             return
         }
+        console.log("drag start", d[0].index)
         dragged_hex.value = d[0].index
         d3.select(this).raise().attr("stroke", "black").attr("stroke-width", 1);
     }
 
     function dragged(event, d) {
+        if(d[0].index === 0) return
         // reset previous highlighted hex
         d3.select("g.hex-group").selectAll("path.hex-bins").attr("stroke-width", 1)
         let dragged_selection: any = d3.select(this)
@@ -565,8 +571,6 @@ function drag(eles) {
             // find hexagon that was assigned to this hex-bin
             const i = d[0].i
             const hexagon = d3.selectAll("path.hexagon").filter((d) => d[0].assigned_hex_index === i)
-            // hexagon.attr("transform", "translate(" + event.x + "," + event.y + ")")
-            //                 .attr("stroke", "#444444").attr("stroke-width", 1)
             dragged_selection = hexagon
             d = hexagon.data()[0]
         }
@@ -605,6 +609,7 @@ function drag(eles) {
     }
 
     function dragended(event, d) {
+        if(d[0].index === 0) return
         let dragged_selection: any = d3.select(this)
         dragged_hex.value = -1
         if(d3.select(this).attr("class") === "hex-bins") {
@@ -807,17 +812,6 @@ defineExpose({
     updateHexColor,
     updateHighlightHex
 })
-
-
-
-/* 
-            <!-- <pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)"
-                patternUnits="userSpaceOnUse">
-                <rect x="0" y="0" width="10" height="10" style="fill:#baf0f5" />
-                <line x1="0" y1="0" x2="0" y2="10" style="stroke:#f4c49c; stroke-width:8" />
-            </pattern> -->
-
-*/
 
 </script>
 

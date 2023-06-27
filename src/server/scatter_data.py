@@ -70,7 +70,8 @@ def grouped_entity_scatter(entity_mentions, processed_data_manager):
         for outlet, articles in mentioned_articles_grouped.items():
             pos_articles, neg_articles = [], []
             for article in mentioned_articles:
-                (pos_articles if article['sentiment']['label'] == 'POSITIVE' else neg_articles).append(article["journal"])
+                (pos_articles if article['doc_level_sentiment'][entity] == 'positive' else neg_articles).append(article["id"])
+                # (pos_articles if article['sentiment']['label'] == 'POSITIVE' else neg_articles).append(article["journal"])
             pos_max_articles = max(pos_max_articles, len(pos_articles))
             pos_min_articles = min(pos_min_articles, len(pos_articles))
             neg_max_articles = max(neg_max_articles, len(neg_articles))
@@ -96,7 +97,8 @@ def grouped_entity_scatter(entity_mentions, processed_data_manager):
         for outlet, articles in mentioned_articles_grouped.items():
             pos_articles, neg_articles = [], []
             for article in articles:
-                (pos_articles if article['sentiment']['label'] == 'POSITIVE' else neg_articles).append(article["id"])
+                (pos_articles if article['doc_level_sentiment'][entity] == 'positive' else neg_articles).append(article["id"])
+                # (pos_articles if article['sentiment']['label'] == 'POSITIVE' else neg_articles).append(article["id"])
             label = "{}-{}".format(entity, outlet)
             node = construct_node(
                 label,
@@ -182,6 +184,7 @@ def construct_node(label, pos_article_ids, neg_article_ids, pos_max, pos_min, ne
     )
     # pos_articles = processed_data_manager.idsToArticles(pos_article_ids)
     # neg_articles = processed_data_manager.idsToArticles(neg_article_ids)
+    # print(label, article_ids)
     return ScatterNode(label, article_ids, pos_article_ids, neg_article_ids, pos, neg)
 
 

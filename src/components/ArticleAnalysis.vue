@@ -20,7 +20,6 @@ const notes = vue.computed(() => store.notes)
 const setNotes = (e) => store.setNotes(e.target.value)
 
 vue.watch(() => props.selected_article, async () => {
-    console.log(props.selected_article)
     await splitArticleSentences(props.selected_article.content)
     initAnalysisPanel(props.selected_article.id)
 })
@@ -37,8 +36,6 @@ async function splitArticleSentences(content) {
         .then(res => res.json())
         .then(json => {
             indexed_content.value = json
-            console.log({content})
-            console.log({json})
         })
 
 }
@@ -106,7 +103,6 @@ function add_highlights(raw_text: string, highlights: any[], filter=false) {
 
         // devided_marks.push(1)
         if(filter && (highlight.wiki_id == props.entity_pair[0] || highlight.wiki_id == props.entity_pair[1])) {
-            console.log(highlight.sentiment)
             divided_marks.push(highlight.sentiment)
         } else {
             divided_marks.push(0)

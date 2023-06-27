@@ -23,7 +23,6 @@ const emit = defineEmits([
 const server_address = vue.inject("server_address")
 
 vue.onMounted(() => {
-    addHeaderClickEvent()
     const pos_scroll_panel = document.querySelector(".pos-article-list > .p-scrollpanel-wrapper > .p-scrollpanel-content")
     const neg_scroll_panel = document.querySelector(".neg-article-list > .p-scrollpanel-wrapper > .p-scrollpanel-content")
     pos_scroll_panel?.addEventListener("scroll", async function(event) {
@@ -36,7 +35,6 @@ vue.onMounted(() => {
             const pos_panel_togglers = document.querySelectorAll(".pos-article-list > .p-scrollpanel-wrapper > .p-scrollpanel-content > .p-panel-toggleable > .p-panel-header > .p-panel-icons > .p-panel-toggler")
             pos_panel_togglers.forEach(toggler => toggler.classList.add("pos-toggler"))
             await nextTick();
-            addHeaderClickEvent()
         }
     })
     neg_scroll_panel?.addEventListener("scroll", function(event) {
@@ -48,7 +46,6 @@ vue.onMounted(() => {
                 neg_panel_articles.value = neg_panel_articles.value.concat(next_ten_articles)
             const neg_panel_togglers = document.querySelectorAll(".neg-article-list > .p-scrollpanel-wrapper > .p-scrollpanel-content > .p-panel-toggleable > .p-panel-header > .p-panel-icons > .p-panel-toggler")
             neg_panel_togglers.forEach(toggler => toggler.classList.add("neg-toggler"))
-            addHeaderClickEvent()
         }
     })
     const pos_panel_togglers = document.querySelectorAll(".pos-article-list > .p-scrollpanel-wrapper > .p-scrollpanel-content > .p-panel-toggleable > .p-panel-header > .p-panel-icons > .p-panel-toggler")
@@ -56,10 +53,11 @@ vue.onMounted(() => {
     const neg_panel_togglers = document.querySelectorAll(".neg-article-list > .p-scrollpanel-wrapper > .p-scrollpanel-content > .p-panel-toggleable > .p-panel-header > .p-panel-icons > .p-panel-toggler")
     neg_panel_togglers.forEach(toggler => toggler.classList.add("neg-toggler"))
 })
-// const pos_articles = vue.computed(() => {
-//     return props.articles?.filter(article => article.sentiment.label === "POSITIVE").sort(sortByRelevance)
-// })
 const pos_articles = vue.computed(() => {
+    props.articles?.forEach(article => {
+        if(article.doc_level_sentiment[props.entity_pair[0]] !== "positive" && article.doc_level_sentiment[props.entity_pair[0]] !== "negative")
+            console.log(article)
+    })
     return props.articles?.filter(article => article.doc_level_sentiment[props.entity_pair[0]] === "positive")
 })
 const pos_panel_articles: Ref<Article[]> = ref(pos_articles.value?.slice(0,10) || []) 
@@ -88,29 +86,6 @@ const neg_marks: Ref<boolean[]> = ref(Array(neg_articles.value?.length || 0).fil
 //     setMarkedArticle({article_id, outlet, description, mark})
 // }
 
-
-function addHeaderClickEvent() {
-    return
-    const headers = document.querySelectorAll('.p-panel-header') 
-    headers.forEach(header => {
-        header.addEventListener("click", function(e) {
-            console.log("header clicked", header.childNodes[3].childNodes[2])
-            if(e.target != header.childNodes[3].childNodes[2] &&
-                ![...header.childNodes[3].childNodes[2].childNodes].includes(e.target)
-            ) 
-            header.childNodes[3].childNodes[2].click()
-        })
-    })
-}
-
-function sortByRelevance(a1, a2): number {
-    const r1 = a1.entity_candidates.filter(pair => pair[0] === props.entity_pair![0] || pair[0] === props.entity_pair![1])
-    const r2 = a2.entity_candidates.filter(pair => pair[0] === props.entity_pair![0] || pair[0] === props.entity_pair![1])
-    const scaler = 5
-    const r1_score = _.sumBy(r1, (pair) => pair[0] === props.entity_pair![0]? scaler*pair[1] : pair[1])
-    const r2_score = _.sumBy(r2, (pair) => pair[0] === props.entity_pair![0]? scaler*pair[1] : pair[1])
-    return -(r1_score - r2_score)
-}
 
 vue.watch(pos_articles, (new_value, old_value) => {
     pos_panel_articles.value.length = 0
@@ -170,7 +145,6 @@ async function handleArticleClicked(e, article_id) {
         .then(res => res.json())
         .then(json => {
             emit("article-selected", json[0])
-            console.log("content fetched", json)
         })
 }
 
