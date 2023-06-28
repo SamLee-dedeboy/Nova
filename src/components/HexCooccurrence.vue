@@ -23,8 +23,9 @@ const props = defineProps({
     show_blink: Boolean,
     show_label: Boolean,
     p_margin: Object as () => any,
+    user_hex_selection: Object as () => any,
 })
-const emit = defineEmits(["hex-clicked"])
+const emit = defineEmits(["hex-clicked", "hex-filled"])
 
 // const viewBox = [1000, 1000/(2*Math.sin(Math.PI/3))*3]
 const viewBox = [640, 680]
@@ -46,6 +47,30 @@ const max_height = viewBox_width / hex_width * hex_height
 const dragged_hex = ref()
 const entity_hex_index_dict = ref({})
 
+const user_hex = vue.computed(() => {
+    if(props.user_hex_selection === undefined)
+        return undefined
+    else {
+        const center_hex_entity: HexEntity = props.entity_cooccurrences?.target!
+        let res: any[] = [{ entity: center_hex_entity.entity, sst: center_hex_entity.sst, x: 0, y: 0, index: 0, exists: true, assigned_hex_index: -1 }]
+        console.log("user_hex_selection", props.user_hex_selection)
+        Object.keys(props.user_hex_selection).forEach(entity => {
+            const assigned_index = props.user_hex_selection[entity]
+            // TODO: handle not assigned entity
+            if(assigned_index === -1) return
+            const { x, y } = generate_hex_coord(assigned_index, hex_radius)
+            res.push({
+                entity: entity,
+                x: x,
+                y: y,
+                exists: assigned_index !== -1,
+                sst: index_to_sst(assigned_index),
+                index: assigned_index,
+            })
+        })
+        return res
+    }
+})
 const sorted_cooccurrence_list = vue.computed(() => {
     const raw_data = props.entity_cooccurrences?.sorted_cooccurrences_list!
     const center_hex_entity: HexEntity = props.entity_cooccurrences?.target!
@@ -79,7 +104,7 @@ const sorted_cooccurrence_list = vue.computed(() => {
             x: x,
             y: y,
             sst: hex_entity.sst,
-            sst_category: categorizeHex(hex_entity.sst, props.segmentation),
+            // sst_category: categorizeHex(hex_entity.sst, props.segmentation),
             exists: hex_entity.article_ids.length !== 0,
             index: index + 1,
             assigned_hex_index: -1,
@@ -201,7 +226,130 @@ function updateHive() {
         updateUserHex()
     } else if(props.mode === "data") {
         updateDataHex()
+    } else if(props.mode === "user-fixed") {
+        updateUserFixedHex()
     }
+}
+
+function updateUserFixedHex() {
+    const svg = d3.select(`#${props.id}`).select("svg")
+    // delete everything to avoid blinking bug
+    svg.selectAll("*").remove()
+
+    // append everything back
+    init()
+
+    // update begins
+    const hex_group = svg.select("g.hex-group").attr("transform", `translate(${margin.value.left}, ${margin.value.top})`)
+
+    const blank_hex_data = hexbin_(blank_hexbins.value)
+    hex_group.select("g.hex-bins").lower()
+        .selectAll("path.hex-bins")
+        .data(blank_hex_data)
+        .join("path")
+        .style("pointer-events", "none")
+        .attr("class", "hex-bins")
+        .attr("d", hexbin_.hexagon())
+        .attr("transform", function (d: any, index) {
+            if(index >= centers_indexed.length)
+                centers_indexed.push(d)
+            else
+                centers_indexed[index] = d
+            return `translate(${d.x},${d.y})`
+        })
+        .attr("stroke", "#444444")
+        .attr("stroke-width", 1)
+        .attr("fill", (d: any) => {
+            const sst = d[0].sst;
+            return SstColors.enum_color_dict[sst]
+        })
+
+    const hex_data = hexbin_(user_hex.value)
+    hex_group.select("g.hex-paths")
+        .selectAll("path.hexagon")
+        .data(hex_data)
+        .join("path")
+        .attr("class", "hexagon")
+        .attr("cursor", "pointer")
+        .attr("d", hexbin_.hexagon())
+        .attr("transform", function (d: any, index) {
+            // centers_indexed.push(d)
+            return `translate(${d.x},${d.y})`
+        })
+        .attr("stroke", (d,i) => i===0? "#444444": "black")
+        .attr("stroke-width", (d, i) => i === 0 ? 7 : 1)
+        .on("click", function (e, d: any) {
+            console.log({clickedEntity: d[0].entity})
+            emit("hex-clicked", { clickedEntity: d[0].entity })
+        })
+        .on("mouseover", function (e, d: any) {
+            if(d[0].entity === props.highlight_hex_entity) return
+            if(d[0].index === 0) return
+            if(d[0].index === dragged_hex.value) return
+            d3.select(this)
+                .transition().duration(100)
+                .attr("stroke-width",  8)
+            if(props.show_blink)
+                d3.select(this).raise()
+        })
+        .on("mouseout", function (e, d: any) {
+            if(d[0].entity === props.highlight_hex_entity) return
+            if(d[0].index === 0) return
+            d3.select(this)
+                .transition().duration(500)
+                .attr("stroke-width", 1)
+        })
+        .attr("opacity", (d: any) => {
+            if (d[0].exists) return 1
+            else return 0.2
+        })
+        .attr("fill", (d: any, i) => {
+            const sst = d[0].sst;
+            if(i === 0) return SstColors.enum_color_dict[categorizeHex(sst, props.segmentation!)]
+            return (d[0].exists) ? SstColors.enum_color_dict[sst] : '#dddddd'
+        })
+    
+    // add looped animation for center hex
+    const center_entity = hex_data[0][0].entity
+    if(props.show_blink) {
+        removeHighlightHex(center_entity)
+        loopedAnimateHex(hex_group)
+    }
+    if(props.highlight_hex_entity) {
+        removeHighlightHex(hex_group)
+        loopedAnimateHex(hex_group)
+    }
+
+
+    hex_group.select("g.hex-labels")
+        .selectAll("text")
+        .data(hex_data)
+        .join("text")
+        .attr("pointer-events", "none")
+        // .attr("x", (d, i) => centers_indexed[i].x)
+        // .attr("y", (d, i) => centers_indexed[i].y) //compute from num words and subtract from the y 
+        .attr("x", (d: any, i) => d.x)
+        .attr("y", (d: any, i) => d.y)
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "central")
+        .attr("fill", "black")
+        .attr("font-size", "0.8em")
+        .attr("opacity", (d: any, i) => {
+            if(i === 0) return 1
+            if(props.show_label === false) return 0
+            if(d[0].exists) return 1
+            else return 0.5
+        })
+        .text((d: any) => {
+            const words = d[0].entity.split("_")
+            if(words.length > 4) {
+                words[3] = "..."
+                words.length = 4
+            }
+            // //console.log(words.join(" "))
+            return words.join(" ")
+        })
+        .call(wrap, 30)
 }
 
 function updateDataHex() {
@@ -652,6 +800,7 @@ function drag(eles) {
                     emit("hex-clicked", { clickedEntity: d[0].entity })
                 })
                 .call(drag)
+            emit("hex-filled", { filledEntity: d[0].entity, filledHexIndex: closest_hex_index })
         } else {
             dragged_selection.attr("fill", "white")
                         .attr("transform", "translate(" + d.x + "," + d.y + ")")

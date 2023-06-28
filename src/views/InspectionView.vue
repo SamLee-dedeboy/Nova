@@ -41,7 +41,7 @@ const right_section_size = vue.computed(() => 100 - left_section_size)
 const server_address = vue.inject("server_address")
 const data_fetched: Ref<boolean> = ref(false)
 
-const selected_outlet = route.params.outlet
+const selected_outlet: any = route.params.outlet
 const selected_entity = vue.computed(() => store.selected_entity)
 const setEntity = (entity) => store.setEntity(entity)
 const selected_cooccurr_entity = vue.computed(() => store.selected_cooccurr_entity)
@@ -50,8 +50,9 @@ const segmentation = vue.computed(() => store.segmentation)
 const original_segmentation = segmentation.value
 const clicked_hexview = vue.computed(() => store.clicked_hexview)
 const highlight_hex_entity: Ref<string> = ref("")
-const setClickedHexView = (hexview) => store.setClickedHexView(hexview)
-const hexview_grid = vue.computed(() => store.hexview_grid)
+const user_hex_selection = vue.computed(() => store.hex_selection) 
+// const setClickedHexView = (hexview) => store.setClickedHexView(hexview)
+// const hexview_grid = vue.computed(() => store.hexview_grid)
 
 // const selected_outlet: Ref<string> = ref("ABC News")
 const selected_article: Ref<Article> = ref()
@@ -153,18 +154,18 @@ async function fetch_article_highlights(article_ids) {
         })
 }
 
-async function handleChangeJournal(e) {
-    // const outlet = e.target.value
-    const outlet = e.value
-    // selected_outlet.value = outlet
-    const entity = selected_entity.value.name
-    const co_occurr_entity = selected_cooccurr_entity.value?.name
-    const view = hexview_grid.value.find(view => view.title.split("-")[2] === outlet)
-    setClickedHexView(view)
-    await fetch_cooccurr_info(outlet, entity, co_occurr_entity)
-    prepare_data()
-    // selectedCategory.value = undefined
-}
+// async function handleChangeJournal(e) {
+//     // const outlet = e.target.value
+//     const outlet = e.value
+//     // selected_outlet.value = outlet
+//     const entity = selected_entity.value.name
+//     const co_occurr_entity = selected_cooccurr_entity.value?.name
+//     const view = hexview_grid.value.find(view => view.title.split("-")[2] === outlet)
+//     setClickedHexView(view)
+//     await fetch_cooccurr_info(outlet, entity, co_occurr_entity)
+//     prepare_data()
+//     // selectedCategory.value = undefined
+// }
 
 async function handleHexClicked({ clickedEntity }, view) {
     if(clickedEntity === selected_entity.value.name) {
@@ -252,6 +253,16 @@ function outletIconStyle(name:string){
                 :entity_pair="[selected_entity?.name as string, selected_cooccurr_entity?.name as string]">
             </ArticleView>
             <div class="hexview-container">
+                <HexCooccurrence v-if="data_fetched" class="inpection-user-hexview" :title="clicked_hexview.title"
+                    :id="`inspection_user_hexview`" :entity_cooccurrences="clicked_hexview.data"
+                    mode="user-fixed"
+                    :p_margin="{top:0, right:0, bottom:0, left:0}"
+                    :segmentation="original_segmentation" :highlight_hex_entity="highlight_hex_entity"
+                    :show_blink="true"
+                    :show_label="true"
+                    :user_hex_selection="user_hex_selection[selected_outlet]"
+                    @hex-clicked="handleHexClicked">
+                </HexCooccurrence>
                 <HexCooccurrence v-if="data_fetched" class="inpection-data-hexview" :title="clicked_hexview.title"
                     :id="`inspection_data_hexview`" :entity_cooccurrences="clicked_hexview.data"
                     mode="data"
@@ -400,6 +411,7 @@ function outletIconStyle(name:string){
     display: flex;
     flex-direction: column;
     font-size: 0.8rem;
+    margin-left: 4%;
     width: 100%;
 }
 
@@ -426,7 +438,6 @@ li {
 }
 
 .num_of_articles {
-    width: 100%;
     margin-left: 2%;
     font-size: 1rem;
 }

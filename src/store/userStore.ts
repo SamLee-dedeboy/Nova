@@ -17,6 +17,7 @@ export const useUserDataStore = defineStore('userData', {
         notes: "",
         marked_articles: [],
         user_outlet_segmentations: {},
+        hex_selection: {},
     }),
     getters: {},
     actions: {
@@ -75,6 +76,9 @@ export const useUserDataStore = defineStore('userData', {
             if (index !== -1) {
                 this.marked_articles.splice(index, 1);
             }
-        }
+        },
+        setHexSelection(hex_selection) {
+            this.hex_selection = hex_selection
+        },
     }
 })

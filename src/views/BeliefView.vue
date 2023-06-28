@@ -43,6 +43,8 @@ const selected_cooccurr_entity = vue.computed(() => store.selected_cooccurr_enti
 const setCooccurrEntity = (cooccurr_entity) => store.setCooccurrEntity(cooccurr_entity)
 const clicked_hexview = vue.computed(() => store.clicked_hexview)
 const setClickedHexView = (hexview) => store.setClickedHexView(hexview)
+const hex_selection = vue.computed(() => store.hex_selection)
+const setHexSelection =  (hex_selection) => store.setHexSelection(hex_selection)
 vue.watch(order, (old_value, new_value) => {
     document.querySelectorAll(".hex-cell").forEach(cell => {
         cell.classList.remove("clicked-cell")
@@ -74,6 +76,13 @@ async function fetch_outlet_hex(outlet, center_entity) {
             }
             outlet_hexview.value = hex_view
             setClickedHexView(hex_view)
+            let init_hex_selection = {}
+            init_hex_selection[outlet] = {}
+            hex_view.data.sorted_cooccurrences_list.forEach(entity_data => {
+                init_hex_selection[outlet][entity_data.entity] = -1
+            })
+            setHexSelection(init_hex_selection)
+
         })
 }
 
@@ -119,6 +128,14 @@ function handleHexClicked({clickedEntity}) {
     setCooccurrEntity({
         "name": clickedEntity
     })
+}
+
+function handleHexFilled({filledEntity, filledHexIndex}) {
+    const outlet = target_outlet.value
+    let old_hex_selection = hex_selection.value
+    old_hex_selection[outlet][filledEntity] = filledHexIndex
+    setHexSelection(old_hex_selection)
+    console.log(hex_selection.value)
 }
 
 function goToNextStep() {
@@ -175,6 +192,7 @@ function toggleTutorial(e: MouseEvent) {
                 :entity_cooccurrences="outlet_hexview.data" :segmentation="segmentation"
                 :highlight_hex_entity="highlight_hex_entity"
                 @hex-clicked="handleHexClicked"
+                @hex-filled="handleHexFilled"
                 :show_blink="true"
                 :show_label="true">
                 </HexCooccurrence>

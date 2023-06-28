@@ -227,6 +227,7 @@ function highlight_element(text) {
 .article-cards-container {
   display: flex;
   height: 50%;
+  border-bottom: solid 1px black;
 }
 .article-card {
   display: flex;
