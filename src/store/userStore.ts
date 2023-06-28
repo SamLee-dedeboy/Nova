@@ -8,6 +8,7 @@ export const useUserDataStore = defineStore('userData', {
     state: () => ({
         selected_entity: undefined,
         selected_cooccurr_entity: undefined,
+        selected_outlet: undefined,
         outlet_weight_dict: { "CNN": 1, "Washington Post": 1, "FoxNews": 1, "New York Times": 1, "Breitbart": 1, "ABC News": 1 },
         article_num_threshold: 20,
         segmentation: { pos: 0.5, neg: 0.5 } as typeUtils.Sentiment2D,
@@ -29,6 +30,9 @@ export const useUserDataStore = defineStore('userData', {
             this.selected_cooccurr_entity = cooccurr_entity
             if(this.selected_cooccurr_entity && this.selected_cooccurr_entity.name === this.selected_entity.name)
                 this.selected_cooccurr_entity = undefined
+        },
+        setSelectedOutlet(outlet) { 
+            this.selected_outlet = outlet
         },
         setArticleNumThreshold(threshold) {
             this.article_num_threshold = threshold

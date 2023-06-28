@@ -14,14 +14,15 @@ import * as vue from "vue"
 const store = useUserDataStore()
 const route = useRoute()
 const selected_entity = vue.computed(() => store.selected_entity)
-const random_outlet = vue.inject("random_outlet")
+const selected_outlet = vue.computed(() => store.selected_outlet)
+// const random_outlet = vue.inject("random_outlet")
 
 const disabled_item_array = vue.computed(() => {
   switch (route.name) {
     case "home": return [true, selected_entity.value == undefined, true]
     case "belief": return [false, false, false]
     // case "compare": return [false, false, false, false, false]
-    case "inspection": return [false, false, false]
+    case "inspection": return [false, true, false]
     default: return [true, true, true]
   }
 })
@@ -32,7 +33,7 @@ const stages = vue.computed(() => [
     disabled: disabled_item_array.value[0],
   },
   {
-    to: `/belief/first/${random_outlet[0]}/${selected_entity.value?.name}`,
+    to: `/belief/${selected_outlet.value}/${selected_entity.value?.name}`,
     label: "Belief",
     disabled: disabled_item_array.value[1],
   },

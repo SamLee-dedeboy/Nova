@@ -2,12 +2,7 @@
 /**
  * primevue comopnents
  */
-import Slider from "primevue/slider"
-import InputText from "primevue/inputtext"
-import SelectButton from 'primevue/selectbutton';
-import ToggleButton from 'primevue/togglebutton';
 import Dialog from 'primevue/dialog';
-import Divider from 'primevue/divider';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from "primevue/splitterpanel"
 
@@ -18,24 +13,24 @@ import { watch, computed, onMounted, PropType, ref, Ref, nextTick, } from 'vue'
 import * as vue from 'vue'
 import * as _ from "lodash"
 import { useUserDataStore } from '../store/userStore'
+import { useRoute, useRouter } from 'vue-router'
+
+const store = useUserDataStore()
+const route = useRoute()
+const router = useRouter()
 
 /**
  * types & utils
  */
 import * as typeUtils from "../types"
-import * as SstColors from "../components/utils/ColorUtils"
 
 /**
  * vue components
  */
-import OutletWeightSlider from "../components/OutletWeightSlider.vue";
-import HexCooccurrence from "../components/HexCooccurrence.vue";
 import EntitySelection from "../components/entitySelection.vue"
 import ThresholdController from "../components/ThresholdController.vue";
 import EntityTable from "../components/entityTable.vue";
-
-const store = useUserDataStore()
-
+import EntityInfo from "../components/EntityInfo.vue"
 
 
 //
@@ -59,9 +54,8 @@ const overall_scatter_view: Ref<typeUtils.EntityScatterView | undefined> = ref(u
 const overall_scatter_data_loading: Ref<boolean> = ref(true)
 const overview_constructed: Ref<boolean> = ref(false)
 const hex_constructed: Ref<boolean> = ref(true)
-const overall_co_hexview: Ref<any> = ref(null)
-const highlight_hex_entity: Ref<string> = ref("")
 const showTutorial: Ref<boolean> = ref(true)
+const selected_entity_info_fetched: Ref<boolean> = ref(false)
 //
 // processed data 
 //
@@ -97,10 +91,6 @@ vue.provide("outlet_article_num_dict", outlet_article_num_dict)
  * Display segmentation on all scatters when segment mode is on.
  */
 const segment_mode: Ref<boolean> = ref(true)
-const segment_options = [
-  { status: 'On', value: true },
-  { status: 'Off', value: false }
-]
 
 /**
  * threshold for filtering on count(articles).
@@ -112,24 +102,6 @@ vue.watch(article_num_threshold, () => {
   setArticleNumThreshold(article_num_threshold.value)
 })
 
-/**
- * Array of highlighted outlet names.
- * referenced in Temporal View of outlets.
- */
-const highlight_outlet: Ref<string[]> = ref([])
-
-
-
-
-/**
- * flag for tutorial mode.
- */
-const tutorial_mode: Ref<boolean> = ref(false)
-/**
- * Array of highlighted node titles. \
- * Used in search feature.
- */
-const highlight_nodes: Ref<string[]> = ref([])
 
 /**
  * layout constants in percentage
@@ -143,7 +115,7 @@ const utilities_panel_size = vue.computed(() => 100 - entity_scatter_panel_size)
 const table_panel_size = 20
 const scatter_panel_size = vue.computed(() => 100 - table_panel_size)
 
-const entity_info_panel_size = 31
+const entity_info_panel_size = 100
 const hex_view_panel_size = vue.computed(() => 100 - entity_info_panel_size)
 
 
@@ -153,6 +125,8 @@ const hex_view_panel_size = vue.computed(() => 100 - entity_info_panel_size)
  */
 // const selected_articles: Ref<typeUtils.Article[]> = ref([])
 // const selected_entity: Ref<typeUtils.EntityInfo|undefined> = ref(undefined)
+const selected_outlet = vue.computed(() => store.selected_outlet)
+const setSelectedOutlet = (outlet) => store.setSelectedOutlet(outlet)
 const selected_entity = vue.computed(() => store.selected_entity)
 const setEntity = (entity) => store.setEntity(entity)
 const selected_entity_name: Ref<string> = ref("")
@@ -160,13 +134,7 @@ vue.watch(selected_entity_name, (new_value, old_value) => {
   handleEntityClicked(selected_entity_name.value)
 })
 const overall_selected_hexview: Ref<typeUtils.CooccurrHexView | undefined> = ref(undefined)
-const constraint_dict = vue.computed(() => store.constraints)
-
 const overall_entity_data = vue.computed(() => overall_scatter_view.value?.data?.nodes)
-
-// const left_most_outlet = vue.inject("left_most_outlet")
-// const right_most_outlet = vue.inject("right_most_outlet")
-const random_outlet = vue.inject("random_outlet")
 
 /**
  * segmentation threshold of sentiment value.
@@ -175,6 +143,7 @@ const segmentation : Ref<typeUtils.Sentiment2D> = vue.computed(() => store.segme
 const setSegmentation = (segmentation : typeUtils.Sentiment2D) => store.setSegmentation(segmentation)
 
 vue.onMounted(async () => {
+  selected_entity_info_fetched.value = false
   const promiseArray: any[] = []
   promiseArray.push(new Promise((resolve) => {
     fetch(`${server_address}/overview/scatter/overall/data`, {
@@ -197,7 +166,6 @@ vue.onMounted(async () => {
           min_articles: json.min_articles
         }
         // console.log({json})
-        // console.log("overall data fetched")
 
 
         // turn flags
@@ -211,26 +179,15 @@ vue.onMounted(async () => {
       .then(res => res.json())
       .then(json => {
         overview_grouped_scatter_data.value = json
-        // console.log("grouped scatter fetched")
         resolve("success")
       })
   }))
-  // promiseArray.push(new Promise((resolve) => {
-  //   fetch(`${server_address}/overview/scatter/overall/metadata`)
-  //     .then(res => res.json())
-  //     .then(json => {
-  //       overview_overall_scatter_metadata.value = json
-  //       console.log("overall scatter metadata fetched")
-  //       resolve("success")
-  //     })
-  // }))
   promiseArray.push(new Promise((resolve) => {
     // overview grouped scatter metadata
     fetch(`${server_address}/overview/scatter/grouped/metadata`)
       .then(res => res.json())
       .then(json => {
         overview_grouped_scatter_metadata.value = json
-        // console.log("grouped scatter metadata fetched")
         resolve("success")
       })
   }))
@@ -240,7 +197,6 @@ vue.onMounted(async () => {
       .then(res => res.json())
       .then(json => {
         outlet_article_num_dict.value = json
-        // console.log("outlet article num dict fetched")
         resolve("success")
       })
   }))
@@ -250,7 +206,6 @@ vue.onMounted(async () => {
       .then(res => res.json())
       .then(json => {
         entity_list.value = json
-        // console.log("entity_list fetched")
         resolve("success")
       })
   }))
@@ -264,7 +219,6 @@ vue.onMounted(async () => {
         enabled_outlet_set.value.forEach(outlet => {
             outlet_leaning.value[outlet] = 1
         });
-        // console.log("outlet_set fetched", outlet_leaning.value)
         resolve("success")
       })
   }))
@@ -280,7 +234,6 @@ vue.onMounted(async () => {
             data: cooccurrences,
           }
           overall_selected_hexview.value = hex_view
-          // console.log("overall hexview fetched")
           resolve("success")
         })
     }))
@@ -291,16 +244,12 @@ vue.onMounted(async () => {
   await Promise.all(promiseArray)
     .then(res => {
       overview_constructed.value = true
-      // console.log("all fetched")
     })
 })
 
 
 // handlers
 async function handleEntityClicked(entity: string) {
-  // console.log("Enity Selection", entity)
-  const metadata = overview_overall_scatter_metadata.value
-
   legendInput.value = {}
   legendInput.value[entity] = "white";
   legendInput.value["Co-Occuring Topic"] = "#4baaf5";
@@ -313,52 +262,22 @@ async function handleEntityClicked(entity: string) {
     fetch(`${server_address}/overview/scatter/overall/node/${entity}`)
       .then(res => res.json())
       .then(json => {
-        // console.log({json})
-        const store_entity  = {
+        console.log({json})
+        const store_entity = {
           name: entity,
           outlet: "Overall",
-          article_ids: json.article_ids 
+          article_ids: json.article_ids,
+          neg_article_ids: json.neg_article_ids,
+          pos_article_ids: json.pos_article_ids,
+          pos_sst: json.pos_sst,
+          neg_sst: json.neg_sst,
         }
         setEntity(store_entity)
-        resolve("success")
-      })
-  }))
-  promiseArray.push(new Promise((resolve) => {
-    hex_constructed.value = false
-    fetch(`${server_address}/hexview/overall/${entity}`)
-      .then(res => res.json())
-      .then(json => {
-        // update hex view data
-        const cooccurrences = json
-        const hex_view: typeUtils.CooccurrHexView = {
-          title: `co-${entity}`,
-          data: cooccurrences,
-        }
-        overall_selected_hexview.value = hex_view
-        console.log({cooccurrences})
-        hex_constructed.value = true
-        // console.log("cooccurr hex fetched", cooccurrences)
+        selected_entity_info_fetched.value = true
         resolve("success")
       })
   }))
   await Promise.all(promiseArray)
-    .then(res => {
-      // do nothing
-    })
-}
-
-function highlightChanged(new_value) {
-  highlight_outlet.value = new_value
-}
-
-function handleSearch(item) {
-  highlight_nodes.value.push(item)
-}
-
-async function fetch_topic_bins(target, callback) {
-  await fetch(`${server_address}/processed_data/topic_bins/${target}`)
-    .then(res => res.json())
-    .then(callback)
 }
 
 let legendInput = ref({});
@@ -374,6 +293,11 @@ function toggleTutorial(e: MouseEvent) {
   showTutorial.value = false
 }
 
+function handleOutletClicked(outlet) {
+  console.log(outlet)
+  setSelectedOutlet(outlet)
+  router.push({ name: 'belief', params: { outlet: outlet, entity: selected_entity.value.name } })
+}
 
 </script>
 
@@ -392,20 +316,6 @@ function toggleTutorial(e: MouseEvent) {
         To demonstrate the system, let's see deleve into what topics these outlets covered during start of the COVID-19 Pandemic (Feb-June
         2020).
       </p>
-      <!-- <p class="tutorialInstructions">
-        Before we begin, please adjust the sliders below for how fair you believe each of corresponding outlets are.
-        The scale is from 0 to 1, where 1 is fair. If you believe they are all fair you may leave them as is.
-      </p>
-      <div class="fairnessLegend">
-        <i class="pi pi-arrow-left" /> Unfair
-        Fair <i class="pi pi-arrow-right" />
-      </div>
-
-      <div class="initialWeights">
-        <OutletWeightSlider v-if="overview_constructed" :outlet_leaning="outlet_leaning"
-         fontSize="0.65em">
-        </OutletWeightSlider>
-      </div> -->
       <template #footer>
         <Button label="Ready" icon="pi pi-check" @click="toggleTutorial" autofocus />
       </template>
@@ -494,11 +404,9 @@ function toggleTutorial(e: MouseEvent) {
       </SplitterPanel>
       <SplitterPanel class="right-section-panel" :size="right_section_panel_size">
         <Splitter layout="vertical">
-          <SplitterPanel class="overview-hex-panel" :size="hex_view_panel_size">
-            <div class="reminder-click-entity" v-if="!selected_entity && overview_constructed"> Click on one of the news
-              topic points or row in the table. </div>
-            <!-- Hex view -->
-            <h2 class="component-header hexview-header" v-if="selected_entity">
+          <SplitterPanel class="overview-entity-info-panel" :size="entity_info_panel_size">
+            <!-- Entity Info View -->
+            <h2 class="component-header entity-info-header" v-if="selected_entity">
               Some information to show for 
               <span class="mainTopicStyle"> {{ selected_entity.name.replaceAll("_", " ") }} </span>
               &nbsp
@@ -511,28 +419,17 @@ function toggleTutorial(e: MouseEvent) {
                 </span>
               </i>
             </h2>
-            <div class="overview-hex-container" v-if="overview_constructed">
-              <!-- load icon -->
-              <!-- <i v-if="!overall_selected_hexview" class="pi pi-spin pi-spinner" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/> -->
-              <i v-if="!overall_selected_hexview" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/>
-              <!-- <HexCooccurrence v-else ref="overall_co_hexview" class="overall-co-hexview"
-                mode="data"
-                :title="overall_selected_hexview.title" :id="`overall-co-hex`"
-                :entity_cooccurrences="overall_selected_hexview.data" :segmentation="segmentation"
-                :highlight_hex_entity="highlight_hex_entity" :show_blink="true"
-                v-on:hex-clicked="handleHexClicked">
-              </HexCooccurrence> -->
+            <div class="overview-entity-info-container" v-if="overview_constructed">
+              <EntityInfo v-if="selected_entity_info_fetched" 
+                :data="selected_entity"
+                :segmentation="segmentation"
+                :outlets="Array.from(enabled_outlet_set)"
+                @outlet-clicked="handleOutletClicked"
+                >
+
+              </EntityInfo>
             </div>
           </SplitterPanel>
-          <!-- <SplitterPanel class="utilities-panel" :size="entity_info_panel_size">
-            <div v-if="selected_entity" class="navigate-container">
-              <router-link class="goNext"
-                :to="{ name: 'belief', params: { order: 'first', outlet: random_outlet[0], entity: selected_entity.name } }">
-                After finding a topic, <span class="clickNext">click here</span> to assess how each outlet covered it.
-                <p class="next"><i class="pi pi-arrow-right " /></p>
-              </router-link>
-            </div>
-          </SplitterPanel> -->
         </Splitter>
       </SplitterPanel>
     </Splitter>
@@ -602,9 +499,6 @@ main {
   overflow: hidden;
 }
 
-.p-splitter-panel.overview-hex-panel {
-  height: 68%;
-}
 
 .legend-container.policy-bar-legend {
   height: 30%;
@@ -747,7 +641,7 @@ main {
 
 }
 
-.hexview-header {
+.entity-info-header {
   // background: #f7f7f7;
   margin: 1%;
   padding: 0.45%;
@@ -766,11 +660,6 @@ main {
   padding-left: 2%;
 }
 
-.entity-info-container {
-  display: flex;
-  height: 100%;
-  justify-content: space-evenly;
-}
 
 .topic-bar-container {
   // height:217px;

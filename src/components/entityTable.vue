@@ -9,7 +9,7 @@
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink ">
             <!-- <Column selectionMode="single" header="Selection"></Column> -->
             <Column sortable field="entity" header="Topic"></Column>
-            <Column sortable field="frequency" header="Frequency" bodyStyle='padding-left: 20%'></Column>
+            <Column sortable field="frequency" header="Articles" bodyStyle='padding-left: 10%'></Column>
         </DataTable>
     </div>
 </template>

@@ -16,7 +16,6 @@ const router = useRouter()
 const server_address = vue.inject("server_address")
 // const left_most_outlet = vue.inject("left_most_outlet")
 // const right_most_outlet = vue.inject("right_most_outlet")
-const random_outlet = vue.inject("random_outlet")
 const outlet_leaning_scale = vue.inject("outlet_leaning_scale")
 const outlet_leaning_scale_dict = vue.inject("outlet_leaning_scale_dict")
 
@@ -38,7 +37,6 @@ const store = useUserDataStore()
 const segmentation: Ref<typeUtils.Sentiment2D> = vue.computed(() => store.segmentation)
 const setUserOutletSegmentations = (segmentation, outlet) => store.setUserOutletSegmentations(segmentation, outlet)
 const selected_entity = vue.computed(() => store.selected_entity)
-const setEntity = (entity) => store.setEntity(entity)
 const selected_cooccurr_entity = vue.computed(() => store.selected_cooccurr_entity )
 const setCooccurrEntity = (cooccurr_entity) => store.setCooccurrEntity(cooccurr_entity)
 const clicked_hexview = vue.computed(() => store.clicked_hexview)
@@ -86,42 +84,6 @@ async function fetch_outlet_hex(outlet, center_entity) {
         })
 }
 
-function handleCellClicked(e, segmentation, index) {
-    document.querySelectorAll(".hex-cell").forEach(cell => {
-        cell.classList.remove("clicked-cell")
-    })
-    e.target.classList.add("clicked-cell")
-    //console.log(e.target, segmentation) // or segmentations.value[index]
-    setUserOutletSegmentations(segmentation, route.params.outlet as string)
-    if (route.params.order == "second") {
-        // begin interpolation / extrapolation
-        const first_segmentation = store.user_outlet_segmentations[random_outlet[0]]
-        const second_segmentation = store.user_outlet_segmentations[random_outlet[1]]
-        const first_base_score = outlet_leaning_scale_dict[random_outlet[0]]
-        const second_base_score = outlet_leaning_scale_dict[random_outlet[1]]
-        const unit_pos = (first_segmentation.pos - second_segmentation.pos) / (first_base_score - second_base_score)
-        const unit_neg = (first_segmentation.neg - second_segmentation.neg) / (first_base_score - second_base_score)
-        Object.keys(outlet_leaning_scale_dict).forEach(outlet => {
-            const leaning_score = outlet_leaning_scale_dict[outlet]
-            // interpolation / extrapolation
-            const interpolated_segmentation = {
-                pos: unit_pos * (leaning_score - first_base_score) + first_segmentation.pos,
-                neg: unit_neg * (leaning_score - first_base_score) + first_segmentation.neg
-            }
-            setUserOutletSegmentations(interpolated_segmentation, outlet)
-        })
-        //Route to Comparision Page
-        // const ccEntity = selected_cooccurr_entity.value?.name || '';
-        const entityName: string = selected_entity.value?.name;
-        // console.log("ROUTER PARAMS to Compare",{ entity: entityName, cooccurr_entity: ccEntity } )
-        router.push({ name: 'compare', params: { entity: selected_entity.value.name } })
-    } else {
-        const randomOutlet: string = random_outlet[1]; //selected_cooccurr_entity?.name || '';
-        const entityName: string = selected_entity.value.name;
-        router.push({ name: 'belief', params: { order: 'second', outlet: randomOutlet, entity: target_entity.value } })
-    }
-}
-
 function handleHexClicked({clickedEntity}) {
     if(clickedEntity === selected_entity.value.name) return
     highlight_hex_entity.value = clickedEntity
@@ -139,7 +101,6 @@ function handleHexFilled({filledEntity, filledHexIndex}) {
 }
 
 function goToNextStep() {
-    const randomOutlet: string = random_outlet[1]; //selected_cooccurr_entity?.name || '';
     router.push({ name: 'inspection', params: { outlet: target_outlet.value, entity: target_entity.value } })
 }
 
@@ -227,8 +188,7 @@ function toggleTutorial(e: MouseEvent) {
                 >
                 </HexCooccurrence>
             </div>
-            <Button v-if="route.params.order == 'first'" 
-                class="next-page-button" 
+            <Button class="next-page-button" 
                 @click="goToNextStep"
                 :disabled="!revealed"
                 > Next Page </Button>

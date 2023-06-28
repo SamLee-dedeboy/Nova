@@ -54,11 +54,18 @@ const user_hex = vue.computed(() => {
         const center_hex_entity: HexEntity = props.entity_cooccurrences?.target!
         let res: any[] = [{ entity: center_hex_entity.entity, sst: center_hex_entity.sst, x: 0, y: 0, index: 0, exists: true, assigned_hex_index: -1 }]
         console.log("user_hex_selection", props.user_hex_selection)
+        // const unknown_index = [62, 36, 88, 122]
+        const unknown_index = [62, 37, 36, 59, 88, 87]
+        let unknown_count = 0
         Object.keys(props.user_hex_selection).forEach(entity => {
             const assigned_index = props.user_hex_selection[entity]
+            let hex_index = assigned_index
             // TODO: handle not assigned entity
-            if(assigned_index === -1) return
-            const { x, y } = generate_hex_coord(assigned_index, hex_radius)
+            if(assigned_index === -1) {
+                hex_index = unknown_index[unknown_count]
+                unknown_count += 1
+            }
+            const { x, y } = generate_hex_coord(hex_index, hex_radius)
             res.push({
                 entity: entity,
                 x: x,
@@ -602,7 +609,7 @@ function removeHighlightHex(target_entity) {
         target_hex = hex_group.selectAll("path.hexagon").filter((d:any) => d[0].entity === target_entity)
     }
     target_hex.transition().duration(0)
-        .attr("stroke-width", (d: any) => d[0].index === 0 ? 20 : 1)
+        .attr("stroke-width", (d: any) => d[0].index === 0 ? 1 : 1)
         .attr("stroke", "#444444")
         .attr("filter", "unset")
         .on("end", () => (1))

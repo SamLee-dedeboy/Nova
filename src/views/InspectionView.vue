@@ -72,15 +72,6 @@ const marked_article_info_grouped = vue.computed(() => {
 
 const article_view = ref(null)
 
-vue.onBeforeMount(() => {
-    if(selected_entity.value == undefined) {
-        setEntity({
-            name: route.params.entity,
-            outlet: "ABC News",
-            article_ids: [1]
-        })
-    }
-})
 vue.onMounted(() => {
     prepare_data()
 })
