@@ -80,7 +80,7 @@ const user_hex = vue.computed(() => {
 })
 const sorted_cooccurrence_list = vue.computed(() => {
     const raw_data = props.entity_cooccurrences?.sorted_cooccurrences_list!
-    const center_hex_entity: HexEntity = props.entity_cooccurrences?.target!
+    const center_hex_entity: HexEntity = props.entity_cooccurrences.target
     let res: any[] = [{ entity: center_hex_entity.entity, sst: center_hex_entity.sst, x: 0, y: 0, index: 0, exists: true, assigned_hex_index: -1 }]
     let sst_bins = {}
     // bin hex entities by sst
@@ -618,6 +618,7 @@ function removeHighlightHex(target_entity) {
 function loopedAnimateHex(hex_group) {
     const center_entity = hexbin_(sorted_cooccurrence_list.value)[0][0].entity
     const co_entity = props.highlight_hex_entity
+    console.log({co_entity})
     // if(!props.show_blink) {
     //     // hack for static highlight
     //     const target_path = hex_group.selectAll("path.hexagon").filter(function (d:any) {
@@ -634,7 +635,7 @@ function loopedAnimateHex(hex_group) {
     if(props.mode === 'user') {
         target_path = hex_group.selectAll("path").filter(function (d:any) {
             if(d[0].entity !== undefined) return d[0].entity === center_entity
-            else return entity_hex_index_dict.value[co_entity] === d[0].i
+            else return entity_hex_index_dict.value[co_entity] === d[0].index
         })
     } else if(props.show_blink){
         target_path = hex_group.selectAll("path.hexagon").filter(function (d:any) {

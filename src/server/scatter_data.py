@@ -55,22 +55,26 @@ def overall_entity_scatter(entity_mentions, processed_data_manager: ProcessedDat
     return data
 
 def grouped_entity_scatter(entity_mentions, processed_data_manager):
-    max_articles, pos_max_articles, neg_max_articles = 0, 0, 0
-    min_articles, pos_min_articles, neg_min_articles = math.inf, math.inf, math.inf
+    # max_articles, pos_max_articles, neg_max_articles = 0, 0, 0
+    # min_articles, pos_min_articles, neg_min_articles = math.inf, math.inf, math.inf
 
     # get max & min
+    outlet_pos_min_dict = defaultdict(lambda: math.inf)
+    outlet_pos_max_dict = defaultdict(lambda: 0)
+    outlet_neg_min_dict = defaultdict(lambda: math.inf)
+    outlet_neg_max_dict = defaultdict(lambda: 0)
     for entity, mention_ids in entity_mentions.items():
         mentioned_articles = processed_data_manager.idsToArticles(mention_ids)
         mentioned_articles_grouped = defaultdict(list)
         # group by outlet
         for article in mentioned_articles:
             mentioned_articles_grouped[article['journal']].append(article)
-        outlet_pos_min_dict = defaultdict(lambda: math.inf) 
-        outlet_pos_max_dict = defaultdict(lambda: 0)
-        outlet_neg_min_dict = defaultdict(lambda: math.inf) 
-        outlet_neg_max_dict = defaultdict(lambda: 0)
         for outlet, articles in mentioned_articles_grouped.items():
             pos_articles, neg_articles = [], []
+            pos_max_articles = outlet_pos_max_dict[outlet]
+            neg_max_articles = outlet_neg_max_dict[outlet]
+            pos_min_articles = outlet_pos_min_dict[outlet]
+            neg_min_articles = outlet_neg_min_dict[outlet]
             for article in mentioned_articles:
                 (pos_articles if article['doc_level_sentiment'][entity] == 'positive' else neg_articles).append(article["id"])
                 # (pos_articles if article['sentiment']['label'] == 'POSITIVE' else neg_articles).append(article["journal"])
@@ -105,7 +109,7 @@ def grouped_entity_scatter(entity_mentions, processed_data_manager):
                 processed_data_manager
             )
             if outlet not in nodes_groupby_outlet_dict:
-                nodes_groupby_outlet_dict[outlet] = EntityScatterData(nodes=[], max_articles=max_articles, min_articles=min_articles)
+                nodes_groupby_outlet_dict[outlet] = EntityScatterData(nodes=[], max_articles=0, min_articles=math.inf)
             nodes_groupby_outlet_dict[outlet].nodes.append(node)
 
     return nodes_groupby_outlet_dict

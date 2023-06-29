@@ -61,7 +61,7 @@ async function fetch_outlet_hex(outlet, center_entity) {
             true_hex_fetched.value = true
             const hex_view: typeUtils.CooccurrHexView = {
                 title: `co-${selected_entity.value.name}`,
-                data: json.cooccurrences_data,
+                data: json
             }
             outlet_hexview.value = hex_view
             setClickedHexView(hex_view)
