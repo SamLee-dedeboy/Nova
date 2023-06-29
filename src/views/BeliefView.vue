@@ -71,7 +71,6 @@ async function fetch_outlet_hex(outlet, center_entity) {
                 init_hex_selection[outlet][entity_data.entity] = -1
             })
             setHexSelection(init_hex_selection)
-
         })
 }
 

@@ -15,7 +15,7 @@ CORS(app)
 raw_data = RawDataManager()
 processed_data = ProcessedDataManager(raw_data)
 overview_scatter_overall_data = scatter_data.overall_entity_scatter(processed_data.entity_mention_articles, processed_data)
-overview_scatter_grouped_data, grouped_metadata = scatter_data.grouped_entity_scatter(processed_data.entity_mention_articles, processed_data)
+overview_scatter_grouped_data = scatter_data.grouped_entity_scatter(processed_data.entity_mention_articles, processed_data)
 # overview_scatter_grouped_data, processed_data.grouped_metadata, grouped_node_dict = scatter_data.grouped_entity_scatter(raw_data.candidate_entity_grouped, processed_data)
 # overview_scatter_grouped_data, processed_data.grouped_metadata, grouped_node_dict = None, None, None
 overall_node_dict = processUtils.list_to_dict(overview_scatter_overall_data.nodes, key=lambda node: node.text)
@@ -53,10 +53,6 @@ def get_grouped_scatter_data():
 # def get_overall_metadata():
 #     return json.dumps(overview_scatter_overall_metadata, default=vars)
 
-@app.route("/overview/scatter/grouped/metadata")
-def get_grouped_metadata():
-    return json.dumps(grouped_metadata, default=vars)
-
 @app.route("/processed_data/outlet_article_num_dict")
 def get_outlet_article_num_dict():
     return json.dumps(processed_data.outlet_article_num_dict)
@@ -83,9 +79,7 @@ def get_grouped_hexview(title, outlet):
     res, merged_entities = hexview_data.get_entity_candidates(title, 
                                                               processed_data.grouped_cooccurrences_dict, 
                                                               grouped_node_dict, 
-                                                              processed_data, 
-                                                             overall_node_dict, 
-                                                              grouped_metadata)
+                                                             overall_node_dict)
     for hex_data in res: 
         blanked_list = []
         for entity in merged_entities:
@@ -106,7 +100,7 @@ def get_grouped_hexview(title, outlet):
 
     if outlet != "all":
         res = next((hex for hex in res if hex['outlet'] == outlet), None)
-
+    print(res)
     return json.dumps(res, default=vars)
 
 # @app.route("/hexview/grouped/<title>")

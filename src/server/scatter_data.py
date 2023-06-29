@@ -58,7 +58,6 @@ def grouped_entity_scatter(entity_mentions, processed_data_manager):
     max_articles, pos_max_articles, neg_max_articles = 0, 0, 0
     min_articles, pos_min_articles, neg_min_articles = math.inf, math.inf, math.inf
 
-    meta_data = SentimentScatterMetaData(0,0,0,0,0,0)
     # get max & min
     for entity, mention_ids in entity_mentions.items():
         mentioned_articles = processed_data_manager.idsToArticles(mention_ids)
@@ -66,7 +65,10 @@ def grouped_entity_scatter(entity_mentions, processed_data_manager):
         # group by outlet
         for article in mentioned_articles:
             mentioned_articles_grouped[article['journal']].append(article)
-        
+        outlet_pos_min_dict = defaultdict(lambda: math.inf) 
+        outlet_pos_max_dict = defaultdict(lambda: 0)
+        outlet_neg_min_dict = defaultdict(lambda: math.inf) 
+        outlet_neg_max_dict = defaultdict(lambda: 0)
         for outlet, articles in mentioned_articles_grouped.items():
             pos_articles, neg_articles = [], []
             for article in mentioned_articles:
@@ -76,15 +78,10 @@ def grouped_entity_scatter(entity_mentions, processed_data_manager):
             pos_min_articles = min(pos_min_articles, len(pos_articles))
             neg_max_articles = max(neg_max_articles, len(neg_articles))
             neg_min_articles = min(neg_min_articles, len(neg_articles))
-            max_articles = max(max_articles, len(articles))
-            min_articles = min(min_articles, len(articles))
-
-    meta_data.max_articles = max_articles
-    meta_data.min_articles = min_articles
-    meta_data.pos_max = pos_max_articles
-    meta_data.pos_min = pos_min_articles
-    meta_data.neg_max = neg_max_articles
-    meta_data.neg_min = neg_min_articles
+            outlet_pos_max_dict[outlet] = pos_max_articles
+            outlet_pos_min_dict[outlet] = pos_min_articles
+            outlet_neg_max_dict[outlet] = neg_max_articles
+            outlet_neg_min_dict[outlet] = neg_min_articles
 
     nodes_groupby_outlet_dict = {}
     for entity, mention_ids in entity_mentions.items():
@@ -103,15 +100,15 @@ def grouped_entity_scatter(entity_mentions, processed_data_manager):
             node = construct_node(
                 label,
                 pos_articles, neg_articles,
-                pos_max_articles, pos_min_articles,
-                neg_max_articles, neg_min_articles,
+                outlet_pos_max_dict[outlet], outlet_pos_min_dict[outlet],
+                outlet_neg_max_dict[outlet], outlet_neg_min_dict[outlet],
                 processed_data_manager
             )
             if outlet not in nodes_groupby_outlet_dict:
                 nodes_groupby_outlet_dict[outlet] = EntityScatterData(nodes=[], max_articles=max_articles, min_articles=min_articles)
             nodes_groupby_outlet_dict[outlet].nodes.append(node)
 
-    return nodes_groupby_outlet_dict, meta_data
+    return nodes_groupby_outlet_dict
 
 def grouped_entity_scatter_old(entity_mentions_grouped, processed_data_manager):
     scatter_outlet_dict = {}

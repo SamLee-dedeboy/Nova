@@ -46,7 +46,6 @@ const server_address = vue.inject("server_address")
 // overview data 
 // const overview_overall_scatter_data: Ref<any> = ref({})
 const overview_grouped_scatter_data: Ref<any> = ref({})
-const overview_grouped_scatter_metadata: Ref<any> = ref({})
 const overview_overall_scatter_metadata: Ref<any> = ref({})
 
 
@@ -179,15 +178,6 @@ vue.onMounted(async () => {
       .then(res => res.json())
       .then(json => {
         overview_grouped_scatter_data.value = json
-        resolve("success")
-      })
-  }))
-  promiseArray.push(new Promise((resolve) => {
-    // overview grouped scatter metadata
-    fetch(`${server_address}/overview/scatter/grouped/metadata`)
-      .then(res => res.json())
-      .then(json => {
-        overview_grouped_scatter_metadata.value = json
         resolve("success")
       })
   }))
