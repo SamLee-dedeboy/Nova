@@ -19,7 +19,7 @@ const selected_outlet = vue.computed(() => store.selected_outlet)
 
 const disabled_item_array = vue.computed(() => {
   switch (route.name) {
-    case "home": return [true, selected_entity.value == undefined, true]
+    case "home": return [true, true, true]
     case "belief": return [false, false, false]
     // case "compare": return [false, false, false, false, false]
     case "inspection": return [false, true, false]

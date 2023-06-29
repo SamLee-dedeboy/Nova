@@ -133,7 +133,7 @@ const blank_hexbins = vue.computed(() => {
                 y: y,
                 i: length,
                 sst: SentimentType.neu,
-                index: count + 1,
+                index: count,
                 level: find_level(count),
             })
             length += 1
@@ -145,7 +145,7 @@ const blank_hexbins = vue.computed(() => {
             y: y,
             i: length,
             sst: sst,
-            index: count + 1,
+            index: count,
             level: find_level(count),
         })
         length += 1
@@ -158,7 +158,7 @@ const blank_hexbins = vue.computed(() => {
             y: y,
             i: length,
             sst: SentimentType.neu,
-            index: count + 1,
+            index: count,
             level: find_level(count),
         })
         length += 1
@@ -286,7 +286,7 @@ function updateUserFixedHex() {
         .attr("stroke", (d,i) => i===0? "#444444": "black")
         .attr("stroke-width", (d, i) => i === 0 ? 7 : 1)
         .on("click", function (e, d: any) {
-            console.log({clickedEntity: d[0].entity})
+            console.log({clickedEntity: d[0]})
             emit("hex-clicked", { clickedEntity: d[0].entity })
         })
         .on("mouseover", function (e, d: any) {
@@ -579,7 +579,7 @@ function updateUserHex() {
         .attr("y", (d: any, i) => d.y)
         .attr("text-anchor", "middle")
         .attr("dominant-baseline", "central")
-        .attr("fill", "black")
+        // .attr("fill", "black")
         .attr("font-size", "0.8em")
         .text((d: any) => {
             const words = d[0].entity.split("_")
@@ -705,7 +705,7 @@ function drag(eles) {
         if(d[0].index === 0) return
         if(d3.select(this).attr("class") === "hex-bins") {
             // find hexagon that was assigned to this hex-bin
-            const i = d[0].i
+            const i = d[0].index
             const hexagon = d3.selectAll("path.hexagon").filter((d) => d[0].assigned_hex_index === i)
             dragged_hex.value = hexagon.data()[0][0].index
             hexagon.raise().attr("stroke", "black").attr("stroke-width", 1)
@@ -724,7 +724,7 @@ function drag(eles) {
         let dragged_selection: any = d3.select(this)
         if(d3.select(this).attr("class") === "hex-bins") {
             // find hexagon that was assigned to this hex-bin
-            const i = d[0].i
+            const i = d[0].index
             const hexagon = d3.selectAll("path.hexagon").filter((d) => d[0].assigned_hex_index === i)
             dragged_selection = hexagon
             d = hexagon.data()[0]
@@ -769,7 +769,7 @@ function drag(eles) {
         dragged_hex.value = -1
         if(d3.select(this).attr("class") === "hex-bins") {
             // find hexagon that was assigned to this hex-bin
-            const i = d[0].i
+            const i = d[0].index
             const hexagon = d3.selectAll("path.hexagon").filter((d) => d[0].assigned_hex_index === i)
             dragged_selection = hexagon
             d = hexagon.data()[0]
@@ -783,23 +783,22 @@ function drag(eles) {
             // highlight closest hex
             const closest_hex = d3.select("g.hex-group").selectAll("path.hex-bins").filter(function (d) { return d[0].i === closest_hex_index;})
             closest_hex.transition().duration(0).attr("stroke-width", 1)
-            entity_hex_index_dict.value[d[0].entity] = closest_hex_index
-            console.log(entity_hex_index_dict.value)
-            d[0].assigned_hex_index = closest_hex_index
+            entity_hex_index_dict.value[d[0].entity] = blank_hexbins.value[closest_hex_index].index
+            d[0].assigned_hex_index = blank_hexbins.value[closest_hex_index].index
             // update draggable hexes
             const entity_hexes = d3.select("g.hex-group").selectAll("path.hexagon").filter((d: any) => d[0].assigned_hex_index !== -1)
             const assigned_hexes = entity_hexes.data().map((ele: any) => ele[0].assigned_hex_index)
             console.log({assigned_hexes})
-            d3.selectAll("path.hex-bins").filter((d) => assigned_hexes.includes(d[0].i))
+            d3.selectAll("path.hex-bins").filter((d) => assigned_hexes.includes(d[0].index))
                 .style("cursor", "pointer")
                 .on("mouseover", function(e, hovered_d: any) {
                     console.log({highlight: props.highlight_hex_entity})
-                    if(entity_hex_index_dict.value[props.highlight_hex_entity] === hovered_d[0].i) return
+                    if(entity_hex_index_dict.value[props.highlight_hex_entity] === hovered_d[0].index) return
                     d3.select(this).transition().duration(100).attr("stroke", "black").attr("stroke-width", 8)
                     d3.select(this).raise()
                 })
                 .on("mouseout", function(e, hovered_d: any) {
-                    if(entity_hex_index_dict.value[props.highlight_hex_entity] === hovered_d[0].i) return
+                    if(entity_hex_index_dict.value[props.highlight_hex_entity] === hovered_d[0].index) return
                     d3.select(this).transition().duration(300).attr("stroke", "#444444").attr("stroke-width", 1)
                 })
                 .on("click", () => {
@@ -807,7 +806,7 @@ function drag(eles) {
                     emit("hex-clicked", { clickedEntity: d[0].entity })
                 })
                 .call(drag)
-            emit("hex-filled", { filledEntity: d[0].entity, filledHexIndex: closest_hex_index })
+            emit("hex-filled", { filledEntity: d[0].entity, filledHexIndex: blank_hexbins.value[closest_hex_index].index })
         } else {
             dragged_selection.attr("fill", "white")
                         .attr("transform", "translate(" + d.x + "," + d.y + ")")
@@ -896,9 +895,13 @@ function index_to_sst(index) {
     const mix_index = [1, 2, 8, 9, 10]
     const neg_index = [3, 4, 12 ,13, 14]
     const pos_index = [0, 5, 6, 16, 17]
+    const neu_index = [15, 30, 31, 32, 33]
+    const unknown_index = [62, 36, 88, 122]
     if(mix_index.includes(index)) return SentimentType.mix
     if(neg_index.includes(index)) return SentimentType.neg
     if(pos_index.includes(index)) return SentimentType.pos
+    if(neu_index.includes(index)) return SentimentType.neu
+    if(unknown_index.includes(index)) return SentimentType.unknown
 }
 
 function distance_to_edge({ alpha, radius }) {

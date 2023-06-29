@@ -24,7 +24,6 @@ const data_hex = ref(null)
 const target_outlet = vue.computed(() => route.params.outlet as string)
 const target_entity = vue.computed(() => route.params.entity as string)
 const highlight_hex_entity: Ref<string> = ref()
-const order = vue.computed(() => route.params.order as string)
 const true_hex_data: Ref<any> = ref()
 const true_hex_fetched: Ref<Boolean> = ref(false)
 const revealed: Ref<Boolean> = ref(false)
@@ -43,14 +42,6 @@ const clicked_hexview = vue.computed(() => store.clicked_hexview)
 const setClickedHexView = (hexview) => store.setClickedHexView(hexview)
 const hex_selection = vue.computed(() => store.hex_selection)
 const setHexSelection =  (hex_selection) => store.setHexSelection(hex_selection)
-vue.watch(order, (old_value, new_value) => {
-    document.querySelectorAll(".hex-cell").forEach(cell => {
-        cell.classList.remove("clicked-cell")
-    })
-    // target outlet should have changed
-    // add 'if' to avoid extra fetching
-    if (order.value) fetch_outlet_hex(target_outlet.value, target_entity.value)
-})
 
 vue.watch(revealed, () => {
    user_hex.value.updateHighlightHex() 
