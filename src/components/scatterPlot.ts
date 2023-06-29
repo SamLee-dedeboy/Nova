@@ -41,6 +41,7 @@ export class EntityScatter {
     segment_controller_width: number;
     node_circle_radius: number;
     svg: any;
+    highlight_nodes: any[];
 
     segment_point: SegmentPoint;
     segment_controller_start: SegmentPoint;
@@ -104,6 +105,7 @@ export class EntityScatter {
         this.segment_point = { x: 0, y: 0 };
         this.segment_controller_start = { x: 0, y: 0 };
         this.current_zoom = undefined;
+        this.highlight_nodes = []
 
         this.show_axes = show_axes
         this.zoomable = zoomable
@@ -147,6 +149,7 @@ export class EntityScatter {
     }
 
     draw(emit): void {
+        const cvThis = this
         this.initScatterSvg(this.svgId)
         let segment_point = { x: this.xScale(this.props.segmentation?.pos || 0.5), y: this.yScale(this.props.segmentation?.neg || 0.5) }
         this.updateSegmentation(segment_point.x, segment_point.y)
@@ -154,8 +157,8 @@ export class EntityScatter {
         this.updateCanvas(emit)
         if (this.show_axes)
             this.drawAxis(emit)
-        if (this.show_offset)
-            this.updateSegmentationOffset(this.props.adjust_offset)
+        // if (this.show_offset)
+        //     this.updateSegmentationOffset(this.props.adjust_offset)
         const fisheye = d3_fisheye.circular()
             .radius(200)
             .distortion(2)
@@ -166,14 +169,25 @@ export class EntityScatter {
         svg.on("mousemove", function(e) {
             // //console.log(d3.pointer(e))
             fisheye.focus(d3.pointer(e));
-            svg.selectAll("circle.entity_circle, .expand_circle").each(function(d: any) {
+            svg.selectAll("circle.entity_circle").each(function(d: any) {
                 const fisheye_coord = fisheye([d.x, d.y])
                 d3.select(this)
                     .transition().duration(0)
                     .attr("cx", fisheye_coord[0])
                     .attr("cy", fisheye_coord[1])
-                    .attr("r", (1+(fisheye_coord[2]-1)/2)*self.node_circle_radius)
+                    .attr("r", (d: ScatterNode) => (1+(fisheye_coord[2]-1)/2)*self.node_circle_radius)
             })
+            svg.selectAll("circle.expand_circle").each(function(d: any) {
+                const fisheye_coord = fisheye([d.x, d.y])
+                d3.select(this)
+                    .transition().duration(0)
+                    .attr("cx", fisheye_coord[0])
+                    .attr("cy", fisheye_coord[1])
+                    .attr("r", (d: ScatterNode) => (1+(fisheye_coord[2]-1)/2)*1.5*self.node_circle_radius)
+                    .attr("opacity", (d: ScatterNode) => cvThis.highlight_nodes.includes(d.text)? 1:0 )
+            })
+            // if(cvThis.clicked_node.value)
+            //     cvThis.setHighlightNode(cvThis.clicked_node.value.text, emit) 
             fisheye_indicator
                 .attr("cx", d3.pointer(e)[0])
                 .attr("cy", d3.pointer(e)[1])
@@ -345,31 +359,6 @@ export class EntityScatter {
             .attr("font-family", "MV Boli")
             .attr("font-weight", "bold")
             .attr("pointer-events", "none")
-    }
-
-    updateSegmentationOffset(offset: number) {
-        const target_node: ScatterNode = this.props.view.data.nodes.find(node => node.text === this.props.highlight_node_text)
-        if (target_node !== undefined) {
-            const top_left = { pos: target_node.pos_sst - offset, neg: target_node.neg_sst + offset }
-            const top_right = { pos: target_node.pos_sst + offset, neg: target_node.neg_sst + offset }
-            const lower_left = { pos: target_node.pos_sst - offset, neg: target_node.neg_sst - offset }
-            const lower_right = { pos: target_node.pos_sst + offset, neg: target_node.neg_sst - offset }
-            const svg = d3.select(`#${this.props.id}`).select("svg")
-            const offset_indicator = svg.selectAll("rect.offset_rect")
-                .data([0])
-                .join("rect")
-                .attr("class", "offset_rect")
-                .attr("x", this.xScale(top_left.pos))
-                .attr("y", this.yScale(top_left.neg))
-                .attr("width", this.xScale(top_right.pos) - this.xScale(top_left.pos))
-                .attr("height", this.yScale(lower_left.neg) - this.yScale(top_left.neg))
-                .attr("fill-opacity", 0)
-                .attr("stroke", "black")
-                .attr("stroke-width", "10")
-                .attr("stroke-dasharray", "10")
-                .style("pointer-events", "none")
-        }
-
     }
 
     updateCategorization(): void {
@@ -550,16 +539,18 @@ export class EntityScatter {
     }
 
     enterEntityScatter(enter, colorScale){
-        enter.append("g").attr("class", "entity").call(
-            g => g.append("circle")
+        enter.append("g").attr("class", "entity")
+        .call(g => g.append("circle")
                 .attr("class", "expand_circle")
-                .attr("r", this.node_circle_radius / (this.current_zoom?.k || 1))
+                .attr("r", this.node_circle_radius*1.5 / (this.current_zoom?.k || 1))
+                .attr("opacity", 0)
                 .attr("cx", (d) => this.xScale(d.pos_sst) || 0)
                 .attr("cy", (d) => this.yScale(Math.abs(d.neg_sst)) || 0)
                 .attr("fill", "white")
                 .attr("stroke", "black")
                 .attr("stroke-dasharray", (d) => d.article_ids.length === 0 ? 2.5 : 0)
-        ).call(g => g.append("circle")
+        )
+        .call(g => g.append("circle")
             .attr("class", "entity_circle")
             .attr("r", this.node_circle_radius / (this.current_zoom?.k || 1))
             .attr("cx", (d) => this.xScale(d.pos_sst) || 0)
@@ -569,7 +560,20 @@ export class EntityScatter {
                 let color = colorScale(d.article_ids.length) || 0
                 return (d.article_ids.length === 0 || color === 0) ? "white" : color
             })
-            .attr("opacity", 0.8))
+            .attr("stroke", "black")
+            .attr("opacity", 1)
+        )
+        .call(g => g.append("text")
+            .attr("class", "node_label")
+            .attr("x", (d: any) => this.xScale(d.pos_sst) || 0)
+            .attr("y", (d: any) => this.yScale(Math.abs(d.neg_sst)) || 0)
+            .text((d) => {return d.text})
+            .attr("font-size", "1.5rem")
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "hanging")
+            .attr("pointer-events", "none")
+            .attr("opacity", 0)
+        )
     }
 
     updateOverviewScatter(emit: any) {
@@ -583,9 +587,6 @@ export class EntityScatter {
         // const colorScale = d3.scaleSequential( (d) => d3.interpolateReds(logScale(d)))
 
         const node_group = svg.select("g.node_group")
-
-
-
         node_group.selectAll("g.entity")
             .data(bind_data, function (d: any) { 
                 d.x = self.xScale(d.pos_sst)
@@ -611,27 +612,11 @@ export class EntityScatter {
                         )
                 }
             )
-
-        if (this.show_highlight) {
-            const highlight_outlet = this.props.highlight_node_text
-            const highlight_node = svg.selectAll("g.entity").filter((d: any) => { return highlight_outlet === d.text })
-                .raise()
-            const other_nodes = svg.selectAll("g.entity").filter((d: any) => highlight_outlet !== d.text)
-            svg.select("g.node_group").raise()
-            // svg.selectAll("rect.segment-controller").lower()
-            // this.applyExpandStyle(highlight_node, this)
-            this.addNodeLabel(highlight_node, this)
-
-            // this.removeExpandedStyle(other_nodes, this)
-            this.removeNodeLabel(other_nodes, this)
-        }
     }
 
     updateExpandedScatter(emit: any) {
         this.updateOverviewScatter(emit)
-        const applyExpandStyle = this.applyExpandStyle;
         const updateNodeInfo = this.updateNodeInfo;
-        const removeExpandedStyle = this.removeExpandedStyle;
         const cvThis = this; //to let events have access to the class vars
 
         // const svg = d3.select(`#${this.props.id}`).select("svg")
@@ -650,7 +635,7 @@ export class EntityScatter {
             .on("mouseover", function (e, d) {
                 const parentNode: any = (this as HTMLElement).parentNode
                 const container: any = d3.select(parentNode)
-                applyExpandStyle(container)
+                cvThis.applyExpandStyle(container)
 
                 if (cvThis.manualTooltip) {
                     const text = container.data()[0].text
@@ -664,11 +649,10 @@ export class EntityScatter {
                 d3.select(`#${cvThis.props.id}`).select(".nodeinfo")
                     .style("opacity", 1)
                 if (cvThis.show_highlight) {
-                    const highlight_node_text = cvThis.props.highlight_node_text
-                    if (d.text !== highlight_node_text) {
-                        const highlight_node = svg.selectAll("g.entity").filter((d: any) => highlight_node_text === d.text)
-                        cvThis.removeNodeLabel(highlight_node, cvThis)
-                        removeExpandedStyle(highlight_node)
+                    if (!cvThis.highlight_nodes.includes(d.text)) {
+                        const cancel_highlight_node = svg.selectAll("g.entity").filter((d: any) => !cvThis.highlight_nodes.includes(d.text))
+                        cvThis.removeNodeLabel(cancel_highlight_node, cvThis)
+                        cvThis.removeExpandedStyle(cancel_highlight_node)
                     }
                     cvThis.addNodeLabel(container, cvThis)
                 }
@@ -676,32 +660,32 @@ export class EntityScatter {
             .on("mouseout", function (e, d) {
                 d3.select(`#${cvThis.props.id}`).select(".nodeinfo")
                     .style("opacity", 0)
-                if ((d as ScatterNode).text === cvThis.clicked_node.value.text) return
+                if (cvThis.highlight_nodes.includes(d.text)) return
                 const parentNode: any = (this as HTMLElement).parentNode
                 const container: any = d3.select(parentNode)
 
-                if (!cvThis.show_highlight || d.text !== cvThis.props.highlight_node_text) {
-                    removeExpandedStyle(container)
+                if (!cvThis.show_highlight || !cvThis.highlight_nodes.includes(d.text)) {
+                    cvThis.removeExpandedStyle(container)
                 }
                 if (cvThis.show_highlight) {
                     cvThis.removeNodeLabel(container, cvThis)
-                    const highlight_node = svg.selectAll("g.entity").filter((d: any) => cvThis.props.highlight_node_text === d.text)
+                    const highlight_node = svg.selectAll("g.entity").filter((d: any) => cvThis.highlight_nodes.includes(d.text))
                         .raise()
                     cvThis.applyExpandStyle(highlight_node)
-                    cvThis.addNodeLabel(highlight_node, cvThis)
+                    // cvThis.addNodeLabel(highlight_node, cvThis)
                 }
             })
             .on("click", function (e, d) {
                 if (!cvThis.node_clickable) return
-                if (cvThis.clicked_node_element.value !== undefined) {
-                    const parentNode: any = (cvThis.clicked_node_element.value as HTMLElement).parentNode
-                    const container: any = d3.select(parentNode)
-                    removeExpandedStyle(container)
+                // if the clicked element is already highlighted, remove highlight
+                if (cvThis.highlight_nodes.includes(d.text)) {
+                    if(cvThis.props.selected_entity_name === d.text) return
+                    cvThis.highlight_nodes.splice(cvThis.highlight_nodes.indexOf(d.text), 1)
+                    const container = d3.select(this.parentNode)
+                    cvThis.removeExpandedStyle(container)
+                } else {
+                    emit("update:selected_entity_name", d.text)
                 }
-                cvThis.clicked_node_element.value = this
-                cvThis.clicked_node.value = d as ScatterNode
-                // emit("node_clicked", cvThis.clicked_node.value.text)
-                emit("update:selected_entity_name", cvThis.clicked_node.value.text)
             })
     }
 
@@ -710,22 +694,20 @@ export class EntityScatter {
         // apply hover effect
         container.select("circle.expand_circle")
             .transition().duration(100)
-            .attr("r", (d) => (parseFloat(container.select("circle.entity_circle").attr("r")) * 1.5))
-
-        // const target_node_text = container.data()[0].text
-        // const other_nodes_container = d3.select(`#${cvThis.props.id}`).selectAll("g.entity").filter((d: any) => d.text !== target_node_text)
-        // other_nodes_container.selectAll("image")
-        //     .attr("opacity", 0)
-        // container.selectAll("image")
-        //     .transition().duration(100)
-        //     .attr("opacity", 0.8)
+            // .attr("r", (d) => (parseFloat(container.select("circle.entity_circle").attr("r")) * 1.5))
+            .attr("r", (d) => (this.node_circle_radius * 1.5))
+            .attr("opacity", 1)
+        this.addNodeLabel(container, this)
     }
 
     removeExpandedStyle(container: any) {
         container.style("filter", "brightness(100%)")
         container.select("circle.expand_circle")
             .transition().duration(100)
-            .attr("r", (d) => (parseFloat(container.select("circle.entity_circle").attr("r"))))
+            // .attr("r", (d) => (parseFloat(container.select("circle.entity_circle").attr("r"))))
+            .attr("r", (d) => (this.node_circle_radius))
+            .attr("opacity", 0)
+        this.removeNodeLabel(container, this)
 
         // const target_node_text = container.data()[0].text
         // const other_nodes_container = d3.select(`#${cvThis.props.id}`).selectAll("g.entity").filter((d: any) => d.text !== target_node_text)
@@ -737,18 +719,29 @@ export class EntityScatter {
     }
 
     setHighlightNode(node_text, emit) {
-        if (!this.node_clickable) return
-        if (this.clicked_node_element.value !== undefined) {
-            const parentNode: any = (this.clicked_node_element.value as HTMLElement).parentNode
-            const container: any = d3.select(parentNode)
-            this.removeExpandedStyle(container)
-        }
-        const highlight_node: any = d3.selectAll("g.entity").filter((d: any) => d.text == node_text).nodes()[0]
-        this.applyExpandStyle(d3.select(highlight_node))
+        // if (!this.node_clickable) return
+        // if (this.clicked_node_element.value) {
+        //     const parentNode: any = (this.clicked_node_element.value as HTMLElement).parentNode
+        //     const container: any = d3.select(parentNode)
+        //     this.removeExpandedStyle(container)
+        // }
+        // const highlight_node: any = d3.selectAll("g.entity").filter((d: any) => d.text == node_text).nodes()[0]
+        // this.applyExpandStyle(d3.select(highlight_node))
 
-        this.clicked_node_element.value = d3.select(highlight_node).select("circle.entity_circle").node()
-        this.clicked_node.value = d3.select(highlight_node).data()[0] as ScatterNode
+        // this.clicked_node_element.value = d3.select(highlight_node).select("circle.entity_circle").node()
+        // this.clicked_node.value = d3.select(highlight_node).data()[0] as ScatterNode
         // emit("node_clicked", this.clicked_node.value.text)
+
+        // if the clicked element is already highlighted, remove highlight
+        if (this.highlight_nodes.includes(node_text)) {
+            const highlight_node: any = d3.selectAll("g.entity").filter((d: any) => d.text === node_text).nodes()[0]
+            console.log("remove highlight", node_text, highlight_node)
+            this.removeExpandedStyle(d3.select(highlight_node))
+        } else {
+            this.highlight_nodes.push(node_text)
+            const highlight_node: any = d3.selectAll("g.entity").filter((d: any) => d.text === node_text).nodes()[0]
+            this.applyExpandStyle(d3.select(highlight_node))
+        }
 
     }
 
@@ -763,6 +756,8 @@ export class EntityScatter {
     }
 
     addNodeLabel(container: any, cvThis) {
+        container.select("text.node_label").attr("opacity", 1)
+        return
         container.selectAll("text.node_label")
             .data((d) => [d])
             .join("text")
@@ -770,12 +765,13 @@ export class EntityScatter {
             .attr("x", (d: any) => cvThis.xScale(d.pos_sst))
             .attr("y", (d: any) => cvThis.yScale(Math.abs(d.neg_sst)))
             .text((d) => d.text)
-            .attr("font-size", "3.5rem")
+            .attr("font-size", "1.5rem")
             .attr("text-anchor", "middle")
             .attr("dominant-baseline", "hanging")
             .attr("pointer-events", "none")
     }
     removeNodeLabel(container: any, cvThis) {
-        container.selectAll("text.node_label").remove()
+        container.select("text.node_label").attr("opacity", 0)
+        // container.selectAll("text.node_label").remove()
     }
 }

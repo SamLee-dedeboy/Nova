@@ -78,7 +78,7 @@
     const segment_controller_width = 12
     const show_axes = true
     const show_offset = false
-    const show_highlight = false
+    const show_highlight = true
     const zoomable = false
     const node_clickable = true
     const show_region_label = true
@@ -134,7 +134,7 @@
     })
 
     function setHighlightNode(node_text) {
-        // console.log('set highlight node', node_text)
+        console.log('set highlight node', node_text)
         entityScatterPlot.setHighlightNode(node_text, emit)
     }
 
