@@ -173,23 +173,18 @@ def get_cooccurr_info(target, co_occurr_entity):
 @app.route("/processed_data/cooccurr_info/grouped/<outlet>/<target>/<co_occurr_entity>")
 def get_cooccurr_info_grouped(outlet, target, co_occurr_entity):
     entity = target + '-' + outlet
-    # target_article_ids = processed_data.grouped_cooccurrences_dict[outlet][entity][entity]
+    co_occurr_entity_key = co_occurr_entity + '-' + outlet
     target_article_ids = grouped_node_dict[outlet][entity].article_ids
-    # target_articles = processed_data.idsToArticles(target_article_ids)
-    # target_articles_topic_dict = processed_data.binArticlesByTopic(target_articles)
-    cooccurr_article_ids = list(map(lambda data: data['article_id'],
-        processed_data.grouped_cooccurrences_dict[outlet][target][co_occurr_entity]))
     # cooccurr_article_ids = list(map(lambda data: data['article_id'],
-    #     processed_data.grouped_cooccurrences_dict[outlet][entity][co_occurr_entity])) or None
-
-    # cooccurr_articles = processed_data.idsToArticles(cooccurr_article_ids)
-    # cooccurr_articles_topic_dict = processed_data.binArticlesByTopic(cooccurr_articles)
+    #     processed_data.grouped_cooccurrences_dict[outlet][target][co_occurr_entity]))
+    cooccurr_entity_article_ids = grouped_node_dict[outlet][co_occurr_entity_key].article_ids
+    merged_article_ids = list(set(target_article_ids + cooccurr_entity_article_ids))
     response = {
         "target": target,
         "target_article_ids": target_article_ids,
         "outlet": outlet,
         "cooccurr_entity": co_occurr_entity,
-        "cooccurr_article_ids": cooccurr_article_ids,
+        "cooccurr_article_ids": merged_article_ids,
     }
     return json.dumps(response)
 
