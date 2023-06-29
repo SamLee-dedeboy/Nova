@@ -48,17 +48,17 @@ function handleOutletClicked(outlet) {
     <div class="entity-info-container">
         <p> A total of 
             <span>{{  total_articles }}</span>
-            articles were found talking about 
-            <span> {{  props.data.name }}.  </span>  
+            polarizing articles were found talking about 
+            <span  :class="category_css_name" class="entity">{{props.data.name}}</span>
         </p>
         <p> <span class="pos_color">{{  `${pos_articles} (${pos_ratio})` }} </span> of them are <span class="pos_color">positive</span>,</p>
         <p> <span class="neg_color">{{  `${neg_articles} (${neg_ratio})` }} </span> of them are <span class="neg_color">negative</span>,</p>
         <p>
-            This translates to a positive score of <span class="pos_color">{{ props.data.pos_sst.toFixed(2) }}</span> and
-            a negative score of <span class="neg_color">{{ props.data.neg_sst.toFixed(2) }}</span>.
+            This translates to a positively polarizing score of <span class="pos_color">{{ props.data.pos_sst.toFixed(2) }}</span> and
+            a negative polarizing score of <span class="neg_color">{{ props.data.neg_sst.toFixed(2) }}</span>.
         </p>
         <p>
-            We calculate the sentiment scores by using min-max normalization on the number of articles.
+            We calculate the polarizing scores by using min-max normalization on the number of articles.
         </p>
         <p>
             A score of 1 means that the entity has the highest number of positive/negative articles.
@@ -70,7 +70,7 @@ function handleOutletClicked(outlet) {
             ),
         </p>
         <p>
-            <span :class="category_css_name"> {{ props.data.name }} </span> is categorized as <span :class="category_css_name">{{ entity_sst_category }}</span>.
+            <span :class="category_css_name" class="entity"> {{ props.data.name }} </span> is categorized as <span :class="category_css_name">{{ entity_sst_category }}</span>.
         </p>
         <p> Drag the white square 
             <svg width="10" height="10">
@@ -104,7 +104,9 @@ function handleOutletClicked(outlet) {
          </p>
          <p>
             <br>
-            Which outlet do you think reported <span class="pos_color">positively</span>/<span class="neg_color">negatively</span> about {{ props.data.name }}?
+            Which outlet do you think reported <span class="pos_color">positively</span>/<span class="neg_color">negatively</span> about <span  :class="category_css_name" class="entity">{{props.data.name}}</span>?
+            <br>
+            When <span  :class="category_css_name" class="entity">{{props.data.name}}</span> and other entities are reported together, do you think that outlet will report <span class="pos_color">positively</span> or <span class="neg_color">negatively</span> ?
          </p>
          <p>
             Click the icon above to start the quiz!
@@ -135,6 +137,10 @@ function handleOutletClicked(outlet) {
 }
 .neu_color {
     background: #dddddd;
+}
+.entity {
+  font-style: italic;
+  font-weight: bold;
 }
 
 .entity-info-container {

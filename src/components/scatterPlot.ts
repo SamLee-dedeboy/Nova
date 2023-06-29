@@ -525,9 +525,10 @@ export class EntityScatter {
 
         this.svg.append("text")
             .attr("class", "axis_x_label")
-            .attr("transform", `translate(${this.margin.left + this.vbWidth - 60}, ${this.margin.top + this.vbHeight - 30})`)
+            .attr("transform", `translate(${this.margin.left + this.vbWidth - 70}, ${this.margin.top + this.vbHeight - 30})`)
             .attr("text-anchor", "middle")
-            .text("+ Sentiment")
+            // .text("+ Sentiment")
+            .text("Pos Polarization")
             .attr("fill", '#2c8c94')
             .style("font-weight", "bold");
 
@@ -540,9 +541,10 @@ export class EntityScatter {
 
         this.svg.append("text")
             .attr("class", "axis_y_label")
-            .attr("transform", `translate(${this.margin.left + 60}, ${this.margin.top + 30})`)
+            .attr("transform", `translate(${this.margin.left + 70}, ${this.margin.top + 30})`)
             .attr("text-anchor", "middle")
-            .text("- Sentiment")
+            // .text("- Sentiment")
+            .text("Neg Polarization")
             .attr("fill", "#e37213")
             .style("font-weight", "bold")
     }
