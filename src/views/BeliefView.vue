@@ -56,7 +56,6 @@ async function fetch_outlet_hex(outlet, center_entity) {
     await fetch(`${server_address}/hexview/grouped/${center_entity}/${outlet}`)
         .then(res => res.json())
         .then(json => {
-            console.log({"true_hex_data": json})
             true_hex_data.value = json
             true_hex_fetched.value = true
             const hex_view: typeUtils.CooccurrHexView = {
@@ -136,6 +135,7 @@ function toggleTutorial(e: MouseEvent) {
         <div class=page-container>
             <i v-if="!true_hex_fetched" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/>
             <div v-else class="belief-user-hexview-overlay">
+                <div class="hive-header">Your belief </div>
                 <div class="border" ></div>
                 <HexCooccurrence ref="user_hex" class="belief-user-hexview"
                 mode="user"
@@ -157,6 +157,7 @@ function toggleTutorial(e: MouseEvent) {
             </div>
             <i v-if="!true_hex_fetched" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/>
             <div v-else class="belief-true-hexview-overlay">
+                <div class="hive-header">Data suggested</div>
                 <div class="border" :class="revealed_css" @click="revealed=true"></div>
                 <i v-if="!revealed" class="pi pi-question" 
                 style="
@@ -172,6 +173,7 @@ function toggleTutorial(e: MouseEvent) {
                 :title="outlet_hexview.title" :id="`belief_data_hexview`"
                 :entity_cooccurrences="outlet_hexview.data" :segmentation="segmentation"
                 :highlight_hex_entity="highlight_hex_entity"
+                :user_hex_selection="hex_selection[target_outlet]"
                 @hex-clicked="handleHexClicked"
                 :show_blink="revealed"
                 :show_label="revealed"
@@ -223,7 +225,7 @@ function toggleTutorial(e: MouseEvent) {
 .belief-user-hexview-overlay, .belief-true-hexview-overlay {
     width: 100%;
     height: 100%;
-    padding: 2%;
+    padding: 0% 2% 2% 2%;
     /*! display: flex; */
 }
 .belief-true-hexview, .belief-user-hexview {
@@ -303,5 +305,12 @@ function toggleTutorial(e: MouseEvent) {
     position: absolute;
     top: 80%;
     left: 70%;
+}
+.hive-header {
+  align-content: center;
+  display: flex;
+  justify-content: center;
+  font-size: larger;
+  font-weight: lighter;
 }
 </style>

@@ -47,6 +47,21 @@ const max_height = viewBox_width / hex_width * hex_height
 const dragged_hex = ref()
 const entity_hex_index_dict = ref({})
 
+const conflict_hex = vue.computed(() => {
+    console.log(props.user_hex_selection)
+    if(props.user_hex_selection === undefined) return []
+    let res = []
+    props.entity_cooccurrences.sorted_cooccurrences_list.forEach(hex_entity => {
+        const user_selected_index = props.user_hex_selection[hex_entity.entity]
+        if(user_selected_index === -1) return
+        const user_selected_sst = index_to_sst(user_selected_index)
+        const data_sst = categorizeHex(hex_entity.sst, props.segmentation)
+        if(user_selected_sst !== data_sst) res.push(hex_entity)
+    })
+    console.log(res)
+    return res
+})
+const conflict_entities = vue.computed(() => conflict_hex.value.map(hex_entity => hex_entity.entity))
 const user_hex = vue.computed(() => {
     if(props.user_hex_selection === undefined)
         return undefined
@@ -360,6 +375,7 @@ function updateUserFixedHex() {
 }
 
 function updateDataHex() {
+    console.log(conflict_hex.value)
     const svg = d3.select(`#${props.id}`).select("svg")
     // delete everything to avoid blinking bug
     svg.selectAll("*").remove()
@@ -368,7 +384,6 @@ function updateDataHex() {
     init()
 
     // update begins
-    console.log({margin: margin.value})
     const hex_group = svg.select("g.hex-group").attr("transform", `translate(${margin.value.left}, ${margin.value.top})`)
 
     const hex_labels =  svg.select("g.hex-labels")
@@ -407,7 +422,7 @@ function updateDataHex() {
             return `translate(${d.x},${d.y})`
         })
         .attr("filter",(d, i) => i===0? "blur(1px)": "none")
-        .attr("stroke", (d,i) => i===0? "#444444": "black")
+        .attr("stroke", (d, i) => i===0? "#444444": "black")
         .attr("stroke-width", (d, i) => i === 0 ? 7 : 1)
         .on("click", function (e, d: any) {
             console.log({clickedEntity: d[0].entity})
@@ -479,6 +494,14 @@ function updateDataHex() {
             // //console.log(words.join(" "))
             return words.join(" ")
         })
+        .attr("fill", (d: any) => {
+            console.log(d[0].entity)
+            if(conflict_entities.value.includes(d[0].entity))
+                return "red"
+            else
+                return "black"
+        })
+
         .call(wrap, 30)
 }
 
@@ -557,17 +580,14 @@ function updateUserHex() {
         // define drag behavior
         .call(drag)
 
-        const center_hex = hex_group.selectAll("path.hexagon").filter((d: any) => {console.log({d}); return d[0].index === 0})
-        console.log(center_hex.node())
+        const center_hex = hex_group.selectAll("path.hexagon").filter((d: any) => { return d[0].index === 0})
         center_hex.on("click", function(e, d: any) {
-            console.log(d.assigned_sst === SentimentType.neu)
             let next_sst = undefined
             if(d.assigned_sst === SentimentType.neu) next_sst = SentimentType.mix 
             if(d.assigned_sst === SentimentType.mix) next_sst = SentimentType.unknown 
             if(d.assigned_sst === SentimentType.unknown) next_sst = SentimentType.pos 
             if(d.assigned_sst === SentimentType.pos) next_sst = SentimentType.neg 
             if(d.assigned_sst === SentimentType.neg) next_sst = SentimentType.neu 
-            console.log(next_sst, SstColors.enum_color_dict[next_sst])
             d3.select(this).attr("fill", SstColors.enum_color_dict[next_sst])
             d.assigned_sst = next_sst
         })
@@ -633,7 +653,6 @@ function removeHighlightHex(target_entity) {
 function loopedAnimateHex(hex_group) {
     const center_entity = hexbin_(sorted_cooccurrence_list.value)[0][0].entity
     const co_entity = props.highlight_hex_entity
-    console.log({co_entity})
     // if(!props.show_blink) {
     //     // hack for static highlight
     //     const target_path = hex_group.selectAll("path.hexagon").filter(function (d:any) {
@@ -728,7 +747,6 @@ function drag(eles) {
             // hexagon.call(drag)
             return
         }
-        console.log("drag start", d[0].index)
         dragged_hex.value = d[0].index
         d3.select(this).raise().attr("stroke", "black").attr("stroke-width", 1);
     }
