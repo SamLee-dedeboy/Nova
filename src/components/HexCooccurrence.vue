@@ -550,12 +550,27 @@ function updateUserHex() {
         })
         .attr("fill", (d: any, i) => {
             if(i != 0) return "white"
-            const sst = d[0].sst;
-            return (d[0].exists) ? SstColors.enum_color_dict[categorizeHex(sst, props.segmentation!)] : '#dddddd'
+            if(d.assigned_sst === undefined) 
+                d.assigned_sst = SentimentType.neu
+            return SstColors.enum_color_dict[d.assigned_sst]
         })
         // define drag behavior
         .call(drag)
-    
+
+        const center_hex = hex_group.selectAll("path.hexagon").filter((d: any) => {console.log({d}); return d[0].index === 0})
+        console.log(center_hex.node())
+        center_hex.on("click", function(e, d: any) {
+            console.log(d.assigned_sst === SentimentType.neu)
+            let next_sst = undefined
+            if(d.assigned_sst === SentimentType.neu) next_sst = SentimentType.mix 
+            if(d.assigned_sst === SentimentType.mix) next_sst = SentimentType.unknown 
+            if(d.assigned_sst === SentimentType.unknown) next_sst = SentimentType.pos 
+            if(d.assigned_sst === SentimentType.pos) next_sst = SentimentType.neg 
+            if(d.assigned_sst === SentimentType.neg) next_sst = SentimentType.neu 
+            console.log(next_sst, SstColors.enum_color_dict[next_sst])
+            d3.select(this).attr("fill", SstColors.enum_color_dict[next_sst])
+            d.assigned_sst = next_sst
+        })
     // add looped animation for center hex
     const center_entity = hex_data[0][0].entity
     if(props.show_blink) {
