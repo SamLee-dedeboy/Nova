@@ -9,10 +9,11 @@ const props = defineProps({
     row_height: Number,
     font_size: Number,
 })
-const margin = {top: 15, bottom: 20, left:65,  right: 15, vertical: 20}
+const margin = {top: 15, bottom: 20, left:15,  right: 15, vertical: 10}
 // const len = Object.keys(props.color_dict!).length
-const row_height = vue.computed(() => props.row_height? props.row_height : 5)
-const font_size = vue.computed(() => props.font_size? props.font_size : 1.2)
+const row_height = vue.computed(() => props.row_height? props.row_height : 15)
+const row_width = 200 - margin.left - margin.right
+const font_size = vue.computed(() => props.font_size? props.font_size : 1)
 // const viewBox: [number, number] = [150, margin.top + margin.bottom + len*(margin.vertical + row_height.value)]
 const viewBox: [number, number] = [200, 200]
 const legend = new Legend(
@@ -21,6 +22,7 @@ const legend = new Legend(
     margin,
     viewBox,
     row_height.value,
+    row_width,
     font_size.value,
 )
 vue.onMounted(()=> {

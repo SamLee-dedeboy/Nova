@@ -18,6 +18,7 @@ export class Legend {
     vbHeight: number;
     margin: Margin;
     row_height: number;
+    row_width: number;
     font_size: number;
     svg: any;
 
@@ -25,12 +26,14 @@ export class Legend {
         props:any, svgId: string, 
         margin:Margin, viewBox:[number,number], 
         row_height: number,
+        row_width: number,
         font_size: number = 0.25,
         ){
         this.props = props
         this.svgId = svgId
         this.margin = margin;
         this.row_height = row_height
+        this.row_width = row_width
         this.font_size = font_size
         this.viewBox = viewBox;
         this.vbWidth = this.viewBox[0] - this.margin.left - this.margin.right;
@@ -51,19 +54,28 @@ export class Legend {
         const svg = this.svg
         const margin = this.margin
         const row_height = this.row_height
+        const row_width = this.row_width
         var index = 0
 
         svg.selectAll("*").remove()
         svg.attr("width", "100%").attr("height","100%")
 
         for(const [title, color] of Object.entries(this.props.color_dict!)) {
-            const circle = svg.append("circle")
-                .attr("cx", margin.left)
-                .attr("cy", margin.top + index*(2*row_height + margin.vertical + row_height) )
-                .attr("r", row_height)
+            // const circle = svg.append("circle")
+            //     .attr("cx", margin.left)
+            //     .attr("cy", margin.top + index*(2*row_height + margin.vertical + row_height) )
+            //     .attr("r", row_height)
+            //     .style("fill", color)
+            //     .style("stroke", 'black')
+            //     .style("stroke-opacity", '15%');
+            const circle = svg.append("rect")
+                .attr("x", margin.left)
+                .attr("y", margin.top + index*(row_height + margin.vertical) - row_height/2)
+                .attr("width", row_width)
+                .attr("height", row_height)
                 .style("fill", color)
                 .style("stroke", 'black')
-                .style("stroke-opacity", '15%');
+                .style("stroke-opacity", '25%');
 
             if(this.props.filter) circle.style("filter", `brightness(${SstColors.brightness}%)`)
             if(title === "no mention") {
@@ -72,8 +84,8 @@ export class Legend {
             }
 
             svg.append("text")
-                .attr("x", margin.left + 3*row_height)
-                .attr("y", margin.top + index*(2*row_height + margin.vertical + row_height))
+                .attr("x", margin.left + row_width/3.5) 
+                .attr("y", margin.top + index*(row_height + margin.vertical))
                 .text(function(){
                     return title.replaceAll("_", " ")
                 })
@@ -82,6 +94,7 @@ export class Legend {
                 .style("font-family", 'Roboto')
                 .style("font-weight", '100')
                 .style("font-size", this.font_size + 'rem')
+                .style("fill", "grey")
                 .call(this.wrap, this.viewBox[0]-this.margin.left - this.margin.right)
             // index is used for vertical offset calculation
             index += 1

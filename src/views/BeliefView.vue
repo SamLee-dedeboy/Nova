@@ -10,15 +10,13 @@ import Dialog from 'primevue/dialog';
 import HexCooccurrence from "../components/HexCooccurrence.vue";
 import Legend from '../components/Legend.vue';
 import * as typeUtils from "../types"
+import BeliefViewTutorial from "./tutorials/BeliefViewTutorial.vue"
 
 const route = useRoute()
 const router = useRouter()
 const server_address = vue.inject("server_address")
-// const left_most_outlet = vue.inject("left_most_outlet")
-// const right_most_outlet = vue.inject("right_most_outlet")
-const outlet_leaning_scale = vue.inject("outlet_leaning_scale")
-const outlet_leaning_scale_dict = vue.inject("outlet_leaning_scale_dict")
 
+const hex_rendered = ref(false)
 const user_hex = ref(null)
 const data_hex = ref(null)
 const target_outlet = vue.computed(() => route.params.outlet as string)
@@ -42,6 +40,8 @@ const clicked_hexview = vue.computed(() => store.clicked_hexview)
 const setClickedHexView = (hexview) => store.setClickedHexView(hexview)
 const hex_selection = vue.computed(() => store.hex_selection)
 const setHexSelection =  (hex_selection) => store.setHexSelection(hex_selection)
+const conflict_hex = vue.computed(() => store.conflict_hex)
+const setConflictHex = (conflicts) => store.setConflictHex(conflicts)
 
 vue.watch(revealed, () => {
    user_hex.value.updateHighlightHex() 
@@ -89,8 +89,16 @@ function handleHexFilled({filledEntity, filledHexIndex}) {
     console.log(hex_selection.value)
 }
 
-function goToNextStep() {
-    router.push({ name: 'inspection', params: { outlet: target_outlet.value, entity: target_entity.value } })
+function goToNextStep(co_occurr_entity: string) {
+    setCooccurrEntity({
+        "name": co_occurr_entity,
+        "target": target_entity.value,
+        "outlet": target_outlet.value,
+    })
+    router.push({ name: 'inspection', params: { 
+        outlet: target_outlet.value, 
+        entity: target_entity.value 
+    } })
 }
 
 function outletIconStyle(name: string) {
@@ -133,6 +141,7 @@ function toggleTutorial(e: MouseEvent) {
         </Dialog>
 
         <div class=page-container>
+            <!-- <BeliefViewTutorial v-if="hex_rendered"></BeliefViewTutorial> -->
             <i v-if="!true_hex_fetched" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/>
             <div v-else class="belief-user-hexview-overlay">
                 <div class="hive-header">Your belief </div>
@@ -144,6 +153,7 @@ function toggleTutorial(e: MouseEvent) {
                 :highlight_hex_entity="highlight_hex_entity"
                 @hex-clicked="handleHexClicked"
                 @hex-filled="handleHexFilled"
+                @hex-rendered="hex_rendered = true"
                 :show_blink="true"
                 :show_label="true">
                 </HexCooccurrence>
@@ -152,6 +162,17 @@ function toggleTutorial(e: MouseEvent) {
             <div v-else class="journal-style-container">
                 <div class="journal-style">
                     <img :src="`/${target_outlet}.png`" :class="['journal-image', `${outletIconStyle(target_outlet)}`]" />
+                </div>
+                <div v-if="revealed" class="diff-description-container">
+                    Your belief on:
+                    <br>
+                    <div class="conflict-hex-selector" v-for="conflict in conflict_hex" @click="goToNextStep(conflict)">
+                        <div class="conflict-hex-selector-overlay"></div>
+                        {{ conflict }}
+                    </div>
+                    conflicts with the data.
+                    <br>
+                    Click any of the above to see why.
                 </div>
                 <Legend id="legend-sentiment" :color_dict="SstColors.key_color_dict"/>
             </div>
@@ -175,6 +196,7 @@ function toggleTutorial(e: MouseEvent) {
                 :highlight_hex_entity="highlight_hex_entity"
                 :user_hex_selection="hex_selection[target_outlet]"
                 @hex-clicked="handleHexClicked"
+                @conflict-hex="setConflictHex"
                 :show_blink="revealed"
                 :show_label="revealed"
                 >
@@ -217,7 +239,7 @@ function toggleTutorial(e: MouseEvent) {
     right: 12%;
     top: 5.7%;
     bottom: 32%;
-    z-index: 100;
+    z-index: 1;
 }
 .border.revealed {
     z-index: 0 !important;
@@ -264,7 +286,29 @@ function toggleTutorial(e: MouseEvent) {
   aspect-ratio: 1;
 }
 .legend-container {
-    width: 85%;
+    /* width: 85%; */
+    position: absolute;
+    bottom: 7%;
+}
+.conflict-hex-selector {
+    font-weight: bold;
+    color: red;
+    cursor: pointer;
+    border: 1px solid black;
+    text-align: center;
+}
+.conflict-hex-selector:hover .conflict-hex-selector-overlay {
+    opacity: 1;
+}
+.conflict-hex-selector-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(43, 42, 42, 0.5); /* Dark overlay color */
+  opacity: 0; /* Initially transparent */
+  transition: opacity 0.3s ease; /* Transition effect */
 }
 
 /* .journal-style {

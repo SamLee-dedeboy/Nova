@@ -25,7 +25,7 @@ const props = defineProps({
     p_margin: Object as () => any,
     user_hex_selection: Object as () => any,
 })
-const emit = defineEmits(["hex-clicked", "hex-filled"])
+const emit = defineEmits(["hex-clicked", "hex-filled", "hex-rendered", "conflict-hex"])
 
 // const viewBox = [1000, 1000/(2*Math.sin(Math.PI/3))*3]
 const viewBox = [640, 680]
@@ -58,9 +58,11 @@ const conflict_hex = vue.computed(() => {
         const data_sst = categorizeHex(hex_entity.sst, props.segmentation)
         if(user_selected_sst !== data_sst) res.push(hex_entity)
     })
+    emit("conflict-hex", res.map(hex_entity => hex_entity.entity))
     console.log(res)
     return res
 })
+
 const conflict_entities = vue.computed(() => conflict_hex.value.map(hex_entity => hex_entity.entity))
 const user_hex = vue.computed(() => {
     if(props.user_hex_selection === undefined)
@@ -501,7 +503,12 @@ function updateDataHex() {
             else
                 return "black"
         })
-
+        // .attr("font-weight", (d: any) => {
+        //     if(conflict_entities.value.includes(d[0].entity))
+        //         return "bold"
+        //     else
+        //         return "normal"
+        // })
         .call(wrap, 30)
 }
 
@@ -626,6 +633,7 @@ function updateUserHex() {
             return words.join(" ")
         })
         .call(wrap, 30)
+    emit("hex-rendered", true)
 }
 
 function updateHighlightHex() {

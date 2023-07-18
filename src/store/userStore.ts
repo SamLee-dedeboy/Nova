@@ -19,6 +19,7 @@ export const useUserDataStore = defineStore('userData', {
         marked_articles: [],
         user_outlet_segmentations: {},
         hex_selection: {},
+        conflict_hex: {},
     }),
     getters: {},
     actions: {
@@ -83,6 +84,9 @@ export const useUserDataStore = defineStore('userData', {
         },
         setHexSelection(hex_selection) {
             this.hex_selection = hex_selection
+        },
+        setConflictHex(conflict_hex) {
+            this.conflict_hex = conflict_hex
         },
     }
 })
