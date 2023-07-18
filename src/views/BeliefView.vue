@@ -148,14 +148,19 @@ function toggleTutorial(e: MouseEvent) {
         ]
     })
     .onchange(function(targetElement) {
-        delegateIntroHelperClick.value = true
-        const introjs_helperlayer = document.querySelector(".introjs-helperLayer")
+        delegateIntroHelperClick.value = targetElement.classList.contains("center-hexagon")
+        const introjs_helperlayer: HTMLElement = document.querySelector(".introjs-helperLayer")
+        if(!introjs_helperlayer) return
+        if(delegateIntroHelperClick.value) {
+            introjs_helperlayer.style.cursor = "pointer"
+        } else {
+            introjs_helperlayer.style.cursor = "unset"
+        }
         introjs_helperlayer?.addEventListener('click', function(e) {
-            if(delegateIntroHelperClick) {
+            if(delegateIntroHelperClick.value) {
                 user_hex.value.changeCenterHexColor()
             }
         })
-        console.log(targetElement.classList.contains("hive-border"))
     })
     .start()
 
