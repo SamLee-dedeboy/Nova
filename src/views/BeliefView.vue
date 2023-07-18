@@ -11,6 +11,7 @@ import HexCooccurrence from "../components/HexCooccurrence.vue";
 import Legend from '../components/Legend.vue';
 import * as typeUtils from "../types"
 import BeliefViewTutorial from "./tutorials/BeliefViewTutorial.vue"
+import introJS from 'intro.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -50,6 +51,9 @@ vue.watch(revealed, () => {
 
 vue.onBeforeMount(() => {
     fetch_outlet_hex(target_outlet.value, target_entity.value)
+})
+
+vue.onMounted(() => {
 })
 
 async function fetch_outlet_hex(outlet, center_entity) {
@@ -111,6 +115,30 @@ const showTutorial_B: Ref<boolean> = ref(true)
 
 function toggleTutorial(e: MouseEvent) {
     showTutorial_B.value = false
+    introJS().setOptions({
+        steps: [
+            {
+                element: document.querySelector('.belief-user-hexview-overlay'),
+                intro: 'This is where you construct your hive.'
+            },
+            {
+                element: document.querySelector('.belief-user-hexview-overlay > .border'),
+                intro: `
+                    Each hexagon represents a topic. 
+                    The color of the hexagon is either positive, negative, neutral or mixed. 
+                `
+            },
+            {
+                element: document.querySelector('.user-hexagon-region'),
+                intro: 'Drag the hexagons in this region to any empty slots above.'
+            },
+            {
+                element: document.querySelector('.belief-true-hexview-overlay > .border'),
+                intro: "This is the data suggested hive. It is hidden for now. Once you're done with your own, click it for the reveal!"
+            }
+        ]
+    }).start()
+
 }
 
 </script>
@@ -122,18 +150,28 @@ function toggleTutorial(e: MouseEvent) {
             </template>
 
             <p class="introTutorial">
-                On this page, you will be presented an outlet, {{ target_outlet }}, and five Co-Occurrence Hives. Based on your
-                prior knowledge of the outlet, and selected topic, how do you believe {{ target_outlet }} reported on {{
-                    target_entity.replaceAll("_", " ") }}?
-                That is, what do you think the overall sentiment would be for articles written by {{ target_outlet }} that discuss {{
-                    target_entity.replaceAll("_", " ") }} alongside other topics.
-                Would it be mixed, neutral, negative, positive, or polarizing? 
-
-                <br />
-                <br />
-                As a reminder, the center hex is the selected topic and all other hexes are topics that frequently appeared
-                with it across all outlets. Thus, if it is light grey it implies the selected outlet never reported on that
-                topic alongside {{ target_entity.replaceAll("_", " ") }}.
+                On this page, you will be presented a <span class="intro-hive-hint">hive</span> that represents how it would report on a topic based on the data we collected. 
+                <br>
+                <br>
+                The <span style='border-bottom: 1px solid grey;font-style:italic;'>data suggested hive</span> 
+                is hidden at first on the right side.
+                Before we show it to you, let's first try to construct your own hive based on your personal experience.
+                <br>
+                <br>
+                When constructing the hive, try to keep the following questions in mind:
+                <br>
+                <ul>
+                    <li>
+                        How has {{ target_outlet }} reported on {{ target_entity.replaceAll("_", " ") }}?
+                        Positively, negatively, neutrally, or mixed?
+                    </li>
+                    <li>
+                        How has {{ target_outlet }} reported on other related topics?
+                    </li>
+                </ul>
+                <br>
+                <br>
+                Drag and drop the hexagons into the hive to create your prediction!
             </p>
             <template #footer>
                 <Button label="Ready" icon="pi pi-check" @click="toggleTutorial" autofocus />
@@ -157,6 +195,7 @@ function toggleTutorial(e: MouseEvent) {
                 :show_blink="true"
                 :show_label="true">
                 </HexCooccurrence>
+                <div class="user-hexagon-region"></div>
             </div>
             <i v-if="!true_hex_fetched" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/>
             <div v-else class="journal-style-container">
@@ -231,7 +270,13 @@ function toggleTutorial(e: MouseEvent) {
   height: 100%;
   display: flex;
 }
-
+.user-hexagon-region {
+    position: absolute;
+    top: 68%;
+    bottom: 1%;
+    left: 12%;
+    right: 12%;
+}
 .border {
     position:absolute;
     border:1px solid black;

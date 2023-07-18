@@ -44,6 +44,7 @@ vue.watch(() => props.color_dict, () => {
 <style scoped>
 .legend-container {
     /* width: 85%; */
+    pointer-events: none;
 }
 .legend-svg {
     width: 100%;
