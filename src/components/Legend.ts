@@ -73,6 +73,7 @@ export class Legend {
                 .attr("y", margin.top + index*(row_height + margin.vertical) - row_height/2)
                 .attr("width", row_width)
                 .attr("height", row_height)
+                .attr("rx", 3)
                 .style("fill", color)
                 .style("stroke", 'black')
                 .style("stroke-opacity", '25%');

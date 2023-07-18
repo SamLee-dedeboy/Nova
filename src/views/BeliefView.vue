@@ -370,6 +370,7 @@ function toggleTutorial(e: MouseEvent) {
     color: red;
     cursor: pointer;
     border: 1px solid black;
+    border-radius: 5px;
     text-align: center;
 }
 .conflict-hex-selector:hover .conflict-hex-selector-overlay {

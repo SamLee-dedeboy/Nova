@@ -178,6 +178,7 @@ function handleOutletClicked(outlet) {
   background-color: rgba(43, 42, 42, 0.5); /* Dark overlay color */
   opacity: 0; /* Initially transparent */
   transition: opacity 0.3s ease; /* Transition effect */
+  border-radius: 5%;
 }
 
 .journal-image {

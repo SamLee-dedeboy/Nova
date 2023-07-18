@@ -244,25 +244,32 @@ function outletIconStyle(name:string){
                 :entity_pair="[selected_entity?.name as string, selected_cooccurr_entity?.name as string]">
             </ArticleView>
             <div class="hexview-container">
-                <HexCooccurrence v-if="data_fetched" class="inpection-user-hexview" :title="clicked_hexview.title"
-                    :id="`inspection_user_hexview`" :entity_cooccurrences="clicked_hexview.data"
-                    mode="user-fixed"
-                    :p_margin="{top:0, right:0, bottom:0, left:0}"
-                    :segmentation="original_segmentation" :highlight_hex_entity="highlight_hex_entity"
-                    :show_blink="true"
-                    :show_label="true"
-                    :user_hex_selection="user_hex_selection[selected_outlet]"
-                    @hex-clicked="handleHexClicked">
-                </HexCooccurrence>
-                <HexCooccurrence v-if="data_fetched" class="inpection-data-hexview" :title="clicked_hexview.title"
-                    :id="`inspection_data_hexview`" :entity_cooccurrences="clicked_hexview.data"
-                    mode="data"
-                    :p_margin="{top:0, right:0, bottom:0, left:0}"
-                    :segmentation="original_segmentation" :highlight_hex_entity="highlight_hex_entity"
-                    :show_blink="true"
-                    :show_label="true"
-                    @hex-clicked="handleHexClicked">
-                </HexCooccurrence>
+                <div class="user-hexview-container">
+                    <div class="hive-header user-hive-header">Your belief </div>
+                    <HexCooccurrence v-if="data_fetched" class="inpection-user-hexview" :title="clicked_hexview.title"
+                        :id="`inspection_user_hexview`" :entity_cooccurrences="clicked_hexview.data"
+                        mode="user-fixed"
+                        :p_margin="{top:0, right:0, bottom:0, left:0}"
+                        :segmentation="original_segmentation" :highlight_hex_entity="highlight_hex_entity"
+                        :show_blink="true"
+                        :show_label="true"
+                        :wider_border="true"
+                        :user_hex_selection="user_hex_selection[selected_outlet]"
+                        @hex-clicked="handleHexClicked">
+                    </HexCooccurrence>
+                    </div>
+                <div class="data-hexview-container">
+                    <div class="hive-header data-hive-header">Data suggested</div>
+                    <HexCooccurrence v-if="data_fetched" class="inpection-data-hexview" :title="clicked_hexview.title"
+                        :id="`inspection_data_hexview`" :entity_cooccurrences="clicked_hexview.data"
+                        mode="data"
+                        :p_margin="{top:0, right:0, bottom:0, left:0}"
+                        :segmentation="original_segmentation" :highlight_hex_entity="highlight_hex_entity"
+                        :show_blink="true"
+                        :show_label="true"
+                        @hex-clicked="handleHexClicked">
+                    </HexCooccurrence>
+                </div>
                 <div v-if="data_fetched" class="cooccurr-info-content">
                     <div class=journal-icon-container>
                         <div :class="['journal-style']">
@@ -467,6 +474,29 @@ li {
     display: flex;
     max-height: 49%;
     overflow: hidden;
+}
+.hive-header {
+  align-content: center;
+  display: flex;
+  justify-content: center;
+  font-size: larger;
+  font-weight: lighter;
+  position: absolute;
+}
+
+.user-hive-header {
+  left: 47%;
+}
+
+.data-hive-header {
+  left: 31%;
+}
+
+.user-hexview-container {
+  width: 100%;
+}
+.data-hexview-container {
+  width: 100%;
 }
 
 

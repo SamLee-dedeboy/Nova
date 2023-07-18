@@ -22,6 +22,7 @@ const props = defineProps({
     mode: String,
     show_blink: Boolean,
     show_label: Boolean,
+    wider_border: Boolean,
     p_margin: Object as () => any,
     user_hex_selection: Object as () => any,
 })
@@ -243,8 +244,9 @@ function init() {
     const border_rect = svg.append("rect").attr("class", "hive-border")
         .attr("x", margin.value.left + viewBox_width * 0.1)
         .attr("y", margin.value.top + viewBox_height * 0.1)
-        .attr("width", viewBox_width - margin.value.left - margin.value.right - viewBox_width * 0.2)
-        .attr("height", viewBox_height - margin.value.top - margin.value.bottom - viewBox_height * 0.2 - hex_radius * 3.5)
+        .attr("width", hex_radius * 13 + (props.wider_border? hex_radius*3 : 0))
+        .attr("height", hex_radius * 12) 
+        .attr("rx", 15)
         .attr("fill", "none")
         .attr("stroke", "black")
         .attr("stroke-width", 1)
@@ -252,8 +254,9 @@ function init() {
     const border_overlay_rect = svg.append("rect").attr("class", "hive-border-overlay")
         .attr("x", margin.value.left + viewBox_width * 0.1)
         .attr("y", margin.value.top + viewBox_height * 0.1)
-        .attr("width", viewBox_width - margin.value.left - margin.value.right - viewBox_width * 0.2)
-        .attr("height", viewBox_height - margin.value.top - margin.value.bottom - viewBox_height * 0.2 - hex_radius * 3.5)
+        .attr("width", hex_radius * 13 + (props.wider_border? hex_radius*3 : 0))
+        .attr("height", hex_radius * 12) 
+        .attr("rx", 15)
         .attr("fill", "none")
         .attr("stroke", "black")
         .attr("stroke-width", 1)
