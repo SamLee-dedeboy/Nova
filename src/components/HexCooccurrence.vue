@@ -25,7 +25,7 @@ const props = defineProps({
     p_margin: Object as () => any,
     user_hex_selection: Object as () => any,
 })
-const emit = defineEmits(["hex-clicked", "hex-filled", "hex-rendered", "conflict-hex"])
+const emit = defineEmits(["hex-clicked", "hex-filled", "hex-rendered", "hex-revealed", "conflict-hex"])
 
 // const viewBox = [1000, 1000/(2*Math.sin(Math.PI/3))*3]
 const viewBox = [640, 680]
@@ -240,6 +240,24 @@ vue.onMounted(() => {
 function init() {
     const svg = d3.select(`#${props.id}`).select("svg")
     const hex_group = svg.append("g").attr("class", "hex-group")
+    const border_rect = svg.append("rect").attr("class", "hive-border")
+        .attr("x", margin.value.left + viewBox_width * 0.1)
+        .attr("y", margin.value.top + viewBox_height * 0.1)
+        .attr("width", viewBox_width - margin.value.left - margin.value.right - viewBox_width * 0.2)
+        .attr("height", viewBox_height - margin.value.top - margin.value.bottom - viewBox_height * 0.2 - hex_radius * 3.5)
+        .attr("fill", "none")
+        .attr("stroke", "black")
+        .attr("stroke-width", 1)
+        .attr("pointer-events", "none")
+    const border_overlay_rect = svg.append("rect").attr("class", "hive-border-overlay")
+        .attr("x", margin.value.left + viewBox_width * 0.1)
+        .attr("y", margin.value.top + viewBox_height * 0.1)
+        .attr("width", viewBox_width - margin.value.left - margin.value.right - viewBox_width * 0.2)
+        .attr("height", viewBox_height - margin.value.top - margin.value.bottom - viewBox_height * 0.2 - hex_radius * 3.5)
+        .attr("fill", "none")
+        .attr("stroke", "black")
+        .attr("stroke-width", 1)
+        .style("opacity", 0)
     const hex_paths = hex_group.append("g").attr("class", "hex-paths")
     const hex_bins = hex_group.append("g").attr("class", "hex-bins")
     const hex_labels = hex_group.append("g").attr("class", "hex-labels")
@@ -503,13 +521,22 @@ function updateDataHex() {
             else
                 return "black"
         })
-        // .attr("font-weight", (d: any) => {
-        //     if(conflict_entities.value.includes(d[0].entity))
-        //         return "bold"
-        //     else
-        //         return "normal"
-        // })
         .call(wrap, 30)
+    if(props.show_label) svg.select("rect.hive-border-overlay").remove()
+    else {
+        const hive_border_overlay = svg.select("rect.hive-border-overlay")
+            .attr("cursor", "pointer")
+            .attr("fill", "rgba(43, 42, 42, 0.5)")
+            .style("opacity", 0)
+            .on("mouseover", function() {
+                d3.select(this).transition().duration(300).style("opacity", 1)
+            })
+            .on("mouseout", function() {
+                d3.select(this).transition().duration(300).style("opacity", 0)
+            })
+            .on("click", () => emit("hex-revealed", true))
+    }
+        
 }
 
 
@@ -587,17 +614,9 @@ function updateUserHex() {
         // define drag behavior
         .call(drag)
 
-        const center_hex = hex_group.selectAll("path.hexagon").filter((d: any) => { return d[0].index === 0})
-        center_hex.on("click", function(e, d: any) {
-            let next_sst = undefined
-            if(d.assigned_sst === SentimentType.neu) next_sst = SentimentType.mix 
-            if(d.assigned_sst === SentimentType.mix) next_sst = SentimentType.unknown 
-            if(d.assigned_sst === SentimentType.unknown) next_sst = SentimentType.pos 
-            if(d.assigned_sst === SentimentType.pos) next_sst = SentimentType.neg 
-            if(d.assigned_sst === SentimentType.neg) next_sst = SentimentType.neu 
-            d3.select(this).attr("fill", SstColors.enum_color_dict[next_sst])
-            d.assigned_sst = next_sst
-        })
+    const center_hex = hex_group.selectAll("path.hexagon").filter((d: any) => { return d[0].index === 0})
+    center_hex.attr("class", "hexagon center-hexagon")
+        .on("click", () => changeCenterHexColor())
     // add looped animation for center hex
     const center_entity = hex_data[0][0].entity
     if(props.show_blink) {
@@ -634,6 +653,20 @@ function updateUserHex() {
         })
         .call(wrap, 30)
     emit("hex-rendered", true)
+}
+
+function changeCenterHexColor() {
+    let next_sst = undefined
+    const center_hex = d3.select("path.center-hexagon")
+    let d: any = center_hex.data()[0]
+    console.log({d})
+    if(d.assigned_sst === SentimentType.neu) next_sst = SentimentType.mix 
+    if(d.assigned_sst === SentimentType.mix) next_sst = SentimentType.unknown 
+    if(d.assigned_sst === SentimentType.unknown) next_sst = SentimentType.pos 
+    if(d.assigned_sst === SentimentType.pos) next_sst = SentimentType.neg 
+    if(d.assigned_sst === SentimentType.neg) next_sst = SentimentType.neu 
+    center_hex.attr("fill", SstColors.enum_color_dict[next_sst])
+    d.assigned_sst = next_sst
 }
 
 function updateHighlightHex() {
@@ -1011,7 +1044,8 @@ function find_level(index) {
 
 defineExpose({
     updateHexColor,
-    updateHighlightHex
+    updateHighlightHex,
+    changeCenterHexColor
 })
 
 </script>

@@ -43,6 +43,7 @@ const hex_selection = vue.computed(() => store.hex_selection)
 const setHexSelection =  (hex_selection) => store.setHexSelection(hex_selection)
 const conflict_hex = vue.computed(() => store.conflict_hex)
 const setConflictHex = (conflicts) => store.setConflictHex(conflicts)
+const delegateIntroHelperClick = ref(false)
 
 vue.watch(revealed, () => {
    user_hex.value.updateHighlightHex() 
@@ -122,10 +123,18 @@ function toggleTutorial(e: MouseEvent) {
                 intro: 'This is where you construct your hive.'
             },
             {
-                element: document.querySelector('.belief-user-hexview-overlay > .border'),
+                element: document.querySelector('.belief-user-hexview > svg > rect.hive-border'),
                 intro: `
                     Each hexagon represents a topic. 
                     The color of the hexagon is either positive, negative, neutral or mixed. 
+                `
+            },
+            {
+                element: document.querySelector('.belief-user-hexview > svg.hex-svg > g.hex-group > g.hex-paths > path.center-hexagon'),
+                intro: `
+                    Your selection of topic in the previous page is the center hexagon.
+                    How has the outlet reported on this topic?
+                    Click to change the color.
                 `
             },
             {
@@ -133,11 +142,22 @@ function toggleTutorial(e: MouseEvent) {
                 intro: 'Drag the hexagons in this region to any empty slots above.'
             },
             {
-                element: document.querySelector('.belief-true-hexview-overlay > .border'),
+                element: document.querySelector('.belief-true-hexview > svg > rect.hive-border'),
                 intro: "This is the data suggested hive. It is hidden for now. Once you're done with your own, click it for the reveal!"
             }
         ]
-    }).start()
+    })
+    .onchange(function(targetElement) {
+        delegateIntroHelperClick.value = true
+        const introjs_helperlayer = document.querySelector(".introjs-helperLayer")
+        introjs_helperlayer?.addEventListener('click', function(e) {
+            if(delegateIntroHelperClick) {
+                user_hex.value.changeCenterHexColor()
+            }
+        })
+        console.log(targetElement.classList.contains("hive-border"))
+    })
+    .start()
 
 }
 
@@ -183,7 +203,7 @@ function toggleTutorial(e: MouseEvent) {
             <i v-if="!true_hex_fetched" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/>
             <div v-else class="belief-user-hexview-overlay">
                 <div class="hive-header">Your belief </div>
-                <div class="border" ></div>
+                <!-- <div class="border" ></div> -->
                 <HexCooccurrence ref="user_hex" class="belief-user-hexview"
                 mode="user"
                 title="belief-user-hexview" :id="`belief_user_hexview`"
@@ -218,7 +238,7 @@ function toggleTutorial(e: MouseEvent) {
             <i v-if="!true_hex_fetched" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/>
             <div v-else class="belief-true-hexview-overlay">
                 <div class="hive-header">Data suggested</div>
-                <div class="border" :class="revealed_css" @click="revealed=true"></div>
+                <!-- <div class="border" :class="revealed_css" @click="revealed=true"></div> -->
                 <i v-if="!revealed" class="pi pi-question" 
                 style="
                     position:absolute; 
@@ -235,6 +255,7 @@ function toggleTutorial(e: MouseEvent) {
                 :highlight_hex_entity="highlight_hex_entity"
                 :user_hex_selection="hex_selection[target_outlet]"
                 @hex-clicked="handleHexClicked"
+                @hex-revealed="revealed=true"
                 @conflict-hex="setConflictHex"
                 :show_blink="revealed"
                 :show_label="revealed"
@@ -276,6 +297,7 @@ function toggleTutorial(e: MouseEvent) {
     bottom: 1%;
     left: 12%;
     right: 12%;
+    pointer-events: none;
 }
 .border {
     position:absolute;
@@ -288,6 +310,9 @@ function toggleTutorial(e: MouseEvent) {
 }
 .border.revealed {
     z-index: 0 !important;
+}
+.belief-user-hexview {
+    /* z-index: 9999999 !important; */
 }
 .belief-user-hexview-overlay, .belief-true-hexview-overlay {
     width: 100%;
@@ -302,9 +327,9 @@ function toggleTutorial(e: MouseEvent) {
     cursor: pointer;
     opacity: 0.8;
 } */
-.belief-user-hexview-overlay > .border {
+/* .belief-user-hexview-overlay > .border {
     z-index: 0 !important;
-}
+} */
 .belief-true-hexview.hidden {
     opacity: 0.3;
 }
