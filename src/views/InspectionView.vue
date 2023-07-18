@@ -275,7 +275,7 @@ function outletIconStyle(name:string){
                             {{  selected_outlet }}
                         </div>
                     </div>
-                    <div class="num_of_articles">
+                    <!-- <div class="num_of_articles">
                         A total of  {{ selected_cooccurr_entity? selected_cooccurr_entity.article_ids.length :
                             selected_entity.article_ids.length }}
                             articles are found related to
@@ -287,7 +287,7 @@ function outletIconStyle(name:string){
                                 {{selected_cooccurr_entity.name.replaceAll("_"," ")}}
                             </span>
                         </span>
-                     </div>
+                     </div> -->
                     <div class="notes" >
                         <h2 class="component-header notes-header">
                             Notes

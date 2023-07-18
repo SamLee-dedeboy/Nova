@@ -52,13 +52,15 @@ vue.onMounted(() => {
     pos_panel_togglers.forEach(toggler => toggler.classList.add("pos-toggler"))
     const neg_panel_togglers = document.querySelectorAll(".neg-article-list > .p-scrollpanel-wrapper > .p-scrollpanel-content > .p-panel-toggleable > .p-panel-header > .p-panel-icons > .p-panel-toggler")
     neg_panel_togglers.forEach(toggler => toggler.classList.add("neg-toggler"))
+
 })
 const pos_articles = vue.computed(() => {
     props.articles?.forEach(article => {
-        if(article.doc_level_sentiment[props.entity_pair[0]] !== "positive" && article.doc_level_sentiment[props.entity_pair[0]] !== "negative")
-            console.log(article)
+        // if(article.doc_level_sentiment[props.entity_pair[0]] !== "positive" && article.doc_level_sentiment[props.entity_pair[0]] !== "negative")
+        //     console.log(article)
     })
-    return props.articles?.filter(article => article.doc_level_sentiment[props.entity_pair[0]] === "positive")
+    // return props.articles?.filter(article => (article.doc_level_sentiment[props.entity_pair[0]] === "positive" && article.doc_level_sentiment[props.entity_pair[1] !== "negative"]) || (article.doc_level_sentiment[props.entity_pair[1]] === "positive" && article.doc_level_sentiment[props.entity_pair[0]] !== "negative"))
+    return props.articles?.filter(article => article.doc_level_sentiment[props.entity_pair[0]] === "positive" || article.doc_level_sentiment[props.entity_pair[1]] === "positive")
 })
 const pos_panel_articles: Ref<Article[]> = ref(pos_articles.value?.slice(0,10) || []) 
 const pos_marks: Ref<boolean[]> = ref(Array(pos_articles.value?.length || 0).fill(false))
@@ -68,23 +70,13 @@ const pos_marks: Ref<boolean[]> = ref(Array(pos_articles.value?.length || 0).fil
 //     return props.articles?.filter(article => article.sentiment.label === "NEGATIVE").sort(sortByRelevance)
 // })
 const neg_articles = vue.computed(() => {
-    return props.articles?.filter(article => article.doc_level_sentiment[props.entity_pair[0]] === "negative")
+    return props.articles?.filter(article => article.doc_level_sentiment[props.entity_pair[0]] === "negative" || article.doc_level_sentiment[props.entity_pair[1]] === "negative")
+    // return props.articles?.filter(article => (article.doc_level_sentiment[props.entity_pair[0]] === "negative" && article.doc_level_sentiment[props.entity_pair[1] !== "positive"]) || (article.doc_level_sentiment[props.entity_pair[1]] === "negative" && article.doc_level_sentiment[props.entity_pair[0]] !== "positive"))
 })
 const neg_panel_articles: Ref<Article[]> = ref(neg_articles.value?.slice(0,10) || []) 
 const neg_marks: Ref<boolean[]> = ref(Array(neg_articles.value?.length || 0).fill(false))
 // const neg_article_notes: Ref<string[]> = ref(Array(neg_articles.value?.length || 0).fill(""))
 
-
-// function setNotes(e) {
-//     console.log("set notes")
-//     notes.value = e.target.value 
-//     if(selected_article_mark.value === undefined) return
-//     const article_id: number = selected_article.value!.id
-//     const outlet = selected_article.value!.journal
-//     const description = notes.value
-//     const mark = selected_article_mark.value
-//     setMarkedArticle({article_id, outlet, description, mark})
-// }
 
 
 vue.watch(pos_articles, (new_value, old_value) => {
@@ -107,28 +99,13 @@ vue.watch(neg_articles, (new_value, old_value) => {
         const neg_panel_togglers = document.querySelectorAll(".neg-article-list > .p-scrollpanel-wrapper > .p-scrollpanel-content > .p-panel-toggleable > .p-panel-header > .p-panel-icons > .p-panel-toggler")
         neg_panel_togglers.forEach(toggler => toggler.classList.add("neg-toggler"))
     })
+    console.log(pos_articles.value, neg_articles.value)
+    const pos_ids = pos_articles.value?.map(article => article.id)
+    const neg_ids = neg_articles.value?.map(article => article.id)
+    const filteredArray = pos_ids.filter(pos_id => neg_ids.includes(pos_id))
+    console.log({filteredArray})
 })
 
-
-// function handleMark(mark, index: number, type: string) {
-//     const outlet = props.articles?.[0].journal
-//     console.log(mark)
-
-//     // if(type === "pos") {
-//     //     pos_marks.value[index] = mark
-//     //     const article_id: number = pos_articles.value![index].id
-//     //     const description = `positive #${index+1}` 
-//     //     if(mark) addMarkedArticle({article_id, outlet, description})
-//     //     else removeMarkedArticle(article_id)
-//     // }
-//     // if(type === "neg") {
-//     //     neg_marks.value[index] = mark
-//     //     const article_id: number = neg_articles.value![index].id
-//     //     const description = `negative #${index+1}` 
-//     //     if(mark) addMarkedArticle({article_id, outlet, description})
-//     //     else removeMarkedArticle(article_id)
-//     // }
-// }
 
 async function handleArticleClicked(e, article_id) {
     await fetch(`${server_address}/processed_data/ids_to_articles`, {
