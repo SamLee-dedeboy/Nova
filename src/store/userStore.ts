@@ -15,7 +15,7 @@ export const useUserDataStore = defineStore('userData', {
         hexview_grid: undefined,
         clicked_hexview: undefined,
         constraints: {},
-        notes: "",
+        notes: {},
         marked_articles: [],
         user_outlet_segmentations: {},
         hex_selection: {},
@@ -63,8 +63,9 @@ export const useUserDataStore = defineStore('userData', {
         removeConstraint( constraint) {
             delete this.constraints[constraint.target][constraint.outlet]
         },
-        setNotes(notes) {
-            this.notes = notes
+        setNotes(notes, outlet) {
+            this.notes[outlet] = notes
+            console.log(this.notes)
         },
         setMarkedArticle( article_info) {
             let found = this.marked_articles.find(existed_article_info => existed_article_info.article_id === article_info.article_id)

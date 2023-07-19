@@ -4,7 +4,6 @@
  */
 import Splitter from 'primevue/splitter';
 import SplitterPanel from "primevue/splitterpanel"
-import Textarea from 'primevue/textarea'
 import Dialog from 'primevue/dialog';
 
 
@@ -44,6 +43,7 @@ const setEntity = (entity) => store.setEntity(entity)
 const selected_cooccurr_entity = vue.computed(() => store.selected_cooccurr_entity)
 const setCooccurrEntity = (cooccurr_entity) => store.setCooccurrEntity(cooccurr_entity)
 const segmentation = vue.computed(() => store.segmentation)
+const setNotes = (e) => (store.setNotes(e.target.value, selected_outlet))
 const original_segmentation = segmentation.value
 const clicked_hexview = vue.computed(() => store.clicked_hexview)
 const highlight_hex_entity: Ref<string> = ref("")
