@@ -203,8 +203,11 @@ function highlight_element(text) {
 <style scoped>
 .article-cards-container {
   display: flex;
-  height: 50%;
+  height: 61%;
   border-bottom: solid 1px black;
+}
+:deep(.p-scroll-wrapper) {
+    z-index: auto !important;
 }
 .article-card {
   display: flex;

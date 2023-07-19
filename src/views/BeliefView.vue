@@ -10,7 +10,6 @@ import Dialog from 'primevue/dialog';
 import HexCooccurrence from "../components/HexCooccurrence.vue";
 import Legend from '../components/Legend.vue';
 import * as typeUtils from "../types"
-import BeliefViewTutorial from "./tutorials/BeliefViewTutorial.vue"
 import introJS from 'intro.js'
 
 const route = useRoute()
@@ -52,9 +51,6 @@ vue.watch(revealed, () => {
 
 vue.onBeforeMount(() => {
     fetch_outlet_hex(target_outlet.value, target_entity.value)
-})
-
-vue.onMounted(() => {
 })
 
 async function fetch_outlet_hex(outlet, center_entity) {
@@ -117,6 +113,7 @@ const showTutorial_B: Ref<boolean> = ref(true)
 function toggleTutorial(e: MouseEvent) {
     showTutorial_B.value = false
     introJS().setOptions({
+        showProgress: true,
         steps: [
             {
                 element: document.querySelector('.belief-user-hexview-overlay'),

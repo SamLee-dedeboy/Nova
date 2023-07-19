@@ -4,12 +4,8 @@
  */
 import Splitter from 'primevue/splitter';
 import SplitterPanel from "primevue/splitterpanel"
-import SelectButton from "primevue/selectbutton"
-import Slider from "primevue/slider"
-import Dropdown from 'primevue/dropdown';
-import Divider from 'primevue/divider';
-import ScrollPanel from 'primevue/scrollpanel'
 import Textarea from 'primevue/textarea'
+import Dialog from 'primevue/dialog';
 
 
 /**
@@ -20,6 +16,7 @@ import { Ref, ref } from 'vue'
 import { useUserDataStore } from '../store/userStore'
 import { useRoute } from 'vue-router'
 import * as d3 from 'd3'
+import introJS from 'intro.js'
 
 /**
  * types
@@ -58,19 +55,8 @@ const user_hex_selection = vue.computed(() => store.hex_selection)
 const selected_article: Ref<Article> = ref()
 const target_articles: Ref<Article[]> = ref([])
 const target_article_highlights: Ref<any> = ref({})
-const marked_articles_ids_with_outlet = vue.computed(() => store.marked_articles)
-const marked_article_info_grouped = vue.computed(() => {
-    const res = {}
-    marked_articles_ids_with_outlet.value.forEach((article_info) => {
-        const outlet = article_info.outlet
-        if (!res[outlet]) res[outlet] = []
-        res[outlet].push(article_info)
-    })
-    //console.log(res)
-    return res
-})
-
 const article_view = ref(null)
+const showTutorial_I = ref(true)
 
 vue.onMounted(() => {
     prepare_data()
@@ -203,9 +189,99 @@ function outletIconStyle(name:string){
     return className;
 }
 
+function toggleTutorial(e: MouseEvent) {
+    showTutorial_I.value = false
+    introJS().setOptions({
+        showProgress: true,
+        steps: [
+            {
+                element: document.querySelector('.article-cards-container'),
+                intro: `
+                    We present all the related articles that we collected here,
+                    splitted into positive-leaning and negative-leaning ones.
+                `
+            },
+            {
+                element: document.querySelector('.article-card'),
+                intro: `
+                    This is the headline of one article. Important entities are colored in yellow.
+                    <br>
+                    Click on the headline to read the full article.
+                `
+            },
+            {
+                element: document.querySelector('.analysis-container'),
+                intro: `
+                    Once an article is clicked, the full article will be shown on the right hand side.
+                    <br>
+                    Related entities are highlighted by
+                    <svg width=20 height=10> 
+                        <rect x=0 y=0 width=20 height=10 fill="#f4c49c" />
+                    </svg>
+                    ,
+                    <svg width=20 height=10> 
+                        <rect x=0 y=0 width=20 height=10 fill="#baf0f5" />
+                    </svg>,
+                    or
+                    <svg width=20 height=10> 
+                        <rect x=0 y=0 width=20 height=10 fill="#dddddd" />
+                    </svg>,
+                    which means the sentence is talking 
+                    <span style="background-color: #f4c49c">positively</span>,
+                    <span style="background-color: #baf0f5">negatively</span>, or
+                    <span style="background-color: #dddddd">neutrally</span> about the entity.
+                    <br>
+                    If you did not click an article in the previous step, hit 'back' and click it.
+                `
+            },
+            {
+                element: document.querySelector('.hexview-container'),
+                intro: `
+                    Your hive vs. data suggested hive is kept here for your record.
+                    The blurry ones in yours are the ones that you did not pick.
+                    Clicking on any hexagon will allow you to see a different set of articles.
+                `
+            },
+            {
+                element: document.querySelector('.cooccurr-info-content'),
+                intro: `
+                    If you find anything interesting or contradictory to your previous belief,
+                    document it here.
+                `
+            },
+        ]
+    }).start()
+
+}
 </script>
 
 <template>
+    <Dialog v-model:visible="showTutorial_I" class="tutorialStyle" position="center" :modal="true">
+        <template #header>
+            <h3> <i class="pi pi-compass" /> Why does the data suggest differently? </h3>
+        </template>
+
+        <p class="introTutorial">
+            No individual in the world can possibly read every single news ever published.
+            Our news reading experience is like peeking the universe through a small window.
+            It is natural that what we saw is not the entire picture.
+            <br>
+            <br>
+            NOVA is designed to help you see a bigger picture. 
+            You have found that the data suggests differently on how 
+            {{ selected_outlet }} 
+            reported on 
+            {{ selected_entity.name }}
+            <span v-if="selected_cooccurr_entity"> and {{ selected_cooccurr_entity.name }}</span>.
+            <br>
+            The next question is: What articles are out of your expectation? 
+            <br>
+
+        </p>
+        <template #footer>
+            <Button label="Ready" icon="pi pi-check" @click="toggleTutorial" autofocus />
+        </template>
+    </Dialog>
     <Splitter class="splitter-outmost">
         <SplitterPanel id="article_view_section"
             class="articleview-section flex align-items-center justify-content-center" :size="left_section_size">
@@ -243,32 +319,34 @@ function outletIconStyle(name:string){
                 @article-selected="(article) => selected_article=article"
                 :entity_pair="[selected_entity?.name as string, selected_cooccurr_entity?.name as string]">
             </ArticleView>
-            <div class="hexview-container">
-                <div class="user-hexview-container">
-                    <div class="hive-header user-hive-header">Your belief </div>
-                    <HexCooccurrence v-if="data_fetched" class="inpection-user-hexview" :title="clicked_hexview.title"
-                        :id="`inspection_user_hexview`" :entity_cooccurrences="clicked_hexview.data"
-                        mode="user-fixed"
-                        :p_margin="{top:0, right:0, bottom:0, left:0}"
-                        :segmentation="original_segmentation" :highlight_hex_entity="highlight_hex_entity"
-                        :show_blink="true"
-                        :show_label="true"
-                        :wider_border="true"
-                        :user_hex_selection="user_hex_selection[selected_outlet]"
-                        @hex-clicked="handleHexClicked">
-                    </HexCooccurrence>
+            <div class="hexview-note-container">
+                <div class="hexview-container">
+                    <div class="user-hexview-container">
+                        <div class="hive-header user-hive-header">Your belief </div>
+                        <HexCooccurrence v-if="data_fetched" class="inpection-user-hexview" :title="clicked_hexview.title"
+                            :id="`inspection_user_hexview`" :entity_cooccurrences="clicked_hexview.data"
+                            mode="user-fixed"
+                            :p_margin="{top:0, right:0, bottom:0, left:0}"
+                            :segmentation="original_segmentation" :highlight_hex_entity="highlight_hex_entity"
+                            :show_blink="true"
+                            :show_label="true"
+                            :wider_border="true"
+                            :user_hex_selection="user_hex_selection[selected_outlet]"
+                            @hex-clicked="handleHexClicked">
+                        </HexCooccurrence>
+                        </div>
+                    <div class="data-hexview-container">
+                        <div class="hive-header data-hive-header">Data suggested</div>
+                        <HexCooccurrence v-if="data_fetched" class="inpection-data-hexview" :title="clicked_hexview.title"
+                            :id="`inspection_data_hexview`" :entity_cooccurrences="clicked_hexview.data"
+                            mode="data"
+                            :p_margin="{top:0, right:0, bottom:0, left:0}"
+                            :segmentation="original_segmentation" :highlight_hex_entity="highlight_hex_entity"
+                            :show_blink="true"
+                            :show_label="true"
+                            @hex-clicked="handleHexClicked">
+                        </HexCooccurrence>
                     </div>
-                <div class="data-hexview-container">
-                    <div class="hive-header data-hive-header">Data suggested</div>
-                    <HexCooccurrence v-if="data_fetched" class="inpection-data-hexview" :title="clicked_hexview.title"
-                        :id="`inspection_data_hexview`" :entity_cooccurrences="clicked_hexview.data"
-                        mode="data"
-                        :p_margin="{top:0, right:0, bottom:0, left:0}"
-                        :segmentation="original_segmentation" :highlight_hex_entity="highlight_hex_entity"
-                        :show_blink="true"
-                        :show_label="true"
-                        @hex-clicked="handleHexClicked">
-                    </HexCooccurrence>
                 </div>
                 <div v-if="data_fetched" class="cooccurr-info-content">
                     <div class=journal-icon-container>
@@ -409,8 +487,7 @@ function outletIconStyle(name:string){
     display: flex;
     flex-direction: column;
     font-size: 0.8rem;
-    margin-left: 4%;
-    width: 100%;
+    width: 40%;
 }
 
 .cooccurr-info-header {
@@ -470,10 +547,15 @@ li {
 // ---------------------
 //  Hexview section
 // ---------------------
+.hexview-note-container {
+    display: flex;
+    margin-top: 1%;
+    overflow: hidden;
+}
 .hexview-container {
     display: flex;
-    max-height: 49%;
-    overflow: hidden;
+    width: 100%;
+    margin-right: 2%;
 }
 .hive-header {
   align-content: center;
@@ -564,7 +646,7 @@ li {
 .notes {
   width: 100%;
   height: 100%;
-  padding-bottom: 1%;
+  padding-bottom: 7%;
   display: flex;
   flex-direction: column;
 }

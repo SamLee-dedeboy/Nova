@@ -243,7 +243,7 @@ function init() {
     const hex_group = svg.append("g").attr("class", "hex-group")
     const border_rect = svg.append("rect").attr("class", "hive-border")
         .attr("x", margin.value.left + viewBox_width * 0.1)
-        .attr("y", margin.value.top + viewBox_height * 0.1)
+        .attr("y", margin.value.top + hex_radius * 2)
         .attr("width", hex_radius * 13 + (props.wider_border? hex_radius*3 : 0))
         .attr("height", hex_radius * 12) 
         .attr("rx", 15)
@@ -1056,8 +1056,8 @@ defineExpose({
 
 <style scoped>
 .hex-svg {
-    width: 100%;
-    height: 100%;
+    /* width: 100%;
+    height: 100%; */
     overflow: visible;
 }
 
