@@ -209,6 +209,9 @@ function highlight_element(text) {
 :deep(.p-scroll-wrapper) {
     z-index: auto !important;
 }
+:deep(.p-scrollpanel-wrapper) {
+    z-index: unset !important;
+}
 .article-card {
   display: flex;
   border-bottom: 1px solid black;
@@ -269,13 +272,6 @@ function highlight_element(text) {
     border-bottom: solid 2px #b7b7b7;
     border-top: solid 1px #b7b7b7;
 }
-/* .pos-panel-header {
-    color:#baf0f5 
-}
-.neg-panel-header {
-    color:#f4c49c
-} */
-
 
 .card-contents {
     width: 100%;
@@ -304,16 +300,5 @@ function highlight_element(text) {
     background: #838585;
 }
 
-
-.options {
-    height: 20%;
-    margin-left: 8%;
-  display: flex;
-  align-items: center;
-}
-
-.remove-button-container {
-  margin-left: 1%;
-}
 
 </style>

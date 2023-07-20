@@ -253,13 +253,24 @@ function init() {
         .attr("pointer-events", "none")
     const border_overlay_rect = svg.append("rect").attr("class", "hive-border-overlay")
         .attr("x", margin.value.left + viewBox_width * 0.1)
-        .attr("y", margin.value.top + viewBox_height * 0.1)
+        .attr("y", margin.value.top + hex_radius * 2)
         .attr("width", hex_radius * 13 + (props.wider_border? hex_radius*3 : 0))
         .attr("height", hex_radius * 12) 
         .attr("rx", 15)
         .attr("fill", "none")
         .attr("stroke", "black")
         .attr("stroke-width", 1)
+        .style("opacity", 0)
+    const user_selection_border_rect = svg.append("rect").attr("class", "hive-user-selection-border")
+        .attr("x", margin.value.left + viewBox_width * 0.1)
+        .attr("y", margin.value.top + hex_radius * 2 + hex_radius*12)
+        .attr("width", hex_radius * 13 + (props.wider_border? hex_radius*3 : 0))
+        .attr("height", hex_radius * 5) 
+        .attr("rx", 15)
+        .attr("fill", "none")
+        .attr("stroke", "black")
+        .attr("stroke-width", 1)
+        .attr("pointer-events", "none")
         .style("opacity", 0)
     const hex_paths = hex_group.append("g").attr("class", "hex-paths")
     const hex_bins = hex_group.append("g").attr("class", "hex-bins")
@@ -444,9 +455,11 @@ function updateDataHex() {
             // centers_indexed.push(d)
             return `translate(${d.x},${d.y})`
         })
-        .attr("filter",(d, i) => i===0? "blur(1px)": "none")
-        .attr("stroke", (d, i) => i===0? "#444444": "black")
-        .attr("stroke-width", (d, i) => i === 0 ? 7 : 1)
+        .attr("stroke", "black")
+        .attr("stroke-width", 1)
+        // .attr("filter",(d, i) => i===0? "blur(1px)": "none")
+        // .attr("stroke", (d, i) => i===0? "#444444": "black")
+        // .attr("stroke-width", (d, i) => i === 0 ? 7 : 1)
         .on("click", function (e, d: any) {
             console.log({clickedEntity: d[0].entity})
             emit("hex-clicked", { clickedEntity: d[0].entity })
@@ -478,11 +491,11 @@ function updateDataHex() {
         })
     
     // add looped animation for center hex
-    const center_entity = hex_data[0][0].entity
-    if(props.show_blink) {
-        removeHighlightHex(center_entity)
-        loopedAnimateHex(hex_group)
-    }
+    // const center_entity = hex_data[0][0].entity
+    // if(props.show_blink) {
+    //     removeHighlightHex(center_entity)
+    //     loopedAnimateHex(hex_group)
+    // }
     if(props.highlight_hex_entity) {
         removeHighlightHex(hex_group)
         loopedAnimateHex(hex_group)
@@ -520,7 +533,7 @@ function updateDataHex() {
         .attr("fill", (d: any) => {
             console.log(d[0].entity)
             if(conflict_entities.value.includes(d[0].entity))
-                return "red"
+                return "#ea2424"
             else
                 return "black"
         })
@@ -717,7 +730,8 @@ function loopedAnimateHex(hex_group) {
         })
     } else if(props.show_blink){
         target_path = hex_group.selectAll("path.hexagon").filter(function (d:any) {
-            return d[0].entity === center_entity || d[0].entity === co_entity
+            // return d[0].entity === center_entity || d[0].entity === co_entity
+            return d[0].entity === co_entity
         })
     }
     repeat()

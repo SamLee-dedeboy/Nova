@@ -4,7 +4,6 @@
  */
 import Splitter from 'primevue/splitter';
 import SplitterPanel from "primevue/splitterpanel"
-import Dialog from 'primevue/dialog';
 
 
 /**
@@ -28,6 +27,7 @@ import { Article, SentimentType, Constraint } from "../types"
 import ArticleView from "../components/ArticleView.vue";
 import ArticleAnalysis from "../components/ArticleAnalysis.vue";
 import HexCooccurrence from "../components/HexCooccurrence.vue"
+import ProgressiveDialog from "../components/ProgressiveDialog.vue"
 
 const store = useUserDataStore()
 const route = useRoute()
@@ -56,7 +56,6 @@ const selected_article: Ref<Article> = ref()
 const target_articles: Ref<Article[]> = ref([])
 const target_article_highlights: Ref<any> = ref({})
 const article_view = ref(null)
-const showTutorial_I = ref(true)
 
 vue.onMounted(() => {
     prepare_data()
@@ -189,8 +188,7 @@ function outletIconStyle(name:string){
     return className;
 }
 
-function toggleTutorial(e: MouseEvent) {
-    showTutorial_I.value = false
+function toggleTutorial() {
     introJS().setOptions({
         showProgress: true,
         steps: [
@@ -256,32 +254,27 @@ function toggleTutorial(e: MouseEvent) {
 </script>
 
 <template>
-    <Dialog v-model:visible="showTutorial_I" class="tutorialStyle" position="center" :modal="true">
-        <template #header>
-            <h3> <i class="pi pi-compass" /> Why does the data suggest differently? </h3>
-        </template>
-
-        <p class="introTutorial">
-            No individual in the world can possibly read every single news ever published.
+    <ProgressiveDialog
+        @toggle-tutorial="toggleTutorial"
+        header="Why does the data suggest differently?"
+        :content="`
+            No individual in the world can possibly read every single news article ever published.
             Our news reading experience is like peeking the universe through a small window.
             It is natural that what we saw is not the entire picture.
             <br>
             <br>
             NOVA is designed to help you see a bigger picture. 
             You have found that the data suggests differently on how 
-            {{ selected_outlet }} 
+            ${selected_outlet}
             reported on 
-            {{ selected_entity.name }}
-            <span v-if="selected_cooccurr_entity"> and {{ selected_cooccurr_entity.name }}</span>.
+            ${selected_entity.name}`
+            + (selected_cooccurr_entity? `and ${selected_cooccurr_entity?.name}</span>.` : `.`) 
+            + `
             <br>
-            The next question is: What articles are out of your expectation? 
+            The next question is: What articles did you miss? You might be surprised at what ${selected_outlet} reported.
             <br>
-
-        </p>
-        <template #footer>
-            <Button label="Ready" icon="pi pi-check" @click="toggleTutorial" autofocus />
-        </template>
-    </Dialog>
+        `"
+    ></ProgressiveDialog>
     <Splitter class="splitter-outmost">
         <SplitterPanel id="article_view_section"
             class="articleview-section flex align-items-center justify-content-center" :size="left_section_size">
@@ -292,7 +285,15 @@ function toggleTutorial(e: MouseEvent) {
                 font-size: 3rem;
                 z-index: 1000">
             </i>
-            <h2 class="component-header article-view-header">
+            <h2 class="component-header article-view-header" 
+                style="
+                    display: flex; 
+                    align-items: center; 
+                    background: #f7f7f7; 
+                    margin: 0%; 
+                    padding: 0.5%;
+                "
+            >
                 Articles on
                 <span> {{selected_entity?.name.replaceAll("_"," ")}} </span>
                 <span v-if="selected_cooccurr_entity">
@@ -310,6 +311,9 @@ function toggleTutorial(e: MouseEvent) {
                         Use the Mark button to mark any interesting articles you find. <br />
                     </span>
                 </i>
+                <div class="tutorial-toggle-container" style="display:inline; margin-left:auto">
+                    <Button severity="secondary" text raised @click="toggleTutorial" style="width:fit-content;font-family:Trebuchet MS"> Tutorial </Button>
+                </div>
             </h2>
             <!-- <i v-if="!data_fetched" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/> -->
             <ArticleView class="article-view-container" v-model:sst_threshold="segmentation"
@@ -437,12 +441,6 @@ function toggleTutorial(e: MouseEvent) {
 // headers
 // ---------------------
 
-.article-view-header {
-    background: #f7f7f7;
-    margin: 0%;
-    padding: 0.5%;
-}
-
 // ---------------------
 // articlew view section
 // ---------------------
@@ -490,9 +488,6 @@ function toggleTutorial(e: MouseEvent) {
     width: 40%;
 }
 
-.cooccurr-info-header {
-    margin: 1.5%;
-}
 
 ol {
     padding-left: 10%;

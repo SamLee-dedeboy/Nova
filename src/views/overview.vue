@@ -31,6 +31,7 @@ import EntitySelection from "../components/entitySelection.vue"
 import ThresholdController from "../components/ThresholdController.vue";
 import EntityTable from "../components/entityTable.vue";
 import EntityInfo from "../components/EntityInfo.vue"
+import ProgressiveDialog from '../components/ProgressiveDialog.vue';
 
 
 //
@@ -53,7 +54,6 @@ const overall_scatter_view: Ref<typeUtils.EntityScatterView | undefined> = ref(u
 const overall_scatter_data_loading: Ref<boolean> = ref(true)
 const overview_constructed: Ref<boolean> = ref(false)
 const hex_constructed: Ref<boolean> = ref(true)
-const showTutorial: Ref<boolean> = ref(true)
 const selected_entity_info_fetched: Ref<boolean> = ref(false)
 //
 // processed data 
@@ -101,7 +101,8 @@ vue.watch(article_num_threshold, () => {
   setArticleNumThreshold(article_num_threshold.value)
 })
 
-
+const entity_clicked = ref(false)
+const entity_changed = ref(false)
 /**
  * layout constants in percentage
  */
@@ -240,6 +241,8 @@ vue.onMounted(async () => {
 
 // handlers
 async function handleEntityClicked(entity: string) {
+  if(!entity_clicked.value) entity_clicked.value = true
+  else entity_changed.value = true
   legendInput.value = {}
   legendInput.value[entity] = "white";
   legendInput.value["Co-Occuring Topic"] = "#4baaf5";
@@ -279,9 +282,6 @@ function updateSegmentation(segmentValue) {
   setSegmentation(segmentation)
 }
 
-function toggleTutorial(e: MouseEvent) {
-  showTutorial.value = false
-}
 
 function handleOutletClicked(outlet) {
   console.log(outlet)
@@ -289,12 +289,32 @@ function handleOutletClicked(outlet) {
   router.push({ name: 'belief', params: { outlet: outlet, entity: selected_entity.value.name } })
 }
 
+function toggleTutorial() {
+  return
+}
+
 </script>
 
 
 <template>
   <main>
-    <Dialog v-model:visible="showTutorial" class="tutorialStyle" position="center" :modal="true">
+    <ProgressiveDialog
+      @toggle-tutorial="toggleTutorial"
+      header="U.S. News Media Coverage Assessment"
+      content="
+        NOVA's purpose is to help you assess if your expectations of how mainstream news media cover topics align with their reporting.
+        We gathered articles centered around COVID-19 from six U.S. mainstream media outlets:
+        <img src='ABC News.png' style='height:18px;'/>
+        <img src='New York Times.png' style='height:18px;'/>
+        <img src='Washington Post.png' style='height:18px;'/>
+        <img src='FoxNews.png' style='height:18px;'/>
+        <img src='Breitbart.png' style='height:18px;'/>
+        <img src='CNN.png' style='height:18px;'/>.
+        <br>
+        To demonstrate the system, let's delve into what topics these outlets covered during start of the COVID-19 Pandemic (Feb-June
+        2020).
+      "/>
+    <!-- <Dialog v-model:visible="showTutorial" class="tutorialStyle" position="center" :modal="true">
       <template #header>
         <h3> <i class="pi pi-compass" /> U.S. News Media Coverage Assessment</h3>
       </template>
@@ -303,13 +323,13 @@ function handleOutletClicked(outlet) {
         NOVA's purpose is to help you assess if your expectations of how mainstream news media cover
         topics align with their reporting.
         We gathered articles centered around COVID-19 from 6 U.S. mainstream media outlets.
-        To demonstrate the system, let's see deleve into what topics these outlets covered during start of the COVID-19 Pandemic (Feb-June
+        To demonstrate the system, let's delve into what topics these outlets covered during start of the COVID-19 Pandemic (Feb-June
         2020).
       </p>
       <template #footer>
         <Button label="Ready" icon="pi pi-check" @click="toggleTutorial" autofocus />
-      </template>
-    </Dialog>
+      </template> -->
+    <!-- </Dialog> -->
 
     <Splitter class="overview-container">
       <SplitterPanel class="left-section-panel" :size="left_section_panel_size">
@@ -397,23 +417,24 @@ function handleOutletClicked(outlet) {
           <SplitterPanel class="overview-entity-info-panel" :size="entity_info_panel_size">
             <!-- Entity Info View -->
             <h2 class="component-header entity-info-header" v-if="selected_entity">
-              Some information to show for 
+              Statistics for 
               <span class="mainTopicStyle"> {{ selected_entity.name.replaceAll("_", " ") }} </span>
               &nbsp
-              <i class='pi pi-info-circle tooltip'>
+              <!-- <i class='pi pi-info-circle tooltip'>
                 <span class="tooltiptext right-tooltiptext" style="width: 400px">
                   Shows most-frequently co-occurring topics with the main topic ({{
                       selected_entity.name.replaceAll("_", " ")
                   }}). <br />
                   Each co-occurring topic is categorized by the region segmentation in the Topic Scatterplot.
                 </span>
-              </i>
+              </i> -->
             </h2>
             <div class="overview-entity-info-container" v-if="overview_constructed">
               <EntityInfo v-if="selected_entity_info_fetched" 
                 :data="selected_entity"
                 :segmentation="segmentation"
                 :outlets="Array.from(enabled_outlet_set)"
+                :show_animation="!entity_changed"
                 @outlet-clicked="handleOutletClicked"
                 >
 
@@ -484,15 +505,8 @@ main {
   height: 62%;
 }
 
-.p-splitter-panel.entity-info-panel {
-  height: 30%;
-  overflow: hidden;
-}
 
 
-.legend-container.policy-bar-legend {
-  height: 30%;
-}
 
 // ---------------------
 // entity table section
@@ -544,32 +558,6 @@ main {
 .util-header {
   background: #f7f7f7;
 }
-:deep(.p-slider .p-slider-handle) {
-  height: 0.8rem;
-  width: 0.8rem;
-}
-
-:deep(.p-slider.p-slider-horizontal .p-slider-handle) {
-  margin-top: -0.4rem;
-  margin-left: -0.4rem;
-}
-
-.legend-utils {
-  margin-top: 5%;
-}
-
-
-.segment-utils {
-  margin: 1%;
-  padding: 2%;
-  width: 33%;
-  // height: 100%;
-  background: #f7f7f7;
-}
-
-.segment-toggler-container {
-  width: 100%;
-}
 
 .scatter-header {
   // background: #f7f7f7;
@@ -586,20 +574,6 @@ main {
   box-shadow: rgb(0 0 0 / 25%) 0px 54px 55px, rgb(0 0 0 / 12%) 0px -12px 30px, rgb(0 0 0 / 12%) 0px 4px 6px, rgb(0 0 0 / 17%) 0px 12px 13px, rgb(0 0 0 / 9%) 0px -3px 5px;
 }
 
-.toolbar-container {
-  display: flex;
-  height: max-content;
-  width: 100%;
-  margin-top: 5%;
-  text-align: center;
-}
-
-.slider-container {
-  width: 100%;
-  display: flex;
-  // height: max-content;
-}
-
 .utilities-container {
   display: flex;
   grid-template-columns: 1fr 1fr;
@@ -610,27 +584,9 @@ main {
   height: 100%;
 }
 
-.utilities-panel {
-  overflow: visible;
-}
-
 // ---------------------
 // hexview section
 // ---------------------
-.reminder-click-entity {
-  margin: 1.3% 1% 1% 1%;
-  font-family: Lato;
-  font-size: x-large;
-  position: absolute;
-  top: 15%;
-  left: 20%;
-  font-style: italic;
-  // box-shadow: 0 0 0 0 rgba(0, 0, 0, 1);
-  // transform: scale(1);
-  // animation: pulse 2s infinite;
-
-}
-
 .entity-info-header {
   // background: #f7f7f7;
   margin: 1%;
@@ -641,76 +597,6 @@ main {
 // ---------------------
 // entity info section
 // ---------------------
-
-.entity-info-panel {
-  overflow: visible;
-}
-
-.entity-info-section {
-  padding-left: 2%;
-}
-
-
-.topic-bar-container {
-  // height:217px;
-  // width:100%;
-  flex: 2 1 0;
-  display: flex;
-  background: #f7f7f7;
-  margin: 0.2%;
-}
-
-.cooccurr-info-content {
-  display: flex;
-  height: 100%;
-  width: 100%;
-  overflow-wrap: break-word;
-}
-
-.target-cooccurr-container {
-  margin: 0.2%;
-  padding: 0.75%;
-  flex: 1 1 0;
-  max-width: 35%;
-  // height: inherit;
-  // width: 35%;
-  background: #f7f7f7;
-}
-
-.num_of_articles,
-.entity-info-section {
-  width: 45%
-}
-
-.topic-bar-header {
-  border-bottom: unset;
-  border-right: solid 1px #b7b7b7;
-  margin: 1%;
-  padding: 1%;
-  max-width: 27%;
-}
-
-.navigate-container {
-  width: 100%;
-  text-align: center;
-  height: 5%;
-  z-index: 999;
-}
-
-a.goNext {
-  text-decoration: none;
-  color: #00000075;
-}
-
-.clickNext {
-  font-style: italic;
-  font-weight: 700;
-}
-
-p.next {
-  text-align: center;
-}
-
 .threshold-title {
   width: 100%;
 }
@@ -733,20 +619,9 @@ p.next {
   }
 }
 
-.introTutorial {
-  margin-bottom: 2%;
-  padding-bottom: 2%;
-  border-bottom: 2px solid #b7b7b7;
+.overview-entity-info-container {
+  padding-left: 0.7%;
 }
 
-p.tutorialInstructions {
-  font-style: italic;
-  margin-bottom: 2%;
-}
-
-.fairnessLegend {
-  text-align: center;
-  width: 100%;
-}
 </style>
 

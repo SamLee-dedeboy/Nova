@@ -6,7 +6,7 @@ import { Ref, ref } from "vue"
 import * as vue from "vue"
 import * as SstColors from "../components/utils/ColorUtils"
 
-import Dialog from 'primevue/dialog';
+import ProgressiveDialog from "../components/ProgressiveDialog.vue"
 import HexCooccurrence from "../components/HexCooccurrence.vue";
 import Legend from '../components/Legend.vue';
 import * as typeUtils from "../types"
@@ -47,6 +47,7 @@ const delegateIntroHelperClick = ref(false)
 vue.watch(revealed, () => {
    user_hex.value.updateHighlightHex() 
    data_hex.value.updateHighlightHex()
+   toggleDataHexTutorial()
 })
 
 vue.onBeforeMount(() => {
@@ -76,6 +77,7 @@ async function fetch_outlet_hex(outlet, center_entity) {
 
 function handleHexClicked({clickedEntity}) {
     if(clickedEntity === selected_entity.value.name) return
+    console.log({clickedEntity})
     highlight_hex_entity.value = clickedEntity
     setCooccurrEntity({
         "name": clickedEntity
@@ -87,15 +89,16 @@ function handleHexFilled({filledEntity, filledHexIndex}) {
     let old_hex_selection = hex_selection.value
     old_hex_selection[outlet][filledEntity] = filledHexIndex
     setHexSelection(old_hex_selection)
-    console.log(hex_selection.value)
 }
 
 function goToNextStep(co_occurr_entity: string) {
-    setCooccurrEntity({
-        "name": co_occurr_entity,
-        "target": target_entity.value,
-        "outlet": target_outlet.value,
-    })
+    if(co_occurr_entity !== undefined) {
+        setCooccurrEntity({
+            "name": co_occurr_entity,
+            "target": target_entity.value,
+            "outlet": target_outlet.value,
+        })
+    }
     router.push({ name: 'inspection', params: { 
         outlet: target_outlet.value, 
         entity: target_entity.value 
@@ -108,10 +111,7 @@ function outletIconStyle(name: string) {
     return className;
 }
 
-const showTutorial_B: Ref<boolean> = ref(true)
-
 function toggleTutorial(e: MouseEvent) {
-    showTutorial_B.value = false
     introJS().setOptions({
         showProgress: true,
         steps: [
@@ -135,7 +135,7 @@ function toggleTutorial(e: MouseEvent) {
                 `
             },
             {
-                element: document.querySelector('.user-hexagon-region'),
+                element: document.querySelector('.hive-user-selection-border'),
                 intro: 'Drag the hexagons in this region to any empty slots above.'
             },
             {
@@ -160,19 +160,36 @@ function toggleTutorial(e: MouseEvent) {
         })
     })
     .start()
-
 }
 
+function toggleDataHexTutorial() {
+    introJS().setOptions({
+        showProgress: true,
+        steps: [
+            {
+                // element: document.querySelector('.belief-true-hexview > svg > rect.hive-border'),
+                element: document.querySelector('.belief-true-hexview-overlay'),
+                intro: `
+                    This is the data suggested hive in its true form.
+                    <br>
+                    It shows how your selected topic, and other highly correlated topics are reported by the outlet.
+                    The differences between yours and this hive are text-colored in red.
+                    <br>
+                    You can click any hexagon to highlight them in both hives.
+                `
+            },
+        ]
+    })
+    .start()
+}
 </script>
 <template>
     <div class='selection-grid'>
-        <Dialog v-model:visible="showTutorial_B" class="tutorialStyle" position="center" :modal="true">
-            <template #header>
-                <h3> <i class="pi pi-compass" /> How would {{ target_outlet }} report on {{target_entity.replaceAll("_", " ")}}? </h3>
-            </template>
-
-            <p class="introTutorial">
-                On this page, you will be presented a <span class="intro-hive-hint">hive</span> that represents how it would report on a topic based on the data we collected. 
+        <ProgressiveDialog 
+            @toggle-tutorial="toggleTutorial"
+            :header="`How would ${target_outlet} report on ${target_entity.replaceAll('_', ' ')}?`"
+            :content="`
+                On this page, you will be presented a <span class='intro-hive-hint'>hive</span> that represents how it would report on a topic based on the data we collected. 
                 <br>
                 <br>
                 The <span style='border-bottom: 1px solid grey;font-style:italic;'>data suggested hive</span> 
@@ -184,24 +201,18 @@ function toggleTutorial(e: MouseEvent) {
                 <br>
                 <ul>
                     <li>
-                        How has {{ target_outlet }} reported on {{ target_entity.replaceAll("_", " ") }}?
+                        How has ${target_outlet} reported on ${target_entity.replaceAll('_', ' ')}?
                         Positively, negatively, neutrally, or mixed?
                     </li>
                     <li>
-                        How has {{ target_outlet }} reported on other related topics?
+                        How has ${target_outlet} reported on other related topics?
                     </li>
                 </ul>
                 <br>
                 <br>
                 Drag and drop the hexagons into the hive to create your prediction!
-            </p>
-            <template #footer>
-                <Button label="Ready" icon="pi pi-check" @click="toggleTutorial" autofocus />
-            </template>
-        </Dialog>
-
+            `"></ProgressiveDialog>
         <div class=page-container>
-            <!-- <BeliefViewTutorial v-if="hex_rendered"></BeliefViewTutorial> -->
             <i v-if="!true_hex_fetched" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/>
             <div v-else class="belief-user-hexview-overlay">
                 <div class="hive-header">Your belief </div>
@@ -217,25 +228,43 @@ function toggleTutorial(e: MouseEvent) {
                 :show_blink="true"
                 :show_label="true">
                 </HexCooccurrence>
-                <div class="user-hexagon-region"></div>
+                <!-- <div class="user-hexagon-region"></div> -->
             </div>
             <i v-if="!true_hex_fetched" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/>
             <div v-else class="journal-style-container">
                 <div class="journal-style">
                     <img :src="`/${target_outlet}.png`" :class="['journal-image', `${outletIconStyle(target_outlet)}`]" />
                 </div>
-                <div v-if="revealed" class="diff-description-container">
-                    Your belief on:
-                    <br>
-                    <div class="conflict-hex-selector" v-for="conflict in conflict_hex" @click="goToNextStep(conflict)">
-                        <div class="conflict-hex-selector-overlay"></div>
-                        {{ conflict }}
+                <div class="diff-container-placeholder" style="height: 30%">
+                    <div v-if="revealed" class="diff-description-container" style="margin-top:15px;">
+                        <div v-if="Object.keys(conflict_hex).length > 0">
+                            Your belief on:
+                            <br>
+                            <div class="conflict-hex-selector" v-for="conflict in conflict_hex" @click="goToNextStep(conflict)">
+                                <div class="conflict-hex-selector-overlay"></div>
+                                {{ conflict }}
+                            </div>
+                            conflicts with the data.
+                            <br>
+                            Click any of the above to see why.
+                        </div>
+                        <div v-else>
+                            <div>
+                                Your prediction matches the data perfectly!
+                                <br>
+                                If you're interested in any topic, click on the hexagon to select it,
+                                then click 'Next Page' to see the articles.
+                            </div>
+                            <div style="display:flex; justify-content:center; margin-top:15px;">
+                                <Button class="next-step-button" severity="secondary" text raised @click="goToNextStep(selected_cooccurr_entity?.name)" style="width:fit-content;font-family:Trebuchet MS;"> Next Page </Button>
+                            </div>
+                        </div>
                     </div>
-                    conflicts with the data.
-                    <br>
-                    Click any of the above to see why.
                 </div>
                 <Legend id="legend-sentiment" :color_dict="SstColors.key_color_dict"/>
+                <div class="tutorial-toggle-container" style="display:flex; justify-content:center; margin-top:-50px;">
+                    <Button severity="secondary" text raised @click="toggleTutorial" style="width:fit-content;font-family:Trebuchet MS"> Tutorial </Button>
+                </div>
             </div>
             <i v-if="!true_hex_fetched" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/>
             <div v-else class="belief-true-hexview-overlay">
@@ -264,10 +293,10 @@ function toggleTutorial(e: MouseEvent) {
                 >
                 </HexCooccurrence>
             </div>
-            <Button class="next-page-button" 
+            <!-- <Button class="next-page-button" 
                 @click="goToNextStep"
                 :disabled="!revealed"
-                > Next Page </Button>
+                > Next Page </Button> -->
             <svg>
                 <pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)"
                     patternUnits="userSpaceOnUse">
@@ -301,47 +330,14 @@ function toggleTutorial(e: MouseEvent) {
     right: 12%;
     pointer-events: none;
 }
-.border {
-    position:absolute;
-    border:1px solid black;
-    left: 12%;
-    right: 12%;
-    top: 5.7%;
-    bottom: 32%;
-    z-index: 1;
-}
-.border.revealed {
-    z-index: 0 !important;
-}
-.belief-user-hexview {
-    /* z-index: 9999999 !important; */
-}
 .belief-user-hexview-overlay, .belief-true-hexview-overlay {
-    width: 100%;
-    height: 100%;
-    padding: 0% 2% 2% 2%;
-    /*! display: flex; */
+width: 100%;
+height: 100%;
+padding: 0% 2% 2% 2%;
+/*! display: flex; */
 }
-.belief-true-hexview, .belief-user-hexview {
-    /* border: 1px solid black; */
-}
-/* .belief-true-hexview:hover {
-    cursor: pointer;
-    opacity: 0.8;
-} */
-/* .belief-user-hexview-overlay > .border {
-    z-index: 0 !important;
-} */
 .belief-true-hexview.hidden {
     opacity: 0.3;
-}
-.border.hidden {
-    opacity: 0.3;
-    background: #8a8787;
-}
-.border.hidden:hover {
-    cursor: pointer;
-    opacity: 0.8;
 }
 
 /* Journal style */
@@ -357,14 +353,9 @@ function toggleTutorial(e: MouseEvent) {
   /*! height: 100%; */
   aspect-ratio: 1;
 }
-.legend-container {
-    /* width: 85%; */
-    position: absolute;
-    bottom: 7%;
-}
 .conflict-hex-selector {
     font-weight: bold;
-    color: red;
+    color: #ea2424;
     cursor: pointer;
     border: 1px solid black;
     border-radius: 5px;
@@ -382,21 +373,6 @@ function toggleTutorial(e: MouseEvent) {
   background-color: rgba(43, 42, 42, 0.5); /* Dark overlay color */
   opacity: 0; /* Initially transparent */
   transition: opacity 0.3s ease; /* Transition effect */
-}
-
-/* .journal-style {
-    width: 200px;
-    height: 200px;
-    position: absolute;
-    bottom: 68%;
-    left: 45%;
-    overflow: hidden;
-    border-radius: 50%;
-    border: #d7d7d7 3px solid;
-} */
-:deep(.hex-svg) {
-    /* width: unset;
-    height: unset; */
 }
 
 .journal-image {
@@ -429,5 +405,24 @@ function toggleTutorial(e: MouseEvent) {
   justify-content: center;
   font-size: larger;
   font-weight: lighter;
+}
+.next-step-button {
+    /* animation:pulse 2s infinite; */
+}
+@keyframes pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.7);
+  }
+
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.5);
+  }
+
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.7);
+  }
 }
 </style>
