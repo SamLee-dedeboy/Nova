@@ -12,6 +12,7 @@ import HexCooccurrence from "../components/HexCooccurrence.vue";
 import Legend from '../components/Legend.vue';
 import * as typeUtils from "../types"
 import introJS from 'intro.js'
+import Tooltip from '../components/Tooltip.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -26,6 +27,7 @@ const highlight_hex_entity: Ref<string> = ref()
 const true_hex_data: Ref<any> = ref()
 const true_hex_fetched: Ref<Boolean> = ref(false)
 const revealed: Ref<Boolean> = ref(false)
+const reveal_anmt_ended = ref(false)
 const revealed_css = vue.computed(() => {
     return revealed.value ? "revealed" : "hidden"
 })
@@ -48,9 +50,12 @@ const hex_filled = ref(false)
 const showDragNDropHint = ref(false)
 
 vue.watch(revealed, () => {
-   user_hex.value.updateHighlightHex() 
-   data_hex.value.updateHighlightHex()
-   toggleDataHexTutorial()
+    user_hex.value.updateHighlightHex() 
+    data_hex.value.updateHighlightHex()
+    toggleDataHexTutorial()
+})
+vue.watch(reveal_anmt_ended, () => {
+    document.querySelector(".introjs-tooltip").style.scale = 1
 })
 
 vue.onBeforeMount(() => {
@@ -124,6 +129,7 @@ function outletIconStyle(name: string) {
 
 function toggleTutorial(e: MouseEvent) {
     introJS().setOptions({
+        dontShowAgain: true,
         showProgress: true,
         steps: [
             {
@@ -174,7 +180,9 @@ function toggleTutorial(e: MouseEvent) {
 }
 
 function toggleDataHexTutorial() {
+    let first_step = true
     introJS().setOptions({
+        dontShowAgain: true,
         showProgress: true,
         steps: [
             {
@@ -189,7 +197,27 @@ function toggleDataHexTutorial() {
                     You can click any hexagon to highlight them in both hives.
                 `
             },
+            {
+                element: document.querySelector('.diff-description-container'),
+                intro: `
+                    We summarizes the differences here for you.
+                    <br>
+                    If you're curious why differences exist on a topic,
+                    click on the topic.
+                    It will take you to the next page where you can see the articles.
+                `
+            },
         ]
+    })
+    .onafterchange(function(element) {
+        if(first_step) {
+            document.querySelector(".introjs-tooltip").style.scale = 0
+            first_step = false
+        }
+        else {
+            document.querySelector(".introjs-tooltip").style.scale = 1
+        }
+        return
     })
     .start()
 }
@@ -265,7 +293,7 @@ function toggleDataHexTutorial() {
                     <img :src="`/${target_outlet}.png`" :class="['journal-image', `${outletIconStyle(target_outlet)}`]" />
                 </div>
                 <div class="diff-container-placeholder" style="height: 30%">
-                    <div v-if="revealed" class="diff-description-container" style="margin-top:15px;">
+                    <div v-if="reveal_anmt_ended" class="diff-description-container" style="margin-top:15px;">
                         <div v-if="Object.keys(conflict_hex).length > 0">
                             Your belief on:
                             <br>
@@ -326,6 +354,7 @@ function toggleDataHexTutorial() {
                 :user_hex_selection="hex_selection[target_outlet]"
                 @hex-clicked="handleHexClicked"
                 @hex-revealed="checkReveal"
+                @hex-anmt-end="reveal_anmt_ended=true"
                 @conflict-hex="setConflictHex"
                 :show_blink="revealed"
                 :show_label="revealed"

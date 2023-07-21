@@ -13,6 +13,7 @@ import * as SstColors from "./utils/ColorUtils"
 import { SentimentType, Sentiment2D, EntityCooccurrences, HexEntity, ScatterNode } from "../types"
 import { Ref, ref } from "vue"
 import { schemeBrBG } from "d3";
+import { delay } from "lodash"
 const props = defineProps({
     title: String,
     id: String,
@@ -26,7 +27,7 @@ const props = defineProps({
     p_margin: Object as () => any,
     user_hex_selection: Object as () => any,
 })
-const emit = defineEmits(["hex-clicked", "hex-filled", "hex-rendered", "hex-revealed", "conflict-hex"])
+const emit = defineEmits(["hex-clicked", "hex-filled", "hex-rendered", "hex-revealed", "conflict-hex", "hex-anmt-end"])
 
 // const viewBox = [1000, 1000/(2*Math.sin(Math.PI/3))*3]
 const viewBox = [640, 680]
@@ -506,6 +507,7 @@ function updateDataHex() {
         .selectAll("text")
         .data(hex_data)
         .join("text")
+        .attr("class", "hex-label")
         .attr("pointer-events", "none")
         // .attr("x", (d, i) => centers_indexed[i].x)
         // .attr("y", (d, i) => centers_indexed[i].y) //compute from num words and subtract from the y 
@@ -538,7 +540,40 @@ function updateDataHex() {
                 return "black"
         })
         .call(wrap, 30)
-    if(props.show_label) svg.select("rect.hive-border-overlay").remove()
+    if(props.show_label) {
+        svg.select("rect.hive-border-overlay").remove()
+        const duration = 600
+        let animated_num = 0
+        svg.selectAll("text.hex-label")
+            .attr("opacity", 0)
+            .transition()
+            .delay((d, i) => duration*i)
+            .duration(duration)
+            .attr("opacity", 1)
+        svg.selectAll("path.hexagon")
+            .attr("pointer-events", "none")
+            .attr("opacity", 0)
+            .attr("transform", function (d: any, index) {
+                // centers_indexed.push(d)
+                return `translate(0, 0))`
+            })
+            .transition()
+            .delay((d, i) => duration*i)
+            .duration(duration)
+            .attr("opacity", 1)
+            .attr("transform", function (d: any, index) {
+                // centers_indexed.push(d)
+                return `translate(${d.x}, ${d.y})`
+            })
+            .on("end", function() {
+                d3.select(this).attr("pointer-events", "auto")
+                animated_num += 1
+                if(animated_num === svg.selectAll("path.hexagon").nodes().length) {
+                    emit("hex-anmt-end", true)
+                }
+            })
+
+    }
     else {
         const hive_border_overlay = svg.select("rect.hive-border-overlay")
             .attr("cursor", "pointer")

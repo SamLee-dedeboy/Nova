@@ -466,13 +466,6 @@ function toggleTutorial() {
 }
 
 
-// ---------------------
-// entity scatter section
-// ---------------------
-
-:deep(.scatter-container) {
-  top: -2%;
-}
 
 // ---------------------
 // utitlies section

@@ -74,6 +74,7 @@ export class EntityScatter {
     emit_at_end: boolean
     manualTooltip: boolean
     manualTooltipID: string
+    fisheye_enabled: boolean
 
     public constructor(
         props: any, svgId: string,
@@ -146,6 +147,7 @@ export class EntityScatter {
         this.zoom = d3.zoom().scaleExtent([1, 3]).on("zoom", function (e) {
             self.handleZoom(e, self.svg)
         })
+        this.fisheye_enabled = false
     }
 
     draw(emit): void {
@@ -167,34 +169,34 @@ export class EntityScatter {
         const svg = d3.select(`#${this.props.id}`).select("svg")
         const fisheye_indicator = svg.append("circle").attr("class", "fisheye") 
         svg.on("mousemove", function(e) {
-            // //console.log(d3.pointer(e))
-            fisheye.focus(d3.pointer(e));
-            svg.selectAll("circle.entity_circle").each(function(d: any) {
-                const fisheye_coord = fisheye([d.x, d.y])
-                d3.select(this)
-                    .transition().duration(0)
-                    .attr("cx", fisheye_coord[0])
-                    .attr("cy", fisheye_coord[1])
-                    .attr("r", (d: ScatterNode) => (1+(fisheye_coord[2]-1)/2)*self.node_circle_radius)
-            })
-            svg.selectAll("circle.expand_circle").each(function(d: any) {
-                const fisheye_coord = fisheye([d.x, d.y])
-                d3.select(this)
-                    .transition().duration(0)
-                    .attr("cx", fisheye_coord[0])
-                    .attr("cy", fisheye_coord[1])
-                    .attr("r", (d: ScatterNode) => (1+(fisheye_coord[2]-1)/2)*1.5*self.node_circle_radius)
-                    .attr("opacity", (d: ScatterNode) => cvThis.highlight_nodes.includes(d.text)? 1:0 )
-            })
-            // if(cvThis.clicked_node.value)
-            //     cvThis.setHighlightNode(cvThis.clicked_node.value.text, emit) 
-            fisheye_indicator
-                .attr("cx", d3.pointer(e)[0])
-                .attr("cy", d3.pointer(e)[1])
-                .attr("r", 100)
-                .attr("stroke", "black")
-                .attr("stroke-width", "1")
-                .attr("fill", "none")
+            if(self.fisheye_enabled) {
+                fisheye.focus(d3.pointer(e));
+                svg.selectAll("circle.entity_circle").each(function(d: any) {
+                    const fisheye_coord = fisheye([d.x, d.y])
+                    d3.select(this)
+                        .transition().duration(0)
+                        .attr("cx", fisheye_coord[0])
+                        .attr("cy", fisheye_coord[1])
+                        .attr("r", (d: ScatterNode) => (1+(fisheye_coord[2]-1)/2)*self.node_circle_radius)
+                })
+                svg.selectAll("circle.expand_circle").each(function(d: any) {
+                    const fisheye_coord = fisheye([d.x, d.y])
+                    d3.select(this)
+                        .transition().duration(0)
+                        .attr("cx", fisheye_coord[0])
+                        .attr("cy", fisheye_coord[1])
+                        .attr("r", (d: ScatterNode) => (1+(fisheye_coord[2]-1)/2)*1.5*self.node_circle_radius)
+                        .attr("opacity", (d: ScatterNode) => cvThis.highlight_nodes.includes(d.text)? 1:0 )
+                })
+                fisheye_indicator
+                    .attr("cx", d3.pointer(e)[0])
+                    .attr("cy", d3.pointer(e)[1])
+                    .attr("r", 100)
+                    .attr("stroke", "black")
+                    .attr("stroke-width", "1")
+                    .attr("fill", "none")
+
+            }
         });
     }
 
@@ -538,30 +540,30 @@ export class EntityScatter {
             .style("font-weight", "bold")
     }
 
-    enterEntityScatter(enter, colorScale){
+    enterEntityScatter(enter, colorScale) {
+        const duration = 100
         enter.append("g").attr("class", "entity")
         .call(g => g.append("circle")
                 .attr("class", "expand_circle")
                 .attr("r", this.node_circle_radius*1.5 / (this.current_zoom?.k || 1))
                 .attr("opacity", 0)
-                .attr("cx", (d) => this.xScale(d.pos_sst) || 0)
-                .attr("cy", (d) => this.yScale(Math.abs(d.neg_sst)) || 0)
                 .attr("fill", "white")
                 .attr("stroke", "black")
                 .attr("stroke-dasharray", (d) => d.article_ids.length === 0 ? 2.5 : 0)
+                .attr("cx", (d) => this.xScale(d.pos_sst) || 0)
+                .attr("cy", (d) => this.yScale(Math.abs(d.neg_sst)) || 0)
         )
         .call(g => g.append("circle")
             .attr("class", "entity_circle")
             .attr("r", this.node_circle_radius / (this.current_zoom?.k || 1))
-            .attr("cx", (d) => this.xScale(d.pos_sst) || 0)
-            .attr("cy", (d) => this.yScale(Math.abs(d.neg_sst)) || 0)
-            // .attr("fill", (d) => SstColors.outlet_color_dict[d.text])
             .attr("fill", (d) => {
                 let color = colorScale(d.article_ids.length) || 0
                 return (d.article_ids.length === 0 || color === 0) ? "white" : color
             })
             .attr("stroke", "black")
             .attr("opacity", 1)
+            .attr("cx", (d) => this.xScale(d.pos_sst) || 0)
+            .attr("cy", (d) => this.yScale(Math.abs(d.neg_sst)) || 0)
         )
         .call(g => g.append("text")
             .attr("class", "node_label")
@@ -580,6 +582,7 @@ export class EntityScatter {
         const svg = d3.select(`#${this.props.id}`).select("svg")
 
         let bind_data: ScatterNode[] = this.filtered_data.value
+        bind_data.sort((a, b) => a.article_ids.length - b.article_ids.length)
         // //console.log(bind_data)
         var self = this
 
@@ -587,19 +590,38 @@ export class EntityScatter {
         // const colorScale = d3.scaleSequential( (d) => d3.interpolateReds(logScale(d)))
 
         const node_group = svg.select("g.node_group")
+        const duration = 20
+        const corners_x = [0, this.xMax]
+        const corners_y = [0, this.yMax]
+        let animated_num = 0
         node_group.selectAll("g.entity")
-            .data(bind_data, function (d: any) { 
+            .data(bind_data, function (d: any, i) { 
                 d.x = self.xScale(d.pos_sst)
                 d.y = self.yScale(Math.abs(d.neg_sst))
+                d.i = i
                 return d.text 
             })
             .join(
                 enter =>  this.enterEntityScatter(enter, colorScale),
                 update => {
                     update.call(g => g.select("circle.entity_circle")
-                        .transition().duration(1000)
-                        .attr("cx", (d: any) => this.xScale(d.pos_sst))
-                        .attr("cy", (d: any) => this.yScale(Math.abs(d.neg_sst))))
+                        // .transition().duration(1000)
+                        // .attr("cx", (d: any) => this.xScale(d.pos_sst))
+                        // .attr("cy", (d: any) => this.yScale(Math.abs(d.neg_sst))))
+                        .attr("opacity", 0)
+                        .attr("cx", () => corners_x[Math.floor(Math.random() * 2)])
+                        .attr("cy", () => corners_y[Math.floor(Math.random() * 2)])
+                        .transition()
+                        .delay((d) => d.i*duration)
+                        .duration(duration)
+                        .attr("opacity", 1)
+                        .attr("cx", (d) => this.xScale(d.pos_sst) || 0)
+                        .attr("cy", (d) => this.yScale(Math.abs(d.neg_sst)) || 0)
+                        .on("end", () => {
+                            animated_num += 1
+                            if(animated_num === bind_data.length)
+                                this.fisheye_enabled = true
+                        })
                         .call(g => g.select("circle.expand_circle")
                             .transition().duration(1000)
                             .attr("cx", function (d: any) {
@@ -610,6 +632,7 @@ export class EntityScatter {
                         .call(g => g.selectAll("circle.entity_circle")
                             .attr("fill", (d: any) => d.article_ids.length === 0 ? "white" : colorScale(d.article_ids.length))
                         )
+                    )
                 }
             )
     }
