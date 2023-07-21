@@ -131,7 +131,7 @@ function handleOutletClicked(outlet) {
         What's next? 
     </Button>
     <div v-if="showNextStep" class="next-step-container">
-        <p> The articles are collected from the following six outlets:
+        <p> The statistics are calculated from articles published by the following six outlets:
             <div class="journal-grid">
                 <div class="journal-cell" v-for="outlet in outlets" @click="handleOutletClicked(outlet)">
                     <img :src="`/${outlet}.png`"
@@ -147,15 +147,25 @@ function handleOutletClicked(outlet) {
         </p>
         <p>
             <p>
-                Why is <span :class="category_css_name" class="entity"> {{ props.data.name }} </span> categorized as <span :class="category_css_name">{{ entity_sst_category }}</span>?
+                <br>
+                Naturally, each outlet would report differently on the topic.
+                <p style="font-weight: bold; font-size: 1.1rem;">
+                    Why is <span :class="category_css_name" class="entity"> {{ props.data.name }} </span> categorized as 
+                    {{ entity_sst_category }} overall?
+                    <!-- <span :class="category_css_name">{{ entity_sst_category }}</span> overall ? -->
+                </p>
+                Some articles must have reported <span class="pos_color">positively</span>, while others <span class="neg_color">negatively</span>.
             </p>
-            Which outlet do you think reported <span class="pos_color">positively</span> or <span class="neg_color">negatively</span> about <span  :class="category_css_name" class="entity">{{props.data.name}}</span>?
             <br>
-            What do you think this outlet would report on other topics related to <span  :class="category_css_name" class="entity">{{props.data.name}}</span>  ?
+            <!-- Which outlet do you think reported <span class="pos_color">positively</span> or <span class="neg_color">negatively</span> about <span  :class="category_css_name" class="entity">{{props.data.name}}</span>? -->
+            Which outlet do you think reported positively or negatively about <span :class="category_css_name" class="entity">{{props.data.name}}</span>?
+            <br>
+            <!-- What do you think this outlet would report on other topics related to <span  :class="category_css_name" class="entity">{{props.data.name}}</span>  ? -->
+            What do you think this outlet would report on other topics related to it?
         </p>
         <br>
-        <p>
-            Click the icon above to start the quiz!
+        <p style="font-weight: bold; font-size: 1.1rem">
+            Click any outlet icon above to start the quiz!
         </p>
     </div>
     <svg style='position:absolute;pointer-events:none'>

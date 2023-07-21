@@ -6,6 +6,7 @@ import { Ref, ref } from "vue"
 import * as vue from "vue"
 import * as SstColors from "../components/utils/ColorUtils"
 
+import Dialog from "primevue/dialog"
 import ProgressiveDialog from "../components/ProgressiveDialog.vue"
 import HexCooccurrence from "../components/HexCooccurrence.vue";
 import Legend from '../components/Legend.vue';
@@ -43,6 +44,8 @@ const setHexSelection =  (hex_selection) => store.setHexSelection(hex_selection)
 const conflict_hex = vue.computed(() => store.conflict_hex)
 const setConflictHex = (conflicts) => store.setConflictHex(conflicts)
 const delegateIntroHelperClick = ref(false)
+const hex_filled = ref(false)
+const showDragNDropHint = ref(false)
 
 vue.watch(revealed, () => {
    user_hex.value.updateHighlightHex() 
@@ -77,7 +80,6 @@ async function fetch_outlet_hex(outlet, center_entity) {
 
 function handleHexClicked({clickedEntity}) {
     if(clickedEntity === selected_entity.value.name) return
-    console.log({clickedEntity})
     highlight_hex_entity.value = clickedEntity
     setCooccurrEntity({
         "name": clickedEntity
@@ -85,10 +87,19 @@ function handleHexClicked({clickedEntity}) {
 }
 
 function handleHexFilled({filledEntity, filledHexIndex}) {
+    hex_filled.value = true
     const outlet = target_outlet.value
     let old_hex_selection = hex_selection.value
     old_hex_selection[outlet][filledEntity] = filledHexIndex
     setHexSelection(old_hex_selection)
+}
+
+function checkReveal() {
+    if(!hex_filled.value) { 
+        showDragNDropHint.value = true
+    } else {
+        revealed.value = true
+    }
 }
 
 function goToNextStep(co_occurr_entity: string) {
@@ -184,7 +195,25 @@ function toggleDataHexTutorial() {
 }
 </script>
 <template>
-    <div class='selection-grid'>
+    <Dialog v-model:visible="showDragNDropHint" position="center" :model="true">
+      <template #header>
+        <h3 class="header-container" style="display: flex; align-items: center"> 
+            <i class="pi pi-exclamation-triangle" style="font-size: 1.5rem; color: #ff7c7c" /> 
+            &thinsp;
+            <span class="header-text"> Make your prediction first! </span> 
+        </h3>
+      </template>
+
+      <p class="introTutorial">
+        Drag and drop the hexagons into the hive to create your prediction!
+        <br>
+        Put a gif here to demonstrate...
+      </p>
+      <template #footer>
+        <Button label="Got it" icon="pi pi-check" @click="showDragNDropHint=false" autofocus />
+      </template>
+    </Dialog> 
+    <div class='selection-grid' style="display: flex; width: 100%; height: 95vh; padding: 1%">
         <ProgressiveDialog 
             @toggle-tutorial="toggleTutorial"
             :header="`How would ${target_outlet} report on ${target_entity.replaceAll('_', ' ')}?`"
@@ -212,7 +241,7 @@ function toggleDataHexTutorial() {
                 <br>
                 Drag and drop the hexagons into the hive to create your prediction!
             `"></ProgressiveDialog>
-        <div class=page-container>
+        <div class=page-container style="display: flex; width: 100%; height: 100%">
             <i v-if="!true_hex_fetched" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/>
             <div v-else class="belief-user-hexview-overlay">
                 <div class="hive-header">Your belief </div>
@@ -231,8 +260,8 @@ function toggleDataHexTutorial() {
                 <!-- <div class="user-hexagon-region"></div> -->
             </div>
             <i v-if="!true_hex_fetched" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/>
-            <div v-else class="journal-style-container">
-                <div class="journal-style">
+            <div v-else class="journal-style-container" style="display: flex; flex-direction: column; width: 30%; padding-top: 5%;">
+                <div class="journal-style" style="width: 100%; aspect-ratio: 1;">
                     <img :src="`/${target_outlet}.png`" :class="['journal-image', `${outletIconStyle(target_outlet)}`]" />
                 </div>
                 <div class="diff-container-placeholder" style="height: 30%">
@@ -240,7 +269,17 @@ function toggleDataHexTutorial() {
                         <div v-if="Object.keys(conflict_hex).length > 0">
                             Your belief on:
                             <br>
-                            <div class="conflict-hex-selector" v-for="conflict in conflict_hex" @click="goToNextStep(conflict)">
+                            <div class="conflict-hex-selector" v-for="conflict in conflict_hex" 
+                            style="
+                                font-weight: bold;
+                                color: #ea2424;
+                                cursor: pointer;
+                                border: 1px solid black;
+                                border-radius: 5px;
+                                text-align: center;
+                            "
+                            @click="goToNextStep(conflict)">
+
                                 <div class="conflict-hex-selector-overlay"></div>
                                 {{ conflict }}
                             </div>
@@ -286,7 +325,7 @@ function toggleDataHexTutorial() {
                 :highlight_hex_entity="highlight_hex_entity"
                 :user_hex_selection="hex_selection[target_outlet]"
                 @hex-clicked="handleHexClicked"
-                @hex-revealed="revealed=true"
+                @hex-revealed="checkReveal"
                 @conflict-hex="setConflictHex"
                 :show_blink="revealed"
                 :show_label="revealed"
@@ -309,58 +348,16 @@ function toggleDataHexTutorial() {
 </template>
 
 <style scoped>
-.selection-grid {
-    width: 100%;
-    padding: 1%;
-    height: 95vh;
-    display: flex;
-    /* flex-wrap: wrap-reverse;
-    justify-content: space-between; */
-}
-.page-container {
-  width: 100%;
-  height: 100%;
-  display: flex;
-}
-.user-hexagon-region {
-    position: absolute;
-    top: 68%;
-    bottom: 1%;
-    left: 12%;
-    right: 12%;
-    pointer-events: none;
-}
 .belief-user-hexview-overlay, .belief-true-hexview-overlay {
-width: 100%;
-height: 100%;
-padding: 0% 2% 2% 2%;
-/*! display: flex; */
+    width: 100%;
+    height: 100%;
+    padding: 0% 2% 2% 2%;
 }
 .belief-true-hexview.hidden {
     opacity: 0.3;
 }
 
 /* Journal style */
-.journal-style-container {
-  /*! height: 100%; */
-  display: flex;
-  flex-direction: column;
-  width: 30%;
-  padding-top: 5%;
-}
-.journal-style {
-  width: 100%;
-  /*! height: 100%; */
-  aspect-ratio: 1;
-}
-.conflict-hex-selector {
-    font-weight: bold;
-    color: #ea2424;
-    cursor: pointer;
-    border: 1px solid black;
-    border-radius: 5px;
-    text-align: center;
-}
 .conflict-hex-selector:hover .conflict-hex-selector-overlay {
     opacity: 1;
 }

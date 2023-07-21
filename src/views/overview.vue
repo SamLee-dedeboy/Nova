@@ -95,7 +95,6 @@ const segment_mode: Ref<boolean> = ref(true)
  * threshold for filtering on count(articles).
  */
 const article_num_threshold: Ref<number> = ref(20)
-// const article_num_threshold_global: Ref<number> = vue.computed(() => store.article_num_threshold_global)
 const setArticleNumThreshold = (threshold) => store.setArticleNumThreshold(threshold)
 vue.watch(article_num_threshold, () => {
   setArticleNumThreshold(article_num_threshold.value)
@@ -108,9 +107,6 @@ const entity_changed = ref(false)
  */
 const left_section_panel_size = 63
 const right_section_panel_size = vue.computed(() => 100 - left_section_panel_size)
-
-const entity_scatter_panel_size = 100
-const utilities_panel_size = vue.computed(() => 100 - entity_scatter_panel_size)
 
 const table_panel_size = 20
 const scatter_panel_size = vue.computed(() => 100 - table_panel_size)
@@ -297,7 +293,7 @@ function toggleTutorial() {
 
 
 <template>
-  <main>
+  <main style="displex: flex; width: 99vw; height: 95vh">
     <ProgressiveDialog
       @toggle-tutorial="toggleTutorial"
       header="U.S. News Media Coverage Assessment"
@@ -314,111 +310,99 @@ function toggleTutorial() {
         To demonstrate the system, let's delve into what topics these outlets covered during start of the COVID-19 Pandemic (Feb-June
         2020).
       "/>
-    <!-- <Dialog v-model:visible="showTutorial" class="tutorialStyle" position="center" :modal="true">
-      <template #header>
-        <h3> <i class="pi pi-compass" /> U.S. News Media Coverage Assessment</h3>
-      </template>
-
-      <p class="introTutorial">
-        NOVA's purpose is to help you assess if your expectations of how mainstream news media cover
-        topics align with their reporting.
-        We gathered articles centered around COVID-19 from 6 U.S. mainstream media outlets.
-        To demonstrate the system, let's delve into what topics these outlets covered during start of the COVID-19 Pandemic (Feb-June
-        2020).
-      </p>
-      <template #footer>
-        <Button label="Ready" icon="pi pi-check" @click="toggleTutorial" autofocus />
-      </template> -->
-    <!-- </Dialog> -->
-
     <Splitter class="overview-container">
-      <SplitterPanel class="left-section-panel" :size="left_section_panel_size">
-        <Splitter layout="vertical">
-          <SplitterPanel class="entity-scatter-panel" :size="entity_scatter_panel_size">
-            <!-- left section header -->
-            <h2 class="component-header scatter-header">
-              News Topics
-              <i class='pi pi-info-circle tooltip'>
-                <span class="tooltiptext right-tooltiptext" style="width: 200px;">
-                  Each point is a topic with 2D sentiment score (pos, neg). <br />
-                  The score represents how many positive and negatives articles they have.
-                  The articles are between Feb 2020 and June 2020.
-                </span>
-              </i>
-            </h2>
-            <div class='entity-scatter-content'>
-              <Splitter class='table-scatter-splitter'>
-                <SplitterPanel class="entity-table-panel" :size="table_panel_size">
-                  <div id="entityTableWrapper" class='entityTableWrapper'>
-                    <i v-if="overall_scatter_data_loading" class="pi pi-spin pi-spinner" style="position:absolute;
-                        left: 45%;
-                        top: 30%;
-                        font-size: 3rem;
-                        z-index: 1000">
-                    </i>
-                    <EntityTable v-else :entity_nodes="overall_entity_data" :article_num_threshold="article_num_threshold" 
-                      v-model:selected_entity_name='selected_entity_name'
-                    />
-                  </div>
-                  <!-- Utilities -->
-                  <div class="utilities-container">
-                    <div id="entity-utility-container" class="entity-utils">
-                      <h2 class="component-header util-header">
-                        Topic Settings
-                        <i class='pi pi-info-circle tooltip'>
-                          <span class="tooltiptext right-tooltiptext" style="width: 300px">
-                            The color spectrum slider helps filter topics by number or articles. <br />
-                            The six-sliders group lets you input your preception of each media outlet based on fairness and
-                            importance.
-                          </span>
-                        </i>
-                      </h2>
-                      <!-- filter slider -->
-                      <h3 class="threshold-title"> Number of Articles Threshold
-                        <i class='pi pi-info-circle tooltip'>
-                          <span class="tooltiptext right-tooltiptext" style="width: 300px">
-                            User the slider to set a threshold on topics' minimum articles.
-                            Topics with less articles than the threshold will not appear in scatter plot.
-                          </span>
-                        </i>
-                      </h3>
-                      <div v-if="overview_constructed" class="slider-container">
-                        <ThresholdController v-model:article_num_threshold="article_num_threshold"
-                          :max_articles="overview_overall_scatter_metadata.max_articles"
-                          :min_articles="overview_overall_scatter_metadata.min_articles"></ThresholdController>
-                      </div>
+      <SplitterPanel class="left-section-panel" style="overflow: visible" :size="left_section_panel_size">
+          <!-- left section header -->
+          <h2 class="component-header scatter-header" style="margin: 2%;">
+            News Topics
+            <i class='pi pi-info-circle tooltip'>
+              <span class="tooltiptext right-tooltiptext" style="width: 200px;">
+                Each point is a topic with 2D sentiment score (pos, neg). <br />
+                The score represents how many positive and negatives articles they have.
+                The articles are between Feb 2020 and June 2020.
+              </span>
+            </i>
+          </h2>
+          <div class='scatter-content' style="height: 100%; flex-direction: content;">
+            <Splitter class='table-scatter-splitter'>
+              <SplitterPanel class="entity-table-panel" :size="table_panel_size" style="display: flex; flex-direction: column">
+                <div id="entityTableWrapper" class='entityTableWrapper' style="height: 67%; min-height: 67%; margin-left: 5%;">
+                  <i v-if="overall_scatter_data_loading" class="pi pi-spin pi-spinner" style="position:absolute;
+                      left: 45%;
+                      top: 30%;
+                      font-size: 3rem;
+                      z-index: 1000">
+                  </i>
+                  <EntityTable v-else :entity_nodes="overall_entity_data" :article_num_threshold="article_num_threshold" 
+                    v-model:selected_entity_name='selected_entity_name'
+                  />
+                </div>
+                <!-- Utilities -->
+                <div class="utilities-container"
+                  style="
+                    display: flex;
+                    grid-template-columns: 1fr 1fr;
+                    grid-template-rows: 50px auto;
+                    flex-wrap: wrap;
+                    justify-content: space-between;
+                    width: 100%;
+                    height: 100%;
+                  ">
+                  <div id="entity-utility-container" class="entity-utils" style="width: 100%; margin: 0.4%; padding: 2%;">
+                    <h2 class="component-header util-header">
+                      Topic Settings
+                      <i class='pi pi-info-circle tooltip'> 
+                        <span class="tooltiptext right-tooltiptext" style="width: 300px">
+                          The color spectrum slider helps filter topics by number or articles. <br />
+                          The six-sliders group lets you input your preception of each media outlet based on fairness and
+                          importance.
+                        </span>
+                      </i>
+                    </h2>
+                    <!-- filter slider -->
+                    <h3 class="threshold-title" style="width: 100%;"> Number of Articles Threshold
+                      <i class='pi pi-info-circle tooltip'>
+                        <span class="tooltiptext right-tooltiptext" style="width: 300px">
+                          User the slider to set a threshold on topics' minimum articles.
+                          Topics with less articles than the threshold will not appear in scatter plot.
+                        </span>
+                      </i>
+                    </h3>
+                    <div v-if="overview_constructed" class="slider-container">
+                      <ThresholdController v-model:article_num_threshold="article_num_threshold"
+                        :max_articles="overview_overall_scatter_metadata.max_articles"
+                        :min_articles="overview_overall_scatter_metadata.min_articles"></ThresholdController>
                     </div>
                   </div>
+                </div>
 
-                </SplitterPanel>
-                <SplitterPanel class='entity-scatter-panel'>
-                  <div class="overview-scatter-container">
-                    <!-- load icon -->
-                    <i v-if="overall_scatter_data_loading" class="pi pi-spin pi-spinner" style="position:absolute;
-                        left: 45%;
-                        top: 30%;
-                        font-size: 3rem;
-                        z-index: 1000">
-                    </i>
-                    <EntitySelection v-else :segmentation="segmentation" :view="overall_scatter_view" id="overview-scatter"
-                      ref='overview_scatter'
-                      :article_num_threshold="article_num_threshold" :segment_mode="segment_mode" 
-                      v-model:selected_entity_name='selected_entity_name'
-                      @update:segmentation="updateSegmentation" />
-                  </div>
-                </SplitterPanel>
-              </Splitter>
-            </div>
-          </SplitterPanel>
-        </Splitter>
+              </SplitterPanel>
+              <SplitterPanel class='entity-scatter-panel' style="display: flex; flex-direction: column">
+                <div class="overview-scatter-container" style="width: 100%; height: 95%">
+                  <!-- load icon -->
+                  <i v-if="overall_scatter_data_loading" class="pi pi-spin pi-spinner" style="position:absolute;
+                      left: 45%;
+                      top: 30%;
+                      font-size: 3rem;
+                      z-index: 1000">
+                  </i>
+                  <EntitySelection v-else :segmentation="segmentation" :view="overall_scatter_view" id="overview-scatter"
+                    ref='overview_scatter'
+                    :article_num_threshold="article_num_threshold" :segment_mode="segment_mode" 
+                    v-model:selected_entity_name='selected_entity_name'
+                    @update:segmentation="updateSegmentation" />
+                </div>
+              </SplitterPanel>
+            </Splitter>
+          </div>
       </SplitterPanel>
       <SplitterPanel class="right-section-panel" :size="right_section_panel_size">
         <Splitter layout="vertical">
           <SplitterPanel class="overview-entity-info-panel" :size="entity_info_panel_size">
             <!-- Entity Info View -->
-            <h2 class="component-header entity-info-header" v-if="selected_entity">
+            <h2 v-if="selected_entity" class="component-header entity-info-header" style="margin: 1%; padding: 0.45%">
               Statistics for 
-              <span class="mainTopicStyle"> {{ selected_entity.name.replaceAll("_", " ") }} </span>
+              <span class="mainTopicStyle" style="font-style: italic; font-weight: 200;"> {{ selected_entity.name.replaceAll("_", " ") }} </span>
               &nbsp
               <!-- <i class='pi pi-info-circle tooltip'>
                 <span class="tooltiptext right-tooltiptext" style="width: 400px">
@@ -429,7 +413,7 @@ function toggleTutorial() {
                 </span>
               </i> -->
             </h2>
-            <div class="overview-entity-info-container" v-if="overview_constructed">
+            <div class="overview-entity-info-container" v-if="overview_constructed" style="padding-left: 0.7%;">
               <EntityInfo v-if="selected_entity_info_fetched" 
                 :data="selected_entity"
                 :segmentation="segmentation"
@@ -457,25 +441,14 @@ function toggleTutorial() {
 * {
   --margin_left: 10px;
 }
-
-main {
-  display: flex;
-  // justify-content: center;
-  // align-items: center;
-  width: 99vw;
-  height: 95vh;
+.component-header {
+  background: #f7f7f7;
 }
+
 
 // ---------------------
 // css for split-panel layout
 // ---------------------
-.overview-scatter-container,
-.overview-hex-container,
-.overall-co-hexview {
-  width: 100%;
-  height: 95%;
-}
-
 :deep(.p-splitter) {
   width: inherit;
   height: inherit;
@@ -493,78 +466,18 @@ main {
 }
 
 
-//
-// general layouts
-//
-.mainTopicStyle {
-  font-style: italic;
-  font-weight: 200;
-}
-
-.p-splitter-panel.entity-scatter-panel {
-  height: 62%;
-}
-
-
-
-
-// ---------------------
-// entity table section
-// ---------------------
-.entity-table-panel {
-  display: flex;
-  flex-direction: column;
-}
-.entityTableWrapper {
-  height: 67%;
-  margin-left: 5%;
-}
-
 // ---------------------
 // entity scatter section
 // ---------------------
-
-.left-section-panel,
-.entity-scatter-panel {
-  // This attribute is for node info to show 
-  overflow: visible;
-}
 
 :deep(.scatter-container) {
   top: -2%;
 }
 
-.entity-scatter-content {
-  height: 100%;
-  /*! display: flex; */
-  flex-direction: content;
-}
-.entity-scatter-panel {
-  display: flex;
-  flex-direction: column;
-}
-
-
-
 // ---------------------
 // utitlies section
 // ---------------------
-.entity-utils {
-  margin: 0.4%;
-  padding: 2%;
-  // height: 100%;
-  width: 100%;
-}
-.util-header {
-  background: #f7f7f7;
-}
-
-.scatter-header {
-  // background: #f7f7f7;
-  margin: 2%;
-  padding: 1%;
-}
-
+// slider style
 
 .tooltiptext {
   font-size: 1rem;
@@ -573,33 +486,9 @@ main {
   font-weight: 200;
   box-shadow: rgb(0 0 0 / 25%) 0px 54px 55px, rgb(0 0 0 / 12%) 0px -12px 30px, rgb(0 0 0 / 12%) 0px 4px 6px, rgb(0 0 0 / 17%) 0px 12px 13px, rgb(0 0 0 / 9%) 0px -3px 5px;
 }
-
-.utilities-container {
-  display: flex;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 50px auto;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  width: 100%;
-  height: 100%;
-}
-
-// ---------------------
-// hexview section
-// ---------------------
-.entity-info-header {
-  // background: #f7f7f7;
-  margin: 1%;
-  padding: 0.45%;
-}
-
-
 // ---------------------
 // entity info section
 // ---------------------
-.threshold-title {
-  width: 100%;
-}
 
 
 @keyframes pulse {
@@ -619,9 +508,6 @@ main {
   }
 }
 
-.overview-entity-info-container {
-  padding-left: 0.7%;
-}
 
 </style>
 

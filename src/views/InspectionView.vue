@@ -241,7 +241,7 @@ function toggleTutorial() {
                 `
             },
             {
-                element: document.querySelector('.cooccurr-info-content'),
+                element: document.querySelector('.cooccurr-info-container'),
                 intro: `
                     If you find anything interesting or contradictory to your previous belief,
                     document it here.
@@ -275,9 +275,10 @@ function toggleTutorial() {
             <br>
         `"
     ></ProgressiveDialog>
-    <Splitter class="splitter-outmost">
+    <Splitter class="splitter-outmost" style="width: 100vw; height: 95vh; display: flex;">
         <SplitterPanel id="article_view_section"
-            class="articleview-section flex align-items-center justify-content-center" :size="left_section_size">
+            class="articleview-section flex align-items-center justify-content-center" :size="left_section_size"
+            style="overflow: hidden; height:100%; display: flex !important; flex-direction: column !important;">
             <i v-if="!data_fetched" class="pi pi-spin pi-spinner" 
             style="position:absolute;
                 left: 45%;
@@ -323,10 +324,10 @@ function toggleTutorial() {
                 @article-selected="(article) => selected_article=article"
                 :entity_pair="[selected_entity?.name as string, selected_cooccurr_entity?.name as string]">
             </ArticleView>
-            <div class="hexview-note-container">
-                <div class="hexview-container">
-                    <div class="user-hexview-container">
-                        <div class="hive-header user-hive-header">Your belief </div>
+            <div class="hexview-note-container" style="display: flex; margin-top: 1%; overflow: hidden">
+                <div class="hexview-container" style="display: flex; width: 100%; margin-right: 2%;">
+                    <div class="user-hexview-container" style="width: 100%">
+                        <div class="hive-header user-hive-header" style="left: 47%">Your belief </div>
                         <HexCooccurrence v-if="data_fetched" class="inpection-user-hexview" :title="clicked_hexview.title"
                             :id="`inspection_user_hexview`" :entity_cooccurrences="clicked_hexview.data"
                             mode="user-fixed"
@@ -339,8 +340,8 @@ function toggleTutorial() {
                             @hex-clicked="handleHexClicked">
                         </HexCooccurrence>
                         </div>
-                    <div class="data-hexview-container">
-                        <div class="hive-header data-hive-header">Data suggested</div>
+                    <div class="data-hexview-container" style="width: 100%">
+                        <div class="hive-header data-hive-header" style="left: 31%">Data suggested</div>
                         <HexCooccurrence v-if="data_fetched" class="inpection-data-hexview" :title="clicked_hexview.title"
                             :id="`inspection_data_hexview`" :entity_cooccurrences="clicked_hexview.data"
                             mode="data"
@@ -352,32 +353,26 @@ function toggleTutorial() {
                         </HexCooccurrence>
                     </div>
                 </div>
-                <div v-if="data_fetched" class="cooccurr-info-content">
-                    <div class=journal-icon-container>
+                <div v-if="data_fetched" class="cooccurr-info-container" style="display: flex; flex-direction: column; font-size: 0.8rem; width: 40%;">
+                    <div class=journal-icon-container style="display: flex; padding-left: 2%;">
                         <div :class="['journal-style']">
                             <img :src="`/${selected_outlet}.png`"
                                 :class="['journal-image',`${outletIconStyle(selected_outlet)}`]" />
                         </div>
-                        <div class="journal-info-container" style="font-size:small; z-index:99;">
+                        <div class="journal-info-container" style="font-size:small; z-index:99; margin: 0.5rem 1rem;">
                             <!-- <Dropdown :modelValue="selected_outlet" :options="journal_options"
                                 placeholder="Select an journal" @change="handleChangeJournal" /> -->
                             {{  selected_outlet }}
                         </div>
                     </div>
-                    <!-- <div class="num_of_articles">
-                        A total of  {{ selected_cooccurr_entity? selected_cooccurr_entity.article_ids.length :
-                            selected_entity.article_ids.length }}
-                            articles are found related to
-                        <span style="font-weight:bolder" :title="selected_entity?.name"> {{selected_entity?.name.replaceAll("_"," ")}}
-                        </span>
-                        <span v-if="selected_cooccurr_entity">
-                            and
-                            <span style="font-weight:bolder" :title="selected_cooccurr_entity.name">
-                                {{selected_cooccurr_entity.name.replaceAll("_"," ")}}
-                            </span>
-                        </span>
-                     </div> -->
-                    <div class="notes" >
+                    <div class="notes" 
+                        style="
+                            width: 100%;
+                            height: 100%;
+                            padding-bottom: 7%;
+                            display: flex;
+                            flex-direction: column;
+                        ">
                         <h2 class="component-header notes-header">
                             Notes
                             <i class='pi pi-info-circle tooltip'>
@@ -388,6 +383,7 @@ function toggleTutorial() {
                             </i>
                         </h2>
                         <textarea class="notes-style"
+                        style="width: 100%; height: 100%;"
                         :value="notes"
                         placeholder="Write down any thoughts you have..." 
                         @input="setNotes" />
@@ -402,12 +398,11 @@ function toggleTutorial() {
                 </svg>
             </div>
         </SplitterPanel>
-        <SplitterPanel id="entity_info_section" class="entity-info-panel flex align-items-center justify-content-center"
+        <SplitterPanel id="article_content_section" class="article-content-panel flex align-items-center justify-content-center"
+            style="overflow: hidden;"
             :size="right_section_size">
-            <div class="entity-info-container">
-                <div class="target-cooccurr-container">
-                </div>
-                <ArticleAnalysis class="article_analysis_panel"
+            <div class="article-content-container" style="display: flex; flex-direction: column; height: 100%; overflow: hidden;">
+                <ArticleAnalysis class="article-analysis-panel"
                     :entity_pair="[selected_entity?.name as string, selected_cooccurr_entity?.name as string]"
                     :selected_article="selected_article"
                     :article_highlights="target_article_highlights">
@@ -419,75 +414,10 @@ function toggleTutorial() {
 
 </template>
 <style scoped lang="scss">
-// ---------------------
-// css for split-panel layout
-// ---------------------
-.splitter-outmost {
-    width: 100vw;
-    height: 95vh;
-    display: flex;
-}
-
-.entity-info-panel {
-    overflow: hidden;
-}
-
 // divider style 
 :deep(.p-divider.p-divider-vertical::before) {
     border-left: 1px solid #dee2e6 !important;
 }
-
-// ---------------------
-// headers
-// ---------------------
-
-// ---------------------
-// articlew view section
-// ---------------------
-.articleview-section {
-  overflow: hidden;
-  height: 100%;
-  display: flex !important;
-  flex-direction: column !important;
-}
-
-// ---------------------
-// entity info section
-// ---------------------
-.target-cooccurr-container {
-    display: flex;
-    flex-direction: column;
-    padding-left: 10px;
-    padding-right: 10px;
-    background: #f7f7f7;
-    margin-left: 1%;
-    margin-right: 1%;
-    width: 100%;
-}
-
-:deep(.entity-info-view-container) {
-    display: flex;
-    flex-direction: column;
-    align-content: center;
-    width: 100%;
-    justify-content: center;
-    max-width: unset !important;
-}
-
-.entity-info-container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    overflow: hidden;
-}
-
-.cooccurr-info-content {
-    display: flex;
-    flex-direction: column;
-    font-size: 0.8rem;
-    width: 40%;
-}
-
 
 ol {
     padding-left: 10%;
@@ -500,32 +430,6 @@ li {
 :deep(.p-slider.p-component.p-slider-horizontal) {
     width: 50%;
     margin-left: 15px;
-}
-
-.entity-info-section {
-    padding-left: 1%;
-    flex: 2 1 0;
-}
-
-.num_of_articles {
-    margin-left: 2%;
-    font-size: 1rem;
-}
-
-// ---------------------
-// Sentiment category selection section
-// ---------------------
-.selection-container {
-    display: flex;
-    align-items: center;
-}
-
-.slider-label {
-    margin-left: 5px;
-    // position:absolute;
-    font-family: Lato;
-    // left: 41.2%;
-    // top: -10%;
 }
 
 :deep(.p-slider .p-slider-handle) {
@@ -542,16 +446,6 @@ li {
 // ---------------------
 //  Hexview section
 // ---------------------
-.hexview-note-container {
-    display: flex;
-    margin-top: 1%;
-    overflow: hidden;
-}
-.hexview-container {
-    display: flex;
-    width: 100%;
-    margin-right: 2%;
-}
 .hive-header {
   align-content: center;
   display: flex;
@@ -561,54 +455,8 @@ li {
   position: absolute;
 }
 
-.user-hive-header {
-  left: 47%;
-}
-
-.data-hive-header {
-  left: 31%;
-}
-
-.user-hexview-container {
-  width: 100%;
-}
-.data-hexview-container {
-  width: 100%;
-}
-
-
-// ---------------------
-// Constraints & Outlet Scatterplot Section
-// ---------------------
-.constraints-outlet-scatter-container {
-    display: flex;
-    //   justify-content: space-between;
-    flex: 1 1 0;
-    overflow: hidden;
-    flex-direction: column;
-}
-
-.intensity-slider {
-    width: 38% !important;
-}
-
-.constraint-table {
-    font-size: 0.8rem;
-}
-
-.constraints-view {
-    //   width: fit-content;
-    background: #f7f7f7;
-    //   flex: 1 1 0;
-    margin-right: 1%;
-}
-
 :deep(.p-button) {
     padding: 0.1rem 1rem;
-}
-
-:deep(.p-buttonset, .p-button) {
-    margin: 0.3rem 0rem;
 }
 
 :deep(.p-inputtext) {
@@ -618,152 +466,16 @@ li {
 :deep(.p-scrollpanel.p-component) {
     width: 100%;
 }
+
 :deep(.p-scrollpanel-bar-y) {
     background: #4d4e4f;
 }
-
-.question-container {
-    display: flex;
-    align-items: center;
-    background: #f7f7f7;
-    border-bottom: solid 1px #b7b7b7;
-    font-family: "Lato";
-    padding-left: 1%;
-}
-
 
 .component-header.notes-header {
     background: #f7f7f7;
     margin: 3% 1% 1% 0%;
     padding-left: 2%;
 }
-
-.notes {
-  width: 100%;
-  height: 100%;
-  padding-bottom: 7%;
-  display: flex;
-  flex-direction: column;
-}
-
-.notes-style {
-  width: 100%;
-  height: 100%;
-}
-
-.document-container {
-    display: flex;
-    height: 100%;
-    margin-left: 1%;
-}
-
-.marked-articles-header {
-    margin: 1% 1% 0% 0%;
-    background: #f7f7f7;
-    padding-left: 1%;
-}
-
-.marked-articles-container {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-.mark-table {
-    font-size: 1rem;
-    width: 100%;
-    height: 100%;
-    border: 1px solid black;
-    border-collapse: collapse;
-}
-
-// td {
-// border-bottom: solid 1px black;
-// border-collapse: collapse;
-// }
-
-.markedTr {
-    border: 1px solid #b7b7b7;
-}
-
-
-
-.journal-style.table-image {
-    width: 34px;
-    height: 34px;
-    bottom: unset;
-}
-.journal-image-text-cell {
-display: flex;
-align-items: center;
-height:100%;
-
-}
-.table-outlet-text {
-  margin-left: 5%;
-}
-.conclusion-icon {
-    font-size: 1.5em;
-}
-.conclusion-icon:hover::before {
-    font-weight: 600;
-}
-.fair_icon {
-    color: red;
-}
-.unfair_icon {
-    color: blue;
-}
-.icon-description {
-    font-size: 1rem;
-    font-size: 1rem;
-    font-family: 'Lato';
-    font-weight: 200;
-    box-shadow: rgb(0 0 0 / 25%) 0px 54px 55px, rgb(0 0 0 / 12%) 0px -12px 30px, rgb(0 0 0 / 12%) 0px 4px 6px, rgb(0 0 0 / 17%) 0px 12px 13px, rgb(0 0 0 / 9%) 0px -3px 5px;
-}
-
-
-
-
-.outlet-scatter-container {
-    display: flex;
-    /*! flex-direction: column; */
-    background: #f7f7f7;
-    height: 100%;
-    flex: 1 1 0;
-}
-
-.outlet-scatter-header {
-    // display: flex;
-    // flex-direction: column;
-    border-bottom: solid 1px #b7b7b7;
-    margin: 0%;
-    flex: 1 1 25%;
-    padding-right: 0%;
-}
-
-
-.navigate-container {
-    text-align: center;
-    display: flex;
-    position: absolute;
-    height: 25%;
-    width: 25%;
-    top: 10%;
-    right: 1%;
-    z-index: 999;
-    box-shadow: 0 0 0 0 rgb(0 0 0);
-    transform: scale(1);
-    animation: pulse-a39a231a 2s infinite;
-}
-
-a.goNext {
-    text-decoration: none;
-    margin: 1%;
-    color: #4caaf5;
-    width: 100%;
-}
-
 
 @keyframes pulse {
     0% {
@@ -814,16 +526,5 @@ a.goNext {
   display: inline;
   margin: 0 auto;
   width: auto;
-}
-.journal-icon-container {
-  display: flex;
-  padding-left: 2%;
-}
-.journal-info-container {
-//   width: fit-content;
-//   right:0;
-//   position: absolute;
-    // white-space: nowrap;
-    margin: 0.5rem 1rem;
 }
 </style>
