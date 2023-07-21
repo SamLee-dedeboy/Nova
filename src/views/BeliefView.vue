@@ -26,7 +26,7 @@ const target_entity = vue.computed(() => route.params.entity as string)
 const highlight_hex_entity: Ref<string> = ref()
 const true_hex_data: Ref<any> = ref()
 const true_hex_fetched: Ref<Boolean> = ref(false)
-const revealed: Ref<Boolean> = ref(false)
+const revealed = ref(false)
 const reveal_anmt_ended = ref(false)
 const revealed_css = vue.computed(() => {
     return revealed.value ? "revealed" : "hidden"
@@ -55,7 +55,8 @@ vue.watch(revealed, () => {
     toggleDataHexTutorial()
 })
 vue.watch(reveal_anmt_ended, () => {
-    document.querySelector(".introjs-tooltip").style.scale = 1
+    const introjs_tooltip: HTMLElement = document.querySelector(".introjs-tooltip")
+    if(introjs_tooltip) introjs_tooltip.style.scale = "1"
 })
 
 vue.onBeforeMount(() => {
@@ -79,6 +80,7 @@ async function fetch_outlet_hex(outlet, center_entity) {
             hex_view.data.sorted_cooccurrences_list.forEach(entity_data => {
                 init_hex_selection[outlet][entity_data.entity] = -1
             })
+            init_hex_selection[outlet][center_entity] = { pos: 0, neg: 0}
             setHexSelection(init_hex_selection)
         })
 }
@@ -129,14 +131,16 @@ function outletIconStyle(name: string) {
 
 function toggleTutorial(e: MouseEvent) {
     introJS().setOptions({
-        dontShowAgain: true,
+        // dontShowAgain: true,
         showProgress: true,
         steps: [
             {
+                title: "You own Hive",
                 element: document.querySelector('.belief-user-hexview-overlay'),
                 intro: 'This is where you construct your hive.'
             },
             {
+                title: "What are the hexagons?",
                 element: document.querySelector('.belief-user-hexview > svg > rect.hive-border'),
                 intro: `
                     Each hexagon represents a topic. 
@@ -144,18 +148,24 @@ function toggleTutorial(e: MouseEvent) {
                 `
             },
             {
+                title: "The center one",
                 element: document.querySelector('.belief-user-hexview > svg.hex-svg > g.hex-group > g.hex-paths > path.center-hexagon'),
                 intro: `
                     Your selection of topic in the previous page is the center hexagon.
                     How has the outlet reported on this topic?
-                    Click to change the color.
+                    Click and change the color so that it matches what you believe.
                 `
             },
             {
+                title: "Other related topics",
                 element: document.querySelector('.hive-user-selection-border'),
-                intro: 'Drag the hexagons in this region to any empty slots above.'
+                intro: `
+                    These hexagons represent other highly correlated topics we found. 
+                    How has the outlet reported on these topics?
+                    Drag the hexagons to any empty slots above in corresponding regions.`
             },
             {
+                title: "Data Suggested Hive",
                 element: document.querySelector('.belief-true-hexview > svg > rect.hive-border'),
                 intro: "This is the data suggested hive. It is hidden for now. Once you're done with your own, click it for the reveal!"
             }
@@ -182,26 +192,27 @@ function toggleTutorial(e: MouseEvent) {
 function toggleDataHexTutorial() {
     let first_step = true
     introJS().setOptions({
-        dontShowAgain: true,
+        // dontShowAgain: true,
         showProgress: true,
         steps: [
             {
                 // element: document.querySelector('.belief-true-hexview > svg > rect.hive-border'),
+                title: "The Big Reveal",
                 element: document.querySelector('.belief-true-hexview-overlay'),
                 intro: `
                     This is the data suggested hive in its true form.
                     <br>
-                    It shows how your selected topic, and other highly correlated topics are reported by the outlet.
                     The differences between yours and this hive are text-colored in red.
                     <br>
                     You can click any hexagon to highlight them in both hives.
                 `
             },
             {
-                element: document.querySelector('.diff-description-container'),
+                title: "What next?",
+                element: document.querySelector('.diff-container-placeholder'),
                 intro: `
                     We summarizes the differences here for you.
-                    <br>
+                    <p style='font-weight: bold; font-size: 1.1rem; color:#ea2424'> Investigate them! </p>
                     If you're curious why differences exist on a topic,
                     click on the topic.
                     It will take you to the next page where you can see the articles.
@@ -288,28 +299,31 @@ function toggleDataHexTutorial() {
                 <!-- <div class="user-hexagon-region"></div> -->
             </div>
             <i v-if="!true_hex_fetched" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/>
-            <div v-else class="journal-style-container" style="display: flex; flex-direction: column; width: 30%; padding-top: 5%;">
+            <div v-else class="journal-style-container" style="display: flex; flex-direction: column; width: 30%; ">
                 <div class="journal-style" style="width: 100%; aspect-ratio: 1;">
                     <img :src="`/${target_outlet}.png`" :class="['journal-image', `${outletIconStyle(target_outlet)}`]" />
                 </div>
                 <div class="diff-container-placeholder" style="height: 30%">
-                    <div v-if="reveal_anmt_ended" class="diff-description-container" style="margin-top:15px;">
-                        <div v-if="Object.keys(conflict_hex).length > 0">
+                    <div v-if="reveal_anmt_ended" class="diff-description-container" style="height: 100%; margin-top:15px;">
+                        <div v-if="Object.keys(conflict_hex).length > 0" style="display: flex; flex-direction: column; height: 100%;">
                             Your belief on:
                             <br>
-                            <div class="conflict-hex-selector" v-for="conflict in conflict_hex" 
-                            style="
-                                font-weight: bold;
-                                color: #ea2424;
-                                cursor: pointer;
-                                border: 1px solid black;
-                                border-radius: 5px;
-                                text-align: center;
-                            "
-                            @click="goToNextStep(conflict)">
+                            <div class="conflict-items-container" style="max-height: 100%; overflow: scroll;">
+                                <div class="conflict-hex-selector" v-for="conflict in conflict_hex" 
+                                style="
+                                    font-weight: bold;
+                                    color: #ea2424;
+                                    cursor: pointer;
+                                    border: 1px solid black;
+                                    border-radius: 5px;
+                                    text-align: center;
+                                "
+                                @click="goToNextStep(conflict)">
 
-                                <div class="conflict-hex-selector-overlay"></div>
-                                {{ conflict }}
+                                    <div class="conflict-hex-selector-overlay"></div>
+                                    {{ conflict }}
+                                </div>
+
                             </div>
                             conflicts with the data.
                             <br>
@@ -328,7 +342,7 @@ function toggleDataHexTutorial() {
                         </div>
                     </div>
                 </div>
-                <Legend id="legend-sentiment" :color_dict="SstColors.key_color_dict"/>
+                <Legend id="legend-sentiment" :color_dict="SstColors.key_color_dict" style="margin-top: 15px;"/>
                 <div class="tutorial-toggle-container" style="display:flex; justify-content:center; margin-top:-50px;">
                     <Button severity="secondary" text raised @click="toggleTutorial" style="width:fit-content;font-family:Trebuchet MS"> Tutorial </Button>
                 </div>
@@ -358,6 +372,7 @@ function toggleDataHexTutorial() {
                 @conflict-hex="setConflictHex"
                 :show_blink="revealed"
                 :show_label="revealed"
+                :show_hex_appear="true"
                 >
                 </HexCooccurrence>
             </div>

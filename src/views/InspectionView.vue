@@ -193,6 +193,7 @@ function toggleTutorial() {
         showProgress: true,
         steps: [
             {
+                title: "Lists of articles",
                 element: document.querySelector('.article-cards-container'),
                 intro: `
                     We present all the related articles that we collected here,
@@ -200,6 +201,7 @@ function toggleTutorial() {
                 `
             },
             {
+                title: "Article headline",
                 element: document.querySelector('.article-card'),
                 intro: `
                     This is the headline of one article. Important entities are colored in yellow.
@@ -208,6 +210,7 @@ function toggleTutorial() {
                 `
             },
             {
+                title: "Full Article",
                 element: document.querySelector('.analysis-container'),
                 intro: `
                     Once an article is clicked, the full article will be shown on the right hand side.
@@ -233,14 +236,17 @@ function toggleTutorial() {
                 `
             },
             {
+                title: "Click for more!",
                 element: document.querySelector('.hexview-container'),
                 intro: `
                     Your hive vs. data suggested hive is kept here for your record.
                     The blurry ones in yours are the ones that you did not pick.
+                    <br>
                     Clicking on any hexagon will allow you to see a different set of articles.
                 `
             },
             {
+                title: "Take Notes!",
                 element: document.querySelector('.cooccurr-info-container'),
                 intro: `
                     If you find anything interesting or contradictory to your previous belief,
@@ -295,13 +301,14 @@ function toggleTutorial() {
                     padding: 0.5%;
                 "
             >
-                Articles on
-                <span> {{selected_entity?.name.replaceAll("_"," ")}} </span>
+                <span> Articles on {{selected_entity?.name.replaceAll("_"," ")}} </span>
                 <span v-if="selected_cooccurr_entity">
-                    &
-                    <span> {{selected_cooccurr_entity?.name.replaceAll("_"," ")}} </span>
+                &thinsp;
+                    <span> & {{selected_cooccurr_entity?.name.replaceAll("_"," ")}} </span>
                 </span>
+                &thinsp;
                 by
+                &thinsp;
                 <span> {{selected_outlet}}</span>
                 <!-- <span> {{selected_outlet}}</span> -->
                 &nbsp
@@ -349,6 +356,7 @@ function toggleTutorial() {
                             :segmentation="original_segmentation" :highlight_hex_entity="highlight_hex_entity"
                             :show_blink="true"
                             :show_label="true"
+                            :show_hex_appear="false"
                             @hex-clicked="handleHexClicked">
                         </HexCooccurrence>
                     </div>
@@ -359,10 +367,18 @@ function toggleTutorial() {
                             <img :src="`/${selected_outlet}.png`"
                                 :class="['journal-image',`${outletIconStyle(selected_outlet)}`]" />
                         </div>
-                        <div class="journal-info-container" style="font-size:small; z-index:99; margin: 0.5rem 1rem;">
+                        <div class="journal-info-container" style="font-size:small; z-index:99; margin: 1rem 1rem;">
                             <!-- <Dropdown :modelValue="selected_outlet" :options="journal_options"
                                 placeholder="Select an journal" @change="handleChangeJournal" /> -->
-                            {{  selected_outlet }}
+                            <!-- {{  selected_outlet }} -->
+                            Did you change your mind on {{ selected_outlet }}? 
+                            Write down your thoughts!
+                            <!-- <i class='pi pi-info-circle tooltip'>
+                                <span class="tooltiptext right-tooltiptext" style="width: 400px">
+                                    We will record any text you put here for academic user study.
+                                    We do not collect any other information from you.
+                                </span>
+                            </i> -->
                         </div>
                     </div>
                     <div class="notes" 
@@ -377,8 +393,10 @@ function toggleTutorial() {
                             Notes
                             <i class='pi pi-info-circle tooltip'>
                                 <span class="tooltiptext right-tooltiptext" style="width: 145px">
-                                    Write down any hypothesis or questions you have.
-                                    The system will document that for you.
+                                    <!-- Write down any hypothesis or questions you have.
+                                    The system will document that for you. -->
+                                    We will record the text you put here for academic user study.
+                                    We do not collect any other information from you.
                                 </span>
                             </i>
                         </h2>
@@ -496,12 +514,12 @@ li {
 
 
 .journal-style{
-    width: 50px;
-    height: 50px;
+    // width: 50px;
+    height: 80px;
     position: relative;
-    overflow: hidden;
+    // overflow: hidden;
     border-radius: 50%;
-    border: #d7d7d7 3px solid;
+    border: #d7d7d7 1px solid;
     // bottom: 10%;
     // left: 2%;
 }

@@ -109,4 +109,7 @@ a {
 
 } */
 
+.introjs-tooltiptext {
+  font-family: Trebuchet MS !important;
+}
 </style>
