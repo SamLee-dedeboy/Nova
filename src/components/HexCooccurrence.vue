@@ -1,8 +1,17 @@
 <template>
     <div :id="id" class="hex-container">
         <svg :id="id+'-svg'" class="hex-svg">
-
+            <defs>
+                <!-- Define the red filter -->
+                <filter id="red-filter">
+                <feColorMatrix type="matrix" values="1 0 0 0 0
+                                                    0 0 0 0 0
+                                                    0 0 0 0 0
+                                                    0 0 0 0.1 0" />
+                </filter>
+            </defs>
         </svg>
+
     </div>
 </template>
 <script setup lang="ts">
@@ -23,6 +32,7 @@ const props = defineProps({
     mode: String,
     show_blink: Boolean,
     show_label: Boolean,
+    show_hex_appear: Boolean,
     wider_border: Boolean,
     p_margin: Object as () => any,
     user_hex_selection: Object as () => any,
@@ -53,6 +63,13 @@ const conflict_hex = vue.computed(() => {
     console.log(props.user_hex_selection)
     if(props.user_hex_selection === undefined) return []
     let res = []
+    // center entity
+    const center_entity = props.entity_cooccurrences?.target!
+    console.log(center_entity, props.user_hex_selection)
+    const center_entity_sst = categorizeHex(props.user_hex_selection[center_entity.entity], props.segmentation)
+    if(center_entity_sst !== categorizeHex(center_entity.sst, props.segmentation)) res.push(center_entity)
+
+    // other entities
     props.entity_cooccurrences.sorted_cooccurrences_list.forEach(hex_entity => {
         const user_selected_index = props.user_hex_selection[hex_entity.entity]
         if(user_selected_index === -1) return
@@ -291,7 +308,7 @@ function updateHive() {
 function updateUserFixedHex() {
     const svg = d3.select(`#${props.id}`).select("svg")
     // delete everything to avoid blinking bug
-    svg.selectAll("*").remove()
+    svg.select("g.hex-group").remove()
 
     // append everything back
     init()
@@ -413,7 +430,7 @@ function updateDataHex() {
     console.log(conflict_hex.value)
     const svg = d3.select(`#${props.id}`).select("svg")
     // delete everything to avoid blinking bug
-    svg.selectAll("*").remove()
+    svg.select("g.hex-group").remove()
 
     // append everything back
     init()
@@ -456,8 +473,16 @@ function updateDataHex() {
             // centers_indexed.push(d)
             return `translate(${d.x},${d.y})`
         })
-        .attr("stroke", "black")
+        .attr("stroke", (d) => {
+            return "black"
+        })
         .attr("stroke-width", 1)
+        .attr("filter", (d) => {
+            if(conflict_entities.value.includes(d[0].entity))
+                return "url(#red-filter)"
+            else
+                return "none"
+        })
         // .attr("filter",(d, i) => i===0? "blur(1px)": "none")
         // .attr("stroke", (d, i) => i===0? "#444444": "black")
         // .attr("stroke-width", (d, i) => i === 0 ? 7 : 1)
@@ -487,6 +512,7 @@ function updateDataHex() {
             else return 0.2
         })
         .attr("fill", (d: any, i) => {
+            if(i === 0 && !props.show_label) return SstColors.enum_color_dict[SentimentType.unknown]
             const sst = d[0].sst;
             return (d[0].exists) ? SstColors.enum_color_dict[categorizeHex(sst, props.segmentation!)] : '#dddddd'
         })
@@ -518,7 +544,7 @@ function updateDataHex() {
         .attr("fill", "black")
         .attr("font-size", "0.8em")
         .attr("opacity", (d: any, i) => {
-            if(i === 0) return 1
+            // if(i === 0) return 1
             if(props.show_label === false) return 0
             if(d[0].exists) return 1
             else return 0.5
@@ -542,6 +568,7 @@ function updateDataHex() {
         .call(wrap, 30)
     if(props.show_label) {
         svg.select("rect.hive-border-overlay").remove()
+        if(!props.show_hex_appear) return
         const duration = 600
         let animated_num = 0
         svg.selectAll("text.hex-label")
@@ -572,9 +599,7 @@ function updateDataHex() {
                     emit("hex-anmt-end", true)
                 }
             })
-
-    }
-    else {
+    } else {
         const hive_border_overlay = svg.select("rect.hive-border-overlay")
             .attr("cursor", "pointer")
             .attr("fill", "rgba(43, 42, 42, 0.5)")
@@ -594,7 +619,7 @@ function updateDataHex() {
 function updateUserHex() {
     const svg = d3.select(`#${props.id}`).select("svg")
     // delete everything to avoid blinking bug
-    svg.selectAll("*").remove()
+    svg.select("g.hex-group").remove()
 
     // append everything back
     init()
@@ -718,6 +743,7 @@ function changeCenterHexColor() {
     if(d.assigned_sst === SentimentType.neg) next_sst = SentimentType.neu 
     center_hex.attr("fill", SstColors.enum_color_dict[next_sst])
     d.assigned_sst = next_sst
+    emit("hex-filled", {filledEntity: d.entity, filledHexIndex: d.assigned_sst})
 }
 
 function updateHighlightHex() {
