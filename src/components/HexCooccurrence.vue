@@ -10,6 +10,11 @@
                                                     0 0 0 0.1 0" />
                 </filter>
             </defs>
+            <pattern id="diagonalHatch_conflict" width="10" height="10" patternTransform="rotate(45 0 0)"
+                patternUnits="userSpaceOnUse">
+                <rect x="0" y="0" width="10" height="10" style="fill:#FFF0F5" />
+                <line x1="0" y1="0" x2="0" y2="10" style="stroke:#ffb89c; stroke-width:8" />
+            </pattern>
         </svg>
 
     </div>
@@ -32,6 +37,7 @@ const props = defineProps({
     mode: String,
     show_blink: Boolean,
     show_label: Boolean,
+    center_changable: Boolean,
     show_hex_appear: Boolean,
     wider_border: Boolean,
     p_margin: Object as () => any,
@@ -477,15 +483,6 @@ function updateDataHex() {
             return "black"
         })
         .attr("stroke-width", 1)
-        .attr("filter", (d) => {
-            if(conflict_entities.value.includes(d[0].entity))
-                return "url(#red-filter)"
-            else
-                return "none"
-        })
-        // .attr("filter",(d, i) => i===0? "blur(1px)": "none")
-        // .attr("stroke", (d, i) => i===0? "#444444": "black")
-        // .attr("stroke-width", (d, i) => i === 0 ? 7 : 1)
         .on("click", function (e, d: any) {
             console.log({clickedEntity: d[0].entity})
             emit("hex-clicked", { clickedEntity: d[0].entity })
@@ -514,7 +511,11 @@ function updateDataHex() {
         .attr("fill", (d: any, i) => {
             if(i === 0 && !props.show_label) return SstColors.enum_color_dict[SentimentType.unknown]
             const sst = d[0].sst;
-            return (d[0].exists) ? SstColors.enum_color_dict[categorizeHex(sst, props.segmentation!)] : '#dddddd'
+            const categorized_sst = categorizeHex(sst, props.segmentation!)
+            if(conflict_entities.value.includes(d[0].entity))
+                return (d[0].exists) ? SstColors.enum_conflict_color_dict[categorized_sst] : '#dddddd'
+            else
+                return (d[0].exists) ? SstColors.enum_color_dict[categorized_sst] : '#dddddd'
         })
     
     // add looped animation for center hex
@@ -732,6 +733,7 @@ function updateUserHex() {
 }
 
 function changeCenterHexColor() {
+    if(!props.center_changable) return
     let next_sst = undefined
     const center_hex = d3.select("path.center-hexagon")
     let d: any = center_hex.data()[0]

@@ -311,9 +311,9 @@ function toggleTutorial() {
         2020).
       "/>
     <Splitter class="overview-container">
-      <SplitterPanel class="left-section-panel" style="overflow: visible" :size="left_section_panel_size">
+      <SplitterPanel class="left-section-panel" style="overflow: visible; display: flex; flex-direction:column;" :size="left_section_panel_size">
           <!-- left section header -->
-          <h2 class="component-header scatter-header" style="margin: 2%;">
+          <h2 class="component-header scatter-header" style="margin: 1%;">
             News Topics
             <i class='pi pi-info-circle tooltip'>
               <span class="tooltiptext right-tooltiptext" style="width: 200px;">
@@ -323,7 +323,7 @@ function toggleTutorial() {
               </span>
             </i>
           </h2>
-          <div class='scatter-content' style="height: 100%; flex-direction: content;">
+          <div class='scatter-content' style="height: 100%; flex-direction: content; flex: 1; overflow-y: auto">
             <Splitter class='table-scatter-splitter'>
               <SplitterPanel class="entity-table-panel" :size="table_panel_size" style="display: flex; flex-direction: column">
                 <div id="entityTableWrapper" class='entityTableWrapper' style="height: 67%; min-height: 67%; margin-left: 5%;">
@@ -360,7 +360,7 @@ function toggleTutorial() {
                       </i>
                     </h2>
                     <!-- filter slider -->
-                    <h3 class="threshold-title" style="width: 100%;"> Number of Articles Threshold
+                    <h3 class="threshold-title" style="width: 100%;"> Articles Threshold
                       <i class='pi pi-info-circle tooltip'>
                         <span class="tooltiptext right-tooltiptext" style="width: 300px">
                           User the slider to set a threshold on topics' minimum articles.

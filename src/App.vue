@@ -32,7 +32,10 @@ header {
   max-height: 100vh;
 }
 main {
-  min-height: 100vh;
+  /* min-height: 100vh; */
+}
+p {
+  margin: 0;
 }
 
 .component-header {

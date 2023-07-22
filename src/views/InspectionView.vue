@@ -42,6 +42,7 @@ const selected_entity = vue.computed(() => store.selected_entity)
 const setEntity = (entity) => store.setEntity(entity)
 const selected_cooccurr_entity = vue.computed(() => store.selected_cooccurr_entity)
 const setCooccurrEntity = (cooccurr_entity) => store.setCooccurrEntity(cooccurr_entity)
+const hex_selection = vue.computed(() => store.hex_selection)
 const segmentation = vue.computed(() => store.segmentation)
 const setNotes = (e) => (store.setNotes(e.target.value, selected_outlet))
 const original_segmentation = segmentation.value
@@ -357,6 +358,7 @@ function toggleTutorial() {
                             :show_blink="true"
                             :show_label="true"
                             :show_hex_appear="false"
+                            :user_hex_selection="hex_selection[selected_outlet]"
                             @hex-clicked="handleHexClicked">
                         </HexCooccurrence>
                     </div>

@@ -74,6 +74,7 @@ async function fetch_outlet_hex(outlet, center_entity) {
                 data: json
             }
             outlet_hexview.value = hex_view
+            console.log(outlet_hexview.value)
             setClickedHexView(hex_view)
             let init_hex_selection = {}
             init_hex_selection[outlet] = {}
@@ -293,13 +294,14 @@ function toggleDataHexTutorial() {
                 @hex-clicked="handleHexClicked"
                 @hex-filled="handleHexFilled"
                 @hex-rendered="hex_rendered = true"
+                @center-changable="!revealed"
                 :show_blink="true"
                 :show_label="true">
                 </HexCooccurrence>
                 <!-- <div class="user-hexagon-region"></div> -->
             </div>
             <i v-if="!true_hex_fetched" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/>
-            <div v-else class="journal-style-container" style="display: flex; flex-direction: column; width: 30%; ">
+            <div v-else class="journal-style-container" style="display: flex; flex-direction: column; width: 30%; padding-top: 2%; ">
                 <div class="journal-style" style="width: 100%; aspect-ratio: 1;">
                     <img :src="`/${target_outlet}.png`" :class="['journal-image', `${outletIconStyle(target_outlet)}`]" />
                 </div>
@@ -343,7 +345,7 @@ function toggleDataHexTutorial() {
                     </div>
                 </div>
                 <Legend id="legend-sentiment" :color_dict="SstColors.key_color_dict" style="margin-top: 15px;"/>
-                <div class="tutorial-toggle-container" style="display:flex; justify-content:center; margin-top:-50px;">
+                <div class="tutorial-toggle-container" style="display:flex; justify-content:center; margin-top:-50px; padding-right: 8%;">
                     <Button severity="secondary" text raised @click="toggleTutorial" style="width:fit-content;font-family:Trebuchet MS"> Tutorial </Button>
                 </div>
             </div>
