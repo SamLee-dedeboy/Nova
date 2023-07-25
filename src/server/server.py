@@ -73,7 +73,7 @@ def get_overall_hexview(title):
 
 @app.route("/hexview/grouped/<title>/<outlet>")
 def get_grouped_hexview(title, outlet):
-    entity_candidates = hexview_data.get_entity_candidates(title, 
+    entity_candidates = hexview_data.get_entity_candidates(title, outlet,
                                                               processed_data.grouped_cooccurrences_dict, 
                                                               grouped_node_dict, 
                                                              overall_node_dict)
