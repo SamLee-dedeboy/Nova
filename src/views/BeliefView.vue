@@ -382,7 +382,7 @@ function toggleDataHexTutorial() {
                 @click="goToNextStep"
                 :disabled="!revealed"
                 > Next Page </Button> -->
-            <svg>
+            <svg style="position: absolute">
                 <pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)"
                     patternUnits="userSpaceOnUse">
                     <rect x="0" y="0" width="10" height="10" style="fill:#baf0f5" />

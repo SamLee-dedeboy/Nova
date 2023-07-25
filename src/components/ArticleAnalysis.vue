@@ -15,13 +15,18 @@ const props = defineProps({
     article_highlights: Object as () => any,
 })
 
+const emit = defineEmits(['sentence-clicked'])
+
 const indexed_content: Ref<Any[]> = ref([])
 const notes = vue.computed(() => store.notes)
 const setNotes = (e) => store.setNotes(e.target.value)
 
 vue.watch(() => props.selected_article, async () => {
+    console.log("selected article changed!")
+    document.querySelector('.scroll-panel').scrollTop = 0
+    
     await splitArticleSentences(props.selected_article.content)
-    initAnalysisPanel(props.selected_article.id)
+    // initAnalysisPanel(props.selected_article.id)
 })
 
 async function splitArticleSentences(content) {
@@ -69,13 +74,22 @@ function addContentHighlights(indexed_content: any[], highlights: any) {
         const sentence = indexed_content[sentence_index]
         const entities = highlights[sentence_index] // list of entity data
         if(entities) {
-            res += add_highlights(sentence, entities, true)
+            res += `<div id='s-${sentence_index}' class="sentence">` + add_highlights(sentence, entities, true) + '</div>'
         } else { // no entities to highlight
-            res += sentence
+            res += `<div id='s-${sentence_index}' class="sentence">` + sentence + '</div>'
         }
-        res += "\n\n"
+        // res += "\n\n"
+        // res += '<br>'
     })
     return res
+}
+
+function handleSentenceClicked(e) {
+    const clicked_sentence_id = e.target.id
+    const clicked_sentence_index = clicked_sentence_id.split('-')[1]
+    const sentence_content = indexed_content.value[clicked_sentence_index]
+    // console.log({sentence_content})
+    emit('sentence-clicked', sentence_content, clicked_sentence_index, props.selected_article.id)
 }
 
 function add_highlights(raw_text: string, highlights: any[], filter=false) {
@@ -128,93 +142,80 @@ function highlight_element(text, highlight_color='#f4e12c5c') {
     return `<span style='background-color:${highlight_color};'>${text}</span>`
 }
 
+function scrollToSentence(sentence_index) {
+    document.querySelector(`#s-${sentence_index}`).scrollIntoView({ behavior: 'smooth'})
+    setTimeout(() => {
+        console.log('The browser has (theoretically) finished scrolling');
+        vue.nextTick(() => document.querySelector(`#s-${sentence_index}`).classList.add("highlighted"))
+        setTimeout(() => {
+            document.querySelector(`#s-${sentence_index}`).classList.remove("highlighted")
+        }, 1000); 
+    }, 500)
+
+}
+
 defineExpose({
     initAnalysisPanel,
+    scrollToSentence
 })
 
 
 </script>
 <template>
-<div class="analysis-container">
-    <div class="analysis-left">
-        <h2 class="component-header analysis-header">
+<div class="analysis-container" style="display: flex; overflow: hidden; flex: 1 1 0; height: 100%">
+    <div class="analysis-left" style="width: 100%; overflow: hidden; display: flex; flex-direction: column">
+        <h2 class="component-header analysis-header" style="background: #f7f7f7; padding-left: 1%">
             Article Reviewer
         </h2>
-        <div class="analysis-content">
-            <ScrollPanel style="width: 100%; height: 100%">
-                <div class="summary" v-if="selected_article">
-                    <div class="articleHeadline">
-                        <h4 class="selected-article-headline" v-html="add_highlights(selected_article.headline, props.article_highlights?.headline_entities?.[selected_article.id])"/>
+        <div class="analysis-content" style="display: flex; height: 100%; flex: 1 1 0; overflow: hidden; margin: 1%;">
+            <div class="scroll-panel" style="width: 100%; height: 100%; overflow-y: auto">
+                <div class="summary" v-if="selected_article" style="height: 100%; flex-direction: column">
+                    <div class="articleHeadline" style="text-align: center; margin: 2%">
+                        <h4 class="selected-article-headline" style="font-weight: 600;" v-html="add_highlights(selected_article.headline, props.article_highlights?.headline_entities?.[selected_article.id])"/>
                     </div>
                     <!-- <div class="articleSummary">
                         <span class="selected-article-summary" v-html="removeTags(add_highlights(selected_article.summary, props.article_highlights?.summary_entities?.[selected_article.id]))"/>
                         <span class="selected-article-summary" v-html="removeTags(selected_article.content)"/>
                     </div> -->
-                    <div class="articleContent">
-                        <span class="selected-article-content" v-html="addContentHighlights(indexed_content, props.article_highlights?.content_entities?.[selected_article.id])"/>
+                    <div class="articleContent" style="margin-left: 8%; margin-right: 8%; font-style: italic">
+                        <span class="selected-article-content" @click="handleSentenceClicked" v-html="addContentHighlights(indexed_content, props.article_highlights?.content_entities?.[selected_article.id])"/>
                         <!-- <span class="selected-article-content" v-html="selected_article.content"/> -->
                     </div>
                     <div style="height: 30px"></div>
                 </div>
-            </ScrollPanel>
+            </div>
         </div>
     </div>
 </div>
 </template>
 
 <style scoped>
-.analysis-container {
-    display: flex;
-  overflow: hidden;
-  /*! height: 100%; */
-  flex: 1 1 0;
-  height: 100%;
+:deep(.sentence) {
+    cursor: pointer;
+    padding: 2% 1% 2% 1%;
 }
-.component-header.analysis-header {
-  background: #f7f7f7;
-  padding-left: 1%;
-}
-.analysis-content {
-  display: flex;
-  height: 100%;
-    flex: 1 1 0;
-    overflow: hidden;
-    margin: 1%
-}
-.analysis-left {
-    width: 100%;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
+:deep(.sentence:hover) {
+    background-color: rgba(45, 45, 45, 0.2);
+    border: 1px solid #f4f4f4;
+    border-radius: 5px;
 }
 
-.articleHeadline {
-    text-align: center;
-    margin: 2% 2% 2% 2%;
-}
-
-.articleSummary, .articleContent {
-    margin-left: 8%;
-    margin-right: 8%;
-    font-style: italic;
-}
-
-.summary {
-    white-space: pre-line;
-    height:100%;
-    /* display: flex; */
-    flex-direction: column;
-}
 .selected-article-summary, .selected-article-content {
   margin-left: 1%;
 }
 :deep(.p-splitter-gutter) {
     pointer-events: none;
 }
-.selected-article-headline {
-  font-weight: 600;
-}
 :deep(.p-scrollpanel .p-scrollpanel-bar) {
     background: #838585;
+}
+:deep(.highlighted) {
+    border-radius: 5px;
+    background-color: rgba(45, 45, 45, 0.2);
+    transition: background-color 0.5s ease;
+}
+:deep(:not(.highlighted)) {
+    border-radius: 5px;
+    transition: background-color 0.5s ease;
 }
 </style>

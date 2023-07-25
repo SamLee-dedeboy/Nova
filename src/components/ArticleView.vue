@@ -99,11 +99,9 @@ vue.watch(neg_articles, (new_value, old_value) => {
         const neg_panel_togglers = document.querySelectorAll(".neg-article-list > .p-scrollpanel-wrapper > .p-scrollpanel-content > .p-panel-toggleable > .p-panel-header > .p-panel-icons > .p-panel-toggler")
         neg_panel_togglers.forEach(toggler => toggler.classList.add("neg-toggler"))
     })
-    console.log(pos_articles.value, neg_articles.value)
     const pos_ids = pos_articles.value?.map(article => article.id)
     const neg_ids = neg_articles.value?.map(article => article.id)
     const filteredArray = pos_ids.filter(pos_id => neg_ids.includes(pos_id))
-    console.log({filteredArray})
 })
 
 

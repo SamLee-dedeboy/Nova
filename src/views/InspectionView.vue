@@ -28,6 +28,8 @@ import ArticleView from "../components/ArticleView.vue";
 import ArticleAnalysis from "../components/ArticleAnalysis.vue";
 import HexCooccurrence from "../components/HexCooccurrence.vue"
 import ProgressiveDialog from "../components/ProgressiveDialog.vue"
+import NoteEditor from '../components/NoteEditor.vue';
+import { wrap } from 'lodash';
 
 const store = useUserDataStore()
 const route = useRoute()
@@ -44,7 +46,9 @@ const selected_cooccurr_entity = vue.computed(() => store.selected_cooccurr_enti
 const setCooccurrEntity = (cooccurr_entity) => store.setCooccurrEntity(cooccurr_entity)
 const hex_selection = vue.computed(() => store.hex_selection)
 const segmentation = vue.computed(() => store.segmentation)
-const setNotes = (e) => (store.setNotes(e.target.value, selected_outlet))
+const notes = vue.computed(() => store.notes[selected_outlet])
+const setNotes = (content) => (store.setNotes(content, selected_outlet))
+const noteHTMLContent = vue.ref('')
 const original_segmentation = segmentation.value
 const clicked_hexview = vue.computed(() => store.clicked_hexview)
 const highlight_hex_entity: Ref<string> = ref("")
@@ -57,10 +61,51 @@ const selected_article: Ref<Article> = ref()
 const target_articles: Ref<Article[]> = ref([])
 const target_article_highlights: Ref<any> = ref({})
 const article_view = ref(null)
+const article_content_view = ref(null)
 
 vue.onMounted(() => {
     prepare_data()
+    noteHTMLContent.value = notes.value || ""
 })
+
+vue.watch(noteHTMLContent, () => {
+    setNotes(noteHTMLContent)
+    vue.nextTick(() => {
+        const references = document.querySelectorAll(".noteReference")
+        references.forEach(reference_element => {
+            reference_element.addEventListener("click", async function(e) {
+                console.log("reference clicked", (e.target as HTMLElement).getAttribute("sentence_index"))
+                const sentence_index = (e.target as HTMLElement).getAttribute("sentence_index")
+                const doc_id = parseInt((e.target as HTMLElement).getAttribute("doc_id"))
+                console.log({sentence_index, doc_id})
+                // check if the article is already loaded
+                if(doc_id != selected_article.value.id) {
+                    console.log("fetching...")
+                    await fetch(`${server_address}/processed_data/ids_to_articles`, {
+                        method: "POST",
+                        headers: {
+                            "Accept": "application/json",
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            no_content: false,
+                            article_ids: [doc_id],
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(articles => {
+                        console.log("fetched!")
+                        selected_article.value = articles[0]
+                        vue.nextTick(() => article_content_view.value.scrollToSentence(sentence_index))
+                    })
+                } else {
+                    article_content_view.value.scrollToSentence(sentence_index)
+                }
+            })
+        })
+    })
+})
+
 
 const journal_options = [
     "CNN",
@@ -154,6 +199,18 @@ async function handleHexClicked({ clickedEntity }, view) {
     const outlet = selected_outlet
     await fetch_cooccurr_info(outlet, entity, clickedEntity)
     prepare_data()
+}
+
+function handleSentenceClicked(sentence, sentence_index, doc_id) {
+    console.log("sentence clicked")
+    const note_content = notes.value || ""
+    noteHTMLContent.value = note_content + wrapSentence(sentence, sentence_index, doc_id)
+}
+
+function wrapSentence(sentence: string, sentence_index: number, doc_id: string) {
+    const sliced = sentence.slice(0, 35)
+    return `<div class='noteReference' contenteditable="false" sentence_index=${sentence_index} doc_id=${doc_id}> "${sliced}..." </div><br>`
+    // return `<NoteReference :sentence="sentence" :sentence_index="sentence_index"> </NoteReference>`
 }
 
 async function fetch_cooccurr_info(outlet, entity, co_occurr_entity) {
@@ -366,7 +423,7 @@ function toggleTutorial() {
                 <div v-if="data_fetched" class="cooccurr-info-container" style="display: flex; flex-direction: column; font-size: 0.8rem; width: 40%;">
                     <div class=journal-icon-container style="display: flex; padding-left: 2%;">
                         <div :class="['journal-style']">
-                            <img :src="`/${selected_outlet}.png`"
+                            <img :src="`/squared/${selected_outlet}.png`"
                                 :class="['journal-image',`${outletIconStyle(selected_outlet)}`]" />
                         </div>
                         <div class="journal-info-container" style="font-size:small; z-index:99; margin: 1rem 1rem;">
@@ -387,9 +444,10 @@ function toggleTutorial() {
                         style="
                             width: 100%;
                             height: 100%;
-                            padding-bottom: 7%;
+                            padding-bottom: 3%;
                             display: flex;
                             flex-direction: column;
+                            overflow: hidden;
                         ">
                         <h2 class="component-header notes-header">
                             Notes
@@ -402,11 +460,12 @@ function toggleTutorial() {
                                 </span>
                             </i>
                         </h2>
-                        <textarea class="notes-style"
+                        <!-- <textarea class="notes-style"
                         style="width: 100%; height: 100%;"
                         :value="notes"
                         placeholder="Write down any thoughts you have..." 
-                        @input="setNotes" />
+                        @input="setNotes" /> -->
+                        <NoteEditor class="notes-style" style="width: 100%; height: 100%" v-model="noteHTMLContent"></NoteEditor>
                     </div>
                 </div>
                 <svg style='position:absolute;pointer-events:none'>
@@ -423,9 +482,12 @@ function toggleTutorial() {
             :size="right_section_size">
             <div class="article-content-container" style="display: flex; flex-direction: column; height: 100%; overflow: hidden;">
                 <ArticleAnalysis class="article-analysis-panel"
+                    ref="article_content_view"
                     :entity_pair="[selected_entity?.name as string, selected_cooccurr_entity?.name as string]"
                     :selected_article="selected_article"
-                    :article_highlights="target_article_highlights">
+                    :article_highlights="target_article_highlights"
+                    @sentence-clicked="handleSentenceClicked"
+                    >
                 </ArticleAnalysis>
 
             </div>
@@ -546,5 +608,15 @@ li {
   display: inline;
   margin: 0 auto;
   width: auto;
+}
+:deep(.noteReference) {
+    cursor: pointer;
+    border: 1px solid grey;
+    border-radius: 5px;
+    padding-left: 3px;
+    font-family: "Trebuchet MS";
+}
+:deep(.noteReference:hover) {
+    background-color: rgba(45, 45, 45, 0.2)
 }
 </style>
