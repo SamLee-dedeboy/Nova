@@ -74,6 +74,7 @@ export class EntityScatter {
     emit_at_end: boolean
     manualTooltip: boolean
     manualTooltipID: string
+    fisheye_flag: boolean
     fisheye_enabled: boolean
 
     public constructor(
@@ -93,7 +94,9 @@ export class EntityScatter {
         min_articles: ComputedRef<any>, max_articles: ComputedRef<any>,
         clicked_node: Ref<ScatterNode>, clicked_node_element: Ref<any>,
         hovered_node_info: Ref<OutletNodeInfo>,
-        manualTooltip: boolean, manualTooltipID: string
+        manualTooltip: boolean, 
+        manualTooltipID: string,
+        fisheye_flag: boolean
     ) {
         this.props = props
         this.svgId = svgId
@@ -148,6 +151,7 @@ export class EntityScatter {
             self.handleZoom(e, self.svg)
         })
         this.fisheye_enabled = false
+        this.fisheye_flag = fisheye_flag
     }
 
     draw(emit): void {
@@ -195,9 +199,16 @@ export class EntityScatter {
                     .attr("stroke", "black")
                     .attr("stroke-width", "1")
                     .attr("fill", "none")
-
+                    .attr("opacity", 1)
+            } else {
+                fisheye_indicator.attr("opacity", 0)
             }
         });
+    }
+    toggleFisheye(fisheye_flag) {
+        this.fisheye_flag = fisheye_flag
+        this.fisheye_enabled = fisheye_flag
+        d3.select("circle.fisheye").attr("opacity", fisheye_flag? 1:0)
     }
 
     checkProximity(d: any, focus_point: any, range: number=100) {
@@ -620,7 +631,7 @@ export class EntityScatter {
                         .on("end", () => {
                             animated_num += 1
                             if(animated_num === bind_data.length)
-                                this.fisheye_enabled = true
+                                this.fisheye_enabled = this.fisheye_flag
                         })
                         .call(g => g.select("circle.expand_circle")
                             .transition().duration(1000)
@@ -678,6 +689,7 @@ export class EntityScatter {
                         cvThis.removeExpandedStyle(cancel_highlight_node)
                     }
                     cvThis.addNodeLabel(container, cvThis)
+                    cvThis.applyExpandStyle(container)
                 }
             })
             .on("mouseout", function (e, d) {

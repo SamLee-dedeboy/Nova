@@ -98,7 +98,6 @@ function handleOutletClicked(outlet) {
                 </span>
             </i>
         </p>
-        <br>
         <p>
             According to the current segmentation rule (
                 <span class="pos_color"> {{ props.segmentation.pos.toFixed(2) }}</span>,
@@ -108,7 +107,9 @@ function handleOutletClicked(outlet) {
         <p>
             <span :class="category_css_name" class="entity"> {{ props.data.name }} </span> is categorized as <span :class="category_css_name">{{ entity_sst_category }}</span>.
         </p>
-        <p> Drag the white square 
+        <br> &nbsp;
+        <p style="font-style: italic"> 
+            Hint: Drag the white square 
             <svg width="10" height="10">
                 <rect width=10 height=10 fill="white" stroke="black" stroke-width="1"></rect>
             </svg>
@@ -119,10 +120,7 @@ function handleOutletClicked(outlet) {
                 <rect x=0 y=10 width=10 height=10 :fill="SstColors.neu_color" stroke="black" stroke-width="1"></rect>
                 <rect x=10 y=10 width=10 height=10 :fill="SstColors.pos_color" stroke="black" stroke-width="1"></rect>
             </svg>
-            to adjust the segmentation rule.
-            <br>
-            <br>
-            <br>
+            so that controversial topics appear in the <span class="mix_color"> mixed</span> region
         </p>
     </div>
     <Button v-if="typeCompleted" severity="secondary" text raised @click="showNextStep=true" style="width:fit-content;font-family:Trebuchet MS" > 

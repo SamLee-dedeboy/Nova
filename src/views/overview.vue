@@ -323,7 +323,7 @@ function toggleTutorial() {
               </span>
             </i>
           </h2>
-          <div class='scatter-content' style="height: 100%; flex-direction: content; flex: 1; overflow-y: auto">
+          <div class='scatter-content' style="height: 100%; flex-direction: content; flex: 1;">
             <Splitter class='table-scatter-splitter'>
               <SplitterPanel class="entity-table-panel" :size="table_panel_size" style="display: flex; flex-direction: column">
                 <div id="entityTableWrapper" class='entityTableWrapper' style="height: 67%; min-height: 67%; margin-left: 5%;">
@@ -457,7 +457,7 @@ function toggleTutorial() {
 :deep(.p-splitter-panel) {
   width: 100%;
   height: 100%;
-  overflow: hidden;
+  // overflow: hidden;
 }
 
 // divider style 
