@@ -1,6 +1,7 @@
 <template>
     <div :id="id" class="hex-container">
         <svg :id="id+'-svg'" class="hex-svg">
+
             <defs>
                 <!-- Define the red filter -->
                 <filter id="red-filter">
@@ -8,6 +9,19 @@
                                                     0 0 0 0 0
                                                     0 0 0 0 0
                                                     0 0 0 0.1 0" />
+                </filter>
+            <!-- border shadow filter -->
+                <filter id="drop-shadow-border" x="0" y="0">
+                    <feOffset result="offOut" in="SourceAlpha" dx="3" dy="3" />
+                    <feGaussianBlur result="blurOut" in="offOut" stdDeviation="2" />
+                    <feBlend in="SourceGraphic" in2="blurOut" mode="normal" flood-color="rgba(0, 0, 0, 0.7)" />
+                </filter>
+            </defs>
+            <defs>
+                <filter id="drop-shadow-hex" x="0" y="0">
+                    <feOffset result="offOut" in="SourceAlpha" dx="3" dy="3" />
+                    <feGaussianBlur result="blurOut" in="offOut" stdDeviation="2" />
+                    <feBlend in="SourceGraphic" in2="blurOut" mode="normal" flood-color="rgba(0, 0, 0, 0)" />
                 </filter>
             </defs>
             <pattern id="diagonalHatch_conflict" width="10" height="10" patternTransform="rotate(45 0 0)"
@@ -265,7 +279,10 @@ vue.onMounted(() => {
 function init() {
     const svg = d3.select(`#${props.id}`).select("svg")
     const hex_group = svg.append("g").attr("class", "hex-group")
-    const border_rect = svg.append("rect").attr("class", "hive-border")
+    const border_rect_group = svg.append("g")
+        .attr("class", "border-group")
+        .attr("filter", "url(#drop-shadow-border)")
+    border_rect_group.append("rect").attr("class", "hive-border")
         .attr("x", margin.value.left + viewBox_width * 0.1)
         .attr("y", margin.value.top + hex_radius * 2)
         .attr("width", hex_radius * 13 + (props.wider_border? hex_radius*3 : 0))
@@ -285,17 +302,17 @@ function init() {
         .attr("stroke", "black")
         .attr("stroke-width", 1)
         .style("opacity", 0)
-    const user_selection_border_rect = svg.append("rect").attr("class", "hive-user-selection-border")
-        .attr("x", margin.value.left + viewBox_width * 0.1)
-        .attr("y", margin.value.top + hex_radius * 2 + hex_radius*12)
-        .attr("width", hex_radius * 13 + (props.wider_border? hex_radius*3 : 0))
-        .attr("height", hex_radius * 5) 
-        .attr("rx", 15)
-        .attr("fill", "none")
-        .attr("stroke", "black")
-        .attr("stroke-width", 1)
-        .attr("pointer-events", "none")
-        .style("opacity", 0)
+    // const user_selection_border_rect = svg.append("rect").attr("class", "hive-user-selection-border")
+    //     .attr("x", margin.value.left + viewBox_width * 0.1)
+    //     .attr("y", margin.value.top + hex_radius * 2 + hex_radius*12)
+    //     .attr("width", hex_radius * 13 + (props.wider_border? hex_radius*3 : 0))
+    //     .attr("height", hex_radius * 5) 
+    //     .attr("rx", 15)
+    //     .attr("fill", "none")
+    //     .attr("stroke", "black")
+    //     .attr("stroke-width", 1)
+    //     .attr("pointer-events", "none")
+    //     .style("opacity", 0)
     const hex_paths = hex_group.append("g").attr("class", "hex-paths")
     const hex_bins = hex_group.append("g").attr("class", "hex-bins")
     const hex_labels = hex_group.append("g").attr("class", "hex-labels")
@@ -437,6 +454,7 @@ function updateDataHex() {
     const svg = d3.select(`#${props.id}`).select("svg")
     // delete everything to avoid blinking bug
     svg.select("g.hex-group").remove()
+    svg.select("g.border-group").remove()
 
     // append everything back
     init()
@@ -603,7 +621,7 @@ function updateDataHex() {
     } else {
         const hive_border_overlay = svg.select("rect.hive-border-overlay")
             .attr("cursor", "pointer")
-            .attr("fill", "rgba(43, 42, 42, 0.5)")
+            .attr("fill", "rgba(43, 42, 42, 0.7)")
             .style("opacity", 0)
             .on("mouseover", function() {
                 d3.select(this).transition().duration(300).style("opacity", 1)
@@ -662,7 +680,7 @@ function updateUserHex() {
             // centers_indexed.push(d)
             return `translate(${d.x},${d.y})`
         })
-        .attr("filter",(d, i) => i===0? "blur(1px)": "none")
+        // .attr("filter",(d, i) => i===0? "blur(1px)": "none")
         .attr("stroke", (d,i) => i===0? "#444444": "black")
         .attr("stroke-width", (d, i) => i === 0 ? 7 : 1)
         .on("mouseover", function (e, d: any) {
@@ -688,6 +706,7 @@ function updateUserHex() {
                 d.assigned_sst = SentimentType.neu
             return SstColors.enum_color_dict[d.assigned_sst]
         })
+        .attr("filter", (d: any, i) => i === 0? "unset" : "url(#drop-shadow-hex)")
         // define drag behavior
         .call(drag)
 
@@ -733,6 +752,7 @@ function updateUserHex() {
 }
 
 function changeCenterHexColor() {
+    console.log(props.center_changable)
     if(!props.center_changable) return
     let next_sst = undefined
     const center_hex = d3.select("path.center-hexagon")
@@ -1141,6 +1161,11 @@ defineExpose({
 .hex-container {
     width: 100%;
     height: 100%;
+}
+.shadow {
+  -webkit-filter: drop-shadow( 3px 3px 2px rgba(0, 0, 0, .7));
+  filter: drop-shadow( 3px 3px 2px rgba(0, 0, 0, .7));
+  /* Similar syntax to box-shadow */
 }
 
 

@@ -3,7 +3,7 @@
         <div id="nova-logo">
             <img alt="logo" src="/nova_logo.png" height="40" class="mr-2">
         </div>
-        <StageSelect class='page-steps' />
+        <!-- <StageSelect class='page-steps' /> -->
     </div>
 </template>
 

@@ -95,11 +95,17 @@ function handleHexClicked({clickedEntity}) {
 }
 
 function handleHexFilled({filledEntity, filledHexIndex}) {
-    hex_filled.value = true
     const outlet = target_outlet.value
     let old_hex_selection = hex_selection.value
     old_hex_selection[outlet][filledEntity] = filledHexIndex
     setHexSelection(old_hex_selection)
+    hex_filled.value = true
+    Object.keys(old_hex_selection[outlet]).forEach(hex_entity => {
+        if(old_hex_selection[outlet][hex_entity] === -1) {
+            hex_filled.value = false
+            return
+        }
+    })
 }
 
 function checkReveal() {
@@ -203,7 +209,7 @@ function toggleDataHexTutorial() {
                 intro: `
                     This is the data suggested hive in its true form.
                     <br>
-                    The differences between yours and this hive are text-colored in red.
+                    The <span style='color: #ea2424;'> differences </span> between yours and this hive are text-colored in red.
                     <br>
                     You can click any hexagon to highlight them in both hives.
                 `
@@ -247,7 +253,7 @@ function toggleDataHexTutorial() {
       <p class="introTutorial">
         Drag and drop the hexagons into the hive to create your prediction!
         <br>
-        Put a gif here to demonstrate...
+        <!-- Put a gif here to demonstrate... -->
       </p>
       <template #footer>
         <Button label="Got it" icon="pi pi-check" @click="showDragNDropHint=false" autofocus />
@@ -296,7 +302,8 @@ function toggleDataHexTutorial() {
                 @hex-rendered="hex_rendered = true"
                 @center-changable="!revealed"
                 :show_blink="true"
-                :show_label="true">
+                :show_label="true"
+                :center_changable="true">
                 </HexCooccurrence>
                 <!-- <div class="user-hexagon-region"></div> -->
             </div>
@@ -308,26 +315,30 @@ function toggleDataHexTutorial() {
                 <div class="diff-container-placeholder" style="height: 30%">
                     <div v-if="reveal_anmt_ended" class="diff-description-container" style="height: 100%; margin-top:15px;">
                         <div v-if="Object.keys(conflict_hex).length > 0" style="display: flex; flex-direction: column; height: 100%;">
-                            Your belief on:
+                            Your belief on the following topics conflicts with the data.
                             <br>
-                            <div class="conflict-items-container" style="max-height: 100%; overflow: scroll;">
+                            <div class="conflict-items-container" style="max-height: 100%; overflow: scroll; padding: 5px;">
                                 <div class="conflict-hex-selector" v-for="conflict in conflict_hex" 
                                 style="
                                     font-weight: bold;
-                                    color: #ea2424;
+                                    font-family: Trebuchet MS;
+                                    color: #e33737;
                                     cursor: pointer;
-                                    border: 1px solid black;
-                                    border-radius: 5px;
+                                    border-color: transparent;
+                                    border-radius: 3px;
                                     text-align: center;
+                                    background-color: transparent;
+                                    padding: 0.5rem, 1rem;
+                                    margin: 1px 0px;
+                                    box-shadow: 0 3px 1px -2px rgba(255, 0, 0, 0.2), 0 2px 2px 0 rgba(128, 0, 0, 0.14), 0 1px 5px 0 rgba(128, 0, 0, 0.12);
                                 "
                                 @click="goToNextStep(conflict)">
 
-                                    <div class="conflict-hex-selector-overlay"></div>
+                                <div class="conflict-hex-selector-overlay" ></div>
                                     {{ conflict }}
                                 </div>
 
                             </div>
-                            conflicts with the data.
                             <br>
                             Click any of the above to see why.
                         </div>
@@ -356,7 +367,7 @@ function toggleDataHexTutorial() {
                 <i v-if="!revealed" class="pi pi-question" 
                 style="
                     position:absolute; 
-                    left: 43%; top: 30%; 
+                    left: 39%; top: 25%; 
                     font-size: 8rem; 
                     z-index:1000;
                     pointer-events:none">
@@ -400,7 +411,7 @@ function toggleDataHexTutorial() {
     padding: 0% 2% 2% 2%;
 }
 .belief-true-hexview.hidden {
-    opacity: 0.3;
+    opacity: 0.1;
 }
 
 /* Journal style */
@@ -413,41 +424,23 @@ function toggleDataHexTutorial() {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(43, 42, 42, 0.5); /* Dark overlay color */
-  opacity: 0; /* Initially transparent */
-  transition: opacity 0.3s ease; /* Transition effect */
+  border-radius: 3px;
+  background-color: rgba(43, 42, 42, 0.5); 
+  opacity: 0; 
+  transition: opacity 0.3s ease;
 }
 
-.journal-image {
-    display: inline;
-    margin: 0 auto;
-    width: auto;
-}
-
-.icon {
-    /* height: 100%; */
-    width: 100%;
-}
-
-.FoxNews-icon {
-    width: 100%;
-}
-
-.Breitbart-icon {
-    width: 100%;
-}
-
-.next-page-button {
-    position: absolute;
-    top: 80%;
-    left: 70%;
-}
 .hive-header {
   align-content: center;
   display: flex;
   justify-content: center;
   font-size: larger;
   font-weight: lighter;
+}
+.pi-question {
+    border-radius: 50%;
+    padding: 1rem;
+    animation: pulse 2s infinite;
 }
 .next-step-button {
     /* animation:pulse 2s infinite; */

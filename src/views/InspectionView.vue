@@ -62,6 +62,7 @@ const target_articles: Ref<Article[]> = ref([])
 const target_article_highlights: Ref<any> = ref({})
 const article_view = ref(null)
 const article_content_view = ref(null)
+const article_selected = ref(false)
 
 vue.onMounted(() => {
     prepare_data()
@@ -155,7 +156,8 @@ async function fetch_articles(article_ids) {
         .then(res => res.json())
         .then(json => {
             target_articles.value = json
-            console.log("articles", target_articles.value.length)
+            console.log("articles", target_articles.value)
+            article_view.value.handleArticleClicked(undefined, article_ids[0])
             data_fetched.value = true
         })
 }
@@ -290,7 +292,6 @@ function toggleTutorial() {
                     <span style="background-color: #baf0f5">negatively</span>, or
                     <span style="background-color: #dddddd">neutrally</span> about the entity.
                     <br>
-                    If you did not click an article in the previous step, hit 'back' and click it.
                 `
             },
             {
@@ -309,6 +310,15 @@ function toggleTutorial() {
                 intro: `
                     If you find anything interesting or contradictory to your previous belief,
                     document it here.
+                `
+            },
+            {
+                title: "A handy feature",
+                // element: document.querySelector('#s-0'),
+                element: document.querySelector('.summary'),
+                intro: `
+                    You can click on any sentence to add it to your notes.
+                    They will be like references and you can add comments on them.
                 `
             },
         ]
@@ -386,11 +396,11 @@ function toggleTutorial() {
                 ref="article_view"
                 :articles="target_articles" 
                 :article_highlights="target_article_highlights"
-                @article-selected="(article) => selected_article=article"
+                @article-selected="(article) => { selected_article=article; article_selected=true }"
                 :entity_pair="[selected_entity?.name as string, selected_cooccurr_entity?.name as string]">
             </ArticleView>
             <div class="hexview-note-container" style="display: flex; margin-top: 1%; overflow: hidden">
-                <div class="hexview-container" style="display: flex; width: 100%; margin-right: 2%;">
+                <div class="hexview-container" style="display: flex; width: 100%;">
                     <div class="user-hexview-container" style="width: 100%">
                         <div class="hive-header user-hive-header" style="left: 47%">Your belief </div>
                         <HexCooccurrence v-if="data_fetched" class="inpection-user-hexview" :title="clicked_hexview.title"
@@ -400,7 +410,6 @@ function toggleTutorial() {
                             :segmentation="original_segmentation" :highlight_hex_entity="highlight_hex_entity"
                             :show_blink="true"
                             :show_label="true"
-                            :wider_border="true"
                             :user_hex_selection="user_hex_selection[selected_outlet]"
                             @hex-clicked="handleHexClicked">
                         </HexCooccurrence>
@@ -420,7 +429,7 @@ function toggleTutorial() {
                         </HexCooccurrence>
                     </div>
                 </div>
-                <div v-if="data_fetched" class="cooccurr-info-container" style="display: flex; flex-direction: column; font-size: 0.8rem; width: 40%;">
+                <div v-if="data_fetched" class="cooccurr-info-container" style="display: flex; flex-direction: column; font-size: 0.8rem;">
                     <div class=journal-icon-container style="display: flex; padding-left: 2%;">
                         <div :class="['journal-style']">
                             <img :src="`/squared/${selected_outlet}.png`"
@@ -618,5 +627,9 @@ li {
 }
 :deep(.noteReference:hover) {
     background-color: rgba(45, 45, 45, 0.2)
+}
+.disable {
+    pointer-events: none;
+    opacity: 0.4;
 }
 </style>
