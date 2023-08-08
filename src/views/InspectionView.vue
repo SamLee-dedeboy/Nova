@@ -6,6 +6,7 @@ import Splitter from 'primevue/splitter';
 import SplitterPanel from "primevue/splitterpanel"
 
 
+
 /**
  * libraries
  */
@@ -29,6 +30,7 @@ import ArticleAnalysis from "../components/ArticleAnalysis.vue";
 import HexCooccurrence from "../components/HexCooccurrence.vue"
 import ProgressiveDialog from "../components/ProgressiveDialog.vue"
 import NoteEditor from '../components/NoteEditor.vue';
+import Summary from '../components/Summary.vue';
 import { wrap } from 'lodash';
 
 const store = useUserDataStore()
@@ -49,10 +51,10 @@ const segmentation = vue.computed(() => store.segmentation)
 const notes = vue.computed(() => store.notes[selected_outlet])
 const setNotes = (content) => (store.setNotes(content, selected_outlet))
 const noteHTMLContent = vue.ref('')
-const original_segmentation = segmentation.value
-const clicked_hexview = vue.computed(() => store.clicked_hexview)
+const inspection_hexview = vue.computed(() => store.inspection_hexview)
 const highlight_hex_entity: Ref<string> = ref("")
 const user_hex_selection = vue.computed(() => store.hex_selection) 
+const conflict_hex = vue.computed(() => store.conflict_hex)
 // const setClickedHexView = (hexview) => store.setClickedHexView(hexview)
 // const hexview_grid = vue.computed(() => store.hexview_grid)
 
@@ -226,7 +228,7 @@ async function fetch_cooccurr_info(outlet, entity, co_occurr_entity) {
                 article_ids: json.target_article_ids,
                 // num_of_mentions: json.target_num,
                 // articles_topic_dict: json.target_articles_topic_dict,
-                // sst_ratio: clicked_hexview.value.data.target.sst
+                // sst_ratio: inspection_hexview.value.data.target.sst
             }
             setEntity(target_entity)
             const cooccurr_entity = {
@@ -403,11 +405,11 @@ function toggleTutorial() {
                 <div class="hexview-container" style="display: flex; width: 100%;">
                     <div class="user-hexview-container" style="width: 100%">
                         <div class="hive-header user-hive-header" style="left: 47%">Your belief </div>
-                        <HexCooccurrence v-if="data_fetched" class="inpection-user-hexview" :title="clicked_hexview.title"
-                            :id="`inspection_user_hexview`" :entity_cooccurrences="clicked_hexview.data"
+                        <HexCooccurrence v-if="data_fetched" class="inpection-user-hexview" 
+                            :id="`inspection_user_hexview`" :entity_cooccurrences="inspection_hexview.data"
                             mode="user-fixed"
                             :p_margin="{top:0, right:0, bottom:0, left:0}"
-                            :segmentation="original_segmentation" :highlight_hex_entity="highlight_hex_entity"
+                            :segmentation="segmentation" :highlight_hex_entity="highlight_hex_entity"
                             :show_blink="true"
                             :show_label="true"
                             :user_hex_selection="user_hex_selection[selected_outlet]"
@@ -416,11 +418,11 @@ function toggleTutorial() {
                         </div>
                     <div class="data-hexview-container" style="width: 100%">
                         <div class="hive-header data-hive-header" style="left: 31%">Data suggested</div>
-                        <HexCooccurrence v-if="data_fetched" class="inpection-data-hexview" :title="clicked_hexview.title"
-                            :id="`inspection_data_hexview`" :entity_cooccurrences="clicked_hexview.data"
+                        <HexCooccurrence v-if="data_fetched" class="inpection-data-hexview" 
+                            :id="`inspection_data_hexview`" :entity_cooccurrences="inspection_hexview.data"
                             mode="data"
                             :p_margin="{top:0, right:0, bottom:0, left:0}"
-                            :segmentation="original_segmentation" :highlight_hex_entity="highlight_hex_entity"
+                            :segmentation="segmentation" :highlight_hex_entity="highlight_hex_entity"
                             :show_blink="true"
                             :show_label="true"
                             :show_hex_appear="false"
@@ -498,10 +500,19 @@ function toggleTutorial() {
                     @sentence-clicked="handleSentenceClicked"
                     >
                 </ArticleAnalysis>
-
             </div>
         </SplitterPanel>
     </Splitter>
+    <!-- <Summary class="inspection-summary"
+        :notes="notes" 
+        :hex_selection="hex_selection" 
+        :conflict_hex="conflict_hex"
+        style="
+            position:absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        "></Summary> -->
 
 </template>
 <style scoped lang="scss">

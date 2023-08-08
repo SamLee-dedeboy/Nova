@@ -43,7 +43,6 @@ import { Ref, ref } from "vue"
 import { schemeBrBG } from "d3";
 import { delay } from "lodash"
 const props = defineProps({
-    title: String,
     id: String,
     entity_cooccurrences: Object as () => EntityCooccurrences,
     highlight_hex_entity: String,

@@ -1,11 +1,14 @@
 <script lang="ts" setup >
 import { RouterLink, RouterView } from "vue-router";
 import Nav from "./components/Nav.vue";
+import DynamicDialog from 'primevue/dynamicdialog';
+
 
 </script>
 
 <template>
   <Nav/>
+  <DynamicDialog/>
   <!-- <stageSelect class='page-steps'/> -->
   <RouterView />
 </template>

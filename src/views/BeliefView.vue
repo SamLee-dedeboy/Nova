@@ -41,6 +41,7 @@ const selected_cooccurr_entity = vue.computed(() => store.selected_cooccurr_enti
 const setCooccurrEntity = (cooccurr_entity) => store.setCooccurrEntity(cooccurr_entity)
 const clicked_hexview = vue.computed(() => store.clicked_hexview)
 const setClickedHexView = (hexview) => store.setClickedHexView(hexview)
+const setInspectionHexView = (hexview) => store.setInspectionHexView(hexview)
 const hex_selection = vue.computed(() => store.hex_selection)
 const setHexSelection =  (hex_selection) => store.setHexSelection(hex_selection)
 const conflict_hex = vue.computed(() => store.conflict_hex)
@@ -71,11 +72,13 @@ async function fetch_outlet_hex(outlet, center_entity) {
             true_hex_fetched.value = true
             const hex_view: typeUtils.CooccurrHexView = {
                 title: `co-${selected_entity.value.name}`,
+                outlet: outlet,
+                center_entity: selected_entity.value.name,
                 data: json
             }
             outlet_hexview.value = hex_view
-            console.log(outlet_hexview.value)
             setClickedHexView(hex_view)
+            setInspectionHexView(hex_view)
             let init_hex_selection = {}
             init_hex_selection[outlet] = {}
             hex_view.data.sorted_cooccurrences_list.forEach(entity_data => {
@@ -100,6 +103,7 @@ function handleHexFilled({filledEntity, filledHexIndex}) {
     old_hex_selection[outlet][filledEntity] = filledHexIndex
     setHexSelection(old_hex_selection)
     hex_filled.value = true
+    return
     Object.keys(old_hex_selection[outlet]).forEach(hex_entity => {
         if(old_hex_selection[outlet][hex_entity] === -1) {
             hex_filled.value = false

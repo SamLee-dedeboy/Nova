@@ -14,6 +14,7 @@ import "primevue/resources/primevue.min.css"
 import "primeicons/primeicons.css"
 import "intro.js/introjs.css"
 import axios from 'axios'
+import DialogService from 'primevue/dialogservice';
  
 
 const pinia = createPinia();
@@ -25,6 +26,7 @@ app.config.globalProperties.axios = axios
 app.use(router);
 app.use(PrimeVue, {ripple:true})
 app.use(pinia)
+app.use(DialogService);
 app.component('Button', Button);
 app.provide('server_address', "http://127.0.0.1:5000")
 app.provide('left_most_outlet', "New York Times")

@@ -79,12 +79,6 @@ const entity_list: Ref<string[]> = ref([])
 const outlet_article_num_dict = ref({})
 vue.provide("outlet_article_num_dict", outlet_article_num_dict)
 
-//
-// preprocessed global data used across components
-//
-
-
-
 /**
  * Flag for segment mode. \
  * Display segmentation on all scatters when segment mode is on.

@@ -13,7 +13,8 @@ export const useUserDataStore = defineStore('userData', {
         article_num_threshold: 20,
         segmentation: { pos: 0.5, neg: 0.5 } as typeUtils.Sentiment2D,
         hexview_grid: undefined,
-        clicked_hexview: undefined,
+        clicked_hexview: [],
+        inspection_hexview: undefined,
         constraints: {},
         notes: {},
         marked_articles: [],
@@ -53,7 +54,10 @@ export const useUserDataStore = defineStore('userData', {
             this.hexview_grid = grid
         },
         setClickedHexView(hexview) {
-            this.clicked_hexview = hexview
+            this.clicked_hexview.push(hexview)
+        },
+        setInspectionHexView(hexview) {
+            this.inspection_hexview = hexview
         },
         addConstraint(constraint) {
             if (!this.constraints[constraint.target])
