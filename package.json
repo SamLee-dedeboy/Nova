@@ -16,6 +16,7 @@
     "d3-hexbin": "^0.2.2",
     "d3-scale-chromatic": "^3.0.0",
     "danfojs": "^1.1.1",
+    "intro.js": "^7.0.1",
     "lodash": "^4.17.21",
     "mitt": "^3.0.0",
     "package.json": "^2.0.1",
