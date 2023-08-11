@@ -13,7 +13,7 @@ import HexCooccurrence from "./HexCooccurrence.vue"
 import { useUserDataStore } from "../store/userStore"
 
 const store = useUserDataStore()
-const clicked_hexview = vue.computed(() => store.clicked_hexview)
+const clicked_hexview = vue.computed(() => Object.keys(store.clicked_hexview).map(title => store.clicked_hexview[title]))
 const user_hex_selection = vue.computed(() => store.hex_selection) 
 const segmentation = vue.computed(() => store.segmentation)
 const notes = vue.computed(() => store.notes)
@@ -47,17 +47,23 @@ vue.onMounted(() => {
     <div class="summary-container" style="display: flex; flex-direction: column; width: 100%">
         <div class="content-container" style="display: flex; flex-direction: column; flex: 1; width: 100%; height: 100%; overflow-y:auto;">
             <div v-for="hexview, index in clicked_hexview" class="item-container" style="display: flex; flex-direction: column; height: 100%; width: 100%; min-width: 50%;">
-                <div class="hexview-header" style="display: flex; flex-direction: row; justify-content: space-between; width: 100%; height: 10%;">
+                <div class="hexview-header" style="display: flex; flex-direction: row; justify-content: space-between; width: 100%; height: 10%; box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.5)">
                     <div class="hexview-title" style="display: flex; flex-direction: row; align-items: center; height: 100%; width: 100%;">
                         <div :class="['journal-style']">
                             <img :src="`/squared/${hexview.outlet}.png`"
                                 :class="['journal-image',`${hexview.outlet}`]" />
                         </div>
-                        <div class="hexview-title-text" style="font-size: 1.5em; font-weight: bold; margin-left: 1em;">{{hexview.center_entity}}</div>
+                        <div class="hexview-title-text" style="font-size: 1.2em; font-weight: bold; margin-left: 0.5em;">{{hexview.center_entity}}</div>
                     </div>
                 </div>
                 <div class="hexview-container" style="display: flex; width: 100%;">
-                    <div class="user-hexview-container" style="flex:1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <div class="user-hexview-container" style="
+                        flex:1;
+                        display: flex; 
+                        flex-direction: column;
+                        align-items: center; 
+                        justify-content: center;
+                        ">
                         <div class="hive-header user-hive-header" style="width: fit-content;">Your belief </div>
                         <HexCooccurrence  class="summary-user-hexview" 
                             :id="`summary_user_hexview_${index}`" :entity_cooccurrences="hexview.data"
@@ -106,7 +112,7 @@ vue.onMounted(() => {
 <style scoped lang="scss">
 .component-header.notes-header {
     background: #f7f7f7;
-    margin: 3% 1% 1% 0%;
+    margin: 3px 1% 1% 0%;
     padding-left: 2%;
 }
 .journal-style{
@@ -125,5 +131,10 @@ vue.onMounted(() => {
     display: inline;
     margin: 0 auto;
     width: auto;
+}
+.hive-header {
+    position: absolute;
+    z-index: 1000;
+    top: 0;
 }
 </style>

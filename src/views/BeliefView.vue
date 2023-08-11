@@ -34,7 +34,6 @@ const outlet_hexview: Ref<typeUtils.CooccurrHexView | undefined> = ref(undefined
 // store data for next stage
 const store = useUserDataStore()
 const segmentation: Ref<typeUtils.Sentiment2D> = vue.computed(() => store.segmentation)
-const setUserOutletSegmentations = (segmentation, outlet) => store.setUserOutletSegmentations(segmentation, outlet)
 const selected_entity = vue.computed(() => store.selected_entity)
 const selected_cooccurr_entity = vue.computed(() => store.selected_cooccurr_entity )
 const setCooccurrEntity = (cooccurr_entity) => store.setCooccurrEntity(cooccurr_entity)
@@ -70,7 +69,7 @@ async function fetch_outlet_hex(outlet, center_entity) {
             true_hex_data.value = json
             true_hex_fetched.value = true
             const hex_view: typeUtils.CooccurrHexView = {
-                title: `co-${selected_entity.value.name}`,
+                title: `co-${outlet}-${selected_entity.value.name}`,
                 outlet: outlet,
                 center_entity: selected_entity.value.name,
                 data: json
