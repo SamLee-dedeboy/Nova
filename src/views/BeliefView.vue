@@ -147,7 +147,7 @@ function toggleTutorial(e: MouseEvent) {
             },
             {
                 title: "What are the hexagons?",
-                element: document.querySelector('.belief-user-hexview > svg > rect.hive-border'),
+                element: document.querySelector('.belief-user-hexview > svg > g.border-group > rect.hive-border'),
                 intro: `
                     Each hexagon represents a topic. 
                     The color of the hexagon is either positive, negative, neutral or mixed. 
@@ -172,7 +172,7 @@ function toggleTutorial(e: MouseEvent) {
             },
             {
                 title: "Data Suggested Hive",
-                element: document.querySelector('.belief-true-hexview > svg > rect.hive-border'),
+                element: document.querySelector('.belief-true-hexview > svg > g.border-group > rect.hive-border'),
                 intro: "This is the data suggested hive. It is hidden for now. Once you're done with your own, click it for the reveal!"
             }
         ]
@@ -306,14 +306,14 @@ function toggleDataHexTutorial() {
                 </HexCooccurrence>
             </div>
             <i v-if="!true_hex_fetched" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/>
-            <div v-else class="journal-style-container" style="display: flex; flex-direction: column; width: 30%; padding-top: 2%; padding-bottom: 15.7%; justify-content: space-between; ">
+            <div v-else class="journal-style-container" style="display: flex; flex-direction: column; padding-top: 2%; padding-bottom: 15.7%; justify-content: space-between; ">
                 <div class="journal-style" style="width: 100%; display: flex; align-items: center; justify-content: center;">
                     <img :src="`/${target_outlet}.png`" :class="['journal-image', `${outletIconStyle(target_outlet)}`]" />
                 </div>
                 <div class="diff-container-placeholder">
                     <div v-if="reveal_anmt_ended" class="diff-description-container" style="height: 100%; margin-top:15px;">
                         <div v-if="Object.keys(conflict_hex).length > 0" style="display: flex; flex-direction: column; height: 100%;">
-                            Your belief on the following topics conflicts with the data.
+                            <span style="font-style: italic;"> Your belief on the following topics conflicts with the data.  </span>
                             <br>
                             <div class="conflict-items-container" style="max-height: 100%; overflow: scroll; padding: 5px;">
                                 <div class="conflict-hex-selector" v-for="conflict in conflict_hex" 
@@ -338,7 +338,7 @@ function toggleDataHexTutorial() {
 
                             </div>
                             <br>
-                            Click any of the above to see why.
+                            <span style="font-style: italic; font-weight: bold;"> Click any of the above to see why.  </span>
                         </div>
                         <div v-else>
                             <div>
@@ -399,7 +399,7 @@ function toggleDataHexTutorial() {
                 :show_hex_appear="true"
                 >
                 </HexCooccurrence>
-                <div class="tutorial-toggle-container" style="display:inline; margin-left: auto; position: absolute; right: 0%; top: 0%;">
+                <div class="tutorial-toggle-container" style="display:inline; margin-left: auto; position: absolute; right: 0%; top: -1%;">
                     <Button severity="secondary" text raised @click="toggleTutorial" style="width:fit-content;font-family:Trebuchet MS"> Tutorial </Button>
                 </div>
             </div>
@@ -422,7 +422,7 @@ function toggleDataHexTutorial() {
 .belief-user-hexview-overlay, .belief-true-hexview-overlay {
     width: 100%;
     height: 100%;
-    padding: 0% 2% 2% 2%;
+    padding: 0% 0% 2% 0%;
 }
 .belief-true-hexview.hidden {
     opacity: 0.1;
