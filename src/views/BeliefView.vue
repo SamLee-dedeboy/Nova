@@ -95,16 +95,13 @@ function handleHexClicked({clickedEntity}) {
 }
 
 function handleHexFilled({filledEntity, filledHexIndex}) {
-    console.log({filledEntity, filledHexIndex})
     const outlet = target_outlet.value
     let old_hex_selection = hex_selection.value
     old_hex_selection[filledEntity] = filledHexIndex
     setHexSelection(old_hex_selection)
-    console.log(hex_selection.value)
     hex_filled.value = true
-    return
-    Object.keys(old_hex_selection[outlet]).forEach(hex_entity => {
-        if(old_hex_selection[outlet][hex_entity] === -1) {
+    Object.keys(old_hex_selection).forEach(hex_entity => {
+        if(old_hex_selection[hex_entity] === -1) {
             hex_filled.value = false
             return
         }
@@ -311,11 +308,11 @@ function toggleDataHexTutorial() {
                 <!-- <div class="user-hexagon-region"></div> -->
             </div>
             <i v-if="!true_hex_fetched" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/>
-            <div v-else class="journal-style-container" style="display: flex; flex-direction: column; width: 30%; padding-top: 2%; ">
-                <div class="journal-style" style="width: 100%; aspect-ratio: 1;">
+            <div v-else class="journal-style-container" style="display: flex; flex-direction: column; width: 30%; padding-top: 2%; padding-bottom: 15.7%; justify-content: space-between; ">
+                <div class="journal-style" style="width: 100%; display: flex; align-items: center; justify-content: center;">
                     <img :src="`/${target_outlet}.png`" :class="['journal-image', `${outletIconStyle(target_outlet)}`]" />
                 </div>
-                <div class="diff-container-placeholder" style="height: 30%">
+                <div class="diff-container-placeholder">
                     <div v-if="reveal_anmt_ended" class="diff-description-container" style="height: 100%; margin-top:15px;">
                         <div v-if="Object.keys(conflict_hex).length > 0" style="display: flex; flex-direction: column; height: 100%;">
                             Your belief on the following topics conflicts with the data.
@@ -358,9 +355,22 @@ function toggleDataHexTutorial() {
                         </div>
                     </div>
                 </div>
-                <Legend id="legend-sentiment" :color_dict="SstColors.key_color_dict" style="margin-top: 15px;"/>
-                <div class="tutorial-toggle-container" style="display:flex; justify-content:center; margin-top:-50px; padding-right: 8%;">
-                    <Button severity="secondary" text raised @click="toggleTutorial" style="width:fit-content;font-family:Trebuchet MS"> Tutorial </Button>
+                <!-- <Legend id="legend-sentiment" :color_dict="SstColors.key_color_dict" style="margin-top: 15px;"/> -->
+                <div class="legend-container" style="width: 100%; ">
+                    <div class="legend-image-container" style="
+                        display: grid;
+                        grid-template-columns: repeat(3, 1fr);
+                        grid-template-rows: repeat(2, 1fr); /* Two rows with equal height */
+                        gap: 10px;
+                        width: 100%; /* Container takes the full width of parent */
+                        padding: 10px; /* Padding for spacing around the grid items */
+                        box-sizing: border-box; /* Include padding in width calculation */
+                        border: 2px solid #b3b3b3;
+                        border-radius: 30px;
+                        background: #fffcf5;
+                    ">
+                        <img v-for="sst in Object.keys(SstColors.hive_color_dict)" :src="`/legend/${sst}.png`" style="width: 100%; height: 100%; object-fit: cover;" />
+                    </div>
                 </div>
             </div>
             <i v-if="!true_hex_fetched" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/>
@@ -391,6 +401,9 @@ function toggleDataHexTutorial() {
                 :show_hex_appear="true"
                 >
                 </HexCooccurrence>
+                <div class="tutorial-toggle-container" style="display:inline; margin-left: auto; position: absolute; right: 0%; top: 0%;">
+                    <Button severity="secondary" text raised @click="toggleTutorial" style="width:fit-content;font-family:Trebuchet MS"> Tutorial </Button>
+                </div>
             </div>
             <!-- <Button class="next-page-button" 
                 @click="goToNextStep"
@@ -417,6 +430,9 @@ function toggleDataHexTutorial() {
     opacity: 0.1;
 }
 
+:deep(.p-button) {
+    padding: 0.1rem 1rem;
+}
 /* Journal style */
 .conflict-hex-selector:hover .conflict-hex-selector-overlay {
     opacity: 1;

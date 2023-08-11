@@ -357,7 +357,6 @@ function updateUserFixedHex() {
             return SstColors.enum_color_dict[sst]
         })
 
-    console.log("user hex: ", user_hex.value)
     const hex_data = hexbin_(user_hex.value)
     hex_group.select("g.hex-paths")
         .selectAll("path.hexagon")
@@ -583,8 +582,8 @@ function updateDataHex() {
     if(props.show_label) {
         svg.select("rect.hive-border-overlay").remove()
         if(!props.show_hex_appear) return
-        // const duration = 600
-        const duration = 0
+        const duration = 600
+        // const duration = 0
         let animated_num = 0
         svg.selectAll("text.hex-label")
             .attr("opacity", 0)
