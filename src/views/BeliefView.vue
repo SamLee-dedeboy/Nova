@@ -9,7 +9,6 @@ import * as SstColors from "../components/utils/ColorUtils"
 import Dialog from "primevue/dialog"
 import ProgressiveDialog from "../components/ProgressiveDialog.vue"
 import HexCooccurrence from "../components/HexCooccurrence.vue";
-import Legend from '../components/Legend.vue';
 import * as typeUtils from "../types"
 import introJS from 'intro.js'
 
@@ -142,7 +141,7 @@ function toggleTutorial(e: MouseEvent) {
         showProgress: true,
         steps: [
             {
-                title: "You own Hive",
+                title: "Your own Hive",
                 element: document.querySelector('.belief-user-hexview-overlay'),
                 intro: 'This is where you construct your hive.'
             },
@@ -305,7 +304,6 @@ function toggleDataHexTutorial() {
                 :show_label="true"
                 :center_changable="true">
                 </HexCooccurrence>
-                <!-- <div class="user-hexagon-region"></div> -->
             </div>
             <i v-if="!true_hex_fetched" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/>
             <div v-else class="journal-style-container" style="display: flex; flex-direction: column; width: 30%; padding-top: 2%; padding-bottom: 15.7%; justify-content: space-between; ">

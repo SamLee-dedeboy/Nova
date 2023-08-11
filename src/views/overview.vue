@@ -2,21 +2,20 @@
 /**
  * primevue comopnents
  */
-import Dialog from 'primevue/dialog';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from "primevue/splitterpanel"
 
 /**
  * libraries
  */
-import { watch, computed, onMounted, PropType, ref, Ref, nextTick, } from 'vue'
+import { ref, Ref } from 'vue'
 import * as vue from 'vue'
 import * as _ from "lodash"
 import { useUserDataStore } from '../store/userStore'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
+import introJS from 'intro.js'
 
 const store = useUserDataStore()
-const route = useRoute()
 const router = useRouter()
 
 /**
@@ -53,7 +52,6 @@ const overview_overall_scatter_metadata: Ref<any> = ref({})
 const overall_scatter_view: Ref<typeUtils.EntityScatterView | undefined> = ref(undefined)
 const overall_scatter_data_loading: Ref<boolean> = ref(true)
 const overview_constructed: Ref<boolean> = ref(false)
-const hex_constructed: Ref<boolean> = ref(true)
 const selected_entity_info_fetched: Ref<boolean> = ref(false)
 //
 // processed data 
@@ -83,7 +81,6 @@ vue.provide("outlet_article_num_dict", outlet_article_num_dict)
  * Flag for segment mode. \
  * Display segmentation on all scatters when segment mode is on.
  */
-const segment_mode: Ref<boolean> = ref(true)
 
 /**
  * threshold for filtering on count(articles).
@@ -101,21 +98,9 @@ const entity_changed = ref(false)
  */
 const left_section_panel_size = 63
 const right_section_panel_size = vue.computed(() => 100 - left_section_panel_size)
-
 const table_panel_size = 20
-const scatter_panel_size = vue.computed(() => 100 - table_panel_size)
-
 const entity_info_panel_size = 100
-const hex_view_panel_size = vue.computed(() => 100 - entity_info_panel_size)
 
-
-/**
- * Array of selected articles. 
- * Used in ArticleView.
- */
-// const selected_articles: Ref<typeUtils.Article[]> = ref([])
-// const selected_entity: Ref<typeUtils.EntityInfo|undefined> = ref(undefined)
-const selected_outlet = vue.computed(() => store.selected_outlet)
 const setSelectedOutlet = (outlet) => store.setSelectedOutlet(outlet)
 const selected_entity = vue.computed(() => store.selected_entity)
 const setEntity = (entity) => store.setEntity(entity)
@@ -233,9 +218,6 @@ vue.onMounted(async () => {
 async function handleEntityClicked(entity: string) {
   if(!entity_clicked.value) entity_clicked.value = true
   else entity_changed.value = true
-  legendInput.value = {}
-  legendInput.value[entity] = "white";
-  legendInput.value["Co-Occuring Topic"] = "#4baaf5";
 
 
   // request entity-related data
@@ -263,10 +245,6 @@ async function handleEntityClicked(entity: string) {
   await Promise.all(promiseArray)
 }
 
-let legendInput = ref({});
-legendInput.value["main"] = "white";
-legendInput.value["co-occur"] = "#4baaf5";
-
 function updateSegmentation(segmentValue) {
   let segmentation : typeUtils.Sentiment2D = segmentValue
   setSegmentation(segmentation)
@@ -279,15 +257,49 @@ function handleOutletClicked(outlet) {
   router.push({ name: 'belief', params: { outlet: outlet, entity: selected_entity.value.name } })
 }
 
-function toggleTutorial() {
-  return
+function toggleTutorial(e: MouseEvent) {
+  // console.log("toggle tutorial")
+    introJS().setOptions({
+        // dontShowAgain: true,
+        showProgress: true,
+        steps: [
+          {
+            title: "The table",
+            element: document.querySelector('.entityList'),
+            intro: "This is the table showing all the topics we collected. You can click any item to see the details.",
+          },
+          {
+            title: "The filter",
+            element: document.querySelector('.entity-utils'),
+            intro: "You can also use this filter to remove unimportant topics.",
+          },
+          {
+            title: "The Scatter Plot",
+            element: document.querySelector(".scatter-container > svg "),
+            // element: document.querySelector(".entity-scatter-panel"),
+            intro: `We visualize the topics in a scatter plot and categorize the topics into four types: 
+            <span class='neg_color'>negative</span>,
+            <span class='pos_color'>positive</span>,
+            <span class='neu_color'>neutral</span>, or
+            <span class='mix_color'>mixed</span>.
+            `,
+          },
+          {
+            title: "The mixed region",
+            element: document.querySelector('.scatter-container > svg > g.segmentation > rect.mixed'),
+            intro: `Mixed topics have high volume of articles, which means that they are more controversial and have more diverse opinions. 
+            <span style='font-weight: bold'> We encourage you to explore the mixed topics. </span>`,
+          },
+        ]
+    }).start()
 }
+
 
 </script>
 
 
 <template>
-  <main style="displex: flex; width: 99vw; height: 95vh">
+  <div style="display: flex; width: 99vw; height: 95vh">
     <ProgressiveDialog
       @toggle-tutorial="toggleTutorial"
       header="U.S. News Media Coverage Assessment"
@@ -317,7 +329,7 @@ function toggleTutorial() {
               </span>
             </i>
           </h2>
-          <div class='scatter-content' style="height: 100%; flex-direction: content; flex: 1;">
+          <div class='scatter-content' style="overflow:hidden; flex-direction: content; flex: 1;">
             <Splitter class='table-scatter-splitter'>
               <SplitterPanel class="entity-table-panel" :size="table_panel_size" style="display: flex; flex-direction: column">
                 <div id="entityTableWrapper" class='entityTableWrapper' style="height: 67%; min-height: 67%; margin-left: 5%;">
@@ -342,7 +354,7 @@ function toggleTutorial() {
                     width: 100%;
                     height: 100%;
                   ">
-                  <div id="entity-utility-container" class="entity-utils" style="width: 100%; margin: 0.4%; padding: 2%;">
+                  <div id="entity-utility-container" class="entity-utils" style="width: 100%; margin: 0.4%; padding: 2%; margin: 2%;">
                     <h2 class="component-header util-header">
                       Topic Settings
                       <i class='pi pi-info-circle tooltip'> 
@@ -382,7 +394,7 @@ function toggleTutorial() {
                   </i>
                   <EntitySelection v-else :segmentation="segmentation" :view="overall_scatter_view" id="overview-scatter"
                     ref='overview_scatter'
-                    :article_num_threshold="article_num_threshold" :segment_mode="segment_mode" 
+                    :article_num_threshold="article_num_threshold" :segment_mode="true" 
                     v-model:selected_entity_name='selected_entity_name'
                     @update:segmentation="updateSegmentation" />
                 </div>
@@ -422,7 +434,7 @@ function toggleTutorial() {
         </Splitter>
       </SplitterPanel>
     </Splitter>
-  </main>
+  </div>
 </template>
 
 <style lang="css">
@@ -445,7 +457,7 @@ function toggleTutorial() {
 // ---------------------
 :deep(.p-splitter) {
   width: inherit;
-  height: inherit;
+  height: 100%;
 }
 
 :deep(.p-splitter-panel) {
@@ -495,6 +507,17 @@ function toggleTutorial() {
   }
 }
 
-
+.pos_color {
+    background: #baf0f5;
+}
+.neg_color {
+    background: #f4c49c;
+}
+.mix_color {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect x="0" y="0" width="10" height="10" fill="rgb(186, 240, 245)" /> <line x1="0" y1="10" x2="10" y2="0" stroke="rgb(244, 196, 156)" stroke-width="2.5" /> </svg>');
+}
+.neu_color {
+    background: #dddddd;
+}
 </style>
 
