@@ -17,6 +17,7 @@ export const useUserDataStore = defineStore('userData', {
         inspection_hexview: undefined,
         constraints: {},
         notes: {},
+        raw_notes: {},
         marked_articles: [],
         user_outlet_segmentations: {},
         hex_selection: {},
@@ -67,9 +68,13 @@ export const useUserDataStore = defineStore('userData', {
         removeConstraint( constraint) {
             delete this.constraints[constraint.target][constraint.outlet]
         },
-        setNotes(notes, outlet) {
-            this.notes[outlet] = notes
-            console.log(this.notes)
+        setNotes(notes, outlet, entity) {
+            if(this.notes[outlet] === undefined) this.notes[outlet] = {}
+            this.notes[outlet][entity] = notes
+        },
+        setRawNotes(notes, outlet, entity) {
+            if(this.raw_notes[outlet] === undefined) this.raw_notes[outlet] = {}
+            this.raw_notes[outlet][entity] = notes
         },
         setMarkedArticle( article_info) {
             let found = this.marked_articles.find(existed_article_info => existed_article_info.article_id === article_info.article_id)
@@ -87,8 +92,9 @@ export const useUserDataStore = defineStore('userData', {
                 this.marked_articles.splice(index, 1);
             }
         },
-        setHexSelection(hex_selection) {
-            this.hex_selection = hex_selection
+        setHexSelection(hex_selection, outlet, entity) {
+            if (!this.hex_selection[outlet]) this.hex_selection[outlet] = {}
+            this.hex_selection[outlet][entity] = hex_selection
         },
         setConflictHex(conflict_hex) {
             this.conflict_hex = conflict_hex

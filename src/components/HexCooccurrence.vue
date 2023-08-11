@@ -79,12 +79,10 @@ const dragged_hex = ref()
 const entity_hex_index_dict = ref({})
 
 const conflict_hex = vue.computed(() => {
-    console.log(props.user_hex_selection)
     if(props.user_hex_selection === undefined) return []
     let res = []
     // center entity
     const center_entity = props.entity_cooccurrences?.target!
-    console.log(center_entity, props.user_hex_selection)
     const center_entity_sst = categorizeHex(props.user_hex_selection[center_entity.entity], props.segmentation)
     if(center_entity_sst !== categorizeHex(center_entity.sst, props.segmentation)) res.push(center_entity)
 
@@ -97,7 +95,6 @@ const conflict_hex = vue.computed(() => {
         if(user_selected_sst !== data_sst) res.push(hex_entity)
     })
     emit("conflict-hex", res.map(hex_entity => hex_entity.entity))
-    console.log(res)
     return res
 })
 
@@ -360,6 +357,7 @@ function updateUserFixedHex() {
             return SstColors.enum_color_dict[sst]
         })
 
+    console.log("user hex: ", user_hex.value)
     const hex_data = hexbin_(user_hex.value)
     hex_group.select("g.hex-paths")
         .selectAll("path.hexagon")
@@ -449,7 +447,6 @@ function updateUserFixedHex() {
 }
 
 function updateDataHex() {
-    console.log(conflict_hex.value)
     const svg = d3.select(`#${props.id}`).select("svg")
     // delete everything to avoid blinking bug
     svg.select("g.hex-group").remove()
@@ -577,7 +574,6 @@ function updateDataHex() {
             return words.join(" ")
         })
         .attr("fill", (d: any) => {
-            console.log(d[0].entity)
             if(conflict_entities.value.includes(d[0].entity))
                 return "#ea2424"
             else
@@ -587,7 +583,8 @@ function updateDataHex() {
     if(props.show_label) {
         svg.select("rect.hive-border-overlay").remove()
         if(!props.show_hex_appear) return
-        const duration = 600
+        // const duration = 600
+        const duration = 0
         let animated_num = 0
         svg.selectAll("text.hex-label")
             .attr("opacity", 0)

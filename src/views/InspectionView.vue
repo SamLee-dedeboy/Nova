@@ -14,13 +14,12 @@ import * as vue from "vue"
 import { Ref, ref } from 'vue'
 import { useUserDataStore } from '../store/userStore'
 import { useRoute } from 'vue-router'
-import * as d3 from 'd3'
 import introJS from 'intro.js'
 
 /**
  * types
  */
-import { Article, SentimentType, Constraint } from "../types"
+import { Article } from "../types"
 
 /**
  * vue components
@@ -30,8 +29,6 @@ import ArticleAnalysis from "../components/ArticleAnalysis.vue";
 import HexCooccurrence from "../components/HexCooccurrence.vue"
 import ProgressiveDialog from "../components/ProgressiveDialog.vue"
 import NoteEditor from '../components/NoteEditor.vue';
-import Summary from '../components/Summary.vue';
-import { wrap } from 'lodash';
 
 const store = useUserDataStore()
 const route = useRoute()
@@ -46,19 +43,13 @@ const selected_entity = vue.computed(() => store.selected_entity)
 const setEntity = (entity) => store.setEntity(entity)
 const selected_cooccurr_entity = vue.computed(() => store.selected_cooccurr_entity)
 const setCooccurrEntity = (cooccurr_entity) => store.setCooccurrEntity(cooccurr_entity)
-const hex_selection = vue.computed(() => store.hex_selection)
+const user_hex_selection = vue.computed(() => store.hex_selection[selected_outlet][selected_entity.value.name])
 const segmentation = vue.computed(() => store.segmentation)
-const notes = vue.computed(() => store.notes[selected_outlet])
-const setNotes = (content) => (store.setNotes(content, selected_outlet))
-const noteHTMLContent = vue.ref('')
+const notes = vue.computed(() => store.notes[selected_outlet]?.[selected_entity.value])
+const setNotes = (content) => (store.setNotes(content, selected_outlet, selected_entity.value.name))
 const inspection_hexview = vue.computed(() => store.inspection_hexview)
 const highlight_hex_entity: Ref<string> = ref("")
-const user_hex_selection = vue.computed(() => store.hex_selection) 
-const conflict_hex = vue.computed(() => store.conflict_hex)
-// const setClickedHexView = (hexview) => store.setClickedHexView(hexview)
-// const hexview_grid = vue.computed(() => store.hexview_grid)
 
-// const selected_outlet: Ref<string> = ref("ABC News")
 const selected_article: Ref<Article> = ref()
 const target_articles: Ref<Article[]> = ref([])
 const target_article_highlights: Ref<any> = ref({})
@@ -66,15 +57,17 @@ const article_view = ref(null)
 const article_content_view = ref(null)
 const article_selected = ref(false)
 
+const note_editor = ref(null)
+
 vue.onMounted(() => {
     prepare_data()
-    noteHTMLContent.value = notes.value || ""
 })
 
-vue.watch(noteHTMLContent, () => {
+function handleNoteUpdated(noteHTMLContent) {
     setNotes(noteHTMLContent)
     vue.nextTick(() => {
         const references = document.querySelectorAll(".noteReference")
+        console.log({references})
         references.forEach(reference_element => {
             reference_element.addEventListener("click", async function(e) {
                 console.log("reference clicked", (e.target as HTMLElement).getAttribute("sentence_index"))
@@ -83,7 +76,6 @@ vue.watch(noteHTMLContent, () => {
                 console.log({sentence_index, doc_id})
                 // check if the article is already loaded
                 if(doc_id != selected_article.value.id) {
-                    console.log("fetching...")
                     await fetch(`${server_address}/processed_data/ids_to_articles`, {
                         method: "POST",
                         headers: {
@@ -97,7 +89,6 @@ vue.watch(noteHTMLContent, () => {
                     })
                     .then(res => res.json())
                     .then(articles => {
-                        console.log("fetched!")
                         selected_article.value = articles[0]
                         vue.nextTick(() => article_content_view.value.scrollToSentence(sentence_index))
                     })
@@ -107,17 +98,7 @@ vue.watch(noteHTMLContent, () => {
             })
         })
     })
-})
-
-
-const journal_options = [
-    "CNN",
-    "FoxNews",
-    "Breitbart",
-    "ABC News",
-    "New York Times",
-    "Washington Post"
-]
+}
 
 async function prepare_data() {
     const cooccurr_entity_name = selected_cooccurr_entity.value? selected_cooccurr_entity.value.name : selected_entity.value.name
@@ -180,19 +161,6 @@ async function fetch_article_highlights(article_ids) {
         })
 }
 
-// async function handleChangeJournal(e) {
-//     // const outlet = e.target.value
-//     const outlet = e.value
-//     // selected_outlet.value = outlet
-//     const entity = selected_entity.value.name
-//     const co_occurr_entity = selected_cooccurr_entity.value?.name
-//     const view = hexview_grid.value.find(view => view.title.split("-")[2] === outlet)
-//     setClickedHexView(view)
-//     await fetch_cooccurr_info(outlet, entity, co_occurr_entity)
-//     prepare_data()
-//     // selectedCategory.value = undefined
-// }
-
 async function handleHexClicked({ clickedEntity }, view) {
     if(clickedEntity === selected_entity.value.name) {
         setCooccurrEntity(undefined)
@@ -207,14 +175,7 @@ async function handleHexClicked({ clickedEntity }, view) {
 
 function handleSentenceClicked(sentence, sentence_index, doc_id) {
     console.log("sentence clicked")
-    const note_content = notes.value || ""
-    noteHTMLContent.value = note_content + wrapSentence(sentence, sentence_index, doc_id)
-}
-
-function wrapSentence(sentence: string, sentence_index: number, doc_id: string) {
-    const sliced = sentence.slice(0, 35)
-    return `<div class='noteReference' contenteditable="false" sentence_index=${sentence_index} doc_id=${doc_id}> "${sliced}..." </div><br>`
-    // return `<NoteReference :sentence="sentence" :sentence_index="sentence_index"> </NoteReference>`
+    note_editor.value.addReference(sentence, sentence_index, doc_id)
 }
 
 async function fetch_cooccurr_info(outlet, entity, co_occurr_entity) {
@@ -412,7 +373,7 @@ function toggleTutorial() {
                             :segmentation="segmentation" :highlight_hex_entity="highlight_hex_entity"
                             :show_blink="true"
                             :show_label="true"
-                            :user_hex_selection="user_hex_selection[selected_outlet]"
+                            :user_hex_selection="user_hex_selection"
                             @hex-clicked="handleHexClicked">
                         </HexCooccurrence>
                         </div>
@@ -426,7 +387,7 @@ function toggleTutorial() {
                             :show_blink="true"
                             :show_label="true"
                             :show_hex_appear="false"
-                            :user_hex_selection="hex_selection[selected_outlet]"
+                            :user_hex_selection="user_hex_selection"
                             @hex-clicked="handleHexClicked">
                         </HexCooccurrence>
                     </div>
@@ -437,18 +398,8 @@ function toggleTutorial() {
                             <img :src="`/squared/${selected_outlet}.png`"
                                 :class="['journal-image',`${outletIconStyle(selected_outlet)}`]" />
                         </div>
-                        <div class="journal-info-container" style="font-size:small; z-index:99; margin: 1rem 1rem;">
-                            <!-- <Dropdown :modelValue="selected_outlet" :options="journal_options"
-                                placeholder="Select an journal" @change="handleChangeJournal" /> -->
-                            <!-- {{  selected_outlet }} -->
-                            Did you change your mind on {{ selected_outlet }}? 
-                            Write down your thoughts!
-                            <!-- <i class='pi pi-info-circle tooltip'>
-                                <span class="tooltiptext right-tooltiptext" style="width: 400px">
-                                    We will record any text you put here for academic user study.
-                                    We do not collect any other information from you.
-                                </span>
-                            </i> -->
+                        <div class="journal-info-container" style="font-size:0.7rem; z-index:99; display: flex; align-items: center;">
+                            <span> Did you change your mind on {{ selected_outlet }}?  Write down your thoughts!  </span>
                         </div>
                     </div>
                     <div class="notes" 
@@ -466,17 +417,12 @@ function toggleTutorial() {
                                 <span class="tooltiptext right-tooltiptext" style="width: 145px">
                                     <!-- Write down any hypothesis or questions you have.
                                     The system will document that for you. -->
-                                    We will record the text you put here for academic user study.
+                                    We will record the text you put here for academic user stuy.
                                     We do not collect any other information from you.
                                 </span>
                             </i>
                         </h2>
-                        <!-- <textarea class="notes-style"
-                        style="width: 100%; height: 100%;"
-                        :value="notes"
-                        placeholder="Write down any thoughts you have..." 
-                        @input="setNotes" /> -->
-                        <NoteEditor class="notes-style" style="width: 100%; height: 100%" v-model="noteHTMLContent"></NoteEditor>
+                        <NoteEditor ref="note_editor" class="notes-style" style="width: 100%; height: 100%" @update="handleNoteUpdated" :initial_content="notes?.[selected_outlet]"></NoteEditor>
                     </div>
                 </div>
                 <svg style='position:absolute;pointer-events:none'>
@@ -503,16 +449,6 @@ function toggleTutorial() {
             </div>
         </SplitterPanel>
     </Splitter>
-    <!-- <Summary class="inspection-summary"
-        :notes="notes" 
-        :hex_selection="hex_selection" 
-        :conflict_hex="conflict_hex"
-        style="
-            position:absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-        "></Summary> -->
 
 </template>
 <style scoped lang="scss">
@@ -600,35 +536,27 @@ li {
 .journal-style{
     // width: 50px;
     height: 80px;
-    position: relative;
     // overflow: hidden;
     border-radius: 50%;
-    border: #d7d7d7 1px solid;
+    // border: #d7d7d7 1px solid;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     // bottom: 10%;
     // left: 2%;
 }
 
-.FoxNews-icon{
-    height: 85%;
-    right: 30%;
-    bottom: 2%;
-}
-
-.Breitbart-icon{
-    height: 65%;
-    top: 20%;
-    left: 10%;
-}
-
-.icon {
-    height: 100%;
-}
-
 .journal-image {
-  display: inline;
-  margin: 0 auto;
-  width: auto;
+    height: 100%;
+    display: inline;
+    margin: 0 auto;
+    width: auto;
 }
+.disable {
+    pointer-events: none;
+    opacity: 0.4;
+}
+
 :deep(.noteReference) {
     cursor: pointer;
     border: 1px solid grey;
@@ -638,9 +566,5 @@ li {
 }
 :deep(.noteReference:hover) {
     background-color: rgba(45, 45, 45, 0.2)
-}
-.disable {
-    pointer-events: none;
-    opacity: 0.4;
 }
 </style>

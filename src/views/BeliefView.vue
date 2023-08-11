@@ -12,7 +12,6 @@ import HexCooccurrence from "../components/HexCooccurrence.vue";
 import Legend from '../components/Legend.vue';
 import * as typeUtils from "../types"
 import introJS from 'intro.js'
-import Tooltip from '../components/Tooltip.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -42,8 +41,8 @@ const setCooccurrEntity = (cooccurr_entity) => store.setCooccurrEntity(cooccurr_
 const clicked_hexview = vue.computed(() => store.clicked_hexview)
 const setClickedHexView = (hexview) => store.setClickedHexView(hexview)
 const setInspectionHexView = (hexview) => store.setInspectionHexView(hexview)
-const hex_selection = vue.computed(() => store.hex_selection)
-const setHexSelection =  (hex_selection) => store.setHexSelection(hex_selection)
+const hex_selection = vue.computed(() => store.hex_selection[target_outlet.value]?.[target_entity.value] || {})
+const setHexSelection =  (hex_selection) => store.setHexSelection(hex_selection, target_outlet.value, target_entity.value)
 const conflict_hex = vue.computed(() => store.conflict_hex)
 const setConflictHex = (conflicts) => store.setConflictHex(conflicts)
 const delegateIntroHelperClick = ref(false)
@@ -79,12 +78,11 @@ async function fetch_outlet_hex(outlet, center_entity) {
             outlet_hexview.value = hex_view
             setClickedHexView(hex_view)
             setInspectionHexView(hex_view)
-            let init_hex_selection = {}
-            init_hex_selection[outlet] = {}
+            const init_hex_selection = {}
             hex_view.data.sorted_cooccurrences_list.forEach(entity_data => {
-                init_hex_selection[outlet][entity_data.entity] = -1
+                init_hex_selection[entity_data.entity] = -1
             })
-            init_hex_selection[outlet][center_entity] = { pos: 0, neg: 0}
+            init_hex_selection[center_entity] = { pos: 0, neg: 0}
             setHexSelection(init_hex_selection)
         })
 }
@@ -98,10 +96,12 @@ function handleHexClicked({clickedEntity}) {
 }
 
 function handleHexFilled({filledEntity, filledHexIndex}) {
+    console.log({filledEntity, filledHexIndex})
     const outlet = target_outlet.value
     let old_hex_selection = hex_selection.value
-    old_hex_selection[outlet][filledEntity] = filledHexIndex
+    old_hex_selection[filledEntity] = filledHexIndex
     setHexSelection(old_hex_selection)
+    console.log(hex_selection.value)
     hex_filled.value = true
     return
     Object.keys(old_hex_selection[outlet]).forEach(hex_entity => {
@@ -280,11 +280,11 @@ function toggleDataHexTutorial() {
                 <br>
                 <ul>
                     <li>
-                        How has ${target_outlet} reported on ${target_entity.replaceAll('_', ' ')}?
+                        How would ${target_outlet} report on ${target_entity.replaceAll('_', ' ')}?
                         Positively, negatively, neutrally, or mixed?
                     </li>
                     <li>
-                        How has ${target_outlet} reported on other related topics?
+                        How would ${target_outlet} report on other related topics?
                     </li>
                 </ul>
                 <br>
@@ -382,7 +382,7 @@ function toggleDataHexTutorial() {
                 :title="outlet_hexview.title" :id="`belief_data_hexview`"
                 :entity_cooccurrences="outlet_hexview.data" :segmentation="segmentation"
                 :highlight_hex_entity="highlight_hex_entity"
-                :user_hex_selection="hex_selection[target_outlet]"
+                :user_hex_selection="hex_selection"
                 @hex-clicked="handleHexClicked"
                 @hex-revealed="checkReveal"
                 @hex-anmt-end="reveal_anmt_ended=true"

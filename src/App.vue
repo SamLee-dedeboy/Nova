@@ -2,12 +2,14 @@
 import { RouterLink, RouterView } from "vue-router";
 import Nav from "./components/Nav.vue";
 import DynamicDialog from 'primevue/dynamicdialog';
-
-
+import * as vue from "vue"
+import { useRoute, useRouter } from 'vue-router'
+const route = useRoute()
+const route_name = vue.computed(() => route.name)
 </script>
 
 <template>
-  <Nav/>
+  <Nav :route_name="route_name"/>
   <DynamicDialog/>
   <!-- <stageSelect class='page-steps'/> -->
   <RouterView />
