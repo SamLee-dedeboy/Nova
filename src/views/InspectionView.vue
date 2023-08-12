@@ -13,7 +13,7 @@ import SplitterPanel from "primevue/splitterpanel"
 import * as vue from "vue"
 import { Ref, ref } from 'vue'
 import { useUserDataStore } from '../store/userStore'
-import { useRoute } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import introJS from 'intro.js'
 
 /**
@@ -32,6 +32,7 @@ import NoteEditor from '../components/NoteEditor.vue';
 
 const store = useUserDataStore()
 const route = useRoute()
+const router = useRouter()
 
 const left_section_size = 60
 const right_section_size = vue.computed(() => 100 - left_section_size)
@@ -58,6 +59,8 @@ const article_content_view = ref(null)
 const article_selected = ref(false)
 
 const note_editor = ref(null)
+const firstAccess = vue.computed(() => store.inspection_first_access)
+const setFirstAccess = (value) => (store.setInspectionFirstAccess(value))
 
 vue.onMounted(() => {
     prepare_data()
@@ -156,7 +159,7 @@ async function fetch_article_highlights(article_ids) {
     })
         .then(res => res.json())
         .then(json => {
-            //console.log("highlights fetched", json)
+            console.log("highlights fetched", json)
             target_article_highlights.value = json
         })
 }
@@ -211,7 +214,12 @@ function outletIconStyle(name:string){
     return className;
 }
 
+function goToOverview() {
+    router.push({ name: "home" })
+}
+
 function toggleTutorial() {
+    setFirstAccess(false)
     introJS().setOptions({
         showProgress: true,
         steps: [
@@ -292,6 +300,7 @@ function toggleTutorial() {
 
 <template>
     <ProgressiveDialog
+        v-if="firstAccess"
         @toggle-tutorial="toggleTutorial"
         header="Why does the data suggest differently?"
         :content="`

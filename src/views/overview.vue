@@ -44,7 +44,6 @@ const overview_scatter = ref(null)
 const server_address = vue.inject("server_address")
 
 // overview data 
-// const overview_overall_scatter_data: Ref<any> = ref({})
 const overview_grouped_scatter_data: Ref<any> = ref({})
 const overview_overall_scatter_metadata: Ref<any> = ref({})
 
@@ -53,9 +52,6 @@ const overall_scatter_view: Ref<typeUtils.EntityScatterView | undefined> = ref(u
 const overall_scatter_data_loading: Ref<boolean> = ref(true)
 const overview_constructed: Ref<boolean> = ref(false)
 const selected_entity_info_fetched: Ref<boolean> = ref(false)
-//
-// processed data 
-//
 
 
 // outlet related data
@@ -78,9 +74,10 @@ const outlet_article_num_dict = ref({})
 vue.provide("outlet_article_num_dict", outlet_article_num_dict)
 
 /**
- * Flag for segment mode. \
- * Display segmentation on all scatters when segment mode is on.
+ * Flags
  */
+const firstAccess = vue.computed(() => store.overview_first_access)
+const setFirstAccess = (value) => (store.setOverviewFirstAccess(value))
 
 /**
  * threshold for filtering on count(articles).
@@ -258,40 +255,40 @@ function handleOutletClicked(outlet) {
 }
 
 function toggleTutorial(e: MouseEvent) {
-  // console.log("toggle tutorial")
-    introJS().setOptions({
-        // dontShowAgain: true,
-        showProgress: true,
-        steps: [
-          {
-            title: "The table",
-            element: document.querySelector('.entityList'),
-            intro: "This is the table showing all the topics we collected. You can click any item to see the details.",
-          },
-          {
-            title: "The filter",
-            element: document.querySelector('.entity-utils'),
-            intro: "You can also use this filter to remove unimportant topics.",
-          },
-          {
-            title: "The Scatter Plot",
-            element: document.querySelector(".scatter-container > svg "),
-            // element: document.querySelector(".entity-scatter-panel"),
-            intro: `We visualize the topics in a scatter plot and categorize the topics into four types: 
-            <span class='neg_color'>negative</span>,
-            <span class='pos_color'>positive</span>,
-            <span class='neu_color'>neutral</span>, or
-            <span class='mix_color'>mixed</span>.
-            `,
-          },
-          {
-            title: "The mixed region",
-            element: document.querySelector('.scatter-container > svg > g.segmentation > rect.mixed'),
-            intro: `Mixed topics have high volume of articles, which means that they are more controversial and have more diverse opinions. 
-            <span style='font-weight: bold'> We encourage you to explore the mixed topics. </span>`,
-          },
-        ]
-    }).start()
+  setFirstAccess(false)
+  introJS().setOptions({
+      // dontShowAgain: true,
+      showProgress: true,
+      steps: [
+        {
+          title: "The table",
+          element: document.querySelector('.entityList'),
+          intro: "This is the table showing all the topics we collected. You can click any item to see the details.",
+        },
+        {
+          title: "The filter",
+          element: document.querySelector('.entity-utils'),
+          intro: "You can also use this filter to remove unimportant topics.",
+        },
+        {
+          title: "The Scatter Plot",
+          element: document.querySelector(".scatter-container > svg "),
+          // element: document.querySelector(".entity-scatter-panel"),
+          intro: `We visualize the topics in a scatter plot and categorize the topics into four types: 
+          <span class='neg_color'>negative</span>,
+          <span class='pos_color'>positive</span>,
+          <span class='neu_color'>neutral</span>, or
+          <span class='mix_color'>mixed</span>.
+          `,
+        },
+        {
+          title: "The mixed region",
+          element: document.querySelector('.scatter-container > svg > g.segmentation > rect.mixed'),
+          intro: `Mixed topics have high volume of articles, which means that they are more controversial and have more diverse opinions. 
+          <span style='font-weight: bold'> We encourage you to explore the mixed topics. </span>`,
+        },
+      ]
+  }).start()
 }
 
 
@@ -301,6 +298,7 @@ function toggleTutorial(e: MouseEvent) {
 <template>
   <div style="display: flex; width: 99vw; height: 95vh">
     <ProgressiveDialog
+      v-if="firstAccess"
       @toggle-tutorial="toggleTutorial"
       header="U.S. News Media Coverage Assessment"
       content="

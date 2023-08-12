@@ -4,7 +4,10 @@
             <img alt="logo" src="/nova_logo.png" height="40" class="mr-2">
         </div>
         <!-- <StageSelect class='page-steps' /> -->
-        <Button v-if="summary_visible" class="summary-button" size="small" severity="secondary" text raised @click="openSummary"> Summary </Button>
+        <div class="nav-button-container" style="display: flex; margin-right:1.1%;">
+            <Button v-if="route_name=='inspection'" class="try-another-button" severity="secondary" size="small" text raised @click="handleLogoClicked" style="display: ruby;font-family:Trebuchet MS"> Try another </Button>
+            <Button v-if="summary_visible" class="summary-button" size="small" severity="secondary" text raised @click="openSummary"> Summary </Button>
+        </div>
     </div>
 </template>
 
@@ -76,7 +79,7 @@ function openSummary() {
     margin-left: 20px;
 }
 
-.summary-button {
+.summary-button, .try-another-button {
     margin-right: 1.1%;
     height: 80%;
 }

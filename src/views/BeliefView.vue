@@ -46,6 +46,8 @@ const setConflictHex = (conflicts) => store.setConflictHex(conflicts)
 const delegateIntroHelperClick = ref(false)
 const hex_filled = ref(false)
 const showDragNDropHint = ref(false)
+const firstAccess = vue.computed(() => store.belief_first_access)
+const setFirstAccess = (value) => (store.setBeliefFirstAccess(value))
 
 vue.watch(revealed, () => {
     user_hex.value.updateHighlightHex() 
@@ -196,6 +198,7 @@ function toggleTutorial(e: MouseEvent) {
 }
 
 function toggleDataHexTutorial() {
+    setFirstAccess(false)
     let first_step = true
     introJS().setOptions({
         // dontShowAgain: true,
@@ -260,6 +263,7 @@ function toggleDataHexTutorial() {
     </Dialog> 
     <div class='selection-grid' style="display: flex; width: 100%; height: 95vh; padding: 1%">
         <ProgressiveDialog 
+            v-if="firstAccess"
             @toggle-tutorial="toggleTutorial"
             :header="`How would ${target_outlet} report on ${target_entity.replaceAll('_', ' ')}?`"
             :content="`

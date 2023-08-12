@@ -22,6 +22,9 @@ export const useUserDataStore = defineStore('userData', {
         user_outlet_segmentations: {},
         hex_selection: {},
         conflict_hex: {},
+        overview_first_access: true,
+        belief_first_access: true,
+        inspection_first_access: true,
     }),
     getters: {},
     actions: {
@@ -99,5 +102,14 @@ export const useUserDataStore = defineStore('userData', {
         setConflictHex(conflict_hex) {
             this.conflict_hex = conflict_hex
         },
+        setOverviewFirstAccess(first_access) {
+            this.overview_first_access = first_access
+        },
+        setBeliefFirstAccess(first_access) {
+            this.belief_first_access = first_access
+        },
+        setInspectionFirstAccess(first_access) {
+            this.inspection_first_access = first_access
+        }
     }
 })
