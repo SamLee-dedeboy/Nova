@@ -32,7 +32,7 @@ function handlePrevPage() {
     <div v-if="page!==1" class="toggle-page left" @click="handlePrevPage">
             <button class="btn"> &#60; </button>
     </div>
-    <div class="toggle-page" style="left:800px">
+    <div v-if="page!==1" class="toggle-page" style="left:800px">
         <span>{{page-1}}</span>
     </div>
     <div v-if="page!==8" class="toggle-page right" @click="handleNextPage">

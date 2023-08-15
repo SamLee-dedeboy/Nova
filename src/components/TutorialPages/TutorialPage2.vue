@@ -1,5 +1,5 @@
 <template>
-    <img class="bg" src='../../../public/TutorialIMG/bg.jpg'/>
+    <img class="bg" src='../../../TutorialIMG/bg.jpg'/>
     <h1 style="margin-top: 1rem;">Welcome to NOVA! </h1>
     <div >
         <div class="textbox" >
@@ -15,22 +15,22 @@
             </div>
             <div class="imagebox">
                 <div class = "column">
-                    <img src="../../../public/TutorialIMG/New York Times.png" style="width:75%;margin-left:2.5rem"/>
+                    <img src="../../../TutorialIMG/New York Times.png" style="width:75%;margin-left:2.5rem"/>
                 </div>
                 <div class = "column">
-                    <img src="../../../public/TutorialIMG/CNN.png" />
+                    <img src="../../../TutorialIMG/CNN.png" />
                 </div>
                 <div class = "column">
-                    <img src="../../../public/TutorialIMG/FoxNews.png" />
+                    <img src="../../../TutorialIMG/FoxNews.png" />
                 </div>
                 <div class = "column">
                     <img src="../../../public/TutorialIMG/Breitbart.png" />
                 </div>
                 <div class = "column">
-                    <img src="../../../public/TutorialIMG/Washington Post.png" />
+                    <img src="../../../TutorialIMG/Washington Post.png" />
                 </div>
                 <div class = "column">
-                    <img src="../../../public/TutorialIMG/ABC News.png" />
+                    <img src="../../../TutorialIMG/ABC News.png" />
                 </div>
             </div>
         </div>
