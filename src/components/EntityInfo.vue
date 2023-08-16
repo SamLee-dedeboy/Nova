@@ -109,7 +109,7 @@ function handleOutletClicked(outlet) {
         </p>
         <br> &nbsp;
         <p style="font-style: italic"> 
-            Hint: Drag the white square 
+            Hint: If you think some topics should or should not be controversial, drag the white square 
             <svg width="10" height="10">
                 <rect width=10 height=10 fill="white" stroke="black" stroke-width="1"></rect>
             </svg>
@@ -184,10 +184,7 @@ function handleOutletClicked(outlet) {
     background: #f4c49c;
 }
 .mix_color {
-    /* background-image: url(#diagonalHatch); */
-    /* background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"> <pattern id="diagonalHatch" width="10" height="10" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse"> <rect x="0" y="0" width="10" height="10" style="fill:#baf0f5" /> <line x1="0" y1="0" x2="0" y2="10" style="stroke:#f4c49c; stroke-width:8" /> </pattern> </svg>'); */
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect x="0" y="0" width="10" height="10" fill="rgb(186, 240, 245)" /> <line x1="0" y1="10" x2="10" y2="0" stroke="rgb(244, 196, 156)" stroke-width="2.5" /> </svg>');
-
 }
 .neu_color {
     background: #dddddd;

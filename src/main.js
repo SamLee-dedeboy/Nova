@@ -15,6 +15,7 @@ import "primevue/resources/primevue.min.css"
 import "primeicons/primeicons.css"
 import "intro.js/introjs.css"
 import axios from 'axios'
+import DialogService from 'primevue/dialogservice';
  
 
 const pinia = createPinia();
@@ -27,10 +28,14 @@ app.use(router);
 app.use(PrimeVue, {ripple:true})
 app.use(pinia)
 app.use(MotionPlugin)
+app.use(DialogService);
 app.component('Button', Button);
 app.provide('server_address', "http://127.0.0.1:5000")
 app.provide('left_most_outlet', "New York Times")
 app.provide('right_most_outlet', "Breitbart")
+
+
+
 const outlet_leaning_scale = [
     { outlet: "New York Times", leaning: 0 }, 
     { outlet: "Washington Post", leaning: 0.25 }, 

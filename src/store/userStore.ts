@@ -13,13 +13,18 @@ export const useUserDataStore = defineStore('userData', {
         article_num_threshold: 20,
         segmentation: { pos: 0.5, neg: 0.5 } as typeUtils.Sentiment2D,
         hexview_grid: undefined,
-        clicked_hexview: undefined,
+        clicked_hexview: {},
+        inspection_hexview: undefined,
         constraints: {},
         notes: {},
+        raw_notes: {},
         marked_articles: [],
         user_outlet_segmentations: {},
         hex_selection: {},
         conflict_hex: {},
+        overview_first_access: true,
+        belief_first_access: true,
+        inspection_first_access: true,
     }),
     getters: {},
     actions: {
@@ -53,7 +58,10 @@ export const useUserDataStore = defineStore('userData', {
             this.hexview_grid = grid
         },
         setClickedHexView(hexview) {
-            this.clicked_hexview = hexview
+            this.clicked_hexview[hexview.title] = hexview
+        },
+        setInspectionHexView(hexview) {
+            this.inspection_hexview = hexview
         },
         addConstraint(constraint) {
             if (!this.constraints[constraint.target])
@@ -63,9 +71,13 @@ export const useUserDataStore = defineStore('userData', {
         removeConstraint( constraint) {
             delete this.constraints[constraint.target][constraint.outlet]
         },
-        setNotes(notes, outlet) {
-            this.notes[outlet] = notes
-            console.log(this.notes)
+        setNotes(notes, outlet, entity) {
+            if(this.notes[outlet] === undefined) this.notes[outlet] = {}
+            this.notes[outlet][entity] = notes
+        },
+        setRawNotes(notes, outlet, entity) {
+            if(this.raw_notes[outlet] === undefined) this.raw_notes[outlet] = {}
+            this.raw_notes[outlet][entity] = notes
         },
         setMarkedArticle( article_info) {
             let found = this.marked_articles.find(existed_article_info => existed_article_info.article_id === article_info.article_id)
@@ -83,11 +95,21 @@ export const useUserDataStore = defineStore('userData', {
                 this.marked_articles.splice(index, 1);
             }
         },
-        setHexSelection(hex_selection) {
-            this.hex_selection = hex_selection
+        setHexSelection(hex_selection, outlet, entity) {
+            if (!this.hex_selection[outlet]) this.hex_selection[outlet] = {}
+            this.hex_selection[outlet][entity] = hex_selection
         },
         setConflictHex(conflict_hex) {
             this.conflict_hex = conflict_hex
         },
+        setOverviewFirstAccess(first_access) {
+            this.overview_first_access = first_access
+        },
+        setBeliefFirstAccess(first_access) {
+            this.belief_first_access = first_access
+        },
+        setInspectionFirstAccess(first_access) {
+            this.inspection_first_access = first_access
+        }
     }
 })

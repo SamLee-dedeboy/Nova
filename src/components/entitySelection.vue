@@ -6,7 +6,7 @@
                 <line x1="0" y1="0" x2="0" y2="10" style="stroke:#f4c49c; stroke-width:8" />
             </pattern>
         </svg>
-        <ToggleButton class="fisheye-toggler w-8rem" severity="secondary" text raised v-model="enable_fisheye" onLabel="Fisheye On" offLabel="Fisheye Off" style="position:absolute; bottom:0; right:10px;"></ToggleButton>
+        <ToggleButton class="fisheye-toggler w-8rem" severity="secondary" text raised v-model="enable_fisheye" onLabel="Fisheye On" offLabel="Fisheye Off" style="position:absolute; top:100%; right:10px;"></ToggleButton>
         <!-- <div class="button-set">
             <Button class="reset-zoom p-button-secondary" @click="resetZoom">reset</Button>
         </div> -->

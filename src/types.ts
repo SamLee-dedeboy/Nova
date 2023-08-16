@@ -5,7 +5,10 @@ export class Constraint {
 }
 export class CooccurrHexView {
     title: string
+    outlet: string
+    center_entity: string
     data: EntityCooccurrences
+
 }
 
 export class EntityScatterView {
