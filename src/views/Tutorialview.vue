@@ -30,13 +30,15 @@ function handlePrevPage() {
         <Page8 v-if="page===8"></Page8>
     </div>
     <div v-if="page!==1" class="toggle-page left" @click="handlePrevPage">
-            <button class="btn"> &#60; </button>
+            <!-- <button class="btn zoom"> &#8592; </button> -->
+            <div class="btn zoom"> &#8592; </div>
     </div>
     <div v-if="page!==1" class="toggle-page" style="left:800px">
         <span>{{page-1}}</span>
     </div>
     <div v-if="page!==8" class="toggle-page right" @click="handleNextPage">
-            <button class="btn"> &#62; </button>
+            <!-- <button class="btn zoom"> &#8594; </button> -->
+            <div class="btn zoom"> &#8594; </div>
     </div>
 
 
@@ -59,15 +61,16 @@ function handlePrevPage() {
   .btn {
     cursor: pointer;
     /* text-align: center; */
-    font-size: 25px;
-    border-radius: 50%;
+    font-size: 40px;
+    border: 0;
+    /* border-radius: 50%;
     width: 50px;
     height: 50px;
     border: 0;
-    background-color: rgb(0, 0, 0,0.1);
+    background-color: rgb(0, 0, 0,0.1); */
   }
 
-  .btn:hover{
+  /* .btn:hover{
     background-color:rgba(0,0,0,0.4);
-  }
+  } */
 </style>

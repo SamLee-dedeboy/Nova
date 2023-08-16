@@ -4,11 +4,11 @@
         <div class="outbox ">
             <img src="../../../TutorialIMG/NOVA.png" class="image">
         </div>
-        <!-- <div class="outbox">
+        <div class="outbox">
             <span class="text">
-                Press here or press &#x25B7 on the keyboard to start the tutorial 
+                Click left arrow &#8592; or right arrow &#8594; below to start the tutorial 
             </span>
-        </div> -->
+        </div>
     </div>
 </template>
 
@@ -25,9 +25,9 @@ body{
   height:auto;
 }
 .outbox{
-display: flex;
-justify-content: center;
-align-items: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 .image{
 
@@ -44,14 +44,15 @@ align-items: center;
     font-size: 1rem;
     /* margin: 0.5rem; */
     padding:5px;
-    width: 400px;
+    width: 500px;
+    text-align: center;
 
 }
-.text:hover{
+/* .text:hover{
     background: rgba(0,0,0,0.1);
     color:black;
     border-radius: 5px;
     cursor: pointer;
-}
+} */
 
 </style>

@@ -3,8 +3,8 @@
     <div class="outbox" style="height: 750px;margin-top: 1rem;">
         <div>
             <h1 class="textbox">
-                <span class="textword" style="font-size: 70px;">
-                Your journey with our system starts now! Click and Try out <span style="font-style: italic">NOVA</span> by youself ! <carbon:arrow-right class="inline"/>
+                <span class="textword_8" style="font-size: 50px; ">
+                Your journey with our system starts now! Click and Try out <span style="font-style: italic">NOVA</span> by youself ! &#8680;
                 <img src="../../../TutorialIMG/nova_logo.png" class="novalogo zoom"  style="float:right"
                 @click="handleNOVAlogoClicked"
                 > 
@@ -21,6 +21,16 @@
     }
 </script>
 <style>
+.textbox .textword_8{
+  font-family: Georgia, serif;
+  background-color: #fff7ed;
+  /* display: inline-block; */
+  /* line-height: 2; */
+  margin: 10px;
+  padding: 20px;
+  text-align: justify;
+  width: 1050px;
+}
 .novalogo{
     width: 12%;
     margin-top: 0.5rem;
