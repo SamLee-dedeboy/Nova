@@ -18,8 +18,6 @@ const props = defineProps({
 const emit = defineEmits(['sentence-clicked'])
 
 const indexed_content: Ref<Any[]> = ref([])
-const notes = vue.computed(() => store.notes)
-const setNotes = (e) => store.setNotes(e.target.value)
 
 vue.watch(() => props.selected_article, async () => {
     console.log("selected article changed!")
@@ -90,6 +88,7 @@ function handleSentenceClicked(e) {
     const sentence_content = indexed_content.value[clicked_sentence_index]
     // console.log({sentence_content})
     emit('sentence-clicked', sentence_content, clicked_sentence_index, props.selected_article.id)
+    document.querySelector('#'+clicked_sentence_id).classList.add('animate')
 }
 
 function add_highlights(raw_text: string, highlights: any[], filter=false) {
@@ -171,13 +170,13 @@ defineExpose({
             <div class="scroll-panel" style="width: 100%; height: 100%; overflow-y: auto">
                 <div class="summary" v-if="selected_article" style="height: 100%; flex-direction: column">
                     <div class="articleHeadline" style="text-align: center; margin: 2%">
-                        <h4 class="selected-article-headline" style="font-weight: 600;" v-html="add_highlights(selected_article.headline, props.article_highlights?.headline_entities?.[selected_article.id])"/>
+                        <h4 class="selected-article-headline" style="font-weight: 600; font-size: 1.3rem; border-bottom: 1px solid black; border-radius: unset;" v-html="add_highlights(selected_article.headline, props.article_highlights?.headline_entities?.[selected_article.id])"/>
                     </div>
                     <!-- <div class="articleSummary">
                         <span class="selected-article-summary" v-html="removeTags(add_highlights(selected_article.summary, props.article_highlights?.summary_entities?.[selected_article.id]))"/>
                         <span class="selected-article-summary" v-html="removeTags(selected_article.content)"/>
                     </div> -->
-                    <div class="articleContent" style="margin-left: 8%; margin-right: 8%; font-style: italic">
+                    <div class="articleContent" style="margin-left: 8%; margin-right: 8%;  ">
                         <span class="selected-article-content" @click="handleSentenceClicked" v-html="addContentHighlights(indexed_content, props.article_highlights?.content_entities?.[selected_article.id])"/>
                         <!-- <span class="selected-article-content" v-html="selected_article.content"/> -->
                     </div>
@@ -199,9 +198,32 @@ defineExpose({
     border: 1px solid #f4f4f4;
     border-radius: 5px;
 }
+:deep(.animate.sentence::before) {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 2px solid black;
+  opacity: 0;
+  z-index: 100;
+  pointer-events: none;
+  /* animation: moveBorderAnimation 1s ease-out; */
+}
+
+@keyframes moveBorderAnimation {
+  0% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-1000px) translateY(1000px); /* Adjust the distance between original and target divs */
+    opacity: 0;
+  }
+}
+
 
 .selected-article-summary, .selected-article-content {
-  margin-left: 1%;
+    margin-left: 1%;
 }
 :deep(.p-splitter-gutter) {
     pointer-events: none;

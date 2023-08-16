@@ -12,14 +12,13 @@ import SplitterPanel from "primevue/splitterpanel"
 import * as vue from "vue"
 import { Ref, ref } from 'vue'
 import { useUserDataStore } from '../store/userStore'
-import { useRoute } from 'vue-router'
-import * as d3 from 'd3'
+import { useRouter, useRoute } from 'vue-router'
 import introJS from 'intro.js'
 
 /**
  * types
  */
-import { Article, SentimentType, Constraint } from "../types"
+import { Article } from "../types"
 
 /**
  * vue components
@@ -29,10 +28,10 @@ import ArticleAnalysis from "../components/ArticleAnalysis.vue";
 import HexCooccurrence from "../components/HexCooccurrence.vue"
 import ProgressiveDialog from "../components/ProgressiveDialog.vue"
 import NoteEditor from '../components/NoteEditor.vue';
-import { wrap } from 'lodash';
 
 const store = useUserDataStore()
 const route = useRoute()
+const router = useRouter()
 
 const left_section_size = 60
 const right_section_size = vue.computed(() => 100 - left_section_size)
@@ -44,34 +43,34 @@ const selected_entity = vue.computed(() => store.selected_entity)
 const setEntity = (entity) => store.setEntity(entity)
 const selected_cooccurr_entity = vue.computed(() => store.selected_cooccurr_entity)
 const setCooccurrEntity = (cooccurr_entity) => store.setCooccurrEntity(cooccurr_entity)
-const hex_selection = vue.computed(() => store.hex_selection)
+const user_hex_selection = vue.computed(() => store.hex_selection[selected_outlet][selected_entity.value.name])
 const segmentation = vue.computed(() => store.segmentation)
-const notes = vue.computed(() => store.notes[selected_outlet])
-const setNotes = (content) => (store.setNotes(content, selected_outlet))
-const noteHTMLContent = vue.ref('')
-const original_segmentation = segmentation.value
-const clicked_hexview = vue.computed(() => store.clicked_hexview)
+const notes = vue.computed(() => store.notes[selected_outlet]?.[selected_entity.value])
+const setNotes = (content) => (store.setNotes(content, selected_outlet, selected_entity.value.name))
+const inspection_hexview = vue.computed(() => store.inspection_hexview)
 const highlight_hex_entity: Ref<string> = ref("")
-const user_hex_selection = vue.computed(() => store.hex_selection) 
-// const setClickedHexView = (hexview) => store.setClickedHexView(hexview)
-// const hexview_grid = vue.computed(() => store.hexview_grid)
 
-// const selected_outlet: Ref<string> = ref("ABC News")
 const selected_article: Ref<Article> = ref()
 const target_articles: Ref<Article[]> = ref([])
 const target_article_highlights: Ref<any> = ref({})
 const article_view = ref(null)
 const article_content_view = ref(null)
+const article_selected = ref(false)
+
+const note_editor = ref(null)
+const firstAccess = vue.computed(() => store.inspection_first_access)
+const setFirstAccess = (value) => (store.setInspectionFirstAccess(value))
 
 vue.onMounted(() => {
     prepare_data()
     noteHTMLContent.value = notes.value || ""
 })
 
-vue.watch(noteHTMLContent, () => {
+function handleNoteUpdated(noteHTMLContent) {
     setNotes(noteHTMLContent)
     vue.nextTick(() => {
         const references = document.querySelectorAll(".noteReference")
+        console.log({references})
         references.forEach(reference_element => {
             reference_element.addEventListener("click", async function(e) {
                 console.log("reference clicked", (e.target as HTMLElement).getAttribute("sentence_index"))
@@ -80,7 +79,6 @@ vue.watch(noteHTMLContent, () => {
                 console.log({sentence_index, doc_id})
                 // check if the article is already loaded
                 if(doc_id != selected_article.value.id) {
-                    console.log("fetching...")
                     await fetch(`${server_address}/processed_data/ids_to_articles`, {
                         method: "POST",
                         headers: {
@@ -94,7 +92,6 @@ vue.watch(noteHTMLContent, () => {
                     })
                     .then(res => res.json())
                     .then(articles => {
-                        console.log("fetched!")
                         selected_article.value = articles[0]
                         vue.nextTick(() => article_content_view.value.scrollToSentence(sentence_index))
                     })
@@ -104,17 +101,7 @@ vue.watch(noteHTMLContent, () => {
             })
         })
     })
-})
-
-
-const journal_options = [
-    "CNN",
-    "FoxNews",
-    "Breitbart",
-    "ABC News",
-    "New York Times",
-    "Washington Post"
-]
+}
 
 async function prepare_data() {
     const cooccurr_entity_name = selected_cooccurr_entity.value? selected_cooccurr_entity.value.name : selected_entity.value.name
@@ -155,7 +142,8 @@ async function fetch_articles(article_ids) {
         .then(res => res.json())
         .then(json => {
             target_articles.value = json
-            console.log("articles", target_articles.value.length)
+            console.log("articles", target_articles.value)
+            article_view.value.handleArticleClicked(undefined, article_ids[0])
             data_fetched.value = true
         })
 }
@@ -171,23 +159,10 @@ async function fetch_article_highlights(article_ids) {
     })
         .then(res => res.json())
         .then(json => {
-            //console.log("highlights fetched", json)
+            console.log("highlights fetched", json)
             target_article_highlights.value = json
         })
 }
-
-// async function handleChangeJournal(e) {
-//     // const outlet = e.target.value
-//     const outlet = e.value
-//     // selected_outlet.value = outlet
-//     const entity = selected_entity.value.name
-//     const co_occurr_entity = selected_cooccurr_entity.value?.name
-//     const view = hexview_grid.value.find(view => view.title.split("-")[2] === outlet)
-//     setClickedHexView(view)
-//     await fetch_cooccurr_info(outlet, entity, co_occurr_entity)
-//     prepare_data()
-//     // selectedCategory.value = undefined
-// }
 
 async function handleHexClicked({ clickedEntity }, view) {
     if(clickedEntity === selected_entity.value.name) {
@@ -203,14 +178,7 @@ async function handleHexClicked({ clickedEntity }, view) {
 
 function handleSentenceClicked(sentence, sentence_index, doc_id) {
     console.log("sentence clicked")
-    const note_content = notes.value || ""
-    noteHTMLContent.value = note_content + wrapSentence(sentence, sentence_index, doc_id)
-}
-
-function wrapSentence(sentence: string, sentence_index: number, doc_id: string) {
-    const sliced = sentence.slice(0, 35)
-    return `<div class='noteReference' contenteditable="false" sentence_index=${sentence_index} doc_id=${doc_id}> "${sliced}..." </div><br>`
-    // return `<NoteReference :sentence="sentence" :sentence_index="sentence_index"> </NoteReference>`
+    note_editor.value.addReference(sentence, sentence_index, doc_id)
 }
 
 async function fetch_cooccurr_info(outlet, entity, co_occurr_entity) {
@@ -224,7 +192,7 @@ async function fetch_cooccurr_info(outlet, entity, co_occurr_entity) {
                 article_ids: json.target_article_ids,
                 // num_of_mentions: json.target_num,
                 // articles_topic_dict: json.target_articles_topic_dict,
-                // sst_ratio: clicked_hexview.value.data.target.sst
+                // sst_ratio: inspection_hexview.value.data.target.sst
             }
             setEntity(target_entity)
             const cooccurr_entity = {
@@ -246,7 +214,12 @@ function outletIconStyle(name:string){
     return className;
 }
 
+function goToOverview() {
+    router.push({ name: "home" })
+}
+
 function toggleTutorial() {
+    setFirstAccess(false)
     introJS().setOptions({
         showProgress: true,
         steps: [
@@ -290,7 +263,6 @@ function toggleTutorial() {
                     <span style="background-color: #baf0f5">negatively</span>, or
                     <span style="background-color: #dddddd">neutrally</span> about the entity.
                     <br>
-                    If you did not click an article in the previous step, hit 'back' and click it.
                 `
             },
             {
@@ -311,6 +283,15 @@ function toggleTutorial() {
                     document it here.
                 `
             },
+            {
+                title: "A handy feature",
+                // element: document.querySelector('#s-0'),
+                element: document.querySelector('.summary'),
+                intro: `
+                    You can click on any sentence to add it to your notes.
+                    They will be like references and you can add comments on them.
+                `
+            },
         ]
     }).start()
 
@@ -319,6 +300,7 @@ function toggleTutorial() {
 
 <template>
     <ProgressiveDialog
+        v-if="firstAccess"
         @toggle-tutorial="toggleTutorial"
         header="Why does the data suggest differently?"
         :content="`
@@ -386,58 +368,47 @@ function toggleTutorial() {
                 ref="article_view"
                 :articles="target_articles" 
                 :article_highlights="target_article_highlights"
-                @article-selected="(article) => selected_article=article"
+                @article-selected="(article) => { selected_article=article; article_selected=true }"
                 :entity_pair="[selected_entity?.name as string, selected_cooccurr_entity?.name as string]">
             </ArticleView>
             <div class="hexview-note-container" style="display: flex; margin-top: 1%; overflow: hidden">
-                <div class="hexview-container" style="display: flex; width: 100%; margin-right: 2%;">
+                <div class="hexview-container" style="display: flex; width: 100%;">
                     <div class="user-hexview-container" style="width: 100%">
                         <div class="hive-header user-hive-header" style="left: 47%">Your belief </div>
-                        <HexCooccurrence v-if="data_fetched" class="inpection-user-hexview" :title="clicked_hexview.title"
-                            :id="`inspection_user_hexview`" :entity_cooccurrences="clicked_hexview.data"
+                        <HexCooccurrence v-if="data_fetched" class="inpection-user-hexview" 
+                            :id="`inspection_user_hexview`" :entity_cooccurrences="inspection_hexview.data"
                             mode="user-fixed"
                             :p_margin="{top:0, right:0, bottom:0, left:0}"
-                            :segmentation="original_segmentation" :highlight_hex_entity="highlight_hex_entity"
+                            :segmentation="segmentation" :highlight_hex_entity="highlight_hex_entity"
                             :show_blink="true"
                             :show_label="true"
-                            :wider_border="true"
-                            :user_hex_selection="user_hex_selection[selected_outlet]"
+                            :user_hex_selection="user_hex_selection"
                             @hex-clicked="handleHexClicked">
                         </HexCooccurrence>
                         </div>
                     <div class="data-hexview-container" style="width: 100%">
                         <div class="hive-header data-hive-header" style="left: 31%">Data suggested</div>
-                        <HexCooccurrence v-if="data_fetched" class="inpection-data-hexview" :title="clicked_hexview.title"
-                            :id="`inspection_data_hexview`" :entity_cooccurrences="clicked_hexview.data"
+                        <HexCooccurrence v-if="data_fetched" class="inpection-data-hexview" 
+                            :id="`inspection_data_hexview`" :entity_cooccurrences="inspection_hexview.data"
                             mode="data"
                             :p_margin="{top:0, right:0, bottom:0, left:0}"
-                            :segmentation="original_segmentation" :highlight_hex_entity="highlight_hex_entity"
+                            :segmentation="segmentation" :highlight_hex_entity="highlight_hex_entity"
                             :show_blink="true"
                             :show_label="true"
                             :show_hex_appear="false"
-                            :user_hex_selection="hex_selection[selected_outlet]"
+                            :user_hex_selection="user_hex_selection"
                             @hex-clicked="handleHexClicked">
                         </HexCooccurrence>
                     </div>
                 </div>
-                <div v-if="data_fetched" class="cooccurr-info-container" style="display: flex; flex-direction: column; font-size: 0.8rem; width: 40%;">
+                <div v-if="data_fetched" class="cooccurr-info-container" style="display: flex; flex-direction: column; font-size: 0.8rem;">
                     <div class=journal-icon-container style="display: flex; padding-left: 2%;">
                         <div :class="['journal-style']">
                             <img :src="`/squared/${selected_outlet}.png`"
                                 :class="['journal-image',`${outletIconStyle(selected_outlet)}`]" />
                         </div>
-                        <div class="journal-info-container" style="font-size:small; z-index:99; margin: 1rem 1rem;">
-                            <!-- <Dropdown :modelValue="selected_outlet" :options="journal_options"
-                                placeholder="Select an journal" @change="handleChangeJournal" /> -->
-                            <!-- {{  selected_outlet }} -->
-                            Did you change your mind on {{ selected_outlet }}? 
-                            Write down your thoughts!
-                            <!-- <i class='pi pi-info-circle tooltip'>
-                                <span class="tooltiptext right-tooltiptext" style="width: 400px">
-                                    We will record any text you put here for academic user study.
-                                    We do not collect any other information from you.
-                                </span>
-                            </i> -->
+                        <div class="journal-info-container" style="font-size:0.7rem; z-index:99; display: flex; align-items: center;">
+                            <span> Did you change your mind on {{ selected_outlet }}?  Write down your thoughts!  </span>
                         </div>
                     </div>
                     <div class="notes" 
@@ -455,17 +426,12 @@ function toggleTutorial() {
                                 <span class="tooltiptext right-tooltiptext" style="width: 145px">
                                     <!-- Write down any hypothesis or questions you have.
                                     The system will document that for you. -->
-                                    We will record the text you put here for academic user study.
+                                    We will record the text you put here for academic user stuy.
                                     We do not collect any other information from you.
                                 </span>
                             </i>
                         </h2>
-                        <!-- <textarea class="notes-style"
-                        style="width: 100%; height: 100%;"
-                        :value="notes"
-                        placeholder="Write down any thoughts you have..." 
-                        @input="setNotes" /> -->
-                        <NoteEditor class="notes-style" style="width: 100%; height: 100%" v-model="noteHTMLContent"></NoteEditor>
+                        <NoteEditor ref="note_editor" class="notes-style" style="width: 100%; height: 100%" @update="handleNoteUpdated" :initial_content="notes?.[selected_outlet]"></NoteEditor>
                     </div>
                 </div>
                 <svg style='position:absolute;pointer-events:none'>
@@ -489,7 +455,6 @@ function toggleTutorial() {
                     @sentence-clicked="handleSentenceClicked"
                     >
                 </ArticleAnalysis>
-
             </div>
         </SplitterPanel>
     </Splitter>
@@ -580,35 +545,27 @@ li {
 .journal-style{
     // width: 50px;
     height: 80px;
-    position: relative;
     // overflow: hidden;
     border-radius: 50%;
-    border: #d7d7d7 1px solid;
+    // border: #d7d7d7 1px solid;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     // bottom: 10%;
     // left: 2%;
 }
 
-.FoxNews-icon{
-    height: 85%;
-    right: 30%;
-    bottom: 2%;
-}
-
-.Breitbart-icon{
-    height: 65%;
-    top: 20%;
-    left: 10%;
-}
-
-.icon {
-    height: 100%;
-}
-
 .journal-image {
-  display: inline;
-  margin: 0 auto;
-  width: auto;
+    height: 100%;
+    display: inline;
+    margin: 0 auto;
+    width: auto;
 }
+.disable {
+    pointer-events: none;
+    opacity: 0.4;
+}
+
 :deep(.noteReference) {
     cursor: pointer;
     border: 1px solid grey;

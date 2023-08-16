@@ -158,9 +158,9 @@ function highlight_element(text) {
     return `<span style='background-color:${highlight_color};'>${text}</span>`
 }
 
-// defineExpose({
-//     handleArticleClicked,
-// })
+defineExpose({
+    handleArticleClicked,
+})
 
 
 </script>
@@ -201,7 +201,7 @@ function highlight_element(text) {
 <style scoped>
 .article-cards-container {
   display: flex;
-  height: 61%;
+  height: 53%;
   border-bottom: solid 1px black;
 }
 :deep(.p-scroll-wrapper) {
