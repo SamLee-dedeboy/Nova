@@ -1,7 +1,8 @@
 import { createRouter, createWebHistory } from "vue-router";
+import Tutorialview from "../views/Tutorialview.vue"
 import Overview from "../views/overview.vue"
 import BeliefView from "../views/BeliefView.vue"
-import CompareView from "../views/CompareView.vue";
+// import CompareView from "../views/CompareView.vue";
 import InspectionView from "../views/InspectionView.vue"
 import SummaryView from "../views/SummaryView.vue"
 const router = createRouter({
@@ -9,24 +10,30 @@ const router = createRouter({
   routes: [
     {
       path: "/",
-      name: "home",
-      component: Overview,
+      name: "tutorial",
+      component: Tutorialview,
       meta: { order: 0 },
     },
     {
-      path: "/belief/:order/:outlet/:entity",
-      name: "belief",
-      component: BeliefView,
+      path: "/home",
+      name: "home",
+      component: Overview,
       meta: { order: 1 },
     },
     {
-      path: "/compare/:entity/",
-      name: "compare",
-      component: CompareView,
+      path: "/belief/:outlet/:entity",
+      name: "belief",
+      component: BeliefView,
       meta: { order: 2 },
     },
+    // {
+    //   path: "/compare/:entity/",
+    //   name: "compare",
+    //   component: CompareView,
+    //   meta: { order: 2 },
+    // },
     {
-      path: "/inspection/:entity",
+      path: "/inspection/:outlet/:entity",
       name: "inspection",
       component: InspectionView,
       meta: { order: 3 },

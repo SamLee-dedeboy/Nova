@@ -5,6 +5,7 @@ import router from "./router";
 import PrimeVue from 'primevue/config';
 import Button from 'primevue/button';
 import mitt from 'mitt';
+import { MotionPlugin } from "@vueuse/motion";
 // import { createStore } from "vuex"
 // import { EntityInfo } from "./types"
 
@@ -12,6 +13,7 @@ import {createPinia} from "pinia";
 import "primevue/resources/themes/saga-blue/theme.css"
 import "primevue/resources/primevue.min.css"
 import "primeicons/primeicons.css"
+import "intro.js/introjs.css"
 import axios from 'axios'
  
 
@@ -24,6 +26,7 @@ app.config.globalProperties.axios = axios
 app.use(router);
 app.use(PrimeVue, {ripple:true})
 app.use(pinia)
+app.use(MotionPlugin)
 app.component('Button', Button);
 app.provide('server_address', "http://127.0.0.1:5000")
 app.provide('left_most_outlet', "New York Times")

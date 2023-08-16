@@ -1,7 +1,7 @@
 <template>
     <div id="nova-navBar">
         <div id="nova-logo">
-            <img alt="logo" src="/nova_logo.png" height="40" class="mr-2">
+            <img alt="logo" src="/nova_logo.png" height="40" class="mr-2" @click="handleNOVAlogoClicked">
         </div>
         <StageSelect class='page-steps' />
     </div>
@@ -10,6 +10,11 @@
 <script setup lang="ts">
 import StageSelect from "./stageSelect.vue";
 
+import { useRoute, useRouter } from 'vue-router'
+const router = useRouter()
+function handleNOVAlogoClicked() {
+    router.push({ name: 'tutorial' })
+}
 
 
 </script>
@@ -29,6 +34,9 @@ import StageSelect from "./stageSelect.vue";
     align-items: center;
     display: flex;
     margin-left: 2%;
+}
+#nova-logo:hover{
+    cursor: pointer;
 }
 
 .page-steps {

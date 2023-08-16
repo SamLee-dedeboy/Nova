@@ -38,7 +38,7 @@ def constructHexData_old(target_entity, cooccurrences, entity_data_dict, top_k=3
     hex_data.sorted_cooccurrences_list = target_cooccurrences[0:top_k]
     return hex_data
     
-def constructGroupedHexData(target_entity, cooccurrences, entity_node_dict, outlet, processed_data, metadata):
+def constructGroupedHexData(target_entity, cooccurrences, entity_node_dict, outlet):
     from pprint import pprint
     top_k = 36
     hex_data = EntityCooccurrences(target=None, sorted_cooccurrences_list=[])
@@ -68,19 +68,23 @@ def constructGroupedHexData(target_entity, cooccurrences, entity_node_dict, outl
     hex_data.sorted_cooccurrences_list = target_cooccurrences[0:top_k]
     return hex_data
 
-def get_entity_candidates(center_entity, entity_cooccurrences_grouped, grouped_node_dict, processed_data, overall_node_dict, grouped_metadata):
-    res = []
+def get_entity_candidates(center_entity, outlet, entity_cooccurrences_grouped, grouped_node_dict, overall_node_dict):
+    # res = []
     merged_entities = []
-    for outlet, cooccurrences_dict in entity_cooccurrences_grouped.items():
-        cooccurrences = cooccurrences_dict[center_entity]
-        hex_data = constructGroupedHexData(center_entity, cooccurrences, grouped_node_dict[outlet], outlet, processed_data, grouped_metadata)
-        res.append({"entity": center_entity, "outlet": outlet, "cooccurrences_data": hex_data})
-        entities = list(map(lambda hex_entity: hex_entity.entity, hex_data.sorted_cooccurrences_list))
-        merged_entities = list(set(merged_entities + entities))
-        # sort by freq in overall scatter
-    merged_entities.sort(reverse=True, key=lambda entity: len(overall_node_dict[entity].article_ids))
+    cooccurrences = entity_cooccurrences_grouped[outlet][center_entity]
+    hex_data = constructGroupedHexData(center_entity, cooccurrences, grouped_node_dict[outlet], outlet)
+    entities = list(map(lambda hex_entity: hex_entity.entity, hex_data.sorted_cooccurrences_list))
+    entities.sort(reverse=True, key=lambda entity: len(overall_node_dict[entity].article_ids))
+    # for outlet, cooccurrences_dict in entity_cooccurrences_grouped.items():
+    #     cooccurrences = cooccurrences_dict[center_entity]
+    #     hex_data = constructGroupedHexData(center_entity, cooccurrences, grouped_node_dict[outlet], outlet)
+    #     # res.append({"entity": center_entity, "outlet": outlet, "cooccurrences_data": hex_data})
+    #     entities = list(map(lambda hex_entity: hex_entity.entity, hex_data.sorted_cooccurrences_list))
+    #     merged_entities = list(set(merged_entities + entities))
+    #     # sort by freq in overall scatter
+    # merged_entities.sort(reverse=True, key=lambda entity: len(overall_node_dict[entity].article_ids))
 
-    return res, merged_entities
+    return entities
 
 
 

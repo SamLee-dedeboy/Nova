@@ -6,10 +6,11 @@
                 <line x1="0" y1="0" x2="0" y2="10" style="stroke:#f4c49c; stroke-width:8" />
             </pattern>
         </svg>
+        <ToggleButton class="fisheye-toggler w-8rem" severity="secondary" text raised v-model="enable_fisheye" onLabel="Fisheye On" offLabel="Fisheye Off" style="position:absolute; bottom:0; right:10px;"></ToggleButton>
         <!-- <div class="button-set">
             <Button class="reset-zoom p-button-secondary" @click="resetZoom">reset</Button>
         </div> -->
-        <NodeInfo class='nodeinfo' :node="hovered_node_info" :total_articles="total_articles" style="position:absolute; z-index:1000;pointer-events: none;"></NodeInfo>
+        <NodeInfo class='nodeinfo' :node="hovered_node_info" :total_articles="total_articles" style="position:absolute; z-index:1000;pointer-events: none; opacity:0.9"></NodeInfo>
     
     </div>
 </template>
@@ -33,10 +34,7 @@
      */
     import NodeInfo from './NodeInfo.vue'
     import {EntityScatter} from "./scatterPlot"
-
-
-
-
+    import ToggleButton from 'primevue/togglebutton';
 
     // initialization
     const props = defineProps({
@@ -46,7 +44,7 @@
         selected_entity_name: String,
         article_num_threshold: Number,
         segment_mode: Boolean,
-        segmentation: Object as () => Sentiment2D
+        segmentation: Object as () => Sentiment2D,
     })
     const emit = defineEmits([
         // 'node_clicked', 
@@ -54,6 +52,11 @@
         'show_temporal', 
         'update:selected_entity_name',
         ])
+    const enable_fisheye = ref(false)
+    vue.watch(enable_fisheye, () => {
+        entityScatterPlot.toggleFisheye(enable_fisheye.value)
+    })
+
     const tooltip_content: Ref<string> = ref("") 
     const hovered_node_info: Ref<OutletNodeInfo> = ref(new OutletNodeInfo())
 
@@ -78,7 +81,7 @@
     const segment_controller_width = 12
     const show_axes = true
     const show_offset = false
-    const show_highlight = false
+    const show_highlight = true
     const zoomable = false
     const node_clickable = true
     const show_region_label = true
@@ -105,7 +108,8 @@
         clicked_node, clicked_node_element, 
         hovered_node_info,
         manualTooltip,
-        manualTooltipID
+        manualTooltipID,
+        enable_fisheye.value,
     );
     
     vue.watch(() => props.view, (new_view, old_view) => {
@@ -134,7 +138,7 @@
     })
 
     function setHighlightNode(node_text) {
-        // console.log('set highlight node', node_text)
+        console.log('set highlight node', node_text)
         entityScatterPlot.setHighlightNode(node_text, emit)
     }
 
@@ -157,15 +161,7 @@
     background-color: white;
 }
 .entity-scatterplot {
-    // overflow: hidden;
-    // height: inherit;
-    // max-height: 100%;
     aspect-ratio: 1;
-    // overflow: hidden;
-    // height: auto;
-    // width: inherit;
-    // aspect-ratio: 1;
-    // height: 95vh;
 }
 .tooltip {
     transform-origin: top left;

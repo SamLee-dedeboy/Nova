@@ -29,11 +29,15 @@ onMounted(() => {
         .style("stop-color", (d) => (colorScale!(d)))
         .attr("offset", (d, i) => (100*(i/(interpolation.length-1)) + '%'))
     svg.append("rect")
+        .attr("class", "spectrum")
         .attr("x", 0)
         .attr("y", 0)
+        .attr("rx", 2)
         .attr("width", viewBox[0])
         .attr("height", viewBox[1])
         .style("fill", "url(#grad)")
+        .attr("stroke-width", 1)
+        .attr("stroke", "#f7f7f7")
 
 }) 
 </script>
