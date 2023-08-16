@@ -40,8 +40,6 @@ const props = defineProps({
     route_name: String
 })
 
-import { useRoute, useRouter } from 'vue-router'
-const router = useRouter()
 function handleNOVAlogoClicked() {
     router.push({ name: 'tutorial' })
 }
