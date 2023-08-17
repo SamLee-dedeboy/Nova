@@ -46,5 +46,12 @@ const router = createRouter({
     },
   ],
 });
+router.beforeEach((to, from, next) => {
+  // Redirect if user is disallowed to view the page
+  if(to.name === "belief" && from.name === "inspection") {
+    return router.push({ name: 'home'})
+  }
+  return next()
+})
 
 export default router;
