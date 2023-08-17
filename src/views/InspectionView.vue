@@ -6,6 +6,7 @@ import Splitter from 'primevue/splitter';
 import SplitterPanel from "primevue/splitterpanel"
 
 
+
 /**
  * libraries
  */
@@ -63,7 +64,6 @@ const setFirstAccess = (value) => (store.setInspectionFirstAccess(value))
 
 vue.onMounted(() => {
     prepare_data()
-    noteHTMLContent.value = notes.value || ""
 })
 
 function handleNoteUpdated(noteHTMLContent) {

@@ -291,9 +291,6 @@ function toggleTutorial(e: MouseEvent) {
   }).start()
 }
 
-// function toggleTutorial() {
-//   return
-// }
 
 </script>
 

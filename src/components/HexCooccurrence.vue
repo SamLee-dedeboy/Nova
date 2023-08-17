@@ -1,6 +1,7 @@
 <template>
     <div :id="id" class="hex-container">
         <svg :id="id+'-svg'" class="hex-svg">
+
             <defs>
                 <!-- Define the red filter -->
                 <filter id="red-filter">
