@@ -11,7 +11,7 @@ class RawDataManager():
         # self.summary_entities = load_summary_entities()
 
 
-def load_raw_data(filepath=r'/code/app/data/articles_w_doc_sentiment.json'):
+def load_raw_data(filepath=r'data/articles_w_doc_sentiment.json'):
     return json.load((open(filepath)))
 
 def load_articles(filepath="data/outlet_article_dict.json"):

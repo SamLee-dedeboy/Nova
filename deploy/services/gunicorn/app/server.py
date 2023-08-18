@@ -1,6 +1,7 @@
-from flask import Flask, Blueprint, request, jsonify
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 import json
+from pprint import pprint
 
 from RawDataManager import RawDataManager
 import scatter_data
@@ -8,24 +9,20 @@ import hexview_data
 from ProcessedDataManager import ProcessedDataManager
 from data_types import *
 import processUtils
-
 app = Flask(__name__)
 CORS(app)
-api = Blueprint('api', __name__)
 
 raw_data = RawDataManager()
 processed_data = ProcessedDataManager(raw_data)
 overview_scatter_overall_data = scatter_data.overall_entity_scatter(processed_data.entity_mention_articles, processed_data)
-overview_scatter_grouped_data, grouped_metadata = scatter_data.grouped_entity_scatter(processed_data.entity_mention_articles, processed_data)
-# overview_scatter_grouped_data, processed_data.grouped_metadata, grouped_node_dict = scatter_data.grouped_entity_scatter(raw_data.candidate_entity_grouped, processed_data)
-# overview_scatter_grouped_data, processed_data.grouped_metadata, grouped_node_dict = None, None, None
+overview_scatter_grouped_data = scatter_data.grouped_entity_scatter(processed_data.entity_mention_articles, processed_data)
 overall_node_dict = processUtils.list_to_dict(overview_scatter_overall_data.nodes, key=lambda node: node.text)
 grouped_node_dict = {}
 for outlet, data in overview_scatter_grouped_data.items():
     grouped_node_dict[outlet] = processUtils.list_to_dict(data.nodes, key=lambda node: node.text)
 
 
-@api.route("/overview/scatter/overall/data", methods=["POST"])
+@app.route("/overview/scatter/overall/data", methods=["POST"])
 def get_overall_scatter_data():
     article_num_threshold = request.json['article_num_threshold']
     print("filtering:", article_num_threshold)
@@ -39,74 +36,72 @@ def get_overall_scatter_data():
     }
     return json.dumps(res, default=vars)
 
-@api.route("/overview/scatter/overall/node/<entity>")
+@app.route("/overview/scatter/overall/node/<entity>")
 def get_overall_scatter_node(entity):
     node = next(node for node in overview_scatter_overall_data.nodes if node.text == entity)
     return json.dumps(node, default=vars)
 
-@api.route("/overview/scatter/grouped/data")
+@app.route("/overview/scatter/grouped/data")
 def get_grouped_scatter_data():
     return json.dumps({}, default=vars)
-    # return json.dumps(overview_scatter_grouped_data, default=vars)
 
 
-# @api.route("/overview/scatter/overall/metadata")
+# @app.route("/overview/scatter/overall/metadata")
 # def get_overall_metadata():
 #     return json.dumps(overview_scatter_overall_metadata, default=vars)
 
-@api.route("/overview/scatter/grouped/metadata")
-def get_grouped_metadata():
-    return json.dumps(grouped_metadata, default=vars)
-
-@api.route("/processed_data/outlet_article_num_dict")
+@app.route("/processed_data/outlet_article_num_dict")
 def get_outlet_article_num_dict():
     return json.dumps(processed_data.outlet_article_num_dict)
 
-@api.route("/processed_data/entity_list")
+@app.route("/processed_data/entity_list")
 def get_entity_list():
     return json.dumps(processed_data.entity_list)
 
-@api.route("/processed_data/outlet_set")
+@app.route("/processed_data/outlet_set")
 def get_outlet_set():
     return json.dumps(list(processed_data.outlet_set))
 
-@api.route("/hexview/overall/<title>")
+@app.route("/hexview/overall/<title>")
 def get_overall_hexview(title):
     node_list = overview_scatter_overall_data.nodes
     node_dict = {node.text: node for node in node_list}
     # cooccurrences = raw_data.entity_cooccurrences[title]
     cooccurrences = processed_data.overall_cooccurrences_dict[title]
-    request_data = hexview_data.constructHexData_overall(title, cooccurrences, node_dict)
+    request_data = hexview_data.constructHexData_overall(title, cooccurrences, node_dict, top_k=10)
     return json.dumps(request_data, default=vars)
 
-@api.route("/hexview/grouped/<title>/<outlet>")
+@app.route("/hexview/grouped/<title>/<outlet>")
 def get_grouped_hexview(title, outlet):
-    res, merged_entities = hexview_data.get_entity_candidates(title, 
+    entity_candidates = hexview_data.get_entity_candidates(title, outlet,
                                                               processed_data.grouped_cooccurrences_dict, 
                                                               grouped_node_dict, 
-                                                              processed_data, 
-                                                              overall_node_dict, 
-                                                              grouped_metadata)
-    for hex_data in res: 
-        blanked_list = []
-        for entity in merged_entities:
-            # entities = list(map(lambda hex_entity: hex_entity.entity, hex_data['sorted_cooccurrences_list']))
-            target = (i for i, e in enumerate(hex_data['cooccurrences_data'].sorted_cooccurrences_list) if e.entity == entity)
-            index = next(target, None)
-            if index != None:
-                blanked_list.append(hex_data['cooccurrences_data'].sorted_cooccurrences_list[index])
-            else:
-                blanked_list.append(HexEntity(
-                    entity=entity,
-                    article_ids=[],
-                    sst=Sentiment2D(0,0)
-                ))
-
-        hex_data['cooccurrences_data'].sorted_cooccurrences_list = blanked_list[0:36]
-
-    if outlet != "all":
-        res = next((hex for hex in res if hex['outlet'] == outlet), None)
-
+                                                             overall_node_dict)
+    sorted_cooccurrences_list = []
+    for candidate in entity_candidates[:9]:
+        entity_data = grouped_node_dict[outlet][candidate+'-'+outlet]
+        sorted_cooccurrences_list.append({
+            "entity": candidate,
+            "sst": {
+                "pos": entity_data.pos_sst,
+                "neg": entity_data.neg_sst
+            },
+            "article_ids": entity_data.article_ids
+        })
+    target_entity = grouped_node_dict[outlet][title+'-'+outlet]
+    res = {
+        "entity": title,
+        "outlet": outlet,
+        "target": {
+            "entity": title,
+            "sst": {
+                "pos": target_entity.pos_sst,
+                "neg": target_entity.neg_sst
+            },
+            "article_ids": target_entity.article_ids
+        },
+        "sorted_cooccurrences_list": sorted_cooccurrences_list
+    }
     return json.dumps(res, default=vars)
 
 # @app.route("/hexview/grouped/<title>")
@@ -137,7 +132,7 @@ def get_grouped_hexview(title, outlet):
 #     return json.dumps(res, default=vars)
 
 
-@api.route("/processed_data/ids_to_articles", methods=['POST'])
+@app.route("/processed_data/ids_to_articles", methods=['POST'])
 def ids_to_articles():
     ids = request.json['article_ids']
     no_content = request.json['no_content']
@@ -160,7 +155,7 @@ def ids_to_articles():
 #         res.append(node)
 #     return json.dumps(res, default=vars)
 
-@api.route("/processed_data/cooccurr_info/overall/<target>/<co_occurr_entity>")
+@app.route("/processed_data/cooccurr_info/overall/<target>/<co_occurr_entity>")
 def get_cooccurr_info(target, co_occurr_entity):
     cooccurr_article_ids = processed_data.overall_cooccurrences_dict[target][co_occurr_entity]
     cooccurr_articles = processed_data.idsToArticles(cooccurr_article_ids)
@@ -175,31 +170,26 @@ def get_cooccurr_info(target, co_occurr_entity):
     }
     return json.dumps(response)
 
-@api.route("/processed_data/cooccurr_info/grouped/<outlet>/<target>/<co_occurr_entity>")
+@app.route("/processed_data/cooccurr_info/grouped/<outlet>/<target>/<co_occurr_entity>")
 def get_cooccurr_info_grouped(outlet, target, co_occurr_entity):
     entity = target + '-' + outlet
-    # target_article_ids = processed_data.grouped_cooccurrences_dict[outlet][entity][entity]
+    co_occurr_entity_key = co_occurr_entity + '-' + outlet
     target_article_ids = grouped_node_dict[outlet][entity].article_ids
-    # target_articles = processed_data.idsToArticles(target_article_ids)
-    # target_articles_topic_dict = processed_data.binArticlesByTopic(target_articles)
-    cooccurr_article_ids = list(map(lambda data: data['article_id'],
-        processed_data.grouped_cooccurrences_dict[outlet][target][co_occurr_entity]))
     # cooccurr_article_ids = list(map(lambda data: data['article_id'],
-    #     processed_data.grouped_cooccurrences_dict[outlet][entity][co_occurr_entity])) or None
-
-    # cooccurr_articles = processed_data.idsToArticles(cooccurr_article_ids)
-    # cooccurr_articles_topic_dict = processed_data.binArticlesByTopic(cooccurr_articles)
+    #     processed_data.grouped_cooccurrences_dict[outlet][target][co_occurr_entity]))
+    cooccurr_entity_article_ids = grouped_node_dict[outlet][co_occurr_entity_key].article_ids
+    merged_article_ids = list(set(target_article_ids + cooccurr_entity_article_ids))
     response = {
         "target": target,
         "target_article_ids": target_article_ids,
         "outlet": outlet,
         "cooccurr_entity": co_occurr_entity,
-        "cooccurr_article_ids": cooccurr_article_ids,
+        "cooccurr_article_ids": merged_article_ids,
     }
     return json.dumps(response)
 
 
-@api.route("/processed_data/ids_to_articles_highlights", methods=['POST'])
+@app.route("/processed_data/ids_to_articles_highlights", methods=['POST'])
 def ids_to_article_highlights():
     ids = request.json
     headline_entities_dict = processed_data.headline_entities_dict
@@ -217,23 +207,22 @@ def ids_to_article_highlights():
     }
     return json.dumps(res, default=vars)
 
-@api.route("/splitSentences", methods=['POST'])
+@app.route("/splitSentences", methods=['POST'])
 def splitSentences():
     content = request.json
     return processUtils.list_to_dict(processUtils.splitSentences(content))
 
-@api.route("/processed_data/scatter_node/grouped/hex_candidates/<outlet>", methods=["POST"])
-def getHexCandidateGroupedNodes(outlet): 
-    hex_candidates = request.json
-    # nodes = overview_scatter_grouped_data[outlet].nodes
-    nodes = []
-    for node in overview_scatter_grouped_data[outlet].nodes:
-        if node.text.split("-")[0] in hex_candidates:
-            node.text = node.text.split("-")[0]
-            nodes.append(node)
-    return json.dumps(nodes, default=vars)
+# @app.route("/processed_data/scatter_node/grouped/hex_candidates/<outlet>", methods=["POST"])
+# def getHexCandidateGroupedNodes(outlet): 
+#     hex_candidates = request.json
+#     nodes = []
+#     for node in overview_scatter_grouped_data[outlet].nodes:
+#         if node.text.split("-")[0] in hex_candidates:
+#             node.text = node.text.split("-")[0]
+#             nodes.append(node)
+#     return json.dumps(nodes, default=vars)
 
-@api.route("/hex/random", methods=["POST"])
+@app.route("/hex/random", methods=["POST"])
 def generate_random_hex():
     outlet = request.json['outlet']
     center_entity = request.json['center_entity']
@@ -267,7 +256,7 @@ def generate_random_hex():
 
     # return json.dumps(random_hex, default=vars)
 
-@api.route("/overall/table/data", methods=["POST"])
+@app.route("/overall/table/data", methods=["POST"])
 def entity_table_data():
     article_num_threshold = request.json['article_num_threshold']
     filtered_nodes = [node for node in overview_scatter_overall_data.nodes if len(node.article_ids) >= article_num_threshold] 
@@ -275,8 +264,6 @@ def entity_table_data():
     
 
 
-@api.route("/test")
+@app.route("/test")
 def test():
     return get_overall_scatter_data()
-
-app.register_blueprint(api, url_prefix='/api')
