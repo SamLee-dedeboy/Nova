@@ -12,16 +12,17 @@ services:
       - ./.env.dev
     # networks: 
     #   - infovisnet
-  nginx:
-    build: ./services/nginx
-    container_name: nova-proxy
-    # volumes:
-    #   - ./services/nginx.conf:/etc/nginx/nginx.conf
-    #   - ./services/dist:/usr/share/nginx/html
-    ports: 
-     - 3040:80
-    depends_on:
-      - gunicorn
+  # nginx:
+  #   build: ./services/nginx
+  #   container_name: nova-proxy
+  #   # volumes:
+  #   #   - ./services/nginx.conf:/etc/nginx/nginx.conf
+  #   #   - ./services/dist:/usr/share/nginx/html
+  #   ports: 
+  #    - 3040:80
+  #   depends_on:
+  #     - gunicorn
+
 #     networks: 
 #       - infovisnet
 
