@@ -6,6 +6,8 @@ services:
     command: gunicorn --bind 0.0.0.0:5050 --worker-class=gevent --log-level=debug wsgi:app 
     volumes:
       - ./services/gunicorn:/code/
+    ports:
+      - 5050:5050  
     expose:
       - 5050
     env_file:

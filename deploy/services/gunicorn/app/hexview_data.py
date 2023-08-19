@@ -1,6 +1,6 @@
-import scatter_data
-import sentimentUtils
-from data_types import *
+from .scatter_data import *
+from .sentimentUtils import *
+from .data_types import *
 
 def constructHexData_overall(target_entity, cooccurrences, entity_data_dict, top_k=36):
     hex_data = EntityCooccurrences(target=None, sorted_cooccurrences_list=[])

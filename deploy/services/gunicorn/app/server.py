@@ -3,23 +3,23 @@ from flask_cors import CORS
 import json
 from pprint import pprint
 
-from RawDataManager import RawDataManager
-import scatter_data
-import hexview_data
-from ProcessedDataManager import ProcessedDataManager
-from data_types import *
-import processUtils
+from .RawDataManager import RawDataManager
+from .ProcessedDataManager import ProcessedDataManager
+from .scatter_data import *
+from .hexview_data import *
+from .data_types import *
+from .processUtils import *
 app = Flask(__name__)
 CORS(app)
 
 raw_data = RawDataManager()
 processed_data = ProcessedDataManager(raw_data)
-overview_scatter_overall_data = scatter_data.overall_entity_scatter(processed_data.entity_mention_articles, processed_data)
-overview_scatter_grouped_data = scatter_data.grouped_entity_scatter(processed_data.entity_mention_articles, processed_data)
-overall_node_dict = processUtils.list_to_dict(overview_scatter_overall_data.nodes, key=lambda node: node.text)
+overview_scatter_overall_data = overall_entity_scatter(processed_data.entity_mention_articles, processed_data)
+overview_scatter_grouped_data = grouped_entity_scatter(processed_data.entity_mention_articles, processed_data)
+overall_node_dict = list_to_dict(overview_scatter_overall_data.nodes, key=lambda node: node.text)
 grouped_node_dict = {}
 for outlet, data in overview_scatter_grouped_data.items():
-    grouped_node_dict[outlet] = processUtils.list_to_dict(data.nodes, key=lambda node: node.text)
+    grouped_node_dict[outlet] = list_to_dict(data.nodes, key=lambda node: node.text)
 
 
 @app.route("/overview/scatter/overall/data", methods=["POST"])
@@ -68,12 +68,12 @@ def get_overall_hexview(title):
     node_dict = {node.text: node for node in node_list}
     # cooccurrences = raw_data.entity_cooccurrences[title]
     cooccurrences = processed_data.overall_cooccurrences_dict[title]
-    request_data = hexview_data.constructHexData_overall(title, cooccurrences, node_dict, top_k=10)
+    request_data = constructHexData_overall(title, cooccurrences, node_dict, top_k=10)
     return json.dumps(request_data, default=vars)
 
 @app.route("/hexview/grouped/<title>/<outlet>")
 def get_grouped_hexview(title, outlet):
-    entity_candidates = hexview_data.get_entity_candidates(title, outlet,
+    entity_candidates = get_entity_candidates(title, outlet,
                                                               processed_data.grouped_cooccurrences_dict, 
                                                               grouped_node_dict, 
                                                              overall_node_dict)
@@ -210,7 +210,7 @@ def ids_to_article_highlights():
 @app.route("/splitSentences", methods=['POST'])
 def splitSentences():
     content = request.json
-    return processUtils.list_to_dict(processUtils.splitSentences(content))
+    return list_to_dict(splitSentences(content))
 
 # @app.route("/processed_data/scatter_node/grouped/hex_candidates/<outlet>", methods=["POST"])
 # def getHexCandidateGroupedNodes(outlet): 

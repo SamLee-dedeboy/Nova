@@ -1,4 +1,6 @@
 import json
+import os
+proj_path = os.path.dirname(os.path.abspath(__file__))
 class RawDataManager():
     def __init__(self):
         self.article_data = load_raw_data()
@@ -11,8 +13,8 @@ class RawDataManager():
         # self.summary_entities = load_summary_entities()
 
 
-def load_raw_data(filepath=r'data/articles_w_doc_sentiment.json'):
-    return json.load((open(filepath)))
+def load_raw_data(filepath=r'/data/articles_w_doc_sentiment.json'):
+    return json.load((open(proj_path + filepath)))
 
 def load_articles(filepath="data/outlet_article_dict.json"):
     return json.load((open(filepath)))

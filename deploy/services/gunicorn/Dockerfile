@@ -10,8 +10,8 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 COPY requirements.txt .
 RUN pip install -r requirements.txt
-RUN pip install gunicorn gevent
-RUN python -m nltk.downloader punkt
+RUN pip install gunicorn gevent==22.8.0
+# RUN python -m nltk.downloader punkt
 
 
 # Operational Stage
