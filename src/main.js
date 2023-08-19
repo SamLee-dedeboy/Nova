@@ -4,6 +4,7 @@ import router from "./router";
 import PrimeVue from 'primevue/config';
 import Button from 'primevue/button';
 import mitt from 'mitt';
+import { MotionPlugin } from "@vueuse/motion";
 // import { createStore } from "vuex"
 // import { EntityInfo } from "./types"
 
@@ -23,6 +24,7 @@ app.config.globalProperties.emitter = emitter;
 app.use(router);
 app.use(PrimeVue, {ripple:true})
 app.use(pinia)
+app.use(MotionPlugin)
 app.use(DialogService);
 app.component('Button', Button);
 // app.provide('server_address', "http://127.0.0.1:5000")

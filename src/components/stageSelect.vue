@@ -28,7 +28,7 @@ const disabled_item_array = vue.computed(() => {
 })
 const stages = vue.computed(() => [
   {
-    to: `/`,
+    to: `/home`,
     label: "Home",
     disabled: disabled_item_array.value[0],
   },

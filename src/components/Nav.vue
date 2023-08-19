@@ -40,6 +40,9 @@ const props = defineProps({
     route_name: String
 })
 
+function handleNOVAlogoClicked() {
+    router.push({ name: 'tutorial' })
+}
 
 const dialog = useDialog();
 const summary_header = vue.h('div', { class: 'summary-header', innerHTML: 'Summary', style:
@@ -77,6 +80,9 @@ function openSummary() {
     cursor: pointer;
     width:fit-content;
     margin-left: 20px;
+}
+#nova-logo:hover{
+    cursor: pointer;
 }
 
 .summary-button, .try-another-button {
