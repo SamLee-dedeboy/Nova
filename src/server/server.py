@@ -25,6 +25,7 @@ for outlet, data in overview_scatter_grouped_data.items():
 reverse_index_node_outlet_dict = defaultdict(set)
 for outlet, node_dict in grouped_node_dict.items():
     for node_id in node_dict.keys():
+        node_id = "".join(node_id.split("-")[:-1])
         reverse_index_node_outlet_dict[node_id].add(outlet)
 # convert to defaultdict of list
 for node_id, outlet_mentions in reverse_index_node_outlet_dict.items():

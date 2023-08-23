@@ -55,12 +55,7 @@ const selected_entity_info_fetched: Ref<boolean> = ref(false)
 
 
 // outlet related data
-/**
- * set of outlet names extracted from dataset.
- */
-const enabled_outlet_set: Ref<Set<string>> = ref(new Set(""))
-const outlet_leaning: Ref<any> = ref({})
-
+const entity_outlet_dict = ref({})
 
 /**
  * entity list
@@ -105,6 +100,7 @@ const selected_entity_name: Ref<string> = ref("")
 vue.watch(selected_entity_name, (new_value, old_value) => {
   handleEntityClicked(selected_entity_name.value)
 })
+
 const overall_selected_hexview: Ref<typeUtils.CooccurrHexView | undefined> = ref(undefined)
 const overall_entity_data = vue.computed(() => overall_scatter_view.value?.data?.nodes)
 
@@ -172,25 +168,14 @@ vue.onMounted(async () => {
         resolve("success")
       })
   }))
-  promiseArray.push(new Promise((resolve) => {
-    // outlet set
-    fetch(`${server_address}/processed_data/outlet_set`)
-      .then(res => res.json())
-      .then(json => {
-        enabled_outlet_set.value = json
-        // update outlet leaning dict
-        enabled_outlet_set.value.forEach(outlet => {
-            outlet_leaning.value[outlet] = 1
-        });
-        resolve("success")
-      })
-  }))
+
   promiseArray.push(new Promise((resolve) => {
     // outlet set
     fetch(`${server_address}/overview/entity_outlet_dict`)
       .then(res => res.json())
       .then(json => {
-        console.log({json})
+        // console.log({json})
+        entity_outlet_dict.value = json
         resolve("success")
       })
   }))
@@ -229,6 +214,7 @@ async function handleEntityClicked(entity: string) {
         resolve("success")
       })
   }))
+
   await Promise.all(promiseArray)
 }
 
@@ -415,7 +401,7 @@ function toggleTutorial(e: MouseEvent) {
               <EntityInfo v-if="selected_entity_info_fetched" 
                 :data="selected_entity"
                 :segmentation="segmentation"
-                :outlets="Array.from(enabled_outlet_set)"
+                :outlets="entity_outlet_dict[selected_entity.name]"
                 :show_animation="!entity_changed"
                 @outlet-clicked="handleOutletClicked"
                 >
