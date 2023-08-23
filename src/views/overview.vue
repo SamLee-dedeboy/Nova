@@ -270,15 +270,16 @@ function toggleTutorial(e: MouseEvent) {
           <span class='neg_color'>negative</span>,
           <span class='pos_color'>positive</span>,
           <span class='neu_color'>neutral</span>, or
-          <span class='mix_color'>mixed</span>. You can also hover the dot on the scatter plot for more information and also click on the dot to select the topic.
-          `,
-          position: 'left'
+          <span class='mix_color'>mixed</span>. You can also hover the dot on the scatter plot for more 
+          information and also click on the dot to select the topic.`,
+          position: 'left',
         },
         {
           title: "The mixed region",
           element: document.querySelector('.scatter-container > svg > g.segmentation > rect.mixed'),
           intro: `Mixed topics have high volume of articles, which means that they are more controversial and have more diverse opinions. 
           <span style='font-weight: bold'> We encourage you to explore the mixed topics. </span>`,
+          position: 'left',
         },
       ]
   }).start()
