@@ -314,7 +314,7 @@ function toggleTutorial() {
             ${selected_outlet}
             reported on 
             ${selected_entity.name}`
-            + (selected_cooccurr_entity? `and ${selected_cooccurr_entity?.name}</span>.` : `.`) 
+            + (selected_cooccurr_entity?` and ${selected_cooccurr_entity?.name}</span>.` : `.`) 
             + `
             <br>
             The next question is: What articles did you miss? You might be surprised at what ${selected_outlet} reported.
