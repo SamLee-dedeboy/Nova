@@ -681,7 +681,7 @@ export class EntityScatter {
                 // update tooltip
                 updateNodeInfo(d as ScatterNode, cvThis)
                 d3.select(`#${cvThis.props.id}`).select(".nodeinfo")
-                    .style("opacity", 1)
+                    .style("opacity", 0.9)
                 if (cvThis.show_highlight) {
                     if (!cvThis.highlight_nodes.includes(d.text)) {
                         const cancel_highlight_node = svg.selectAll("g.entity").filter((d: any) => !cvThis.highlight_nodes.includes(d.text))

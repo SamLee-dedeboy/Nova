@@ -4,7 +4,7 @@
     <div >
         <div class="textbox" >
             <span class="textword">
-                NOVA, news outlet visual assessment, serves as a platform to allow general audiences to freely review mainstream media outlet coverage on a variety of topics. Additionally, our system supports user's in assessing if their prior expectations and understanding of an outlet aligns with how the iutlet reported on a selected topic.
+                NOVA, news outlet visual assessment, serves as a platform to allow general audiences to freely review mainstream media outlet coverage on a variety of topics. Additionally, our system supports user's in assessing if their prior expectations and understanding of an outlet aligns with how the outlet reported on a selected topic.
             </span>
         </div>
         <div>

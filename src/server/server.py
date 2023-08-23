@@ -8,6 +8,7 @@ import scatter_data
 import hexview_data
 from ProcessedDataManager import ProcessedDataManager
 from data_types import *
+from collections import defaultdict
 import processUtils
 app = Flask(__name__)
 CORS(app)
@@ -20,7 +21,14 @@ overall_node_dict = processUtils.list_to_dict(overview_scatter_overall_data.node
 grouped_node_dict = {}
 for outlet, data in overview_scatter_grouped_data.items():
     grouped_node_dict[outlet] = processUtils.list_to_dict(data.nodes, key=lambda node: node.text)
-
+    
+reverse_index_node_outlet_dict = defaultdict(set)
+for outlet, node_dict in grouped_node_dict.items():
+    for node_id in node_dict.keys():
+        reverse_index_node_outlet_dict[node_id].add(outlet)
+# convert to defaultdict of list
+for node_id, outlet_mentions in reverse_index_node_outlet_dict.items():
+    reverse_index_node_outlet_dict[node_id] = list(outlet_mentions)
 
 @app.route("/overview/scatter/overall/data", methods=["POST"])
 def get_overall_scatter_data():
@@ -35,6 +43,11 @@ def get_overall_scatter_data():
         "min_articles": overview_scatter_overall_data.min_articles,
     }
     return json.dumps(res, default=vars)
+
+@app.route("/overview/entity_outlet_dict")
+def get_node_outlet_dict():
+    return json.dumps(reverse_index_node_outlet_dict)      
+
 
 @app.route("/overview/scatter/overall/node/<entity>")
 def get_overall_scatter_node(entity):

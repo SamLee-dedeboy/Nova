@@ -185,25 +185,15 @@ vue.onMounted(async () => {
         resolve("success")
       })
   }))
-  if (selected_entity.value) {
-    // request selected entity data (happens when user use back button)
-    promiseArray.push(new Promise((resolve) => {
-      fetch(`${server_address}/hexview/overall/${selected_entity.value.name}`)
-        .then(res => res.json())
-        .then(json => {
-          const cooccurrences = json
-          const hex_view: typeUtils.CooccurrHexView = {
-            title: `co-${selected_entity.value.name}`,
-            data: cooccurrences,
-          }
-          overall_selected_hexview.value = hex_view
-          resolve("success")
-        })
-    }))
-    // trigger handler function 
-    handleEntityClicked(selected_entity.value.name)
-
-  }
+  promiseArray.push(new Promise((resolve) => {
+    // outlet set
+    fetch(`${server_address}/overview/entity_outlet_dict`)
+      .then(res => res.json())
+      .then(json => {
+        console.log({json})
+        resolve("success")
+      })
+  }))
   await Promise.all(promiseArray)
     .then(res => {
       overview_constructed.value = true
@@ -268,18 +258,21 @@ function toggleTutorial(e: MouseEvent) {
         {
           title: "The filter",
           element: document.querySelector('.entity-utils'),
+          // element: document.querySelector('.utilities-container'),
           intro: "You can also use this filter to remove unimportant topics.",
         },
         {
           title: "The Scatter Plot",
-          element: document.querySelector(".scatter-container > svg "),
+          // element: document.querySelector(".scatter-container > svg "),
+          element: document.querySelector(".scatter-container"),
           // element: document.querySelector(".entity-scatter-panel"),
           intro: `We visualize the topics in a scatter plot and categorize the topics into four types: 
           <span class='neg_color'>negative</span>,
           <span class='pos_color'>positive</span>,
           <span class='neu_color'>neutral</span>, or
-          <span class='mix_color'>mixed</span>.
+          <span class='mix_color'>mixed</span>. You can also hover the dot on the scatter plot for more information and also click on the dot to select the topic.
           `,
+          position: 'left'
         },
         {
           title: "The mixed region",
@@ -296,7 +289,7 @@ function toggleTutorial(e: MouseEvent) {
 
 
 <template>
-  <div style="display: flex; width: 99vw; height: 95vh">
+  <div style="display: flex; width: 99vw; height: 95vh; overflow: hidden;">
     <ProgressiveDialog
       v-if="firstAccess"
       @toggle-tutorial="toggleTutorial"
@@ -327,9 +320,9 @@ function toggleTutorial(e: MouseEvent) {
               </span>
             </i>
           </h2>
-          <div class='scatter-content' style="overflow:hidden; flex-direction: content; flex: 1;">
+          <div class='scatter-content' style="max-height: calc(100% - 40px); flex: 1;">
             <Splitter class='table-scatter-splitter'>
-              <SplitterPanel class="entity-table-panel" :size="table_panel_size" style="display: flex; flex-direction: column">
+              <SplitterPanel class="entity-table-panel" :size="table_panel_size" style="overflow: hidden; display: flex; flex-direction: column">
                 <div id="entityTableWrapper" class='entityTableWrapper' style="height: 67%; min-height: 67%; margin-left: 5%;">
                   <i v-if="overall_scatter_data_loading" class="pi pi-spin pi-spinner" style="position:absolute;
                       left: 45%;
@@ -352,7 +345,7 @@ function toggleTutorial(e: MouseEvent) {
                     width: 100%;
                     height: 100%;
                   ">
-                  <div id="entity-utility-container" class="entity-utils" style="width: 100%; margin: 0.4%; padding: 2%; margin: 2%;">
+                  <div id="entity-utility-container" class="entity-utils" style="width: 100%; height: fit-content; padding: 2%; margin: 2%;">
                     <h2 class="component-header util-header">
                       Topic Settings
                       <i class='pi pi-info-circle tooltip'> 
