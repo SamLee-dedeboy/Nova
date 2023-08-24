@@ -11,6 +11,8 @@ from .data_types import *
 from .processUtils import *
 app = Flask(__name__)
 CORS(app)
+app.url_map.strict_slashes = False
+
 
 raw_data = RawDataManager()
 processed_data = ProcessedDataManager(raw_data)

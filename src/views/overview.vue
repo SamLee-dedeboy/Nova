@@ -144,6 +144,35 @@ vue.onMounted(async () => {
         overall_scatter_data_loading.value = false
         resolve("success")
       })
+      .catch((err) => {
+        fetch(`${server_address}/overview/scatter/overall/data`, {
+            method: "POST",
+            headers: {
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({article_num_threshold: article_num_threshold.value})
+        })
+          .then(res => res.json())
+          .then(json => {
+            // overview_overall_scatter_data.value = json
+            overall_scatter_view.value = {
+              title: "Overall",
+              data: json
+            }
+            overview_overall_scatter_metadata.value = {
+              max_articles: json.max_articles,
+              min_articles: json.min_articles
+            }
+            // console.log({json})
+
+
+            // turn flags
+            overall_scatter_data_loading.value = false
+            resolve("success")
+          })
+
+      })
   }))
   promiseArray.push(new Promise((resolve) => {
     // overview grouped scatter data 
@@ -152,6 +181,14 @@ vue.onMounted(async () => {
       .then(json => {
         overview_grouped_scatter_data.value = json
         resolve("success")
+      })
+      .catch((err) => {
+        fetch(`${server_address}/overview/scatter/grouped/data`)
+        .then(res => res.json())
+        .then(json => {
+          overview_grouped_scatter_data.value = json
+          resolve("success")
+        }) 
       })
   }))
   promiseArray.push(new Promise((resolve) => {
@@ -162,6 +199,14 @@ vue.onMounted(async () => {
         outlet_article_num_dict.value = json
         resolve("success")
       })
+      .catch((err) => {
+        fetch(`${server_address}/processed_data/outlet_article_num_dict`)
+          .then(res => res.json())
+          .then(json => {
+            outlet_article_num_dict.value = json
+            resolve("success")
+          })
+      })
   }))
   promiseArray.push(new Promise((resolve) => {
     // entity list
@@ -170,6 +215,14 @@ vue.onMounted(async () => {
       .then(json => {
         entity_list.value = json
         resolve("success")
+      })
+      .catch((err) => {
+        fetch(`${server_address}/processed_data/entity_list`)
+          .then(res => res.json())
+          .then(json => {
+            entity_list.value = json
+            resolve("success")
+          })
       })
   }))
   promiseArray.push(new Promise((resolve) => {
@@ -184,26 +237,20 @@ vue.onMounted(async () => {
         });
         resolve("success")
       })
+      .catch((err) => {
+        fetch(`${server_address}/processed_data/outlet_set`)
+          .then(res => res.json())
+          .then(json => {
+            enabled_outlet_set.value = json
+            // update outlet leaning dict
+            enabled_outlet_set.value.forEach(outlet => {
+                outlet_leaning.value[outlet] = 1
+            });
+            resolve("success")
+          })
+      })
   }))
-  if (selected_entity.value) {
-    // request selected entity data (happens when user use back button)
-    promiseArray.push(new Promise((resolve) => {
-      fetch(`${server_address}/hexview/overall/${selected_entity.value.name}`)
-        .then(res => res.json())
-        .then(json => {
-          const cooccurrences = json
-          const hex_view: typeUtils.CooccurrHexView = {
-            title: `co-${selected_entity.value.name}`,
-            data: cooccurrences,
-          }
-          overall_selected_hexview.value = hex_view
-          resolve("success")
-        })
-    }))
-    // trigger handler function 
-    handleEntityClicked(selected_entity.value.name)
 
-  }
   await Promise.all(promiseArray)
     .then(res => {
       overview_constructed.value = true
