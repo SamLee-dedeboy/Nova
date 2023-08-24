@@ -90,7 +90,7 @@ export class EntityScatter {
         emit_at_end: boolean,
         filtered_data: Ref<ScatterNode[]>,
         tooltip_content: Ref<string>,
-        total_articles: ComputedRef<any>,
+        total_articles: Ref<any>,
         min_articles: ComputedRef<any>, max_articles: ComputedRef<any>,
         clicked_node: Ref<ScatterNode>, clicked_node_element: Ref<any>,
         hovered_node_info: Ref<OutletNodeInfo>,

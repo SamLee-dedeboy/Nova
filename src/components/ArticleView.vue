@@ -106,20 +106,18 @@ vue.watch(neg_articles, (new_value, old_value) => {
 
 
 async function handleArticleClicked(e, article_id) {
-    await fetch(`${server_address}/processed_data/ids_to_articles`, {
+    await fetch(`${server_address}/processed_data/article`, {
         method: "POST",
         headers: {
             "Accept": "application/json",
             "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-            no_content: false,
-            article_ids: [article_id],
-        })
+        body: JSON.stringify({ article_id })
     })
         .then(res => res.json())
-        .then(json => {
-            emit("article-selected", json[0])
+        .then(article => {
+            console.log("article selected", article)
+            emit("article-selected", article)
         })
 }
 
