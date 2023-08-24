@@ -1,9 +1,7 @@
-FROM node:latest as build
-WORKDIR /app
-COPY . /app/
-
 FROM nginx:1.23-alpine
-COPY nginx.conf /etc/nginx/nginx.conf
 
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+RUN rm /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d
+
+EXPOSE 80:80
+# CMD ["nginx", "-g", "daemon off;"]

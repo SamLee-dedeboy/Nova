@@ -1,6 +1,7 @@
 import json
 import os
 proj_path = os.path.dirname(os.path.abspath(__file__))
+
 class RawDataManager():
     def __init__(self):
         self.article_data = load_raw_data()
