@@ -373,8 +373,8 @@ function toggleTutorial() {
             </ArticleView>
             <div class="hexview-note-container" style="display: flex; margin-top: 1%; overflow: hidden">
                 <div class="hexview-container" style="display: flex; width: 100%;">
-                    <div class="user-hexview-container" style="width: 100%">
-                        <div class="hive-header user-hive-header" style="left: 47%">Your belief </div>
+                    <div class="user-hexview-container" style="flex:1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <div class="hive-header user-hive-header" style="width: fit-content; top: 0;">Your belief </div>
                         <HexCooccurrence v-if="data_fetched" class="inpection-user-hexview" 
                             :id="`inspection_user_hexview`" :entity_cooccurrences="inspection_hexview.data"
                             mode="user-fixed"
@@ -386,8 +386,8 @@ function toggleTutorial() {
                             @hex-clicked="handleHexClicked">
                         </HexCooccurrence>
                         </div>
-                    <div class="data-hexview-container" style="width: 100%">
-                        <div class="hive-header data-hive-header" style="left: 31%">Data suggested</div>
+                    <div class="data-hexview-container" style="flex:1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <div class="hive-header data-hive-header" style="width: fit-content; top: 0;">Data suggested</div>
                         <HexCooccurrence v-if="data_fetched" class="inpection-data-hexview" 
                             :id="`inspection_data_hexview`" :entity_cooccurrences="inspection_hexview.data"
                             mode="data"

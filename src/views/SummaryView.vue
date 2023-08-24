@@ -108,8 +108,6 @@ const hex_selection = vue.computed(() => store.hex_selection)
   margin-top: -0.4rem;
   margin-left: -0.4rem;
 }
-
-
 //
 // Hypothesis/Notes Section
 //

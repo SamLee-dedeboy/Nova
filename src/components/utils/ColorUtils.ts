@@ -17,7 +17,7 @@ export const topic_color_dict = {
 
 const key_color_dict = {
         "mixed": mixed_color, 
-        "not covered": "white",
+        // "not covered": "white",
         "negative": neg_color,
         "positive": pos_color, //pos_color,
         "neutral": neu_color,
@@ -25,10 +25,10 @@ const key_color_dict = {
 export const hive_color_dict = {
         "positive": pos_color, //pos_color,
         "negative": neg_color,
-        "error": neu_color,
+        // "error": neu_color,
         "neutral": neu_color,
         "mixed": mixed_color, 
-        "not covered": "white"
+        // "not covered": "white"
     } 
 const color_dict = {
     "pos": pos_color,
@@ -41,14 +41,14 @@ enum_color_dict[SentimentType.neu] = neu_color
 enum_color_dict[SentimentType.neg] = neg_color
 enum_color_dict[SentimentType.pos] = pos_color
 enum_color_dict[SentimentType.mix] = mixed_color
-enum_color_dict[SentimentType.unknown] = "white"
+// enum_color_dict[SentimentType.unknown] = "white"
 
 const enum_conflict_color_dict = {}
 enum_conflict_color_dict[SentimentType.neu] = "#e3c1c1"
 enum_conflict_color_dict[SentimentType.neg] = "#ffb89c"
 enum_conflict_color_dict[SentimentType.pos] = "#FFF0F5"
 enum_conflict_color_dict[SentimentType.mix] = 'url(#diagonalHatch_conflict)'
-enum_conflict_color_dict[SentimentType.unknown] = "#ffc3c3"
+// enum_conflict_color_dict[SentimentType.unknown] = "#ffc3c3"
 
 const outlet_color_dict = {
     "CNN": "rgb(205 0 0)",

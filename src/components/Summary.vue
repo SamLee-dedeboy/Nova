@@ -43,10 +43,10 @@ vue.onMounted(() => {
 <div v-if="!summary_created">
     No summary created yet.
 </div>
-<div v-else class="page-container" style="display: flex; width: 80vw; height: 80vh; z-index:1000; background-color: white">
+<div v-else class="page-container" style="display: flex; width: 80vw; height: 60vh; z-index:1000; background-color: white">
     <div class="summary-container" style="display: flex; flex-direction: column; width: 100%">
-        <div class="content-container" style="display: flex; flex-direction: column; flex: 1; width: 100%; height: 100%; overflow-y:auto;">
-            <div v-for="hexview, index in clicked_hexview" class="item-container" style="display: flex; flex-direction: column; height: 100%; width: 100%; min-width: 50%;">
+        <div class="content-container" style="display: flex; flex-direction: column; flex: 1; width: 100%; height: 100%; ">
+            <div v-for="hexview, index in clicked_hexview" class="item-container" style="display: flex; flex-direction: column;  width: 100%; min-width: 50%;height: 420px;margin-bottom: 1rem;">
                 <div class="hexview-header" style="display: flex; flex-direction: row; justify-content: space-between; width: 100%; height: 10%; box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.5)">
                     <div class="hexview-title" style="display: flex; flex-direction: row; align-items: center; height: 100%; width: 100%;">
                         <div :class="['journal-style']">
@@ -56,7 +56,7 @@ vue.onMounted(() => {
                         <div class="hexview-title-text" style="font-size: 1.2em; font-weight: bold; margin-left: 0.5em;">{{hexview.center_entity}}</div>
                     </div>
                 </div>
-                <div class="hexview-container" style="display: flex; width: 100%;">
+                <div class="hexview-container" style="display: flex; width: 100%;height:100%;">
                     <div class="user-hexview-container" style="
                         flex:1;
                         display: flex; 
@@ -88,7 +88,7 @@ vue.onMounted(() => {
                             :user_hex_selection="user_hex_selection[hexview.outlet]?.[hexview.center_entity]">
                         </HexCooccurrence>
                     </div>
-                    <div class="summary-notes-container" style="height: 100%; flex: 1.5; display: flex; flex-direction: column;">
+                    <div class="summary-notes-container" style=" flex: 1.5; display: flex; flex-direction: column;height: 100%;">
                         <h2 class="component-header notes-header">
                             Notes
                             <i class='pi pi-info-circle tooltip'>
@@ -104,6 +104,8 @@ vue.onMounted(() => {
                     </div>
                 </div>
             </div>
+            <br>
+            <br>
         </div>
     </div>
 </div>
