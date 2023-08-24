@@ -10,7 +10,7 @@
         <!-- <div class="button-set">
             <Button class="reset-zoom p-button-secondary" @click="resetZoom">reset</Button>
         </div> -->
-        <NodeInfo class='nodeinfo' :node="hovered_node_info" :total_articles="total_articles" style="position:absolute; z-index:1000;pointer-events: none; opacity:0.9"></NodeInfo>
+        <NodeInfo class='nodeinfo' :node="hovered_node_info" :total_articles="total_articles" style="position:absolute; z-index:1000;pointer-events: none;"></NodeInfo>
     
     </div>
 </template>
@@ -63,13 +63,14 @@
 
     const max_articles = vue.computed(() => props.view?.data.max_articles)
     const min_articles = vue.computed(() => props.view?.data.min_articles)
-    const outlet_article_num_dict: Ref<any> = vue.inject("outlet_article_num_dict") || ref({})
-    const total_articles = computed(() => {
-        return _.sumBy( 
-            Object.keys(outlet_article_num_dict.value), 
-            (outlet) => (outlet_article_num_dict.value[outlet])
-        )
-    })
+    // const outlet_article_num_dict: Ref<any> = vue.inject("outlet_article_num_dict") || ref({})
+    const total_articles: Ref<any> = vue.inject("total_articles") || ref(0)
+    // const total_articles = computed(() => {
+    //     return _.sumBy( 
+    //         Object.keys(outlet_article_num_dict.value), 
+    //         (outlet) => (outlet_article_num_dict.value[outlet])
+    //     )
+    // })
 
     const filtered_data = computed( () => props.view?.data.nodes.filter((node: ScatterNode) => node.article_ids.length > (props.article_num_threshold || 0))) as  Ref<ScatterNode[]>
     const clicked_node: Ref<ScatterNode> = ref(new ScatterNode())
@@ -138,7 +139,6 @@
     })
 
     function setHighlightNode(node_text) {
-        console.log('set highlight node', node_text)
         entityScatterPlot.setHighlightNode(node_text, emit)
     }
 

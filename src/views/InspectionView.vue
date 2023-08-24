@@ -106,25 +106,9 @@ function handleNoteUpdated(noteHTMLContent) {
 async function prepare_data() {
     const cooccurr_entity_name = selected_cooccurr_entity.value? selected_cooccurr_entity.value.name : selected_entity.value.name
     await fetch_cooccurr_info(selected_outlet, selected_entity.value.name, cooccurr_entity_name)
-    //console.log(selected_entity.value)
     const article_ids = selected_cooccurr_entity.value?.article_ids || selected_entity.value.article_ids
-    console.log({article_ids})
-    // const article_ids = article_ids_w_sentiment.map(obj => obj.article_id)
     highlight_hex_entity.value = selected_cooccurr_entity.value?.name
-    // setSegmentation(selected_entity.value.sst_ratio)
-    // selected_outlet.value = selected_entity.value.outlet
-    const promiseArray: any[] = []
-    promiseArray.push(new Promise(async (resolve) => {
-        fetch_articles(article_ids).then(
-            resolve("success")
-        )
-    }))
-    promiseArray.push(new Promise(async (resolve) => {
-        fetch_article_highlights(article_ids).then(
-            resolve("success")
-        )
-    }))
-    await Promise.all(promiseArray)
+    await fetch_articles(article_ids)
 }
 
 async function fetch_articles(article_ids) {
@@ -134,33 +118,15 @@ async function fetch_articles(article_ids) {
             "Accept": "application/json",
             "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-            no_content: true,
-            article_ids: article_ids,
-        })
+        body: JSON.stringify({ article_ids })
     })
         .then(res => res.json())
         .then(json => {
-            target_articles.value = json
-            console.log("articles", target_articles.value)
+            target_articles.value = json.articles
+            target_article_highlights.value = json.article_highlights
+
             article_view.value.handleArticleClicked(undefined, article_ids[0])
             data_fetched.value = true
-        })
-}
-
-async function fetch_article_highlights(article_ids) {
-    await fetch(`${server_address}/processed_data/ids_to_articles_highlights`, {
-        method: "POST",
-        headers: {
-            "Accept": "application/json",
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(article_ids)
-    })
-        .then(res => res.json())
-        .then(json => {
-            console.log("highlights fetched", json)
-            target_article_highlights.value = json
         })
 }
 
@@ -212,10 +178,6 @@ function outletIconStyle(name:string){
     let className = name.replaceAll(' ','-') + '-icon';
     className = (className.includes("FoxNews") || className.includes("Breitbart")) ? className : 'icon';
     return className;
-}
-
-function goToOverview() {
-    router.push({ name: "home" })
 }
 
 function toggleTutorial() {
@@ -314,7 +276,7 @@ function toggleTutorial() {
             ${selected_outlet}
             reported on 
             ${selected_entity.name}`
-            + (selected_cooccurr_entity? `and ${selected_cooccurr_entity?.name}</span>.` : `.`) 
+            + (selected_cooccurr_entity?` and ${selected_cooccurr_entity?.name}</span>.` : `.`) 
             + `
             <br>
             The next question is: What articles did you miss? You might be surprised at what ${selected_outlet} reported.
@@ -373,8 +335,8 @@ function toggleTutorial() {
             </ArticleView>
             <div class="hexview-note-container" style="display: flex; margin-top: 1%; overflow: hidden">
                 <div class="hexview-container" style="display: flex; width: 100%;">
-                    <div class="user-hexview-container" style="width: 100%">
-                        <div class="hive-header user-hive-header" style="left: 47%">Your belief </div>
+                    <div class="user-hexview-container" style="flex:1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <div class="hive-header user-hive-header" style="width: fit-content; top: 0;">Your belief </div>
                         <HexCooccurrence v-if="data_fetched" class="inpection-user-hexview" 
                             :id="`inspection_user_hexview`" :entity_cooccurrences="inspection_hexview.data"
                             mode="user-fixed"
@@ -386,8 +348,8 @@ function toggleTutorial() {
                             @hex-clicked="handleHexClicked">
                         </HexCooccurrence>
                         </div>
-                    <div class="data-hexview-container" style="width: 100%">
-                        <div class="hive-header data-hive-header" style="left: 31%">Data suggested</div>
+                    <div class="data-hexview-container" style="flex:1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <div class="hive-header data-hive-header" style="width: fit-content; top: 0;">Data suggested</div>
                         <HexCooccurrence v-if="data_fetched" class="inpection-data-hexview" 
                             :id="`inspection_data_hexview`" :entity_cooccurrences="inspection_hexview.data"
                             mode="data"

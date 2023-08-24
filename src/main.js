@@ -1,3 +1,5 @@
+
+import {createPinia} from "pinia";
 import {createApp} from "vue";
 import App from "./App.vue";
 import router from "./router";
@@ -5,10 +7,7 @@ import PrimeVue from 'primevue/config';
 import Button from 'primevue/button';
 import mitt from 'mitt';
 import { MotionPlugin } from "@vueuse/motion";
-// import { createStore } from "vuex"
-// import { EntityInfo } from "./types"
 
-import {createPinia} from "pinia";
 import "primevue/resources/themes/saga-blue/theme.css"
 import "primevue/resources/primevue.min.css"
 import "primeicons/primeicons.css"
@@ -22,8 +21,8 @@ const emitter = mitt();
 app.config.globalProperties.emitter = emitter;
 
 app.use(router);
+app.use(pinia);
 app.use(PrimeVue, {ripple:true})
-app.use(pinia)
 app.use(MotionPlugin)
 app.use(DialogService);
 app.component('Button', Button);

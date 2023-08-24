@@ -361,7 +361,7 @@ function toggleDataHexTutorial() {
                 <div class="legend-container" style="width: 100%; ">
                     <div class="legend-image-container" style="
                         display: grid;
-                        grid-template-columns: repeat(3, 1fr);
+                        grid-template-columns: repeat(2, 1fr);
                         grid-template-rows: repeat(2, 1fr); /* Two rows with equal height */
                         gap: 10px;
                         width: 100%; /* Container takes the full width of parent */

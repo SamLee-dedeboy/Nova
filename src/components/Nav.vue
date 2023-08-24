@@ -5,8 +5,9 @@
         </div>
         <!-- <StageSelect class='page-steps' /> -->
         <div class="nav-button-container" style="display: flex; margin-right:1.1%;">
-            <Button v-if="route_name=='inspection'" class="try-another-button" severity="secondary" size="small" text raised @click="handleLogoClicked" style="display: ruby;font-family:Trebuchet MS"> Try another </Button>
-            <Button v-if="summary_visible" class="summary-button" size="small" severity="secondary" text raised @click="openSummary"> Summary </Button>
+            <Button v-if="route_name=='inspection'" class="try-another-button" severity="secondary" size="small" text raised @click="handleLogoClicked" style="display: ruby;font-family:Trebuchet MS; white-space: nowrap ;"> Try another </Button>
+            <Button v-if="summary_visible" class="summary-button" size="small" severity="secondary" text raised @click="openSummary" style="font-family: Trebuchet MS; white-space: nowrap;"> Summary </Button>
+            <Button v-if="route_name=='home'" class="tutorial-button" severity="secondary" size="small" text raised @click="handleTutorialClicked" style="display: ruby;font-family:Trebuchet MS;white-space: nowrap;"> Introduction </Button>
         </div>
     </div>
 </template>
@@ -40,7 +41,7 @@ const props = defineProps({
     route_name: String
 })
 
-function handleNOVAlogoClicked() {
+function handleTutorialClicked() {
     router.push({ name: 'tutorial' })
 }
 
@@ -85,7 +86,7 @@ function openSummary() {
     cursor: pointer;
 }
 
-.summary-button, .try-another-button {
+.summary-button, .try-another-button, .tutorial-button {
     margin-right: 1.1%;
     height: 80%;
 }

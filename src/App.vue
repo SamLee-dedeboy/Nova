@@ -108,14 +108,6 @@ p {
 a {
   font-family: "Lato";
 }
-/* 
-@media (min-width: 1024px) {
-
-  #app {
-    padding: 0 2rem;
-  }
-
-} */
 
 .introjs-tooltiptext {
   font-family: Trebuchet MS !important;

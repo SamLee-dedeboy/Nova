@@ -44,7 +44,6 @@ const overview_scatter = ref(null)
 const server_address = vue.inject("server_address")
 
 // overview data 
-const overview_grouped_scatter_data: Ref<any> = ref({})
 const overview_overall_scatter_metadata: Ref<any> = ref({})
 
 
@@ -55,12 +54,7 @@ const selected_entity_info_fetched: Ref<boolean> = ref(false)
 
 
 // outlet related data
-/**
- * set of outlet names extracted from dataset.
- */
-const enabled_outlet_set: Ref<Set<string>> = ref(new Set(""))
-const outlet_leaning: Ref<any> = ref({})
-
+const entity_outlet_dict = ref({})
 
 /**
  * entity list
@@ -70,8 +64,9 @@ const entity_list: Ref<string[]> = ref([])
 /**
  * dictionary: { [outlet]: Article[ ].length }
  */
-const outlet_article_num_dict = ref({})
-vue.provide("outlet_article_num_dict", outlet_article_num_dict)
+// const outlet_article_num_dict = ref({})
+const total_articles = ref(0)
+vue.provide("total_articles", total_articles)
 
 /**
  * Flags
@@ -105,6 +100,7 @@ const selected_entity_name: Ref<string> = ref("")
 vue.watch(selected_entity_name, (new_value, old_value) => {
   handleEntityClicked(selected_entity_name.value)
 })
+
 const overall_selected_hexview: Ref<typeUtils.CooccurrHexView | undefined> = ref(undefined)
 const overall_entity_data = vue.computed(() => overall_scatter_view.value?.data?.nodes)
 
@@ -114,147 +110,57 @@ const overall_entity_data = vue.computed(() => overall_scatter_view.value?.data?
 const segmentation : Ref<typeUtils.Sentiment2D> = vue.computed(() => store.segmentation)
 const setSegmentation = (segmentation : typeUtils.Sentiment2D) => store.setSegmentation(segmentation)
 
+
+function fetchRetry(url, fetchOptions = {}) {
+  // on error, retry
+  function onError(err){
+    return fetchRetry(url, fetchOptions)
+  }
+
+  return fetch(url, fetchOptions)
+  // check 404 error
+  .then(response => {
+    if (!response.ok) {
+      onError(response)
+      // throw new Error("HTTP error, status = " + response.status);
+    }
+    return response;
+  })
+  // other errors
+  .catch(onError);
+}
 vue.onMounted(async () => {
   selected_entity_info_fetched.value = false
-  const promiseArray: any[] = []
-  promiseArray.push(new Promise((resolve) => {
-    fetch(`${server_address}/overview/scatter/overall/data`, {
-        method: "POST",
-        headers: {
-            "Accept": "application/json",
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({article_num_threshold: article_num_threshold.value})
-    })
-      .then(res => res.json())
-      .then(json => {
-        // overview_overall_scatter_data.value = json
-        overall_scatter_view.value = {
-          title: "Overall",
-          data: json
-        }
-        overview_overall_scatter_metadata.value = {
-          max_articles: json.max_articles,
-          min_articles: json.min_articles
-        }
-        // console.log({json})
+  const url = `${server_address}/overview/data`
+  const fetchOptions = {
+    method: "POST",
+    headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+    },
+    body: JSON.stringify({article_num_threshold: article_num_threshold.value})
+  }
+  fetchRetry(url, fetchOptions)
+  .then(res => res.json())
+  .then(json => {
+    // overview_overall_scatter_data.value = json
+    overall_scatter_view.value = {
+      title: "Overall",
+      data: json
+    }
+    overview_overall_scatter_metadata.value = {
+      max_articles: json.max_articles,
+      min_articles: json.min_articles
+    }
+    total_articles.value = json.total_article
+    console.log("total_articles:", total_articles.value)
+    entity_list.value = json.entity_list
+    entity_outlet_dict.value = json.entity_outlet_dict
 
-
-        // turn flags
-        overall_scatter_data_loading.value = false
-        resolve("success")
-      })
-      .catch((err) => {
-        fetch(`${server_address}/overview/scatter/overall/data`, {
-            method: "POST",
-            headers: {
-                "Accept": "application/json",
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({article_num_threshold: article_num_threshold.value})
-        })
-          .then(res => res.json())
-          .then(json => {
-            // overview_overall_scatter_data.value = json
-            overall_scatter_view.value = {
-              title: "Overall",
-              data: json
-            }
-            overview_overall_scatter_metadata.value = {
-              max_articles: json.max_articles,
-              min_articles: json.min_articles
-            }
-            // console.log({json})
-
-
-            // turn flags
-            overall_scatter_data_loading.value = false
-            resolve("success")
-          })
-
-      })
-  }))
-  promiseArray.push(new Promise((resolve) => {
-    // overview grouped scatter data 
-    fetch(`${server_address}/overview/scatter/grouped/data`)
-      .then(res => res.json())
-      .then(json => {
-        overview_grouped_scatter_data.value = json
-        resolve("success")
-      })
-      .catch((err) => {
-        fetch(`${server_address}/overview/scatter/grouped/data`)
-        .then(res => res.json())
-        .then(json => {
-          overview_grouped_scatter_data.value = json
-          resolve("success")
-        }) 
-      })
-  }))
-  promiseArray.push(new Promise((resolve) => {
-    // outlet article numbers, return as a dictionary
-    fetch(`${server_address}/processed_data/outlet_article_num_dict`)
-      .then(res => res.json())
-      .then(json => {
-        outlet_article_num_dict.value = json
-        resolve("success")
-      })
-      .catch((err) => {
-        fetch(`${server_address}/processed_data/outlet_article_num_dict`)
-          .then(res => res.json())
-          .then(json => {
-            outlet_article_num_dict.value = json
-            resolve("success")
-          })
-      })
-  }))
-  promiseArray.push(new Promise((resolve) => {
-    // entity list
-    fetch(`${server_address}/processed_data/entity_list`)
-      .then(res => res.json())
-      .then(json => {
-        entity_list.value = json
-        resolve("success")
-      })
-      .catch((err) => {
-        fetch(`${server_address}/processed_data/entity_list`)
-          .then(res => res.json())
-          .then(json => {
-            entity_list.value = json
-            resolve("success")
-          })
-      })
-  }))
-  promiseArray.push(new Promise((resolve) => {
-    // outlet set
-    fetch(`${server_address}/processed_data/outlet_set`)
-      .then(res => res.json())
-      .then(json => {
-        enabled_outlet_set.value = json
-        // update outlet leaning dict
-        enabled_outlet_set.value.forEach(outlet => {
-            outlet_leaning.value[outlet] = 1
-        });
-        resolve("success")
-      })
-      .catch((err) => {
-        fetch(`${server_address}/processed_data/outlet_set`)
-          .then(res => res.json())
-          .then(json => {
-            enabled_outlet_set.value = json
-            // update outlet leaning dict
-            enabled_outlet_set.value.forEach(outlet => {
-                outlet_leaning.value[outlet] = 1
-            });
-            resolve("success")
-          })
-      })
-  }))
-
-  await Promise.all(promiseArray)
-    .then(res => {
-      overview_constructed.value = true
-    })
+    // turn flags
+    overall_scatter_data_loading.value = false
+    overview_constructed.value = true
+  })
 })
 
 
@@ -263,31 +169,26 @@ async function handleEntityClicked(entity: string) {
   if(!entity_clicked.value) entity_clicked.value = true
   else entity_changed.value = true
 
-
   // request entity-related data
-  const promiseArray: any[] = []
-  promiseArray.push(new Promise((resolve) => {
-    // selected entity node data
-    fetch(`${server_address}/overview/scatter/overall/node/${entity}`)
-      .then(res => res.json())
-      .then(json => {
-        console.log({json})
-        const store_entity = {
-          name: entity,
-          outlet: "Overall",
-          article_ids: json.article_ids,
-          neg_article_ids: json.neg_article_ids,
-          pos_article_ids: json.pos_article_ids,
-          pos_sst: json.pos_sst,
-          neg_sst: json.neg_sst,
-        }
-        setEntity(store_entity)
-        selected_entity_info_fetched.value = true
-        resolve("success")
-      })
-  }))
-  await Promise.all(promiseArray)
+  const url = `${server_address}/overview/scatter/overall/nodes/${entity}`
+  fetchRetry(url)
+  .then(res => res.json())
+  .then(json => {
+    console.log({json})
+    const store_entity = {
+      name: entity,
+      outlet: "Overall",
+      article_ids: json.article_ids,
+      neg_article_ids: json.neg_article_ids,
+      pos_article_ids: json.pos_article_ids,
+      pos_sst: json.pos_sst,
+      neg_sst: json.neg_sst,
+    }
+    setEntity(store_entity)
+    selected_entity_info_fetched.value = true
+  })
 }
+
 
 function updateSegmentation(segmentValue) {
   let segmentation : typeUtils.Sentiment2D = segmentValue
@@ -315,24 +216,28 @@ function toggleTutorial(e: MouseEvent) {
         {
           title: "The filter",
           element: document.querySelector('.entity-utils'),
+          // element: document.querySelector('.utilities-container'),
           intro: "You can also use this filter to remove unimportant topics.",
         },
         {
           title: "The Scatter Plot",
-          element: document.querySelector(".scatter-container > svg "),
+          // element: document.querySelector(".scatter-container > svg "),
+          element: document.querySelector(".scatter-container"),
           // element: document.querySelector(".entity-scatter-panel"),
           intro: `We visualize the topics in a scatter plot and categorize the topics into four types: 
           <span class='neg_color'>negative</span>,
           <span class='pos_color'>positive</span>,
           <span class='neu_color'>neutral</span>, or
-          <span class='mix_color'>mixed</span>.
-          `,
+          <span class='mix_color'>mixed</span>. You can also hover the dot on the scatter plot for more 
+          information and also click on the dot to select the topic.`,
+          position: 'left',
         },
         {
           title: "The mixed region",
           element: document.querySelector('.scatter-container > svg > g.segmentation > rect.mixed'),
           intro: `Mixed topics have high volume of articles, which means that they are more controversial and have more diverse opinions. 
           <span style='font-weight: bold'> We encourage you to explore the mixed topics. </span>`,
+          position: 'left',
         },
       ]
   }).start()
@@ -343,7 +248,7 @@ function toggleTutorial(e: MouseEvent) {
 
 
 <template>
-  <div style="display: flex; width: 99vw; height: 95vh">
+  <div style="display: flex; width: 99vw; height: 95vh; overflow: hidden;">
     <ProgressiveDialog
       v-if="firstAccess"
       @toggle-tutorial="toggleTutorial"
@@ -374,9 +279,9 @@ function toggleTutorial(e: MouseEvent) {
               </span>
             </i>
           </h2>
-          <div class='scatter-content' style="overflow:hidden; flex-direction: content; flex: 1;">
+          <div class='scatter-content' style="max-height: calc(100% - 40px); flex: 1;">
             <Splitter class='table-scatter-splitter'>
-              <SplitterPanel class="entity-table-panel" :size="table_panel_size" style="display: flex; flex-direction: column">
+              <SplitterPanel class="entity-table-panel" :size="table_panel_size" style="overflow: hidden; display: flex; flex-direction: column">
                 <div id="entityTableWrapper" class='entityTableWrapper' style="height: 67%; min-height: 67%; margin-left: 5%;">
                   <i v-if="overall_scatter_data_loading" class="pi pi-spin pi-spinner" style="position:absolute;
                       left: 45%;
@@ -399,7 +304,7 @@ function toggleTutorial(e: MouseEvent) {
                     width: 100%;
                     height: 100%;
                   ">
-                  <div id="entity-utility-container" class="entity-utils" style="width: 100%; margin: 0.4%; padding: 2%; margin: 2%;">
+                  <div id="entity-utility-container" class="entity-utils" style="width: 100%; height: fit-content; padding: 2%; margin: 2%;">
                     <h2 class="component-header util-header">
                       Topic Settings
                       <i class='pi pi-info-circle tooltip'> 
@@ -468,7 +373,7 @@ function toggleTutorial(e: MouseEvent) {
               <EntityInfo v-if="selected_entity_info_fetched" 
                 :data="selected_entity"
                 :segmentation="segmentation"
-                :outlets="Array.from(enabled_outlet_set)"
+                :outlets="entity_outlet_dict[selected_entity.name]"
                 :show_animation="!entity_changed"
                 @outlet-clicked="handleOutletClicked"
                 >

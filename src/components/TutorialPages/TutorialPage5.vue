@@ -21,7 +21,7 @@
     </div>
     <div class="textbox" > 
         <span class="textword">
-            Entites may have many forms, for example, <span style="font-style: italic">Donald Trump</span>, <span style="font-style: italic">Trump</span> and <span style="font-style: italic">President Trump</span>, that are associated with a single topic,  <span style="font-weight: 600;font-style: italic">Donald Trump</span>. We link entities mentioned in different articles by Wikipedia ID and generate as a single topic. We visually encode each topic as a dot.
+            Entites may have many forms, for example, <span style="font-style: italic">Donald Trump</span>, <span style="font-style: italic">Trump</span> and <span style="font-style: italic">President Trump</span>, they are associated with a single topic,  <span style="font-weight: 600;font-style: italic">Donald Trump</span>. We link entities mentioned in different articles by Wikipedia ID and generate as a single topic. We visually encode each topic as a dot.
         </span>
     </div>
 </template>

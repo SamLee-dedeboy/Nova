@@ -129,7 +129,7 @@ function handleOutletClicked(outlet) {
         What's next? 
     </Button>
     <div v-if="showNextStep" class="next-step-container">
-        <p> The statistics are calculated from articles published by the following six outlets:
+        <p> The statistics are calculated from articles published by the following outlets:
             <div class="journal-grid">
                 <div class="journal-cell" v-for="outlet in outlets" @click="handleOutletClicked(outlet)">
                     <img :src="`/${outlet}.png`"
@@ -205,16 +205,18 @@ function handleOutletClicked(outlet) {
 }
 .journal-grid {
   display: flex;
-  height: auto;
-  width: 100%;
+  align-items: center;
+  justify-content: center;
+  height: 6rem;
+  /* width:auto; */
 }
 
 .journal-cell {
+    margin: 8px;
     display:flex;
     align-items: center;
-    flex: 1;
-    height: auto;
-    max-height: 100%;
+    height: 5rem;
+    width: 15%;
     cursor: pointer;
     animation: pulse 2s infinite;
     border-radius: 40%;
