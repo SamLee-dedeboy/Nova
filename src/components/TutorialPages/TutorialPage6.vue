@@ -1,20 +1,20 @@
 <template>
-    <img class="bg" src='../../../TutorialIMG/bg.jpg'/>
+    <img class="bg" src='/TutorialIMG/bg.jpg'/>
     <div style="margin-top: 1rem;">
         <br> 
         <div class="imagebox" style="margin-top: 2rem;">
             <div style="width:80%">
-                <img src="../../../TutorialIMG/articles_withTopics.png" class="center_img" style="width:100%">
+                <img src="/TutorialIMG/articles_withTopics.png" class="center_img" style="width:100%">
             </div>
             <div style="width:25%">
-                <img src="../../../TutorialIMG/arrow.png" class="center_img" style="width:40%">
+                <img src="/TutorialIMG/arrow.png" class="center_img" style="width:40%">
                 <br>
             </div>
             <div style="width:80%">
-                <img src="../../../TutorialIMG/Topics1.png" class="center_img" style="width:75%">
+                <img src="/TutorialIMG/Topics1.png" class="center_img" style="width:75%">
             </div>
             <div style="width:25%">
-                <img src="../../../TutorialIMG/arrow.png" class="center_img" style="width:40%">
+                <img src="/TutorialIMG/arrow.png" class="center_img" style="width:40%">
                 <div class="box" style="width:75%;margin:auto">
                     <span class="encode">
                             data encoding
@@ -22,7 +22,7 @@
                 </div>
             </div>
             <div style="width:80%">
-                <img src="../../../TutorialIMG/dots_5.png" class="center_img" style="width:70%;">
+                <img src="/TutorialIMG/dots_5.png" class="center_img" style="width:70%;">
             </div>
         </div>
     </div> 

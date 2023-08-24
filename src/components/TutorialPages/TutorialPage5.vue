@@ -1,13 +1,13 @@
 <template>
-    <img class="bg" src='../../../TutorialIMG/bg.jpg'/>
+    <img class="bg" src='/TutorialIMG/bg.jpg'/>
     <div style="margin-top: 1rem;">
         <br> 
         <div class="imagebox">
             <div style="width:90%">
-                <img src="../../../TutorialIMG/EntitiesLink.png" class="center_img" style="width:90%">
+                <img src="/TutorialIMG/EntitiesLink.png" class="center_img" style="width:90%">
             </div>
             <div style="width:25%">
-                <img src="../../../TutorialIMG/arrow.png" class = "center_img" style="width:35%" >
+                <img src="/TutorialIMG/arrow.png" class = "center_img" style="width:35%" >
                 <div class="box" style="width:45%;margin:auto">
                     <span class="encode">
                             data encoding
@@ -15,7 +15,7 @@
                 </div>
             </div>
             <div style="width: 60%;">
-                <img src="../../../TutorialIMG/dots_4.png" class="center_img" style="width: 70%;">
+                <img src="/TutorialIMG/dots_4.png" class="center_img" style="width: 70%;">
             </div>
         </div>
     </div>

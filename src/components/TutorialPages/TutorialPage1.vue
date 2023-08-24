@@ -1,8 +1,8 @@
 <template>
-    <img class="bg" background-image src='../../../TutorialIMG/bg.jpg'/>
+    <img class="bg" background-image src='/TutorialIMG/bg.jpg'/>
     <div style="margin-top: 1rem;">
         <div class="outbox ">
-            <img src="../../../TutorialIMG/NOVA.png" class="image">
+            <img src="/TutorialIMG/NOVA.png" class="image">
         </div>
         <div class="outbox">
             <span class="text">
