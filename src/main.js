@@ -27,6 +27,7 @@ app.use(MotionPlugin)
 app.use(DialogService);
 app.component('Button', Button);
 // app.provide('server_address', "http://127.0.0.1:5000")
+// app.provide('server_address', "http://0.0.0.0:5050")
 app.provide('server_address', "http://infovis.cs.ucdavis.edu/nova/api")
 
 app.mount("#app");

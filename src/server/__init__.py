@@ -36,6 +36,9 @@ total_articles = 0
 for outlet, article_num in processed_data.outlet_article_num_dict.items():
     total_articles += article_num
 
+splitSentences("This will trigger punkt to download")
+print("init done")
+
 
 @app.route("/overview/data", methods=["POST"])
 def get_overview_data():

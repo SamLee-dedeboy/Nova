@@ -170,7 +170,7 @@ async function handleEntityClicked(entity: string) {
   else entity_changed.value = true
 
   // request entity-related data
-  const url = `${server_address}/overview/scatter/overall/nodes/${entity}`
+  const url = `${server_address}/overview/scatter/overall/node/${entity}`
   fetchRetry(url)
   .then(res => res.json())
   .then(json => {

@@ -590,7 +590,7 @@ function updateDataHex() {
             .attr("opacity", 0)
             .attr("transform", function (d: any, index) {
                 // centers_indexed.push(d)
-                return `translate(0, 0))`
+                return `translate(0, 0)`
             })
             .transition()
             .delay((d, i) => duration*i)
