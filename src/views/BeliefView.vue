@@ -63,23 +63,20 @@ vue.onBeforeMount(() => {
     fetch_outlet_hex(target_outlet.value, target_entity.value)
 })
 
-function fetchRetry(url, fetchOptions = {}) {
-  // on error, retry
-  function onError(err){
-    return fetchRetry(url, fetchOptions)
-  }
-
+function fetchRetry(url, fetchOptions = {}, retry=2) {
   return fetch(url, fetchOptions)
   // check 404 error
   .then(response => {
     if (!response.ok) {
-    //   onError(response)
-      throw new Error("HTTP error, status = " + response.status);
+      console.log({response})
+      if(retry != 0) return fetchRetry(url, fetchOptions, retry-1)
     }
     return response;
   })
   // other errors
-  .catch(onError);
+  .catch(() => {
+    if(retry != 0) return fetchRetry(url, fetchOptions, retry - 1)
+  });
 }
 
 async function fetch_outlet_hex(outlet, center_entity) {

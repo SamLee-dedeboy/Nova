@@ -111,24 +111,22 @@ async function prepare_data() {
     await fetch_articles(article_ids)
 }
 
-function fetchRetry(url, fetchOptions = {}) {
-  // on error, retry
-  function onError(err){
-    return fetchRetry(url, fetchOptions)
-  }
-
+function fetchRetry(url, fetchOptions = {}, retry=2) {
   return fetch(url, fetchOptions)
   // check 404 error
   .then(response => {
     if (!response.ok) {
-    //   onError(response)
-      throw new Error("HTTP error, status = " + response.status);
+      console.log({response})
+      if(retry != 0) return fetchRetry(url, fetchOptions, retry-1)
     }
     return response;
   })
   // other errors
-  .catch(onError);
+  .catch(() => {
+    if(retry != 0) return fetchRetry(url, fetchOptions, retry - 1)
+  });
 }
+
 
 async function fetch_articles(article_ids) {
     const url = `${server_address}/processed_data/ids_to_articles`

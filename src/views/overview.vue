@@ -111,23 +111,20 @@ const segmentation : Ref<typeUtils.Sentiment2D> = vue.computed(() => store.segme
 const setSegmentation = (segmentation : typeUtils.Sentiment2D) => store.setSegmentation(segmentation)
 
 
-function fetchRetry(url, fetchOptions = {}) {
-  // on error, retry
-  function onError(err){
-    return fetchRetry(url, fetchOptions)
-  }
-
+function fetchRetry(url, fetchOptions = {}, retry=2) {
   return fetch(url, fetchOptions)
   // check 404 error
   .then(response => {
     if (!response.ok) {
-      // onError(response)
-      throw new Error("HTTP error, status = " + response.status);
+      console.log({response})
+      if(retry != 0) return fetchRetry(url, fetchOptions, retry-1)
     }
     return response;
   })
   // other errors
-  .catch(onError);
+  .catch(() => {
+    if(retry != 0) return fetchRetry(url, fetchOptions, retry - 1)
+  });
 }
 
 vue.onMounted(async () => {
