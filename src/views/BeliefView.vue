@@ -354,7 +354,7 @@ function toggleDataHexTutorial() {
             <i v-if="!true_hex_fetched" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/>
             <div v-else class="journal-style-container" style="display: flex; flex-direction: column; padding-top: 2%; padding-bottom: 15.7%; justify-content: space-between; ">
                 <div class="journal-style" style="width: 100%; display: flex; align-items: center; justify-content: center;">
-                    <img :src="`/${target_outlet}.png`" :class="['journal-image', `${outletIconStyle(target_outlet)}`]" />
+                    <img :src="`../../imgs/${target_outlet}.png`" :class="['journal-image', `${outletIconStyle(target_outlet)}`]" />
                 </div>
                 <div class="diff-container-placeholder">
                     <div v-if="reveal_anmt_ended" class="diff-description-container" style="height: 100%; margin-top:15px;">
@@ -413,7 +413,7 @@ function toggleDataHexTutorial() {
                         border-radius: 30px;
                         background: #fffcf5;
                     ">
-                        <img v-for="sst in Object.keys(SstColors.hive_color_dict)" :src="`/legend/${sst}.png`" style="width: 100%; height: 100%; object-fit: cover;" />
+                        <img v-for="sst in Object.keys(SstColors.hive_color_dict)" :src="`../../legend/${sst}.png`" style="width: 100%; height: 100%; object-fit: cover;" />
                     </div>
                 </div>
             </div>

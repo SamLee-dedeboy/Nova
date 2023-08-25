@@ -430,7 +430,7 @@ function toggleTutorial() {
                 <div v-if="data_fetched" class="cooccurr-info-container" style="display: flex; flex-direction: column; font-size: 0.8rem;">
                     <div class=journal-icon-container style="display: flex; padding-left: 2%;">
                         <div :class="['journal-style']">
-                            <img :src="`/squared/${selected_outlet}.png`"
+                            <img :src="`../../squared/${selected_outlet}.png`"
                                 :class="['journal-image',`${outletIconStyle(selected_outlet)}`]" />
                         </div>
                         <div class="journal-info-container" style="font-size:0.7rem; z-index:99; display: flex; align-items: center;">

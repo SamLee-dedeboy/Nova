@@ -132,7 +132,7 @@ function handleOutletClicked(outlet) {
         <p> The statistics are calculated from articles published by the following outlets:
             <div class="journal-grid">
                 <div class="journal-cell" v-for="outlet in outlets" @click="handleOutletClicked(outlet)">
-                    <img :src="`/${outlet}.png`"
+                    <img :src="`imgs/${outlet}.png`"
                         :class="['journal-image',`${outletIconStyle(outlet)}`]" />
                     <div class="overlay"></div>
                 </div>

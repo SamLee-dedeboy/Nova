@@ -257,12 +257,12 @@ function toggleTutorial(e: MouseEvent) {
       content="
         NOVA's purpose is to help you assess if your expectations of how mainstream news media cover topics align with their reporting.
         We gathered articles centered around COVID-19 from six U.S. mainstream media outlets:
-        <img src='ABC News.png' style='height:18px;'/>
-        <img src='New York Times.png' style='height:18px;'/>
-        <img src='Washington Post.png' style='height:18px;'/>
-        <img src='FoxNews.png' style='height:18px;'/>
-        <img src='Breitbart.png' style='height:18px;'/>
-        <img src='CNN.png' style='height:18px;'/>.
+        <img src='imgs/ABC News.png' style='height:18px;'/>
+        <img src='imgs/New York Times.png' style='height:18px;'/>
+        <img src='imgs/Washington Post.png' style='height:18px;'/>
+        <img src='imgs/FoxNews.png' style='height:18px;'/>
+        <img src='imgs/Breitbart.png' style='height:18px;'/>
+        <img src='imgs/CNN.png' style='height:18px;'/>.
         <br>
         To demonstrate the system, let's delve into what topics these outlets covered during start of the COVID-19 Pandemic (Feb-June
         2020).
