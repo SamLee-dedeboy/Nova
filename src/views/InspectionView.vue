@@ -111,23 +111,61 @@ async function prepare_data() {
     await fetch_articles(article_ids)
 }
 
+function fetchRetry(url, fetchOptions = {}) {
+  // on error, retry
+  function onError(err){
+    return fetchRetry(url, fetchOptions)
+  }
+
+  return fetch(url, fetchOptions)
+  // check 404 error
+  .then(response => {
+    if (!response.ok) {
+    //   onError(response)
+      throw new Error("HTTP error, status = " + response.status);
+    }
+    return response;
+  })
+  // other errors
+  .catch(onError);
+}
+
 async function fetch_articles(article_ids) {
-    await fetch(`${server_address}/processed_data/ids_to_articles`, {
+    const url = `${server_address}/processed_data/ids_to_articles`
+    const fetchOptions = {
         method: "POST",
         headers: {
             "Accept": "application/json",
             "Content-Type": "application/json"
         },
         body: JSON.stringify({ article_ids })
-    })
-        .then(res => res.json())
-        .then(json => {
-            target_articles.value = json.articles
-            target_article_highlights.value = json.article_highlights
+    }
+    fetchRetry(url, fetchOptions)
+    .then(res => res.json())
+    .then(json => {
+        target_articles.value = json.articles
+        target_article_highlights.value = json.article_highlights
 
-            article_view.value.handleArticleClicked(undefined, article_ids[0])
-            data_fetched.value = true
-        })
+        article_view.value.handleArticleClicked(undefined, article_ids[0])
+        data_fetched.value = true
+    })
+
+    // await fetch(`${server_address}/processed_data/ids_to_articles`, {
+    //     method: "POST",
+    //     headers: {
+    //         "Accept": "application/json",
+    //         "Content-Type": "application/json"
+    //     },
+    //     body: JSON.stringify({ article_ids })
+    // })
+    //     .then(res => res.json())
+    //     .then(json => {
+    //         target_articles.value = json.articles
+    //         target_article_highlights.value = json.article_highlights
+
+    //         article_view.value.handleArticleClicked(undefined, article_ids[0])
+    //         data_fetched.value = true
+    //     })
 }
 
 async function handleHexClicked({ clickedEntity }, view) {
@@ -148,30 +186,56 @@ function handleSentenceClicked(sentence, sentence_index, doc_id) {
 }
 
 async function fetch_cooccurr_info(outlet, entity, co_occurr_entity) {
-    await fetch(`${server_address}/processed_data/cooccurr_info/grouped/${outlet}/${entity}/${co_occurr_entity}`)
-        .then(res => res.json())
-        .then(json => {
-            console.log("cooccurr_info fetched", json)
-            const target_entity = {
-                name: json.target,
-                outlet: outlet,
-                article_ids: json.target_article_ids,
-                // num_of_mentions: json.target_num,
-                // articles_topic_dict: json.target_articles_topic_dict,
-                // sst_ratio: inspection_hexview.value.data.target.sst
-            }
-            setEntity(target_entity)
-            const cooccurr_entity = {
-                target: json.target,
-                name: json.cooccurr_entity,
-                outlet: outlet,
-                article_ids: json.cooccurr_article_ids,
-                // num_of_mentions: json.cooccurr_num,
-                // target_num_of_mentions: json.target_num_of_mentions,
-                // articles_topic_dict: json.cooccurr_articles_topic_dict,
-            }
-            setCooccurrEntity(cooccurr_entity)
-        })
+    const url = `${server_address}/processed_data/cooccurr_info/grouped/${outlet}/${entity}/${co_occurr_entity}`
+    fetchRetry(url, {})
+    .then(res => res.json())
+    .then(json => {
+        console.log("cooccurr_info fetched", json)
+        const target_entity = {
+            name: json.target,
+            outlet: outlet,
+            article_ids: json.target_article_ids,
+            // num_of_mentions: json.target_num,
+            // articles_topic_dict: json.target_articles_topic_dict,
+            // sst_ratio: inspection_hexview.value.data.target.sst
+        }
+        setEntity(target_entity)
+        const cooccurr_entity = {
+            target: json.target,
+            name: json.cooccurr_entity,
+            outlet: outlet,
+            article_ids: json.cooccurr_article_ids,
+            // num_of_mentions: json.cooccurr_num,
+            // target_num_of_mentions: json.target_num_of_mentions,
+            // articles_topic_dict: json.cooccurr_articles_topic_dict,
+        }
+        setCooccurrEntity(cooccurr_entity)
+    })
+
+    // await fetch(`${server_address}/processed_data/cooccurr_info/grouped/${outlet}/${entity}/${co_occurr_entity}`)
+    //     .then(res => res.json())
+    //     .then(json => {
+    //         console.log("cooccurr_info fetched", json)
+    //         const target_entity = {
+    //             name: json.target,
+    //             outlet: outlet,
+    //             article_ids: json.target_article_ids,
+    //             // num_of_mentions: json.target_num,
+    //             // articles_topic_dict: json.target_articles_topic_dict,
+    //             // sst_ratio: inspection_hexview.value.data.target.sst
+    //         }
+    //         setEntity(target_entity)
+    //         const cooccurr_entity = {
+    //             target: json.target,
+    //             name: json.cooccurr_entity,
+    //             outlet: outlet,
+    //             article_ids: json.cooccurr_article_ids,
+    //             // num_of_mentions: json.cooccurr_num,
+    //             // target_num_of_mentions: json.target_num_of_mentions,
+    //             // articles_topic_dict: json.cooccurr_articles_topic_dict,
+    //         }
+    //         setCooccurrEntity(cooccurr_entity)
+    //     })
 }
 
 function outletIconStyle(name:string){

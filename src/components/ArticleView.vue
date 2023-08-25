@@ -105,20 +105,54 @@ vue.watch(neg_articles, (new_value, old_value) => {
 })
 
 
+function fetchRetry(url, fetchOptions = {}) {
+  // on error, retry
+  function onError(err){
+    return fetchRetry(url, fetchOptions)
+  }
+
+  return fetch(url, fetchOptions)
+  // check 404 error
+  .then(response => {
+    if (!response.ok) {
+    //   onError(response)
+      throw new Error("HTTP error, status = " + response.status);
+    }
+    return response;
+  })
+  // other errors
+  .catch(onError);
+}
+
 async function handleArticleClicked(e, article_id) {
-    await fetch(`${server_address}/processed_data/article`, {
+    const url = `${server_address}/processed_data/article`
+    const fetchOptions = {
         method: "POST",
         headers: {
             "Accept": "application/json",
             "Content-Type": "application/json"
         },
         body: JSON.stringify({ article_id })
+    }
+    fetchRetry(url, fetchOptions)
+    .then(res => res.json())
+    .then(article => {
+        console.log("article selected", article)
+        emit("article-selected", article)
     })
-        .then(res => res.json())
-        .then(article => {
-            console.log("article selected", article)
-            emit("article-selected", article)
-        })
+    // await fetch(`${server_address}/processed_data/article`, {
+    //     method: "POST",
+    //     headers: {
+    //         "Accept": "application/json",
+    //         "Content-Type": "application/json"
+    //     },
+    //     body: JSON.stringify({ article_id })
+    // })
+    //     .then(res => res.json())
+    //     .then(article => {
+    //         console.log("article selected", article)
+    //         emit("article-selected", article)
+    //     })
 }
 
 function add_highlights(raw_text: string, highlights: any[]) {

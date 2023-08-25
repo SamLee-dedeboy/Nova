@@ -54,6 +54,11 @@ def get_overview_data():
         "entity_list": processed_data.entity_list,
         "entity_outlet_dict": reverse_index_node_outlet_dict
     }
+
+    # this needs to be done for all POST requests returning JSON
+    response = jsonify(res)
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
     return json.dumps(res, default=vars)
 
 @app.route("/overview/scatter/overall/node/<entity>")
@@ -115,6 +120,9 @@ def ids_to_articles():
         "articles": articles,
         "article_highlights": article_highlights
     }
+    response = jsonify(res)
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
     return json.dumps(res, default=vars)
 
 @app.route("/processed_data/cooccurr_info/grouped/<outlet>/<target>/<co_occurr_entity>")
@@ -142,4 +150,8 @@ def get_article():
     content = article['content']
     splited_sentences = splitSentences(content)
     article['splitted_sentences'] = splited_sentences
+
+    response = jsonify(article)
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
     return json.dumps(article, default=vars)

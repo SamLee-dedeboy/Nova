@@ -121,14 +121,15 @@ function fetchRetry(url, fetchOptions = {}) {
   // check 404 error
   .then(response => {
     if (!response.ok) {
-      onError(response)
-      // throw new Error("HTTP error, status = " + response.status);
+      // onError(response)
+      throw new Error("HTTP error, status = " + response.status);
     }
     return response;
   })
   // other errors
   .catch(onError);
 }
+
 vue.onMounted(async () => {
   selected_entity_info_fetched.value = false
   const url = `${server_address}/overview/data`

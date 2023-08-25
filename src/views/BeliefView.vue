@@ -63,28 +63,70 @@ vue.onBeforeMount(() => {
     fetch_outlet_hex(target_outlet.value, target_entity.value)
 })
 
+function fetchRetry(url, fetchOptions = {}) {
+  // on error, retry
+  function onError(err){
+    return fetchRetry(url, fetchOptions)
+  }
+
+  return fetch(url, fetchOptions)
+  // check 404 error
+  .then(response => {
+    if (!response.ok) {
+    //   onError(response)
+      throw new Error("HTTP error, status = " + response.status);
+    }
+    return response;
+  })
+  // other errors
+  .catch(onError);
+}
+
 async function fetch_outlet_hex(outlet, center_entity) {
-    await fetch(`${server_address}/hexview/grouped/${center_entity}/${outlet}`)
-        .then(res => res.json())
-        .then(json => {
-            true_hex_data.value = json
-            true_hex_fetched.value = true
-            const hex_view: typeUtils.CooccurrHexView = {
-                title: `co-${outlet}-${selected_entity.value.name}`,
-                outlet: outlet,
-                center_entity: selected_entity.value.name,
-                data: json
-            }
-            outlet_hexview.value = hex_view
-            setClickedHexView(hex_view)
-            setInspectionHexView(hex_view)
-            const init_hex_selection = {}
-            hex_view.data.sorted_cooccurrences_list.forEach(entity_data => {
-                init_hex_selection[entity_data.entity] = -1
-            })
-            init_hex_selection[center_entity] = { pos: 0, neg: 0}
-            setHexSelection(init_hex_selection)
+    const url = `${server_address}/hexview/grouped/${center_entity}/${outlet}`
+    fetchRetry(url, {})
+    .then(res => res.json())
+    .then(json => {
+        true_hex_data.value = json
+        true_hex_fetched.value = true
+        const hex_view: typeUtils.CooccurrHexView = {
+            title: `co-${outlet}-${selected_entity.value.name}`,
+            outlet: outlet,
+            center_entity: selected_entity.value.name,
+            data: json
+        }
+        outlet_hexview.value = hex_view
+        setClickedHexView(hex_view)
+        setInspectionHexView(hex_view)
+        const init_hex_selection = {}
+        hex_view.data.sorted_cooccurrences_list.forEach(entity_data => {
+            init_hex_selection[entity_data.entity] = -1
         })
+        init_hex_selection[center_entity] = { pos: 0, neg: 0}
+        setHexSelection(init_hex_selection)
+    })
+
+    // await fetch(`${server_address}/hexview/grouped/${center_entity}/${outlet}`)
+    //     .then(res => res.json())
+    //     .then(json => {
+    //         true_hex_data.value = json
+    //         true_hex_fetched.value = true
+    //         const hex_view: typeUtils.CooccurrHexView = {
+    //             title: `co-${outlet}-${selected_entity.value.name}`,
+    //             outlet: outlet,
+    //             center_entity: selected_entity.value.name,
+    //             data: json
+    //         }
+    //         outlet_hexview.value = hex_view
+    //         setClickedHexView(hex_view)
+    //         setInspectionHexView(hex_view)
+    //         const init_hex_selection = {}
+    //         hex_view.data.sorted_cooccurrences_list.forEach(entity_data => {
+    //             init_hex_selection[entity_data.entity] = -1
+    //         })
+    //         init_hex_selection[center_entity] = { pos: 0, neg: 0}
+    //         setHexSelection(init_hex_selection)
+    //     })
 }
 
 function handleHexClicked({clickedEntity}) {
