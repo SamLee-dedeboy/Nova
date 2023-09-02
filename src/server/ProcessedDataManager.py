@@ -1,9 +1,9 @@
 from collections import defaultdict
 from datetime import datetime
 import itertools
-import processUtils
 from pprint import pprint
 import copy
+from .processUtils import *
 
 class ProcessedDataManager:
     def __init__(self, raw_data):
@@ -22,8 +22,8 @@ class ProcessedDataManager:
         self.entity_mention_articles, self.metadata = index_by_entities(raw_data.article_data)
         self.overall_cooccurrences_dict = extract_cooccurrences_overall(raw_data.article_data)
         self.grouped_cooccurrences_dict = extract_cooccurrences_grouped(raw_data.article_data)
-        self.article_dict = processUtils.list_to_dict(raw_data.article_data, key=lambda article: article['id'])
-        self.article_metadata_dict = processUtils.list_to_dict(removeContent(raw_data.article_data), key=lambda article: article['id'])
+        self.article_dict = list_to_dict(raw_data.article_data, key=lambda article: article['id'])
+        self.article_metadata_dict = list_to_dict(removeContent(raw_data.article_data), key=lambda article: article['id'])
 
 
     def idsToArticles(self, id_list, no_content=False):

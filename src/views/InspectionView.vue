@@ -106,62 +106,64 @@ function handleNoteUpdated(noteHTMLContent) {
 async function prepare_data() {
     const cooccurr_entity_name = selected_cooccurr_entity.value? selected_cooccurr_entity.value.name : selected_entity.value.name
     await fetch_cooccurr_info(selected_outlet, selected_entity.value.name, cooccurr_entity_name)
-    //console.log(selected_entity.value)
     const article_ids = selected_cooccurr_entity.value?.article_ids || selected_entity.value.article_ids
-    console.log({article_ids})
-    // const article_ids = article_ids_w_sentiment.map(obj => obj.article_id)
     highlight_hex_entity.value = selected_cooccurr_entity.value?.name
-    // setSegmentation(selected_entity.value.sst_ratio)
-    // selected_outlet.value = selected_entity.value.outlet
-    const promiseArray: any[] = []
-    promiseArray.push(new Promise(async (resolve) => {
-        fetch_articles(article_ids).then(
-            resolve("success")
-        )
-    }))
-    promiseArray.push(new Promise(async (resolve) => {
-        fetch_article_highlights(article_ids).then(
-            resolve("success")
-        )
-    }))
-    await Promise.all(promiseArray)
+    await fetch_articles(article_ids)
 }
+
+function fetchRetry(url, fetchOptions = {}, retry=2) {
+  return fetch(url, fetchOptions)
+  // check 404 error
+  .then(response => {
+    if (!response.ok) {
+      console.log({response})
+      if(retry != 0) return fetchRetry(url, fetchOptions, retry-1)
+    }
+    return response;
+  })
+  // other errors
+  .catch(() => {
+    if(retry != 0) return fetchRetry(url, fetchOptions, retry - 1)
+  });
+}
+
 
 async function fetch_articles(article_ids) {
-    await fetch(`${server_address}/processed_data/ids_to_articles`, {
+    const url = `${server_address}/processed_data/ids_to_articles`
+    const fetchOptions = {
         method: "POST",
         headers: {
             "Accept": "application/json",
             "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-            no_content: true,
-            article_ids: article_ids,
-        })
-    })
-        .then(res => res.json())
-        .then(json => {
-            target_articles.value = json
-            console.log("articles", target_articles.value)
-            article_view.value.handleArticleClicked(undefined, article_ids[0])
-            data_fetched.value = true
-        })
-}
+        body: JSON.stringify({ article_ids })
+    }
+    fetchRetry(url, fetchOptions)
+    .then(res => res.json())
+    .then(json => {
+        target_articles.value = json.articles
+        target_article_highlights.value = json.article_highlights
 
-async function fetch_article_highlights(article_ids) {
-    await fetch(`${server_address}/processed_data/ids_to_articles_highlights`, {
-        method: "POST",
-        headers: {
-            "Accept": "application/json",
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(article_ids)
+        article_view.value.handleArticleClicked(undefined, article_ids[0])
+        data_fetched.value = true
     })
-        .then(res => res.json())
-        .then(json => {
-            console.log("highlights fetched", json)
-            target_article_highlights.value = json
-        })
+
+    // await fetch(`${server_address}/processed_data/ids_to_articles`, {
+    //     method: "POST",
+    //     headers: {
+    //         "Accept": "application/json",
+    //         "Content-Type": "application/json"
+    //     },
+    //     body: JSON.stringify({ article_ids })
+    // })
+    //     .then(res => res.json())
+    //     .then(json => {
+    //         target_articles.value = json.articles
+    //         target_article_highlights.value = json.article_highlights
+
+    //         article_view.value.handleArticleClicked(undefined, article_ids[0])
+    //         data_fetched.value = true
+    //     })
 }
 
 async function handleHexClicked({ clickedEntity }, view) {
@@ -182,40 +184,62 @@ function handleSentenceClicked(sentence, sentence_index, doc_id) {
 }
 
 async function fetch_cooccurr_info(outlet, entity, co_occurr_entity) {
-    await fetch(`${server_address}/processed_data/cooccurr_info/grouped/${outlet}/${entity}/${co_occurr_entity}`)
-        .then(res => res.json())
-        .then(json => {
-            console.log("cooccurr_info fetched", json)
-            const target_entity = {
-                name: json.target,
-                outlet: outlet,
-                article_ids: json.target_article_ids,
-                // num_of_mentions: json.target_num,
-                // articles_topic_dict: json.target_articles_topic_dict,
-                // sst_ratio: inspection_hexview.value.data.target.sst
-            }
-            setEntity(target_entity)
-            const cooccurr_entity = {
-                target: json.target,
-                name: json.cooccurr_entity,
-                outlet: outlet,
-                article_ids: json.cooccurr_article_ids,
-                // num_of_mentions: json.cooccurr_num,
-                // target_num_of_mentions: json.target_num_of_mentions,
-                // articles_topic_dict: json.cooccurr_articles_topic_dict,
-            }
-            setCooccurrEntity(cooccurr_entity)
-        })
+    const url = `${server_address}/processed_data/cooccurr_info/grouped/${outlet}/${entity}/${co_occurr_entity}`
+    fetchRetry(url, {})
+    .then(res => res.json())
+    .then(json => {
+        console.log("cooccurr_info fetched", json)
+        const target_entity = {
+            name: json.target,
+            outlet: outlet,
+            article_ids: json.target_article_ids,
+            // num_of_mentions: json.target_num,
+            // articles_topic_dict: json.target_articles_topic_dict,
+            // sst_ratio: inspection_hexview.value.data.target.sst
+        }
+        setEntity(target_entity)
+        const cooccurr_entity = {
+            target: json.target,
+            name: json.cooccurr_entity,
+            outlet: outlet,
+            article_ids: json.cooccurr_article_ids,
+            // num_of_mentions: json.cooccurr_num,
+            // target_num_of_mentions: json.target_num_of_mentions,
+            // articles_topic_dict: json.cooccurr_articles_topic_dict,
+        }
+        setCooccurrEntity(cooccurr_entity)
+    })
+
+    // await fetch(`${server_address}/processed_data/cooccurr_info/grouped/${outlet}/${entity}/${co_occurr_entity}`)
+    //     .then(res => res.json())
+    //     .then(json => {
+    //         console.log("cooccurr_info fetched", json)
+    //         const target_entity = {
+    //             name: json.target,
+    //             outlet: outlet,
+    //             article_ids: json.target_article_ids,
+    //             // num_of_mentions: json.target_num,
+    //             // articles_topic_dict: json.target_articles_topic_dict,
+    //             // sst_ratio: inspection_hexview.value.data.target.sst
+    //         }
+    //         setEntity(target_entity)
+    //         const cooccurr_entity = {
+    //             target: json.target,
+    //             name: json.cooccurr_entity,
+    //             outlet: outlet,
+    //             article_ids: json.cooccurr_article_ids,
+    //             // num_of_mentions: json.cooccurr_num,
+    //             // target_num_of_mentions: json.target_num_of_mentions,
+    //             // articles_topic_dict: json.cooccurr_articles_topic_dict,
+    //         }
+    //         setCooccurrEntity(cooccurr_entity)
+    //     })
 }
 
 function outletIconStyle(name:string){
     let className = name.replaceAll(' ','-') + '-icon';
     className = (className.includes("FoxNews") || className.includes("Breitbart")) ? className : 'icon';
     return className;
-}
-
-function goToOverview() {
-    router.push({ name: "home" })
 }
 
 function toggleTutorial() {
@@ -404,7 +428,7 @@ function toggleTutorial() {
                 <div v-if="data_fetched" class="cooccurr-info-container" style="display: flex; flex-direction: column; font-size: 0.8rem;">
                     <div class=journal-icon-container style="display: flex; padding-left: 2%;">
                         <div :class="['journal-style']">
-                            <img :src="`/squared/${selected_outlet}.png`"
+                            <img :src="`../../squared/${selected_outlet}.png`"
                                 :class="['journal-image',`${outletIconStyle(selected_outlet)}`]" />
                         </div>
                         <div class="journal-info-container" style="font-size:0.7rem; z-index:99; display: flex; align-items: center;">

@@ -1,9 +1,9 @@
 from collections import defaultdict
 from datetime import datetime
 import itertools
-import processUtils
 from pprint import pprint
 import copy
+from .processUtils import *
 
 class ProcessedDataManager:
     def __init__(self, raw_data):
@@ -22,8 +22,8 @@ class ProcessedDataManager:
         self.entity_mention_articles, self.metadata = index_by_entities(raw_data.article_data)
         self.overall_cooccurrences_dict = extract_cooccurrences_overall(raw_data.article_data)
         self.grouped_cooccurrences_dict = extract_cooccurrences_grouped(raw_data.article_data)
-        self.article_dict = processUtils.list_to_dict(raw_data.article_data, key=lambda article: article['id'])
-        self.article_metadata_dict = processUtils.list_to_dict(removeContent(raw_data.article_data), key=lambda article: article['id'])
+        self.article_dict = list_to_dict(raw_data.article_data, key=lambda article: article['id'])
+        self.article_metadata_dict = list_to_dict(removeContent(raw_data.article_data), key=lambda article: article['id'])
 
 
     def idsToArticles(self, id_list, no_content=False):
@@ -88,10 +88,10 @@ def extract_cooccurrences_overall(article_list):
         outlet = article['journal']
         entity_sentiments = article['doc_level_sentiment']
         for entity1, sentiment1 in entity_sentiments.items():
-            if sentiment1 != "neutral":
+            if sentiment1 != "neutral" and sentiment1 != "error":
                 # add co-occurrences
                 for entity2, sentiment2 in entity_sentiments.items():
-                    if sentiment2 != "neutral":
+                    if sentiment2 != "neutral" and sentiment2 != "error":
                         # add to co-occurrences data 
                         cooccurrences_dict[entity1][entity2].append(article_id) 
                         # utils.save_json(cooccurrences_dict, 'cooccurrences.json')
@@ -107,10 +107,10 @@ def extract_cooccurrences_grouped(article_list):
         outlet = article['journal']
         entity_sentiments = article['doc_level_sentiment']
         for entity1, sentiment1 in entity_sentiments.items():
-            if sentiment1 != "neutral":
+            if sentiment1 != "neutral" and sentiment1 != "error":
                 # add co-occurrences
                 for entity2, sentiment2 in entity_sentiments.items():
-                    if sentiment2 != "neutral":
+                    if sentiment2 != "neutral" and sentiment2 != "error":
                         # add to co-occurrences data 
                         cooccurrences_dict[outlet][entity1][entity2].append({
                             "article_id": article_id,
@@ -138,7 +138,7 @@ def index_by_entities(article_list):
         entity_sentiments = article['doc_level_sentiment']
         for entity1, sentiment1 in entity_sentiments.items():
             # add pos/neg mentions to scatter data 
-            if sentiment1 != "neutral":
+            if sentiment1 != "neutral" and sentiment1 != "error":
                 entity_mentioned_articles_dict[entity1].append(article_id)
     metadata = {
         "total_articles": len(article_list),

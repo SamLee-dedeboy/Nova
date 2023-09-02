@@ -90,7 +90,7 @@ export class EntityScatter {
         emit_at_end: boolean,
         filtered_data: Ref<ScatterNode[]>,
         tooltip_content: Ref<string>,
-        total_articles: ComputedRef<any>,
+        total_articles: Ref<any>,
         min_articles: ComputedRef<any>, max_articles: ComputedRef<any>,
         clicked_node: Ref<ScatterNode>, clicked_node_element: Ref<any>,
         hovered_node_info: Ref<OutletNodeInfo>,
@@ -622,9 +622,6 @@ export class EntityScatter {
                         .attr("opacity", 0)
                         .attr("cx", () => corners_x[Math.floor(Math.random() * 2)])
                         .attr("cy", () => corners_y[Math.floor(Math.random() * 2)])
-                        .transition()
-                        .delay((d) => d.i*duration)
-                        .duration(duration)
                         .attr("opacity", 1)
                         .attr("cx", (d) => this.xScale(d.pos_sst) || 0)
                         .attr("cy", (d) => this.yScale(Math.abs(d.neg_sst)) || 0)

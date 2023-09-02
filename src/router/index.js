@@ -38,12 +38,12 @@ const router = createRouter({
       component: InspectionView,
       meta: { order: 3 },
     },
-    {
-      path: "/summary/:entity",
-      name: "summary",
-      component: SummaryView,
-      meta: { order: 4 },
-    },
+    // {
+    //   path: "/summary/:entity",
+    //   name: "summary",
+    //   component: SummaryView,
+    //   meta: { order: 4 },
+    // },
   ],
 });
 router.beforeEach((to, from, next) => {

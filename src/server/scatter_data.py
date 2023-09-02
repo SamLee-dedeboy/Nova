@@ -1,12 +1,10 @@
-from email.policy import default
 import itertools
 from collections import defaultdict
 from re import I
-from data_types import *
-from ProcessedDataManager import *
-import sentimentUtils
-import functools
 import math
+from .data_types import *
+from .ProcessedDataManager import ProcessedDataManager
+from .sentimentUtils import *
 
 def overall_entity_scatter(entity_mentions, processed_data_manager: ProcessedDataManager):
     data = EntityScatterData( nodes=[], max_articles=0, min_articles=0,)
@@ -177,7 +175,7 @@ def construct_node(label, pos_article_ids, neg_article_ids, pos_max, pos_min, ne
     if len(pos_article_ids) + len(neg_article_ids) == 0:
         return ScatterNode(label, [], 0, 0, 0, 0, {})
     article_ids = pos_article_ids + neg_article_ids
-    pos, neg = sentimentUtils.generate_sst_score(
+    pos, neg = generate_sst_score(
         pos_article_ids,
         neg_article_ids,
         pos_max, pos_min,

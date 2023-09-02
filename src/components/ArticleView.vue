@@ -104,23 +104,51 @@ vue.watch(neg_articles, (new_value, old_value) => {
     const filteredArray = pos_ids.filter(pos_id => neg_ids.includes(pos_id))
 })
 
+function fetchRetry(url, fetchOptions = {}, retry=2) {
+  return fetch(url, fetchOptions)
+  // check 404 error
+  .then(response => {
+    if (!response.ok) {
+      console.log({response})
+      if(retry != 0) return fetchRetry(url, fetchOptions, retry-1)
+    }
+    return response;
+  })
+  // other errors
+  .catch(() => {
+    if(retry != 0) return fetchRetry(url, fetchOptions, retry - 1)
+  });
+}
 
 async function handleArticleClicked(e, article_id) {
-    await fetch(`${server_address}/processed_data/ids_to_articles`, {
+    const url = `${server_address}/processed_data/article`
+    const fetchOptions = {
         method: "POST",
         headers: {
             "Accept": "application/json",
             "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-            no_content: false,
-            article_ids: [article_id],
-        })
+        body: JSON.stringify({ article_id })
+    }
+    fetchRetry(url, fetchOptions)
+    .then(res => res.json())
+    .then(article => {
+        console.log("article selected", article)
+        emit("article-selected", article)
     })
-        .then(res => res.json())
-        .then(json => {
-            emit("article-selected", json[0])
-        })
+    // await fetch(`${server_address}/processed_data/article`, {
+    //     method: "POST",
+    //     headers: {
+    //         "Accept": "application/json",
+    //         "Content-Type": "application/json"
+    //     },
+    //     body: JSON.stringify({ article_id })
+    // })
+    //     .then(res => res.json())
+    //     .then(article => {
+    //         console.log("article selected", article)
+    //         emit("article-selected", article)
+    //     })
 }
 
 function add_highlights(raw_text: string, highlights: any[]) {

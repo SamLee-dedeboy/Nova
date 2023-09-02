@@ -63,28 +63,67 @@ vue.onBeforeMount(() => {
     fetch_outlet_hex(target_outlet.value, target_entity.value)
 })
 
+function fetchRetry(url, fetchOptions = {}, retry=2) {
+  return fetch(url, fetchOptions)
+  // check 404 error
+  .then(response => {
+    if (!response.ok) {
+      console.log({response})
+      if(retry != 0) return fetchRetry(url, fetchOptions, retry-1)
+    }
+    return response;
+  })
+  // other errors
+  .catch(() => {
+    if(retry != 0) return fetchRetry(url, fetchOptions, retry - 1)
+  });
+}
+
 async function fetch_outlet_hex(outlet, center_entity) {
-    await fetch(`${server_address}/hexview/grouped/${center_entity}/${outlet}`)
-        .then(res => res.json())
-        .then(json => {
-            true_hex_data.value = json
-            true_hex_fetched.value = true
-            const hex_view: typeUtils.CooccurrHexView = {
-                title: `co-${outlet}-${selected_entity.value.name}`,
-                outlet: outlet,
-                center_entity: selected_entity.value.name,
-                data: json
-            }
-            outlet_hexview.value = hex_view
-            setClickedHexView(hex_view)
-            setInspectionHexView(hex_view)
-            const init_hex_selection = {}
-            hex_view.data.sorted_cooccurrences_list.forEach(entity_data => {
-                init_hex_selection[entity_data.entity] = -1
-            })
-            init_hex_selection[center_entity] = { pos: 0, neg: 0}
-            setHexSelection(init_hex_selection)
+    const url = `${server_address}/hexview/grouped/${center_entity}/${outlet}`
+    fetchRetry(url, {})
+    .then(res => res.json())
+    .then(json => {
+        true_hex_data.value = json
+        true_hex_fetched.value = true
+        const hex_view: typeUtils.CooccurrHexView = {
+            title: `co-${outlet}-${selected_entity.value.name}`,
+            outlet: outlet,
+            center_entity: selected_entity.value.name,
+            data: json
+        }
+        outlet_hexview.value = hex_view
+        setClickedHexView(hex_view)
+        setInspectionHexView(hex_view)
+        const init_hex_selection = {}
+        hex_view.data.sorted_cooccurrences_list.forEach(entity_data => {
+            init_hex_selection[entity_data.entity] = -1
         })
+        init_hex_selection[center_entity] = { pos: 0, neg: 0}
+        setHexSelection(init_hex_selection)
+    })
+
+    // await fetch(`${server_address}/hexview/grouped/${center_entity}/${outlet}`)
+    //     .then(res => res.json())
+    //     .then(json => {
+    //         true_hex_data.value = json
+    //         true_hex_fetched.value = true
+    //         const hex_view: typeUtils.CooccurrHexView = {
+    //             title: `co-${outlet}-${selected_entity.value.name}`,
+    //             outlet: outlet,
+    //             center_entity: selected_entity.value.name,
+    //             data: json
+    //         }
+    //         outlet_hexview.value = hex_view
+    //         setClickedHexView(hex_view)
+    //         setInspectionHexView(hex_view)
+    //         const init_hex_selection = {}
+    //         hex_view.data.sorted_cooccurrences_list.forEach(entity_data => {
+    //             init_hex_selection[entity_data.entity] = -1
+    //         })
+    //         init_hex_selection[center_entity] = { pos: 0, neg: 0}
+    //         setHexSelection(init_hex_selection)
+    //     })
 }
 
 function handleHexClicked({clickedEntity}) {
@@ -312,7 +351,7 @@ function toggleDataHexTutorial() {
             <i v-if="!true_hex_fetched" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/>
             <div v-else class="journal-style-container" style="display: flex; flex-direction: column; padding-top: 2%; padding-bottom: 15.7%; justify-content: space-between; ">
                 <div class="journal-style" style="width: 100%; display: flex; align-items: center; justify-content: center;">
-                    <img :src="`/${target_outlet}.png`" :class="['journal-image', `${outletIconStyle(target_outlet)}`]" />
+                    <img :src="`../../imgs/${target_outlet}.png`" :class="['journal-image', `${outletIconStyle(target_outlet)}`]" />
                 </div>
                 <div class="diff-container-placeholder">
                     <div v-if="reveal_anmt_ended" class="diff-description-container" style="height: 100%; margin-top:15px;">
@@ -371,7 +410,7 @@ function toggleDataHexTutorial() {
                         border-radius: 30px;
                         background: #fffcf5;
                     ">
-                        <img v-for="sst in Object.keys(SstColors.hive_color_dict)" :src="`/legend/${sst}.png`" style="width: 100%; height: 100%; object-fit: cover;" />
+                        <img v-for="sst in Object.keys(SstColors.hive_color_dict)" :src="`../../legend/${sst}.png`" style="width: 100%; height: 100%; object-fit: cover;" />
                     </div>
                 </div>
             </div>

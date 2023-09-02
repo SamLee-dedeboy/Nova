@@ -1,5 +1,5 @@
 <template>
-    <img class="bg" src='../../../TutorialIMG/bg.jpg'/>
+    <img class="bg" src='/TutorialIMG/bg.jpg'/>
     <h1 style="margin-top: 1rem;">How does <span style="font-style: italic">NOVA</span> work? </h1>
     <div >
         <img
@@ -7,7 +7,7 @@
             :initial="{ x: 200,y:500}"
             :enter="final_NY"
             class="absolute newsimg"
-            src="../../../TutorialIMG/New York Times_articles.png"
+            src="/TutorialIMG/New_York_Times_articles.png"
         />
         <img
             v-motion
@@ -15,21 +15,21 @@
             :enter="final_CNN"
             class="absolute"
             style="width:16%"
-            src="../../../TutorialIMG/CNN_articles.png"
+            src="/TutorialIMG/CNN_articles.png"
         />
         <img
             v-motion
             :initial="{ x: -150,y:0}"
             :enter="final_FOX"
             class="absolute newsimg"
-            src="../../../TutorialIMG/FoxNews_articles.png"
+            src="/TutorialIMG/FoxNews_articles.png"
         />
         <img
             v-motion
             :initial="{ x: 50,y:-80}"
             :enter="final_B"
             class="absolute newsimg"
-            src="../../../TutorialIMG/Breitbart_articles.png"
+            src="/TutorialIMG/Breitbart_articles.png"
         />
         <img
             v-motion
@@ -37,14 +37,14 @@
             :enter="final_WP"
             class="absolute"
             style="width:12%"
-            src="../../../TutorialIMG/Washington Post_articles.png"
+            src="/TutorialIMG/Washington_Post_articles.png"
         />
         <img
             v-motion
             :initial="{ x: 100,y:500}"
             :enter="final_ABC"
             class="absolute newsimg"
-            src="../../../TutorialIMG/ABC News_articles.png"
+            src="/TutorialIMG/ABC_News_articles.png"
         />  
     </div>
     <div class="textbox pop" style="margin-top: 12rem;">
@@ -52,7 +52,7 @@
             <span style="font-style: italic">NOVA</span> offers a means to explore an individual's potential <span style="font-style:italic"> echo chamber </span> when it comes to online mainstream media outlets. Each news oulet has its own coverage and possible biases. Typically the average person receives their news from a subset of these outlets they trust. <span style="font-style: italic">NOVA</span> enables users to explore outside of their own universe and assess their assumptions of other outlets.
         </span>
     </div>
-    <img class="pop circle absolute" src="../../../TutorialIMG/circle.png"/>
+    <img class="pop circle absolute" src="/TutorialIMG/circle.png"/>
 </template>
 
 <script setup lang="ts">

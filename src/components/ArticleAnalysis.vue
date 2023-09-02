@@ -1,14 +1,9 @@
 <script setup lang=ts>
-import ScrollPanel from 'primevue/scrollpanel'
-import Panel from 'primevue/panel'
 import * as vue from "vue"
 import { Ref, ref } from 'vue'
 import { Article } from "../types"
-import { useUserDataStore } from '../store/userStore'
 import * as ColorUtils from "./utils/ColorUtils"
 
-const server_address = vue.inject("server_address")
-const store = useUserDataStore()
 const props = defineProps({
     entity_pair: Object as () => String[],
     selected_article: Object as () => Article,
@@ -17,52 +12,21 @@ const props = defineProps({
 
 const emit = defineEmits(['sentence-clicked'])
 
-const indexed_content: Ref<Any[]> = ref([])
+const indexed_content: Ref<any[]> = ref([])
 
 vue.watch(() => props.selected_article, async () => {
     console.log("selected article changed!")
     document.querySelector('.scroll-panel').scrollTop = 0
     
-    await splitArticleSentences(props.selected_article.content)
-    // initAnalysisPanel(props.selected_article.id)
+    indexed_content.value = props.selected_article.splitted_sentences
 })
 
-async function splitArticleSentences(content) {
-    await fetch(`${server_address}/splitSentences`, {
-        method: "POST",
-        headers: {
-            "Accept": "application/json",
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(content)
-    })
-        .then(res => res.json())
-        .then(json => {
-            indexed_content.value = json
-        })
-
-}
-
-function initAnalysisPanel(article_id: number|undefined=undefined) {
-    if(article_id === undefined) {
-        selected_article.value = undefined
-        return
-    }
-    // find article in marked articles
-    // let found = marked_articles.value.find(existed_article_info => existed_article_info.article_id === article_id)
-    // if(!found) {
-    //     selected_article_mark.value = undefined
-    // // notes.value = ""
-    // } else {
-    //     selected_article_mark.value = found.mark
-    // // notes.value = found.description
-    // }
-}
-
-function removeTags(content) {
-    const res = content.replaceAll("<n>", "\n")
-    return res
-}
+// function initAnalysisPanel(article_id: number|undefined=undefined) {
+//     if(article_id === undefined) {
+//         selected_article.value = undefined
+//         return
+//     }
+// }
 
 // indexed_content: {0: s0, 1: s1, 2: s2 ...}
 // highlight: {0: entities, 1: entities}
@@ -154,7 +118,6 @@ function scrollToSentence(sentence_index) {
 }
 
 defineExpose({
-    initAnalysisPanel,
     scrollToSentence
 })
 

@@ -105,7 +105,6 @@ const user_hex = vue.computed(() => {
     else {
         const center_hex_entity: HexEntity = props.entity_cooccurrences?.target!
         let res: any[] = [{ entity: center_hex_entity.entity, sst: center_hex_entity.sst, x: 0, y: 0, index: 0, exists: true, assigned_hex_index: -1 }]
-        console.log("user_hex_selection", props.user_hex_selection)
         // const unknown_index = [62, 36, 88, 122]
         const unknown_index = [62, 37, 36, 59, 88, 87]
         let unknown_count = 0
@@ -245,7 +244,6 @@ vue.watch(() => props.segmentation, (new_value, old_value) => {
 }, { deep: true })
 
 vue.watch(() => props.highlight_hex_entity, (new_value, old_value) => {
-    console.log("highlight_hex_entity", new_value, old_value)
     updateHighlightHex()
     removeHighlightHex(old_value)
 })
@@ -372,7 +370,6 @@ function updateUserFixedHex() {
         .attr("stroke", (d,i) => i===0? "#444444": "black")
         .attr("stroke-width", (d, i) => i === 0 ? 7 : 1)
         .on("click", function (e, d: any) {
-            console.log({clickedEntity: d[0]})
             emit("hex-clicked", { clickedEntity: d[0].entity })
         })
         .on("mouseover", function (e, d: any) {
@@ -439,7 +436,6 @@ function updateUserFixedHex() {
                 words[3] = "..."
                 words.length = 4
             }
-            // //console.log(words.join(" "))
             return words.join(" ")
         })
         .call(wrap, 30)
@@ -497,7 +493,6 @@ function updateDataHex() {
         })
         .attr("stroke-width", 1)
         .on("click", function (e, d: any) {
-            console.log({clickedEntity: d[0].entity})
             emit("hex-clicked", { clickedEntity: d[0].entity })
         })
         .on("mouseover", function (e, d: any) {
@@ -569,7 +564,6 @@ function updateDataHex() {
                 words[3] = "..."
                 words.length = 4
             }
-            // //console.log(words.join(" "))
             return words.join(" ")
         })
         .attr("fill", (d: any) => {
@@ -596,7 +590,7 @@ function updateDataHex() {
             .attr("opacity", 0)
             .attr("transform", function (d: any, index) {
                 // centers_indexed.push(d)
-                return `translate(0, 0))`
+                return `translate(0, 0)`
             })
             .transition()
             .delay((d, i) => duration*i)
@@ -739,7 +733,6 @@ function updateUserHex() {
                 words[3] = "..."
                 words.length = 4
             }
-            // //console.log(words.join(" "))
             return words.join(" ")
         })
         .call(wrap, 30)
@@ -747,12 +740,10 @@ function updateUserHex() {
 }
 
 function changeCenterHexColor() {
-    console.log(props.center_changable)
     if(!props.center_changable) return
     let next_sst = undefined
     const center_hex = d3.select("path.center-hexagon")
     let d: any = center_hex.data()[0]
-    console.log({d})
     if(d.assigned_sst === SentimentType.neu) next_sst = SentimentType.mix 
     if(d.assigned_sst === SentimentType.mix) next_sst = SentimentType.unknown 
     if(d.assigned_sst === SentimentType.unknown) next_sst = SentimentType.pos 
@@ -929,7 +920,6 @@ function drag(eles) {
             .attr("x", closest_hex_center.x)
             // .attr("y", closest_hex_center.y)
             .attr("y", parseFloat(closest_hex_center.y) - em_to_px / 2 * lineHeight * (line_num - 1) / 2) 
-        // console.log(closest_hex_center.y, parseFloat(closest_hex_center.y) - em_to_px / 2 * lineHeight * (line_num - 1) / 2)
 
     }
 
@@ -946,7 +936,6 @@ function drag(eles) {
         }
         dragged_selection.raise().attr("stroke", "black").attr("stroke-width", 1);
         const closest_hex_index = find_closest_hex_index(event.x, event.y)
-        console.log({closest_hex_index})
         if(closest_hex_index !== -1) {
             // if found, remove the stroke of dragged hex
             dragged_selection.attr("stroke", "none")
@@ -958,11 +947,9 @@ function drag(eles) {
             // update draggable hexes
             const entity_hexes = d3.select("g.hex-group").selectAll("path.hexagon").filter((d: any) => d[0].assigned_hex_index !== -1)
             const assigned_hexes = entity_hexes.data().map((ele: any) => ele[0].assigned_hex_index)
-            console.log({assigned_hexes})
             d3.selectAll("path.hex-bins").filter((d) => assigned_hexes.includes(d[0].index))
                 .style("cursor", "pointer")
                 .on("mouseover", function(e, hovered_d: any) {
-                    console.log({highlight: props.highlight_hex_entity})
                     if(entity_hex_index_dict.value[props.highlight_hex_entity] === hovered_d[0].index) return
                     d3.select(this).transition().duration(100).attr("stroke", "black").attr("stroke-width", 8)
                     d3.select(this).raise()
@@ -972,7 +959,6 @@ function drag(eles) {
                     d3.select(this).transition().duration(300).attr("stroke", "#444444").attr("stroke-width", 1)
                 })
                 .on("click", () => {
-                    console.log("emit hex-clicked", d[0].entity)
                     emit("hex-clicked", { clickedEntity: d[0].entity })
                 })
                 .call(drag)

@@ -11,4 +11,9 @@ def splitSentences(content):
     return _splitSentences(content, lambda x: x)
 
 def _splitSentences(content, post_process=lambda x:x):
-    return list(map(post_process, tokenize.sent_tokenize(content)))
+    try:
+        return list(map(post_process, tokenize.sent_tokenize(content)))
+    except LookupError:
+        import nltk
+        nltk.download("punkt")
+        return list(map(post_process, tokenize.sent_tokenize(content)))

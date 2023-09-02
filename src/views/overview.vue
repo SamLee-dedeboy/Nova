@@ -44,7 +44,6 @@ const overview_scatter = ref(null)
 const server_address = vue.inject("server_address")
 
 // overview data 
-const overview_grouped_scatter_data: Ref<any> = ref({})
 const overview_overall_scatter_metadata: Ref<any> = ref({})
 
 
@@ -65,8 +64,9 @@ const entity_list: Ref<string[]> = ref([])
 /**
  * dictionary: { [outlet]: Article[ ].length }
  */
-const outlet_article_num_dict = ref({})
-vue.provide("outlet_article_num_dict", outlet_article_num_dict)
+// const outlet_article_num_dict = ref({})
+const total_articles = ref(0)
+vue.provide("total_articles", total_articles)
 
 /**
  * Flags
@@ -110,79 +110,55 @@ const overall_entity_data = vue.computed(() => overall_scatter_view.value?.data?
 const segmentation : Ref<typeUtils.Sentiment2D> = vue.computed(() => store.segmentation)
 const setSegmentation = (segmentation : typeUtils.Sentiment2D) => store.setSegmentation(segmentation)
 
+
+function fetchRetry(url, fetchOptions = {}, retry=2) {
+  return fetch(url, fetchOptions)
+  // check 404 error
+  .then(response => {
+    if (!response.ok) {
+      console.log({response})
+      if(retry != 0) return fetchRetry(url, fetchOptions, retry-1)
+    }
+    return response;
+  })
+  // other errors
+  .catch(() => {
+    if(retry != 0) return fetchRetry(url, fetchOptions, retry - 1)
+  });
+}
+
 vue.onMounted(async () => {
   selected_entity_info_fetched.value = false
-  const promiseArray: any[] = []
-  promiseArray.push(new Promise((resolve) => {
-    fetch(`${server_address}/overview/scatter/overall/data`, {
-        method: "POST",
-        headers: {
-            "Accept": "application/json",
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({article_num_threshold: article_num_threshold.value})
-    })
-      .then(res => res.json())
-      .then(json => {
-        // overview_overall_scatter_data.value = json
-        overall_scatter_view.value = {
-          title: "Overall",
-          data: json
-        }
-        overview_overall_scatter_metadata.value = {
-          max_articles: json.max_articles,
-          min_articles: json.min_articles
-        }
-        // console.log({json})
+  const url = `${server_address}/overview/data`
+  const fetchOptions = {
+    method: "POST",
+    headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+    },
+    body: JSON.stringify({article_num_threshold: article_num_threshold.value})
+  }
+  fetchRetry(url, fetchOptions)
+  .then(res => res.json())
+  .then(json => {
+    // overview_overall_scatter_data.value = json
+    overall_scatter_view.value = {
+      title: "Overall",
+      data: json
+    }
+    overview_overall_scatter_metadata.value = {
+      max_articles: json.max_articles,
+      min_articles: json.min_articles
+    }
+    total_articles.value = json.total_article
+    console.log("total_articles:", total_articles.value)
+    entity_list.value = json.entity_list
+    entity_outlet_dict.value = json.entity_outlet_dict
 
-
-        // turn flags
-        overall_scatter_data_loading.value = false
-        resolve("success")
-      })
-  }))
-  promiseArray.push(new Promise((resolve) => {
-    // overview grouped scatter data 
-    fetch(`${server_address}/overview/scatter/grouped/data`)
-      .then(res => res.json())
-      .then(json => {
-        overview_grouped_scatter_data.value = json
-        resolve("success")
-      })
-  }))
-  promiseArray.push(new Promise((resolve) => {
-    // outlet article numbers, return as a dictionary
-    fetch(`${server_address}/processed_data/outlet_article_num_dict`)
-      .then(res => res.json())
-      .then(json => {
-        outlet_article_num_dict.value = json
-        resolve("success")
-      })
-  }))
-  promiseArray.push(new Promise((resolve) => {
-    // entity list
-    fetch(`${server_address}/processed_data/entity_list`)
-      .then(res => res.json())
-      .then(json => {
-        entity_list.value = json
-        resolve("success")
-      })
-  }))
-
-  promiseArray.push(new Promise((resolve) => {
-    // outlet set
-    fetch(`${server_address}/overview/entity_outlet_dict`)
-      .then(res => res.json())
-      .then(json => {
-        // console.log({json})
-        entity_outlet_dict.value = json
-        resolve("success")
-      })
-  }))
-  await Promise.all(promiseArray)
-    .then(res => {
-      overview_constructed.value = true
-    })
+    // turn flags
+    overall_scatter_data_loading.value = false
+    overview_constructed.value = true
+  })
 })
 
 
@@ -191,32 +167,26 @@ async function handleEntityClicked(entity: string) {
   if(!entity_clicked.value) entity_clicked.value = true
   else entity_changed.value = true
 
-
   // request entity-related data
-  const promiseArray: any[] = []
-  promiseArray.push(new Promise((resolve) => {
-    // selected entity node data
-    fetch(`${server_address}/overview/scatter/overall/node/${entity}`)
-      .then(res => res.json())
-      .then(json => {
-        console.log({json})
-        const store_entity = {
-          name: entity,
-          outlet: "Overall",
-          article_ids: json.article_ids,
-          neg_article_ids: json.neg_article_ids,
-          pos_article_ids: json.pos_article_ids,
-          pos_sst: json.pos_sst,
-          neg_sst: json.neg_sst,
-        }
-        setEntity(store_entity)
-        selected_entity_info_fetched.value = true
-        resolve("success")
-      })
-  }))
-
-  await Promise.all(promiseArray)
+  const url = `${server_address}/overview/scatter/overall/node/${entity}`
+  fetchRetry(url)
+  .then(res => res.json())
+  .then(json => {
+    console.log({json})
+    const store_entity = {
+      name: entity,
+      outlet: "Overall",
+      article_ids: json.article_ids,
+      neg_article_ids: json.neg_article_ids,
+      pos_article_ids: json.pos_article_ids,
+      pos_sst: json.pos_sst,
+      neg_sst: json.neg_sst,
+    }
+    setEntity(store_entity)
+    selected_entity_info_fetched.value = true
+  })
 }
+
 
 function updateSegmentation(segmentValue) {
   let segmentation : typeUtils.Sentiment2D = segmentValue
@@ -284,12 +254,12 @@ function toggleTutorial(e: MouseEvent) {
       content="
         NOVA's purpose is to help you assess if your expectations of how mainstream news media cover topics align with their reporting.
         We gathered articles centered around COVID-19 from six U.S. mainstream media outlets:
-        <img src='ABC News.png' style='height:18px;'/>
-        <img src='New York Times.png' style='height:18px;'/>
-        <img src='Washington Post.png' style='height:18px;'/>
-        <img src='FoxNews.png' style='height:18px;'/>
-        <img src='Breitbart.png' style='height:18px;'/>
-        <img src='CNN.png' style='height:18px;'/>.
+        <img src='imgs/ABC News.png' style='height:18px;'/>
+        <img src='imgs/New York Times.png' style='height:18px;'/>
+        <img src='imgs/Washington Post.png' style='height:18px;'/>
+        <img src='imgs/FoxNews.png' style='height:18px;'/>
+        <img src='imgs/Breitbart.png' style='height:18px;'/>
+        <img src='imgs/CNN.png' style='height:18px;'/>.
         <br>
         To demonstrate the system, let's delve into what topics these outlets covered during start of the COVID-19 Pandemic (Feb-June
         2020).

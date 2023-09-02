@@ -9,7 +9,6 @@ lerna-debug.log*
 
 node_modules
 .DS_Store
-dist
 dist-ssr
 coverage
 *.local
@@ -39,5 +38,6 @@ public/*.json
 src/server/__pycache__/
 src/server/data/
 *.txt
+!requirements.txt
 
 data/

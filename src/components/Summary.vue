@@ -50,7 +50,7 @@ vue.onMounted(() => {
                 <div class="hexview-header" style="display: flex; flex-direction: row; justify-content: space-between; width: 100%; height: 10%; box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.5)">
                     <div class="hexview-title" style="display: flex; flex-direction: row; align-items: center; height: 100%; width: 100%;">
                         <div :class="['journal-style']">
-                            <img :src="`/squared/${hexview.outlet}.png`"
+                            <img :src="`../../squared/${hexview.outlet}.png`"
                                 :class="['journal-image',`${hexview.outlet}`]" />
                         </div>
                         <div class="hexview-title-text" style="font-size: 1.2em; font-weight: bold; margin-left: 0.5em;">{{hexview.center_entity}}</div>

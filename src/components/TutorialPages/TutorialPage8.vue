@@ -1,11 +1,11 @@
 <template>
-    <img class="bg" src='../../../TutorialIMG/bg.jpg'/>
+    <img class="bg" src='/TutorialIMG/bg.jpg'/>
     <div class="outbox" style="height: 750px;margin-top: 1rem;">
         <div>
             <h1 class="textbox">
                 <span class="textword_8" style="font-size: 50px; ">
                 Your journey with our system starts now! Click and Try out <span style="font-style: italic">NOVA</span> by youself ! &#8680;
-                <img src="../../../TutorialIMG/nova_logo.png" class="novalogo zoom"  style="float:right"
+                <img src="/TutorialIMG/nova_logo.png" class="novalogo zoom"  style="float:right"
                 @click="handleNOVAlogoClicked"
                 > 
                 </span>

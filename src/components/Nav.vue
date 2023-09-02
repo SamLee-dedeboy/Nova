@@ -1,7 +1,7 @@
 <template>
     <div id="nova-navBar">
         <div id="nova-logo" @click="handleLogoClicked">
-            <img alt="logo" src="/nova_logo.png" height="40" class="mr-2">
+            <img alt="logo" src="/imgs/nova_logo.png" height="40" class="mr-2">
         </div>
         <!-- <StageSelect class='page-steps' /> -->
         <div class="nav-button-container" style="display: flex; margin-right:1.1%;">
