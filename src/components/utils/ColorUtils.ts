@@ -43,11 +43,11 @@ enum_color_dict[SentimentType.pos] = pos_color
 enum_color_dict[SentimentType.mix] = mixed_color
 // enum_color_dict[SentimentType.unknown] = "white"
 
-const enum_conflict_color_dict = {}
-enum_conflict_color_dict[SentimentType.neu] = "#e3c1c1"
-enum_conflict_color_dict[SentimentType.neg] = "#ffb89c"
-enum_conflict_color_dict[SentimentType.pos] = "#FFF0F5"
-enum_conflict_color_dict[SentimentType.mix] = 'url(#diagonalHatch_conflict)'
+// const enum_conflict_color_dict = {}
+// enum_conflict_color_dict[SentimentType.neu] = "#e3c1c1"
+// enum_conflict_color_dict[SentimentType.neg] = "#ffb89c"
+// enum_conflict_color_dict[SentimentType.pos] = "#FFF0F5"
+// enum_conflict_color_dict[SentimentType.mix] = 'url(#diagonalHatch_conflict)'
 // enum_conflict_color_dict[SentimentType.unknown] = "#ffc3c3"
 
 const outlet_color_dict = {

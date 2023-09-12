@@ -1,12 +1,12 @@
 <template>
     <div id="nova-navBar">
         <div id="nova-logo" @click="handleLogoClicked">
-            <img alt="logo" src="/imgs/nova_logo.png" height="40" class="mr-2">
+            <img alt="logo" src="/imgs/nova_logo.png" class="mr-2" style="height:5vh">
         </div>
         <!-- <StageSelect class='page-steps' /> -->
         <div class="nav-button-container" style="display: flex; margin-right:1.1%;">
-            <Button v-if="route_name=='inspection'" class="try-another-button" severity="secondary" size="small" text raised @click="handleLogoClicked" style="display: ruby;font-family:Trebuchet MS; white-space: nowrap ;"> Try another </Button>
             <Button v-if="summary_visible" class="summary-button" size="small" severity="secondary" text raised @click="openSummary" style="font-family: Trebuchet MS; white-space: nowrap;"> Summary </Button>
+            <Button v-if="route_name=='inspection'" class="try-another-button" severity="secondary" size="small" text raised @click="handleLogoClicked" style="display: ruby;font-family:Trebuchet MS; white-space: nowrap ;"> Try another </Button>
             <Button v-if="route_name=='home'" class="tutorial-button" severity="secondary" size="small" text raised @click="handleTutorialClicked" style="display: ruby;font-family:Trebuchet MS;white-space: nowrap;"> Introduction </Button>
         </div>
     </div>
@@ -22,21 +22,7 @@ import * as vue from "vue"
 const store = useUserDataStore()
 const router = useRouter()
 const user_hex_selection = vue.computed(() => store.hex_selection) 
-const summary_created = vue.computed(() => {
-    if(Object.keys(user_hex_selection.value).length == 0) return false
-    let created = false
-    Object.keys(user_hex_selection.value).forEach(outlet => {
-        const entities_dict = user_hex_selection.value[outlet]
-        Object.keys(entities_dict).forEach(entity => {
-            if(entities_dict[entity] !== -1) {
-                created = true
-                return
-            }
-        })
-        if(created) return 
-    })
-    return created
-})
+const summary_created = vue.computed(() => {return(Object.keys(user_hex_selection.value).length !== 0)})
 const props = defineProps({
     route_name: String
 })
@@ -47,7 +33,7 @@ function handleTutorialClicked() {
 
 const dialog = useDialog();
 const summary_header = vue.h('div', { class: 'summary-header', innerHTML: 'Summary', style:
-"background: #f7f7f7; margin: 0% 1% 1% 0%; padding-left: 3px; width: 100%;font-weight: bold; font-size: 1.5rem; border-bottom: 1px solid #b3b3b3;"
+"background: #f7f7f7; margin: 0% 1% 1% 0%; padding-left: 3px; width: 100%;font-weight: bold; font-size: 1.5rem; border-bottom: 1px solid #b3b3b3; font-family: 'Lato';"
  })
 const summary_visible = vue.computed(() => summary_created.value && props.route_name != "belief")
 

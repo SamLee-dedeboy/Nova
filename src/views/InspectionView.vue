@@ -266,7 +266,7 @@ function toggleTutorial() {
             },
             {
                 title: "Full Article",
-                element: document.querySelector('.analysis-container'),
+                element: document.querySelector('.analysis-left'),
                 intro: `
                     Once an article is clicked, the full article will be shown on the right hand side.
                     <br>
@@ -377,10 +377,10 @@ function toggleTutorial() {
                 <!-- <span> {{selected_outlet}}</span> -->
                 &nbsp
                 <i class='pi pi-info-circle tooltip'>
-                    <span class="tooltiptext right-tooltiptext" style="width: 400px">
+                    <span class="tooltiptext right-tooltiptext" style="width: 400px;z-index:1000;">
                         Below are the articles of the selected topics published by {{ selected_entity?.outlet }}. <br />
-                        Click the plus button to expand and see a summary of the article. <br />
-                        Use the Mark button to mark any interesting articles you find. <br />
+                        <!-- Click the plus button to expand and see a summary of the article. <br />
+                        Use the Mark button to mark any interesting articles you find. <br /> -->
                     </span>
                 </i>
                 <div class="tutorial-toggle-container" style="display:inline; margin-left:auto">
@@ -450,7 +450,7 @@ function toggleTutorial() {
                                 <span class="tooltiptext right-tooltiptext" style="width: 145px">
                                     <!-- Write down any hypothesis or questions you have.
                                     The system will document that for you. -->
-                                    We will record the text you put here for academic user stuy.
+                                    We will record the text you put here for academic user study.
                                     We do not collect any other information from you.
                                 </span>
                             </i>
@@ -471,7 +471,7 @@ function toggleTutorial() {
             style="overflow: hidden;"
             :size="right_section_size">
             <div class="article-content-container" style="display: flex; flex-direction: column; height: 100%; overflow: hidden;">
-                <ArticleAnalysis class="article-analysis-panel"
+                <ArticleAnalysis class="article-analysis-panel" 
                     ref="article_content_view"
                     :entity_pair="[selected_entity?.name as string, selected_cooccurr_entity?.name as string]"
                     :selected_article="selected_article"
@@ -526,9 +526,9 @@ li {
   position: absolute;
 }
 
-:deep(.p-button) {
-    padding: 0.1rem 1rem;
-}
+// :deep(.p-button) {
+//     padding: 0.1rem 1rem;
+// }
 
 :deep(.p-inputtext) {
     padding: 0.2rem 0.5rem;
@@ -565,7 +565,17 @@ li {
     }
 }
 
-
+// .tooltiptext {
+//   text-align: justify;
+//   position: absolute;
+//   z-index:1000;
+//   pointer-events: none;
+//   font-size: 1rem;
+//   font-size: 1rem;
+//   font-family: 'Lato';
+//   font-weight: 200;
+//   box-shadow: rgb(0 0 0 / 25%) 0px 54px 55px, rgb(0 0 0 / 12%) 0px -12px 30px, rgb(0 0 0 / 12%) 0px 4px 6px, rgb(0 0 0 / 17%) 0px 12px 13px, rgb(0 0 0 / 9%) 0px -3px 5px;
+// }
 .journal-style{
     // width: 50px;
     height: 80px;

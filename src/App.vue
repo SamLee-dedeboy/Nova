@@ -17,7 +17,7 @@ const route_name = vue.computed(() => route.name)
 
 <style>
 @import "@/assets/base.css";
-@import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400&family=Roboto:wght@300;400&display=swap');
+/* @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400&family=Roboto:wght@300;400&display=swap'); */
 #app {
   font-weight: normal;
 }
@@ -49,6 +49,7 @@ p {
   font-family: 'Lato';
   font-weight: bold;
 }
+
 .tooltip .tooltiptext {
   visibility: hidden;
   background-color: white;

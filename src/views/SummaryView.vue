@@ -30,7 +30,7 @@ const hex_selection = vue.computed(() => store.hex_selection)
 <template>
 <div class="page-container">
     <div class="summary-container">
-        <h2 class="component-header summary-header"> 
+        <h2 class="component-header summary-header" > 
             Summary
         </h2>
         <Summary :notes="notes" :hex_selection="hex_selection"></Summary>
@@ -42,11 +42,11 @@ const hex_selection = vue.computed(() => store.hex_selection)
 //
 // Page containers
 //
-.page-container {
-  width: 98vw;
-  height: 98vh;
-  display: flex;
-}
+// .page-container {
+//   width: 98vw;
+//   height: 98vh;
+//   display: flex;
+// }
 .summary-container {
   width: 100%;
   height: 100%;
@@ -76,6 +76,7 @@ const hex_selection = vue.computed(() => store.hex_selection)
   background: #f7f7f7;
   padding-left: 1%;
   margin: 1% 0% 1% 0%;
+  
 }
 
 // 

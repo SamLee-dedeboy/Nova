@@ -22,13 +22,7 @@
     </div>
 </template>
 
-<style>
-
-  .center_img{
-    /* padding: 1px; */
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-  }
+<style scoped>
+@import "./tutorial.css";
 
 </style>

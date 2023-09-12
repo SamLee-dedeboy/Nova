@@ -1,34 +1,20 @@
 <template>
     <img class="bg" background-image src='/TutorialIMG/bg.jpg'/>
-    <div style="margin-top: 1rem;">
+    <div style="margin-top: 1rem;"> 
         <div class="outbox ">
             <img src="/TutorialIMG/NOVA.png" class="image">
         </div>
         <div class="outbox">
             <span class="text">
-                Click left arrow &#8592; or right arrow &#8594; below to start the tutorial 
+                Click left arrow &#8592; or right arrow &#8594; below to start the introduction 
             </span>
         </div>
     </div>
 </template>
 
-<style>
-body{
-    margin: auto;
-}
-.bg{
-  opacity:0.06;
-  position:absolute;
-  left:0;
-  top:0;
-  width:100%;
-  height:auto;
-}
-.outbox{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
+<style scoped>
+@import "./tutorial.css";
+
 .image{
 
     width:80%;
@@ -38,11 +24,9 @@ body{
     margin-top: 2%;
 }
 .text{
-    /* top: 3rem; */
-    /* display: block; */
     font-style: italic;
+    /* font-family: 'Lato'; */
     font-size: 1rem;
-    /* margin: 0.5rem; */
     padding:5px;
     width: 500px;
     text-align: center;

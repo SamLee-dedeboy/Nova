@@ -11,46 +11,43 @@ import NoteEditor from '../components/NoteEditor.vue';
  */
 import HexCooccurrence from "./HexCooccurrence.vue"
 import { useUserDataStore } from "../store/userStore"
+import { useRoute, useRouter } from 'vue-router'
+
+const route = useRoute()
 
 const store = useUserDataStore()
 const clicked_hexview = vue.computed(() => Object.keys(store.clicked_hexview).map(title => store.clicked_hexview[title]))
 const user_hex_selection = vue.computed(() => store.hex_selection) 
 const segmentation = vue.computed(() => store.segmentation)
 const notes = vue.computed(() => store.notes)
-const summary_created = vue.computed(() => {
-    if(Object.keys(user_hex_selection.value).length == 0) return false
-    let created = false
-    Object.keys(user_hex_selection.value).forEach(outlet => {
-        const entities_dict = user_hex_selection.value[outlet]
-        Object.keys(entities_dict).forEach(entity => {
-            if(entities_dict[entity] !== -1) {
-                created = true
-                return
-            }
-        })
-        if(created) return 
-    })
-    return created
-})
+const summary_created = vue.computed(() => 
+                        {
+                            console.log(user_hex_selection.value)
+                            if(Object.keys(user_hex_selection.value).length !== 0)
+                                return true;
+                        })
+
+const image_path = vue.computed(() => route.name === 'home'? "" : "../../")
 vue.onMounted(() => {
     console.log('summary mounted: ', notes.value)
-
+    // console.log(user_hex_selection.value)
+    console.log(route.name)
 })
 </script>
 
 <template>
 
-<div v-if="!summary_created">
+<div v-if="!summary_created" class="page-container" style="display: flex; width: 80vw; height: 60vh; z-index:1000; background-color: white">
     No summary created yet.
 </div>
 <div v-else class="page-container" style="display: flex; width: 80vw; height: 60vh; z-index:1000; background-color: white">
     <div class="summary-container" style="display: flex; flex-direction: column; width: 100%">
         <div class="content-container" style="display: flex; flex-direction: column; flex: 1; width: 100%; height: 100%; ">
-            <div v-for="hexview, index in clicked_hexview" class="item-container" style="display: flex; flex-direction: column;  width: 100%; min-width: 50%;height: 420px;margin-bottom: 1rem;">
+            <div v-for="hexview, index in clicked_hexview" class="item-container" :key="hexview.title" style="display: flex; flex-direction: column;  width: 100%; min-width: 50%;height: 420px;margin-bottom: 1rem;">
                 <div class="hexview-header" style="display: flex; flex-direction: row; justify-content: space-between; width: 100%; height: 10%; box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.5)">
                     <div class="hexview-title" style="display: flex; flex-direction: row; align-items: center; height: 100%; width: 100%;">
                         <div :class="['journal-style']">
-                            <img :src="`../../squared/${hexview.outlet}.png`"
+                            <img :src="`${image_path}squared/${hexview.outlet}.png`"
                                 :class="['journal-image',`${hexview.outlet}`]" />
                         </div>
                         <div class="hexview-title-text" style="font-size: 1.2em; font-weight: bold; margin-left: 0.5em;">{{hexview.center_entity}}</div>

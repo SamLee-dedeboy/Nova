@@ -19,7 +19,7 @@
         />
         <img
             v-motion
-            :initial="{ x: -150,y:0}"
+            :initial="{ x: -150,y:70}"
             :enter="final_FOX"
             class="absolute newsimg"
             src="/TutorialIMG/FoxNews_articles.png"
@@ -33,7 +33,7 @@
         />
         <img
             v-motion
-            :initial="{ x: 500,y:10}"
+            :initial="{ x: 700,y:0}"
             :enter="final_WP"
             class="absolute"
             style="width:12%"
@@ -57,8 +57,8 @@
 
 <script setup lang="ts">
     const final_NY = {
-    x:500,
-    y:150,
+    x:(window.innerHeight)*0.7,
+    y:(window.innerHeight)*0.2,
     transition: {
         type: 'spring',
         damping: 10,
@@ -67,8 +67,8 @@
     }
     }
     const final_CNN = {
-    x:500,
-    y:80,
+    x:(window.innerHeight)*0.67,
+    y:(window.innerHeight)*0.1,
     transition: {
         type: 'spring',
         damping: 10,
@@ -77,8 +77,8 @@
     }
     }
     const final_FOX = {
-    x:70,
-    y:-30,
+    x:(window.innerHeight)*0.1,
+    y:-(window.innerHeight)*0.06,
     transition: {
         type: 'spring',
         damping: 10,
@@ -87,8 +87,8 @@
     }
     }
     const final_B = {
-    x:90,
-    y:-60,
+    x:(window.innerHeight)*0.1,
+    y:-(window.innerHeight)*0.08,
     transition: {
         type: 'spring',
         damping: 10,
@@ -97,8 +97,8 @@
     }
     }
     const final_WP = {
-    x:110,
-    y:10,
+    x:(window.innerHeight)*0.15,
+    y:(window.innerHeight)*0.01,
     transition: {
         type: 'spring',
         damping: 10,
@@ -107,8 +107,8 @@
     }
     }
     const final_ABC = {
-    x:-150,
-    y:200,
+    x:-(window.innerHeight)*0.1,
+    y:(window.innerHeight)*0.25,
     transition: {
         type: 'spring',
         damping: 10,
@@ -118,26 +118,20 @@
     }
 </script>
 
-<style>
+<style scoped>
+@import "./tutorial.css";
 .newsimg{
     width: 13%;
 }
 
-.center{
-    /* width: 60%; */
+/* .center{
+    width: 60%;
     margin: auto;
     display: block;
     width: 100%;
     max-width: 1400px;
-}
-.pop{
-animation: clickit 1.9s
-}
-@keyframes clickit {
-    0% {opacity: 0}
-    80% {opacity: 0}
-    100% {opacity: 1}
-}
+} */
+
 .circle{
     position: absolute;
     width: 30%;

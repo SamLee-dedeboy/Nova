@@ -83,6 +83,7 @@ const conflict_hex = vue.computed(() => {
     let res = []
     // center entity
     const center_entity = props.entity_cooccurrences?.target!
+    console.log(props.user_hex_selection)
     const center_entity_sst = categorizeHex(props.user_hex_selection[center_entity.entity], props.segmentation)
     if(center_entity_sst !== categorizeHex(center_entity.sst, props.segmentation)) res.push(center_entity)
 
@@ -520,10 +521,12 @@ function updateDataHex() {
             if(i === 0 && !props.show_label) return SstColors.enum_color_dict[SentimentType.unknown]
             const sst = d[0].sst;
             const categorized_sst = categorizeHex(sst, props.segmentation!)
-            if(conflict_entities.value.includes(d[0].entity))
-                return (d[0].exists) ? SstColors.enum_conflict_color_dict[categorized_sst] : '#dddddd'
-            else
-                return (d[0].exists) ? SstColors.enum_color_dict[categorized_sst] : '#dddddd'
+            return (d[0].exists) ? SstColors.enum_color_dict[categorized_sst] : '#dddddd'
+
+            // if(conflict_entities.value.includes(d[0].entity))
+            //     return (d[0].exists) ? SstColors.enum_conflict_color_dict[categorized_sst] : '#dddddd'
+            // else
+            //     return (d[0].exists) ? SstColors.enum_color_dict[categorized_sst] : '#dddddd'
         })
     
     // add looped animation for center hex
@@ -744,14 +747,14 @@ function changeCenterHexColor() {
     let next_sst = undefined
     const center_hex = d3.select("path.center-hexagon")
     let d: any = center_hex.data()[0]
+    console.log(d)  
     if(d.assigned_sst === SentimentType.neu) next_sst = SentimentType.mix 
-    if(d.assigned_sst === SentimentType.mix) next_sst = SentimentType.unknown 
-    if(d.assigned_sst === SentimentType.unknown) next_sst = SentimentType.pos 
+    if(d.assigned_sst === SentimentType.mix) next_sst = SentimentType.pos 
     if(d.assigned_sst === SentimentType.pos) next_sst = SentimentType.neg 
     if(d.assigned_sst === SentimentType.neg) next_sst = SentimentType.neu 
     center_hex.attr("fill", SstColors.enum_color_dict[next_sst])
     d.assigned_sst = next_sst
-    emit("hex-filled", {filledEntity: d.entity, filledHexIndex: d.assigned_sst})
+    emit("hex-filled", {filledEntity: d[0].entity, filledHexIndex: d.assigned_sst})
 }
 
 function updateHighlightHex() {
@@ -1010,7 +1013,7 @@ function updateHexColor(animation = true) {
 
 
 function categorizeHex(sst: Sentiment2D | undefined, segmentation: Sentiment2D) {
-    if (sst.pos === 0 && sst.neg === 0) return SentimentType.unknown
+    // if (sst.pos === 0 && sst.neg === 0) return SentimentType.unknown
     if (sst.pos < segmentation.pos && sst.neg < segmentation.neg) return SentimentType.neu
     if (sst.pos < segmentation.pos && sst.neg > segmentation.neg) return SentimentType.neg
     if (sst.pos > segmentation.pos && sst.neg < segmentation.neg) return SentimentType.pos

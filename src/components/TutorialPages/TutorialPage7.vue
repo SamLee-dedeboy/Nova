@@ -15,7 +15,7 @@
           </div>
           <div style="width:20%">
               <img src="/TutorialIMG/arrow.png" class="center_img" style="width:50%" >
-              <div class="box" style="width:100%;margin:auto">
+              <div class="box" style="margin:auto">
                   <span class="encode">
                           data encoding
                   </span>
@@ -34,7 +34,8 @@
     </div>
 </template>
 
-<style>
+<style scoped>
+@import "./tutorial.css";
   .neg_color{
     background-color: #f4c49c;
     opacity:1.0;
