@@ -36,10 +36,9 @@ const segmentation: Ref<typeUtils.Sentiment2D> = vue.computed(() => store.segmen
 const selected_entity = vue.computed(() => store.selected_entity)
 const selected_cooccurr_entity = vue.computed(() => store.selected_cooccurr_entity )
 const setCooccurrEntity = (cooccurr_entity) => store.setCooccurrEntity(cooccurr_entity)
-const clicked_hexview = vue.computed(() => store.clicked_hexview)
 const setClickedHexView = (hexview) => store.setClickedHexView(hexview)
 const setInspectionHexView = (hexview) => store.setInspectionHexView(hexview)
-const hex_selection = vue.computed(() => store.hex_selection[target_outlet.value]?.[target_entity.value] || {})
+const hex_selection = vue.computed(() => store.hex_selection[target_outlet.value]?.[target_entity.value] || undefined)
 const setHexSelection =  (hex_selection) => store.setHexSelection(hex_selection, target_outlet.value, target_entity.value)
 const conflict_hex = vue.computed(() => store.conflict_hex)
 const setConflictHex = (conflicts) => store.setConflictHex(conflicts)
@@ -48,6 +47,8 @@ const hex_filled = ref(false)
 const showDragNDropHint = ref(false)
 const firstAccess = vue.computed(() => store.belief_first_access)
 const setFirstAccess = (value) => (store.setBeliefFirstAccess(value))
+const init_hex_selection = ref({}) //declare a ref object
+const init_hexview = ref()
 
 vue.watch(revealed, () => {
     user_hex.value.updateHighlightHex() 
@@ -93,14 +94,15 @@ async function fetch_outlet_hex(outlet, center_entity) {
             data: json
         }
         outlet_hexview.value = hex_view
-        setClickedHexView(hex_view)
+        init_hexview.value = hex_view    //save for user's belief
+        
         setInspectionHexView(hex_view)
-        const init_hex_selection = {}
+
+        // initialize user's belief hexagon
         hex_view.data.sorted_cooccurrences_list.forEach(entity_data => {
-            init_hex_selection[entity_data.entity] = -1
+            init_hex_selection.value[entity_data.entity] = "-1"
         })
-        init_hex_selection[center_entity] = { pos: 0, neg: 0}
-        setHexSelection(init_hex_selection)
+        init_hex_selection.value[center_entity] = "neutral"
     })
 
     // await fetch(`${server_address}/hexview/grouped/${center_entity}/${outlet}`)
@@ -135,17 +137,19 @@ function handleHexClicked({clickedEntity}) {
 }
 
 function handleHexFilled({filledEntity, filledHexIndex}) {
-    const outlet = target_outlet.value
-    let old_hex_selection = hex_selection.value
-    old_hex_selection[filledEntity] = filledHexIndex
-    setHexSelection(old_hex_selection)
-    hex_filled.value = true
-    Object.keys(old_hex_selection).forEach(hex_entity => {
-        if(old_hex_selection[hex_entity] === -1) {
-            hex_filled.value = false
-            return
-        }
-    })
+    init_hex_selection.value[filledEntity] = filledHexIndex
+    let exists = Object.values(init_hex_selection.value).includes("-1");
+
+    
+    if(!exists){ //is filled
+        setHexSelection(init_hex_selection.value) //update as filled hexagon
+        setClickedHexView(init_hexview.value) //update clicked entity(s) and oulet(s)
+        hex_filled.value = true
+    }
+    else{
+        hex_filled.value = false
+    }
+
 }
 
 function checkReveal() {
@@ -209,7 +213,8 @@ function toggleTutorial(e: MouseEvent) {
                 intro: `
                     These hexagons represent other highly correlated topics we found. 
                     How has the outlet reported on these topics?
-                    Drag the hexagons to any empty slots above in corresponding regions.`
+                    Drag the hexagons to any empty slots above in corresponding regions. Remember not to
+                    overlap each of the hexagon.`
             },
             {
                 title: "Data Suggested Hive",
@@ -270,11 +275,11 @@ function toggleDataHexTutorial() {
     })
     .onafterchange(function(element) {
         if(first_step) {
-            document.querySelector(".introjs-tooltip").style.scale = 0
+            (document.querySelector(".introjs-tooltip") as HTMLElement).style.scale = "0"
             first_step = false
         }
         else {
-            document.querySelector(".introjs-tooltip").style.scale = 1
+            (document.querySelector(".introjs-tooltip")as HTMLElement).style.scale = "1"
         }
         return
     })
@@ -360,6 +365,7 @@ function toggleDataHexTutorial() {
                             <br>
                             <div class="conflict-items-container" style="max-height: 100%; overflow: scroll; padding: 5px;">
                                 <div class="conflict-hex-selector" v-for="conflict in conflict_hex" 
+                                :key="conflict"
                                 style="
                                     font-weight: bold;
                                     font-family: Trebuchet MS;
@@ -410,7 +416,7 @@ function toggleDataHexTutorial() {
                         border-radius: 30px;
                         background: #fffcf5;
                     ">
-                        <img v-for="sst in Object.keys(SstColors.hive_color_dict)" :src="`../../legend/${sst}.png`" style="width: 100%; height: 100%; object-fit: cover;" />
+                        <img v-for="sst in Object.keys(SstColors.hive_color_dict)" :key="sst" :src="`../../legend/${sst}.png`" style="width: 100%; height: 100%; object-fit: cover;" />
                     </div>
                 </div>
             </div>
@@ -471,9 +477,9 @@ function toggleDataHexTutorial() {
     opacity: 0.1;
 }
 
-:deep(.p-button) {
+/* :deep(.p-button) {
     padding: 0.1rem 1rem;
-}
+} */
 /* Journal style */
 .conflict-hex-selector:hover .conflict-hex-selector-overlay {
     opacity: 1;

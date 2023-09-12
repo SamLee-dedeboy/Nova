@@ -260,6 +260,7 @@ function handleOutletClicked(outlet) {
   }
 }
 .tooltiptext {
+  text-align: justify;
   font-size: 1rem;
   font-size: 1rem;
   font-family: 'Lato';

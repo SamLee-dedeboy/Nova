@@ -1,9 +1,9 @@
 <template>
     <img class="bg" src='/TutorialIMG/bg.jpg'/>
-    <div class="outbox" style="height: 750px;margin-top: 1rem;">
+    <div class="outbox" style="height: 90vh;margin-top: 1rem;">
         <div>
             <h1 class="textbox">
-                <span class="textword_8" style="font-size: 50px; ">
+                <span class="textword_8" style="font-size: 3rem; ">
                 Your journey with our system starts now! Click and Try out <span style="font-style: italic">NOVA</span> by youself ! &#8680;
                 <img src="/TutorialIMG/nova_logo.png" class="novalogo zoom"  style="float:right"
                 @click="handleNOVAlogoClicked"
@@ -20,16 +20,15 @@
         router.push({ name: 'home' })
     }
 </script>
-<style>
+<style scoped>
+@import "./tutorial.css";
 .textbox .textword_8{
   font-family: Georgia, serif;
   background-color: #fff7ed;
-  /* display: inline-block; */
-  /* line-height: 2; */
-  margin: 10px;
-  padding: 20px;
+  margin: 2rem;
+  padding: 1.5rem;
   text-align: justify;
-  width: 1050px;
+  width: 63rem;
 }
 .novalogo{
     width: 12%;

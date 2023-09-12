@@ -4,7 +4,7 @@
         <br> 
         <div class="imagebox">
             <div style="width:90%">
-                <img src="/TutorialIMG/EntitiesLink.png" class="center_img" style="width:90%">
+                <img src="/TutorialIMG/EntitiesLink.png" class="center_img" style="width:90%;">
             </div>
             <div style="width:25%">
                 <img src="/TutorialIMG/arrow.png" class = "center_img" style="width:35%" >
@@ -28,27 +28,7 @@
 
 
 
-<style>
-    .box{
-        /* background-color: #3c3f41; */
-        width: max-content;
-        display: flex;
-    }
-    .encode{
-        /* font-size: 13px; */
-        font-style: italic;
-        font-family: Georgia, serif;
-        font-size: 1rem;
-        color: #000;
-        overflow: hidden;
-        white-space: nowrap;
-        margin: 0 auto;
-        animation:
-            typing 1s steps(20),
-            cursor 0.5s;
-    }
-    @keyframes typing {
-        from{ width: 0 }
-        to{ width: 100% }
-    }
+<style scoped>
+@import "./tutorial.css";
+
 </style>

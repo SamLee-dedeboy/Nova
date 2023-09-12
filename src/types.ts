@@ -104,7 +104,7 @@ export enum SentimentType {
     pos = "positive",
     neg = "negative",
     mix = "mixed",
-    unknown = "unknown",
+    // unknown = "unknown",
 }
 export class Sentiment {
     label: string

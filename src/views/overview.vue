@@ -271,15 +271,19 @@ function toggleTutorial(e: MouseEvent) {
             News Topics
             <i class='pi pi-info-circle tooltip'>
               <span class="tooltiptext right-tooltiptext" style="width: 200px;">
-                Each point is a topic with 2D sentiment score (pos, neg). <br />
-                The score represents how many positive and negatives articles they have.
-                The articles are between Feb 2020 and June 2020.
+                Each dot on the scatter plot is a topic with 2D sentiment score (pos, neg). <br />
+                User can either choose topics from the table or the scatter plot.
+                <!-- The score represents the normalization value of how many positive and negatives articles they have. -->
+                <!-- The articles are between Feb 2020 and June 2020. -->
               </span>
             </i>
+            <div class="tutorial-toggle-container" style="display:inline; margin-left: auto; position: absolute; right: 0%; top: -1%;">
+              <Button severity="secondary" text raised @click="toggleTutorial" style="width:fit-content;font-family:Trebuchet MS;"> Tutorial </Button>
+            </div>
           </h2>
           <div class='scatter-content' style="max-height: calc(100% - 40px); flex: 1;">
             <Splitter class='table-scatter-splitter'>
-              <SplitterPanel class="entity-table-panel" :size="table_panel_size" style="overflow: hidden; display: flex; flex-direction: column">
+              <SplitterPanel class="entity-table-panel" :size="table_panel_size" style="display: flex; flex-direction: column">
                 <div id="entityTableWrapper" class='entityTableWrapper' style="height: 67%; min-height: 67%; margin-left: 5%;">
                   <i v-if="overall_scatter_data_loading" class="pi pi-spin pi-spinner" style="position:absolute;
                       left: 45%;
@@ -306,18 +310,18 @@ function toggleTutorial(e: MouseEvent) {
                     <h2 class="component-header util-header">
                       Topic Settings
                       <i class='pi pi-info-circle tooltip'> 
-                        <span class="tooltiptext right-tooltiptext" style="width: 300px">
+                        <span class="tooltiptext right-tooltiptext" style="width: 300px;">
                           The color spectrum slider helps filter topics by number or articles. <br />
-                          The six-sliders group lets you input your preception of each media outlet based on fairness and
-                          importance.
+                          <!-- The six-sliders group lets you input your preception of each media outlet based on fairness and
+                          importance. -->
                         </span>
                       </i>
                     </h2>
                     <!-- filter slider -->
                     <h3 class="threshold-title" style="width: 100%;"> Articles Threshold
                       <i class='pi pi-info-circle tooltip'>
-                        <span class="tooltiptext right-tooltiptext" style="width: 300px">
-                          User the slider to set a threshold on topics' minimum articles.
+                        <span class="tooltiptext right-tooltiptext" style="width: 300px;">
+                          Drag the slider or click on the increasement/ decreasement button to set a threshold on topics' minimum articles.
                           Topics with less articles than the threshold will not appear in scatter plot.
                         </span>
                       </i>
@@ -375,8 +379,10 @@ function toggleTutorial(e: MouseEvent) {
                 :show_animation="!entity_changed"
                 @outlet-clicked="handleOutletClicked"
                 >
-
               </EntityInfo>
+              <div v-else class="default">
+                <div style="padding:3rem; ">Select a topic by clicking on a row in the table or a dot on the scatter plot!</div>
+              </div>
             </div>
           </SplitterPanel>
         </Splitter>
@@ -392,14 +398,23 @@ function toggleTutorial(e: MouseEvent) {
 </style>
 
 <style scoped lang="scss">
+
 * {
   --margin_left: 10px;
 }
 .component-header {
   background: #f7f7f7;
 }
-
-
+.default{
+  height: 100%;
+  text-align: justify;
+  padding: 45% 0;
+  font-family: 'Lato';
+  font-weight: 200;
+  font-size: 2rem;
+  font-style: italic;
+  
+}
 // ---------------------
 // css for split-panel layout
 // ---------------------
@@ -426,13 +441,17 @@ function toggleTutorial(e: MouseEvent) {
 // ---------------------
 // slider style
 
-.tooltiptext {
-  font-size: 1rem;
-  font-size: 1rem;
-  font-family: 'Lato';
-  font-weight: 200;
-  box-shadow: rgb(0 0 0 / 25%) 0px 54px 55px, rgb(0 0 0 / 12%) 0px -12px 30px, rgb(0 0 0 / 12%) 0px 4px 6px, rgb(0 0 0 / 17%) 0px 12px 13px, rgb(0 0 0 / 9%) 0px -3px 5px;
-}
+// .tooltiptext {
+//   text-align: justify;
+//   position: absolute;
+//   z-index:1000;
+//   pointer-events: none;
+//   font-size: 1rem;
+//   font-size: 1rem;
+//   font-family: 'Lato';
+//   font-weight: 200;
+//   box-shadow: rgb(0 0 0 / 25%) 0px 54px 55px, rgb(0 0 0 / 12%) 0px -12px 30px, rgb(0 0 0 / 12%) 0px 4px 6px, rgb(0 0 0 / 17%) 0px 12px 13px, rgb(0 0 0 / 9%) 0px -3px 5px;
+// }
 // ---------------------
 // entity info section
 // ---------------------

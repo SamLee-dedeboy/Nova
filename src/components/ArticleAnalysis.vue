@@ -124,8 +124,8 @@ defineExpose({
 
 </script>
 <template>
-<div class="analysis-container" style="display: flex; overflow: hidden; flex: 1 1 0; height: 100%">
-    <div class="analysis-left" style="width: 100%; overflow: hidden; display: flex; flex-direction: column">
+<div class="analysis-container" style="display: flex; overflow: hidden; flex: 1 1 0; height: 100%; ">
+    <div class="analysis-left" style="width: 100%; overflow: hidden; display: flex; flex-direction: column; ">
         <h2 class="component-header analysis-header" style="background: #f7f7f7; padding-left: 1%">
             Article Reviewer
         </h2>
@@ -200,7 +200,7 @@ defineExpose({
     transition: background-color 0.5s ease;
 }
 :deep(:not(.highlighted)) {
-    border-radius: 5px;
+    /* border-radius: 5px; */
     transition: background-color 0.5s ease;
 }
 </style>

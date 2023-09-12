@@ -231,6 +231,7 @@ defineExpose({
   display: flex;
   height: 53%;
   border-bottom: solid 1px black;
+  margin: 0 10px;
 }
 :deep(.p-scroll-wrapper) {
     z-index: auto !important;
