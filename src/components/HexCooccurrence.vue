@@ -747,7 +747,6 @@ function changeCenterHexColor() {
     let next_sst = undefined
     const center_hex = d3.select("path.center-hexagon")
     let d: any = center_hex.data()[0]
-    console.log(d)  
     if(d.assigned_sst === SentimentType.neu) next_sst = SentimentType.mix 
     if(d.assigned_sst === SentimentType.mix) next_sst = SentimentType.pos 
     if(d.assigned_sst === SentimentType.pos) next_sst = SentimentType.neg 

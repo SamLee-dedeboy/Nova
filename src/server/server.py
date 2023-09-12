@@ -36,9 +36,12 @@ total_articles = 0
 for outlet, article_num in processed_data.outlet_article_num_dict.items():
     total_articles += article_num
 
+<<<<<<< HEAD
 splitSentences("This will trigger punkt to download")
 print("init done")
 
+=======
+>>>>>>> 3a2ddb21f057a709b6597b214f1510a7187ed833
 
 @app.route("/overview/data", methods=["POST"])
 def get_overview_data():
@@ -120,9 +123,12 @@ def ids_to_articles():
         "articles": articles,
         "article_highlights": article_highlights
     }
+<<<<<<< HEAD
     response = jsonify(res)
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
+=======
+>>>>>>> 3a2ddb21f057a709b6597b214f1510a7187ed833
     return json.dumps(res, default=vars)
 
 @app.route("/processed_data/cooccurr_info/grouped/<outlet>/<target>/<co_occurr_entity>")
