@@ -54,6 +54,7 @@ const props = defineProps({
     show_hex_appear: Boolean,
     wider_border: Boolean,
     p_margin: Object as () => any,
+    font_size: {type: Number, default: 1},
     user_hex_selection: Object as () => any,
 })
 const emit = defineEmits(["hex-clicked", "hex-filled", "hex-rendered", "hex-revealed", "conflict-hex", "hex-anmt-end"])
@@ -424,7 +425,7 @@ function updateUserFixedHex() {
         .attr("text-anchor", "middle")
         .attr("dominant-baseline", "central")
         .attr("fill", "black")
-        .attr("font-size", "0.8em")
+        .attr("font-size", props.font_size + "em")
         .attr("opacity", (d: any, i) => {
             if(i === 0) return 1
             if(props.show_label === false) return 0
@@ -554,7 +555,7 @@ function updateDataHex() {
         .attr("text-anchor", "middle")
         .attr("dominant-baseline", "central")
         .attr("fill", "black")
-        .attr("font-size", "0.8em")
+        .attr("font-size", props.font_size + "em")
         .attr("opacity", (d: any, i) => {
             // if(i === 0) return 1
             if(props.show_label === false) return 0
@@ -729,7 +730,7 @@ function updateUserHex() {
         .attr("text-anchor", "middle")
         .attr("dominant-baseline", "central")
         // .attr("fill", "black")
-        .attr("font-size", "0.8em")
+        .attr("font-size", props.font_size + "em")
         .text((d: any) => {
             const words = d[0].entity.split("_")
             if(words.length > 4) {
