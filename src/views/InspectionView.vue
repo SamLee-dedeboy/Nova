@@ -38,7 +38,7 @@ const left_section_size = 60
 const right_section_size = vue.computed(() => 100 - left_section_size)
 const server_address = vue.inject("server_address")
 const data_fetched: Ref<boolean> = ref(false)
-
+const articles_fetched: Ref<boolean> = ref(false)
 const selected_outlet: any = route.params.outlet
 const selected_entity = vue.computed(() => store.selected_entity)
 const setEntity = (entity) => store.setEntity(entity)
@@ -62,21 +62,23 @@ const note_editor = ref(null)
 const firstAccess = vue.computed(() => store.inspection_first_access)
 const setFirstAccess = (value) => (store.setInspectionFirstAccess(value))
 
-vue.onMounted(() => {
-    prepare_data()
+vue.onMounted(async () => {
+    const cooccurr_entity_name = selected_cooccurr_entity.value? selected_cooccurr_entity.value.name : selected_entity.value.name
+    highlight_hex_entity.value = selected_cooccurr_entity.value?.name
+    
+    await fetch_cooccurr_info(selected_outlet, selected_entity.value.name, cooccurr_entity_name)
+    // prepare_data()
 })
 
 function handleNoteUpdated(noteHTMLContent) {
     setNotes(noteHTMLContent)
     vue.nextTick(() => {
         const references = document.querySelectorAll(".noteReference")
-        console.log({references})
+
         references.forEach(reference_element => {
             reference_element.addEventListener("click", async function(e) {
-                console.log("reference clicked", (e.target as HTMLElement).getAttribute("sentence_index"))
                 const sentence_index = (e.target as HTMLElement).getAttribute("sentence_index")
                 const doc_id = parseInt((e.target as HTMLElement).getAttribute("doc_id"))
-                console.log({sentence_index, doc_id})
                 // check if the article is already loaded
                 if(doc_id != selected_article.value.id) {
                     await fetch(`${server_address}/processed_data/ids_to_articles`, {
@@ -104,10 +106,7 @@ function handleNoteUpdated(noteHTMLContent) {
 }
 
 async function prepare_data() {
-    const cooccurr_entity_name = selected_cooccurr_entity.value? selected_cooccurr_entity.value.name : selected_entity.value.name
-    await fetch_cooccurr_info(selected_outlet, selected_entity.value.name, cooccurr_entity_name)
     const article_ids = selected_cooccurr_entity.value?.article_ids || selected_entity.value.article_ids
-    highlight_hex_entity.value = selected_cooccurr_entity.value?.name
     await fetch_articles(article_ids)
 }
 
@@ -116,7 +115,6 @@ function fetchRetry(url, fetchOptions = {}, retry=2) {
   // check 404 error
   .then(response => {
     if (!response.ok) {
-      console.log({response})
       if(retry != 0) return fetchRetry(url, fetchOptions, retry-1)
     }
     return response;
@@ -129,6 +127,7 @@ function fetchRetry(url, fetchOptions = {}, retry=2) {
 
 
 async function fetch_articles(article_ids) {
+    console.log("fetching articles: ", article_ids)
     const url = `${server_address}/processed_data/ids_to_articles`
     const fetchOptions = {
         method: "POST",
@@ -141,7 +140,9 @@ async function fetch_articles(article_ids) {
     fetchRetry(url, fetchOptions)
     .then(res => res.json())
     .then(json => {
+        console.log("articles fetche: ", json.articles.length)
         target_articles.value = json.articles
+        articles_fetched.value = true
         target_article_highlights.value = json.article_highlights
 
         article_view.value.handleArticleClicked(undefined, article_ids[0])
@@ -171,15 +172,15 @@ async function handleHexClicked({ clickedEntity }, view) {
         setCooccurrEntity(undefined)
     } else {
         highlight_hex_entity.value = clickedEntity
+        // setCooccurrEntity(clickedEntity)
     }
     const entity = selected_entity.value.name
     const outlet = selected_outlet
+    articles_fetched.value = false
     await fetch_cooccurr_info(outlet, entity, clickedEntity)
-    prepare_data()
 }
 
 function handleSentenceClicked(sentence, sentence_index, doc_id) {
-    console.log("sentence clicked")
     note_editor.value.addReference(sentence, sentence_index, doc_id)
 }
 
@@ -208,32 +209,9 @@ async function fetch_cooccurr_info(outlet, entity, co_occurr_entity) {
             // articles_topic_dict: json.cooccurr_articles_topic_dict,
         }
         setCooccurrEntity(cooccurr_entity)
+        prepare_data()
     })
 
-    // await fetch(`${server_address}/processed_data/cooccurr_info/grouped/${outlet}/${entity}/${co_occurr_entity}`)
-    //     .then(res => res.json())
-    //     .then(json => {
-    //         console.log("cooccurr_info fetched", json)
-    //         const target_entity = {
-    //             name: json.target,
-    //             outlet: outlet,
-    //             article_ids: json.target_article_ids,
-    //             // num_of_mentions: json.target_num,
-    //             // articles_topic_dict: json.target_articles_topic_dict,
-    //             // sst_ratio: inspection_hexview.value.data.target.sst
-    //         }
-    //         setEntity(target_entity)
-    //         const cooccurr_entity = {
-    //             target: json.target,
-    //             name: json.cooccurr_entity,
-    //             outlet: outlet,
-    //             article_ids: json.cooccurr_article_ids,
-    //             // num_of_mentions: json.cooccurr_num,
-    //             // target_num_of_mentions: json.target_num_of_mentions,
-    //             // articles_topic_dict: json.cooccurr_articles_topic_dict,
-    //         }
-    //         setCooccurrEntity(cooccurr_entity)
-    //     })
 }
 
 function outletIconStyle(name:string){
@@ -349,7 +327,7 @@ function toggleTutorial() {
         <SplitterPanel id="article_view_section"
             class="articleview-section flex align-items-center justify-content-center" :size="left_section_size"
             style="overflow: hidden; height:100%; display: flex !important; flex-direction: column !important;">
-            <i v-if="!data_fetched" class="pi pi-spin pi-spinner" 
+            <i v-if="!articles_fetched" class="pi pi-spin pi-spinner" 
             style="position:absolute;
                 left: 45%;
                 top: 30%;
@@ -390,10 +368,12 @@ function toggleTutorial() {
             <!-- <i v-if="!data_fetched" class="pi pi-ellipsis-h" style="position:absolute; left: 50%; top: 50%;font-size: 3rem; z-index: 1000"/> -->
             <ArticleView class="article-view-container" v-model:sst_threshold="segmentation"
                 ref="article_view"
+                :articles_fetched="articles_fetched"
                 :articles="target_articles" 
                 :article_highlights="target_article_highlights"
                 @article-selected="(article) => { selected_article=article; article_selected=true }"
                 :entity_pair="[selected_entity?.name as string, selected_cooccurr_entity?.name as string]">
+            
             </ArticleView>
             <div class="hexview-note-container" style="display: flex; margin-top: 1%; overflow: hidden">
                 <div class="hexview-container" style="display: flex; width: 100%;">

@@ -83,6 +83,7 @@ export class Article {
     entity_candidates: any[]
     sentiment: Sentiment
     splitted_sentences: any
+    doc_level_sentiment: { [id: string]: string} 
 }
 
 export class EntityMention {

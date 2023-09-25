@@ -139,8 +139,7 @@ function handleHexClicked({clickedEntity}) {
 function handleHexFilled({filledEntity, filledHexIndex}) {
     init_hex_selection.value[filledEntity] = filledHexIndex
     let exists = Object.values(init_hex_selection.value).includes("-1");
-
-    
+    // exists = false       
     if(!exists){ //is filled
         setHexSelection(init_hex_selection.value) //update as filled hexagon
         setClickedHexView(init_hexview.value) //update clicked entity(s) and oulet(s)
@@ -341,7 +340,7 @@ function toggleDataHexTutorial() {
                 <!-- <div class="border" ></div> -->
                 <HexCooccurrence ref="user_hex" class="belief-user-hexview"
                 mode="user"
-                title="belief-user-hexview" :id="`belief_user_hexview`"
+                :id="`belief_user_hexview`"
                 :entity_cooccurrences="outlet_hexview.data" :segmentation="segmentation"
                 :highlight_hex_entity="highlight_hex_entity"
                 @hex-clicked="handleHexClicked"
@@ -435,7 +434,7 @@ function toggleDataHexTutorial() {
                 <HexCooccurrence ref="data_hex" class="belief-true-hexview"
                 mode="data"
                 :class="revealed_css"
-                :title="outlet_hexview.title" :id="`belief_data_hexview`"
+                :id="`belief_data_hexview`"
                 :entity_cooccurrences="outlet_hexview.data" :segmentation="segmentation"
                 :highlight_hex_entity="highlight_hex_entity"
                 :user_hex_selection="hex_selection"

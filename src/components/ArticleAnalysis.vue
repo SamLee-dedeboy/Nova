@@ -31,6 +31,7 @@ vue.watch(() => props.selected_article, async () => {
 // indexed_content: {0: s0, 1: s1, 2: s2 ...}
 // highlight: {0: entities, 1: entities}
 function addContentHighlights(indexed_content: any[], highlights: any) {
+    if(highlights === undefined) return
     let res = ""
     Object.keys(indexed_content).forEach(sentence_index => {
         const sentence = indexed_content[sentence_index]

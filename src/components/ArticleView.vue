@@ -13,15 +13,15 @@ import { useUserDataStore } from '../store/userStore'
 
 const store = useUserDataStore()
 const props = defineProps({
+    articles_fetched: Boolean,
     articles: Object as () => Article[],
     article_highlights: Object as () => any,
-    entity_pair: Object as () => String[],
+    entity_pair: Object as () => string[],
 })
 const emit = defineEmits([
     'article-selected',
 ])
 const server_address = vue.inject("server_address")
-
 vue.onMounted(() => {
     const pos_scroll_panel = document.querySelector(".pos-article-list > .p-scrollpanel-wrapper > .p-scrollpanel-content")
     const neg_scroll_panel = document.querySelector(".neg-article-list > .p-scrollpanel-wrapper > .p-scrollpanel-content")
@@ -54,14 +54,26 @@ vue.onMounted(() => {
     neg_panel_togglers.forEach(toggler => toggler.classList.add("neg-toggler"))
 
 })
-const pos_articles = vue.computed(() => {
-    props.articles?.forEach(article => {
-        // if(article.doc_level_sentiment[props.entity_pair[0]] !== "positive" && article.doc_level_sentiment[props.entity_pair[0]] !== "negative")
-        //     console.log(article)
-    })
-    // return props.articles?.filter(article => (article.doc_level_sentiment[props.entity_pair[0]] === "positive" && article.doc_level_sentiment[props.entity_pair[1] !== "negative"]) || (article.doc_level_sentiment[props.entity_pair[1]] === "positive" && article.doc_level_sentiment[props.entity_pair[0]] !== "negative"))
-    return props.articles?.filter(article => article.doc_level_sentiment[props.entity_pair[0]] === "positive" || article.doc_level_sentiment[props.entity_pair[1]] === "positive")
+const pos_articles: Ref<any[]> = ref([])
+const neg_articles: Ref<any[]> = ref([])
+
+vue.watch(() => props.entity_pair, () => {
+    if(props.articles_fetched) {
+        pos_articles.value =  props.articles?.filter(article => article.doc_level_sentiment[props.entity_pair[0]] === "positive" || article.doc_level_sentiment[props.entity_pair[1]] === "positive")
+        neg_articles.value =  props.articles?.filter(article => article.doc_level_sentiment[props.entity_pair[0]] === "negative" || article.doc_level_sentiment[props.entity_pair[1]] === "negative")
+    }
 })
+vue.watch(() => props.articles, () => {
+    pos_articles.value =  props.articles?.filter(article => article.doc_level_sentiment[props.entity_pair[0]] === "positive" || article.doc_level_sentiment[props.entity_pair[1]] === "positive")
+    neg_articles.value =  props.articles?.filter(article => article.doc_level_sentiment[props.entity_pair[0]] === "negative" || article.doc_level_sentiment[props.entity_pair[1]] === "negative")
+})
+// const pos_articles = vue.computed(() => {
+//     // props.articles?.forEach(article => {
+//     //     // if(article.doc_level_sentiment[props.entity_pair[0]] !== "positive" && article.doc_level_sentiment[props.entity_pair[0]] !== "negative")
+//     //     //     console.log(article)
+//     // })
+//     return props.articles?.filter(article => article.doc_level_sentiment[props.entity_pair[0]] === "positive" || article.doc_level_sentiment[props.entity_pair[1]] === "positive")
+// })
 const pos_panel_articles: Ref<Article[]> = ref(pos_articles.value?.slice(0,10) || []) 
 const pos_marks: Ref<boolean[]> = ref(Array(pos_articles.value?.length || 0).fill(false))
 // const pos_article_notes: Ref<string[]> = ref(Array(pos_articles.value?.length || 0).fill(""))
@@ -69,10 +81,10 @@ const pos_marks: Ref<boolean[]> = ref(Array(pos_articles.value?.length || 0).fil
 // const neg_articles = vue.computed(() => {
 //     return props.articles?.filter(article => article.sentiment.label === "NEGATIVE").sort(sortByRelevance)
 // })
-const neg_articles = vue.computed(() => {
-    return props.articles?.filter(article => article.doc_level_sentiment[props.entity_pair[0]] === "negative" || article.doc_level_sentiment[props.entity_pair[1]] === "negative")
-    // return props.articles?.filter(article => (article.doc_level_sentiment[props.entity_pair[0]] === "negative" && article.doc_level_sentiment[props.entity_pair[1] !== "positive"]) || (article.doc_level_sentiment[props.entity_pair[1]] === "negative" && article.doc_level_sentiment[props.entity_pair[0]] !== "positive"))
-})
+// const neg_articles = vue.computed(() => {
+//     return props.articles?.filter(article => article.doc_level_sentiment[props.entity_pair[0]] === "negative" || article.doc_level_sentiment[props.entity_pair[1]] === "negative")
+//     // return props.articles?.filter(article => (article.doc_level_sentiment[props.entity_pair[0]] === "negative" && article.doc_level_sentiment[props.entity_pair[1] !== "positive"]) || (article.doc_level_sentiment[props.entity_pair[1]] === "negative" && article.doc_level_sentiment[props.entity_pair[0]] !== "positive"))
+// })
 const neg_panel_articles: Ref<Article[]> = ref(neg_articles.value?.slice(0,10) || []) 
 const neg_marks: Ref<boolean[]> = ref(Array(neg_articles.value?.length || 0).fill(false))
 // const neg_article_notes: Ref<string[]> = ref(Array(neg_articles.value?.length || 0).fill(""))
@@ -121,6 +133,7 @@ function fetchRetry(url, fetchOptions = {}, retry=2) {
 }
 
 async function handleArticleClicked(e, article_id) {
+    console.log("fetching article highlights", article_id)
     const url = `${server_address}/processed_data/article`
     const fetchOptions = {
         method: "POST",
@@ -133,7 +146,8 @@ async function handleArticleClicked(e, article_id) {
     fetchRetry(url, fetchOptions)
     .then(res => res.json())
     .then(article => {
-        console.log("article selected", article)
+        // console.log("article selected", article)
+        console.log('article highligh fetched', article_id)
         emit("article-selected", article)
     })
     // await fetch(`${server_address}/processed_data/article`, {

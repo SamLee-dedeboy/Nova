@@ -22,7 +22,7 @@ const segmentation = vue.computed(() => store.segmentation)
 const notes = vue.computed(() => store.notes)
 const summary_created = vue.computed(() => 
                         {
-                            console.log(user_hex_selection.value)
+                            // console.log(user_hex_selection.value)
                             if(Object.keys(user_hex_selection.value).length !== 0)
                                 return true;
                         })

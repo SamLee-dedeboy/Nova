@@ -6,7 +6,7 @@
         </div>
         <div class="outbox">
             <span class="text">
-                Click left arrow &#8592; or right arrow &#8594; below to start the introduction 
+                Click the right arrow &#8594; below to start the introduction 
             </span>
         </div>
     </div>
