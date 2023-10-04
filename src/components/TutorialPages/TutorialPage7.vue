@@ -28,8 +28,11 @@
     </div>
     <div class="textbox"> 
         <span class="textword">
-            In addition to encoding the interest a topic received from media outlets, we also encode the sentiment type of each topic derived from the content of related articles.<span >
-            We count both the number of negative and positive articles per topic. Then we use min-max normalization on both counts and assign (<span class="pos_color">score<sub>pos</sub></span>, <span class="neg_color">score<sub>neg</sub></span>). This value is used to determine the position of each dot. We plot each topic using score<sub>pos</sub> as x-coordinate and score<sub>neg</sub> as y-coordinate on the 2-D scatter plot.</span>
+            In addition to encoding the attention a topic received, we also encode the sentiment of each topic when the outlet is reporting it.<span >
+            We count both the number of negative and positive articles per topic. 
+            <!-- Then we use min-max normalization on both counts and assign (<span class="pos_color">score<sub>pos</sub></span>, <span class="neg_color">score<sub>neg</sub></span>).  -->
+            <!-- This value is used to determine the position of each dot.  -->
+            We plot each topic using <span class="pos_color"> score<sub>pos</sub></span> as x-coordinate and <span class="neg_color"> score<sub>neg</sub> </span> as y-coordinate on the scatter plot.</span>
         </span>
     </div>
 </template>

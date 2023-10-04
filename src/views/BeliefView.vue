@@ -381,7 +381,7 @@ function toggleDataHexTutorial() {
                                 @click="goToNextStep(conflict)">
 
                                 <div class="conflict-hex-selector-overlay" ></div>
-                                    {{ conflict }}
+                                    {{ (conflict as string).replaceAll("_", " ") }}
                                 </div>
 
                             </div>

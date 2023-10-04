@@ -49,7 +49,7 @@
     </div>
     <div class="textbox pop" style="margin-top: 12rem;">
         <span class="textword">
-            <span style="font-style: italic">NOVA</span> offers a means to explore an individual's potential <span style="font-style:italic"> echo chamber </span> when it comes to online mainstream media outlets. Each news oulet has its own coverage and possible biases. Typically the average person receives their news from a subset of these outlets they trust. <span style="font-style: italic">NOVA</span> enables users to explore outside of their own universe and assess their assumptions of other outlets.
+            <span style="font-style: italic">NOVA</span> offers a means to explore an individual's potential <span style="font-style:italic"> echo chamber </span> when it comes to online mainstream media outlets. Each news outlet has its own coverage and possible biases. Typically the average person receives their news from a subset of these outlets they trust. <span style="font-style: italic">NOVA</span> enables users to explore outside of their own universe and assess their assumptions of other outlets.
         </span>
     </div>
     <img class="pop circle absolute" src="/TutorialIMG/circle.png"/>

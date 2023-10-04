@@ -1,22 +1,38 @@
 <script setup lang="ts">
-import { ref, Ref } from "vue"
+import { ref, Ref, VueElement } from "vue"
+import { onMounted } from "vue"
 import Page1 from "../components/TutorialPages/TutorialPage1.vue"
 import Page2 from "../components/TutorialPages/TutorialPage2.vue"
 import Page3 from "../components/TutorialPages/TutorialPage3.vue"
 import Page4 from "../components/TutorialPages/TutorialPage4.vue"
-import Page5 from "../components/TutorialPages/TutorialPage5.vue"
+// import Page5 from "../components/TutorialPages/TutorialPage5.vue"
 import Page6 from "../components/TutorialPages/TutorialPage6.vue"
 import Page7 from "../components/TutorialPages/TutorialPage7.vue"
 import Page8 from "../components/TutorialPages/TutorialPage8.vue"
-
+import { useRoute, useRouter } from 'vue-router'
+const router = useRouter()
 
 const page = ref(1)
 function handleNextPage() {
-    page.value += 1
+  if(page.value == 7) {
+    router.push({ name: 'home' })
+    return
+  }
+  page.value += 1
 }
 function handlePrevPage() {
-    page.value -= 1
+  if(page.value == 1) return
+  page.value -= 1
 }
+onMounted(() => {
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'ArrowRight') {
+        handleNextPage()
+    } else if(e.key === 'ArrowLeft') {
+        handlePrevPage()
+    }
+  })
+})
 </script>
 <template>
     <div class="container" >
@@ -24,10 +40,14 @@ function handlePrevPage() {
         <Page2 v-if="page===2"></Page2>
         <Page3 v-if="page===3"></Page3>
         <Page4 v-if="page===4"></Page4>
+        <Page6 v-if="page===5"></Page6>
+        <Page7 v-if="page===6"></Page7>
+        <Page8 v-if="page===7"></Page8>
+        <!-- <Page4 v-if="page===4"></Page4>
         <Page5 v-if="page===5"></Page5>
         <Page6 v-if="page===6"></Page6>
         <Page7 v-if="page===7"></Page7>
-        <Page8 v-if="page===8"></Page8>
+        <Page8 v-if="page===8"></Page8> -->
     </div>
     <div v-if="page!==1" class="toggle-page left" @click="handlePrevPage">
             <!-- <button class="btn zoom"> &#8592; </button> -->

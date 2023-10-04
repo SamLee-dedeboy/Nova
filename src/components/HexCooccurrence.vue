@@ -84,8 +84,8 @@ const conflict_hex = vue.computed(() => {
     let res = []
     // center entity
     const center_entity = props.entity_cooccurrences?.target!
-    console.log(props.user_hex_selection)
-    const center_entity_sst = categorizeHex(props.user_hex_selection[center_entity.entity], props.segmentation)
+    // const center_entity_sst = categorizeHex(props.user_hex_selection[center_entity.entity], props.segmentation)
+    const center_entity_sst = props.user_hex_selection[center_entity.entity]
     if(center_entity_sst !== categorizeHex(center_entity.sst, props.segmentation)) res.push(center_entity)
 
     // other entities
@@ -750,6 +750,8 @@ function changeCenterHexColor() {
     let d: any = center_hex.data()[0]
     if(d.assigned_sst === SentimentType.neu) next_sst = SentimentType.mix 
     if(d.assigned_sst === SentimentType.mix) next_sst = SentimentType.pos 
+    // if(d.assigned_sst === SentimentType.mix) next_sst = SentimentType.unknown 
+    // if(d.assigned_sst === SentimentType.unknown) next_sst = SentimentType.pos 
     if(d.assigned_sst === SentimentType.pos) next_sst = SentimentType.neg 
     if(d.assigned_sst === SentimentType.neg) next_sst = SentimentType.neu 
     center_hex.attr("fill", SstColors.enum_color_dict[next_sst])

@@ -26,11 +26,11 @@
             </div>
         </div>
     </div> 
-    <div class="textbox" style="margin-top:6rem;"> 
-        <span class="textword">
-            However, a dot doesn't reveal that much information. Not all topics received equal attention and had same number of articles written about them. 
-            <span>We count the total number of articles related to the same topic and using a linear scale color encode each dot. A deepper purple hue implies more articles were written related to that topic. As we see above, there are 1557 articles related to <span style="font-weight: 600;font-style: italic">Donald Trump</span> and there are 87 articles for <span style="font-weight: 600;font-style: italic">The Times</span>. Therefore, the purple dot for <span style="font-weight: 600;font-style: italic">Donald Trump</span> is much darker than the dot for <span style="font-weight: 600;font-style: italic">The Times</span>.</span>
-        </span>
+    <div class="textbox"> 
+    <span class="textword">
+        However, a dot doesn't reveal that much information. Not all topics received equal attention.
+        <span>We count the total number of articles related to a topic and use a purple color scale encode each dot. A deepper purple implies more articles related to that topic. For example, there are 1557 articles related to <span style="font-weight: 600;font-style: italic">Donald Trump</span> and there are 87 articles for <span style="font-weight: 600;font-style: italic">The Times</span>. Therefore, the purple dot for <span style="font-weight: 600;font-style: italic">Donald Trump</span> is much darker than the dot for <span style="font-weight: 600;font-style: italic">The Times</span>.</span>
+    </span>
     </div>
 </template>
 

@@ -140,7 +140,6 @@ async function fetch_articles(article_ids) {
     fetchRetry(url, fetchOptions)
     .then(res => res.json())
     .then(json => {
-        console.log("articles fetche: ", json.articles.length)
         target_articles.value = json.articles
         articles_fetched.value = true
         target_article_highlights.value = json.article_highlights

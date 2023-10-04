@@ -4,13 +4,13 @@
     <div >
         <div class="textbox" >
             <span class="textword">
-                NOVA, news outlet visual assessment, serves as a platform to allow general audiences to freely review mainstream media outlet coverage on a variety of topics. Additionally, our system supports user's in assessing if their prior expectations and understanding of an outlet aligns with how the outlet reported on a selected topic.
+                NOVA, news outlet visual assessment, serves as a platform to allow general pubic to assess if their prior expectations and understanding of an outlet aligns with how the outlet reported on a selected topic.
             </span>
         </div>
         <div class="pop">
             <div class="textbox">
                 <span class="textword">
-                    The article you will browse soon were centered around COVID-19 and collected from U.S. mainstream media outlets (New York Times, CNN, Fox News, Breitbart, Washington Post and ABC News) from Feb 2020 to June 2020.
+                    The article you will browse soon are centered around COVID-19 collected from U.S. mainstream media outlets (New York Times, CNN, Fox News, Breitbart, Washington Post and ABC News) from Feb 2020 to June 2020.
                 </span>
             </div>
             <div class="imagebox">

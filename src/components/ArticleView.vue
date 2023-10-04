@@ -22,6 +22,25 @@ const emit = defineEmits([
     'article-selected',
 ])
 const server_address = vue.inject("server_address")
+const article_tags = vue.computed(() => {
+    const res = {}
+    props.articles?.forEach(article => {
+        const entities = Object.values(article.entities).flat().map(entity => entity.wiki_id)
+        const article_id = article.id
+        console.log(entities, props.entity_pair)
+        if(entities.includes(props.entity_pair[0])) {
+            if(!res[article_id]) res[article_id] = []
+            res[article_id].push(props.entity_pair[0])
+        }
+        if(entities.includes(props.entity_pair[1])) {
+            if(!res[article_id]) res[article_id] = []
+            res[article_id].push(props.entity_pair[1])
+        }
+    })
+    console.log({res})
+    return res
+})
+
 vue.onMounted(() => {
     const pos_scroll_panel = document.querySelector(".pos-article-list > .p-scrollpanel-wrapper > .p-scrollpanel-content")
     const neg_scroll_panel = document.querySelector(".neg-article-list > .p-scrollpanel-wrapper > .p-scrollpanel-content")
@@ -219,6 +238,7 @@ defineExpose({
                     </div>
                     <span class="headlineStyle" v-html="add_highlights(article.headline, props.article_highlights?.headline_entities?.[article.id])">
                     </span>
+                    <span class="entity_tag" v-for="tag in article_tags[article.id]"> {{ tag.replaceAll("_", " ") }} </span>
                 </div>
 
             </div>
@@ -234,6 +254,9 @@ defineExpose({
                     </div>
                     <span class="headlineStyle" v-html="add_highlights(article.headline, props.article_highlights?.headline_entities?.[article.id])">
                     </span>
+                    <div class="tag-container">
+                        <span class="entity_tag" v-for="tag in article_tags[article.id]"> {{ tag.replaceAll("_", " ") }} </span>
+                    </div>
                 </div>
             </div>
         </ScrollPanel>
@@ -241,6 +264,20 @@ defineExpose({
 </div>
 </template>
 <style scoped>
+.tag-container {
+    display: flex;
+    flex-direction: column;
+}
+.entity_tag {
+    font-size: x-small;
+    border: solid 1px grey;
+    height: fit-content;
+    border-radius: 5px;
+    padding: 1px;
+    background: #f4e12c5c;
+    margin-left: 3px;
+    width: fit-content;
+}
 .article-cards-container {
   display: flex;
   height: 53%;
@@ -320,12 +357,14 @@ defineExpose({
 }
 
 .icon-container {
-    width: 10%;
+    width: fit-content;
+    margin-right: 5px;
 }
 
 .headlineStyle{
    font-size: .75em;
    font-weight: 200;
+   flex: 1;
 }
 
 .headlineStyle:hover{
