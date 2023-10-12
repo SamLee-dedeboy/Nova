@@ -293,6 +293,15 @@ function toggleTutorial() {
                     They will be like references and you can add comments on them.
                 `
             },
+            {
+                title: "Take the survey!",
+                element: document.querySelector('.summary-button'),
+                intro: `
+                    When you're done, click the 'Summary' button to view your results.
+                    You will also find the survey link there.
+                    The summary result will be helpful when taking the survey.
+                `
+            },
         ]
     }).start()
 

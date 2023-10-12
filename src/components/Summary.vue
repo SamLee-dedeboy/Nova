@@ -105,6 +105,18 @@ vue.onMounted(() => {
             </div>
             <br>
             <br>
+            <div style="margin-top: 30px; font-size: 0.8rem; border-top: 1px dashed black;">
+                A gentle reminder:
+                <br>
+                You are encouraged to explore 2-3 topics/outlets before taking the survey.
+                <br>
+                This page will help document all your findings.
+                <br>
+                Keep this page open while taking the 
+                <a target="_blank" rel="noopener noreferrer" href="https://ucdavis.co1.qualtrics.com/jfe/form/SV_3rPs4H0gu3HrBs2">
+                <i class='pi pi-book'/> survey.
+                </a>
+            </div>
         </div>
     </div>
 </div>
