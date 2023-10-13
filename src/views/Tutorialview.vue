@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, Ref, VueElement } from "vue"
 import { onMounted } from "vue"
+import * as vue from "vue"
 import Page1 from "../components/TutorialPages/TutorialPage1.vue"
 import Page2 from "../components/TutorialPages/TutorialPage2.vue"
 import Page3 from "../components/TutorialPages/TutorialPage3.vue"
@@ -11,6 +12,7 @@ import Page7 from "../components/TutorialPages/TutorialPage7.vue"
 import Page8 from "../components/TutorialPages/TutorialPage8.vue"
 import { useRoute, useRouter } from 'vue-router'
 const router = useRouter()
+const server_address = vue.inject("server_address")
 
 const page = ref(1)
 function handleNextPage() {
@@ -32,6 +34,17 @@ onMounted(() => {
         handlePrevPage()
     }
   })
+
+  fetch(`${server_address}/overview/data`, {
+    method: "POST",
+    headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+    },
+    body: JSON.stringify({article_num_threshold: 1000})
+  })
+  .then(res => res.json())
+  .then(res => console.log(res))
 })
 </script>
 <template>
