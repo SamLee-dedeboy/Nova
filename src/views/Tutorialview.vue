@@ -76,6 +76,48 @@ onMounted(() => {
             <div class="btn zoom"> &#8594; </div>
     </div>
   </div>
+  <div v-else style="width: 100%; height: 100%; font-size: 3rem; display: flex; flex-direction: column; align-items: center; justify-content: center">
+    <div class="header" style="flex-basis: 5%;">
+      Why are you seeing this page?
+    </div>
+    <div style="font-size: 1.5rem;"> The browser is blocking you for security reasons. Follow the instructions to disable it: </div>
+    <div style="display: flex; width: 100%; flex: 1;">
+      <div class="firefox" style="width: 100%; text-align: center; margin-right: 5px;"> 
+        <span> Firefox </span>
+        <div style="display: flex; flex-direction: column; align-items: left;"> 
+          <div style="display: flex; align-items: top; padding: 5px; justify-content: center; border-bottom: dashed 1px black;">
+            <img src="/security/1.svg" style="width: 30px; height: 30px; margin-top: 5px;"> 
+            <img src="/security/firefox_1.png" style="width: 50%; margin-left: 30px;"/>
+          </div>
+          <div style="display: flex; align-items: top; padding: 5px; justify-content: center; border-bottom: dashed 1px black;">
+            <img src="/security/2.svg" style="width: 30px; height: 30px; margin-top: 5px;"> 
+            <img src="/security/firefox_2.png" style="width: 50%; margin-left: 30px;"/>
+          </div>
+          <div style="display: flex; align-items: top; padding: 5px; justify-content: center; border-bottom: dashed 1px black;">
+            <img src="/security/done.svg" style="width: 30px; height: 30px; margin-top: 5px;"> 
+            <img src="/security/firefox_done.png" style="width: 50%; margin-left: 30px;"/>
+          </div>
+        </div>
+      </div>
+      <div class="chrome" style="width: 100%; text-align: center; border-left: 1px solid black; padding-left: 5px;">
+        <span> Chrome </span>
+        <div style="display: flex; flex-direction: column; align-items: left; "> 
+          <div style="display: flex; align-items: top; padding: 5px; justify-content: center; border-bottom: dashed 1px black;">
+            <img src="/security/1.svg" style="width: 30px; height: 30px; margin-top: 5px;"> 
+            <img src="/security/chrome_1.png" style="width: 40%; margin-left: 30px;"/>
+          </div>
+          <div style="display: flex; align-items: top; padding: 5px; justify-content: center; border-bottom: dashed 1px black;">
+            <img src="/security/2.svg" style="width: 30px; height: 30px; margin-top: 5px;"> 
+            <img src="/security/chrome_2.png" style="height: 50px; margin-left: 30px;"/>
+          </div>
+          <div style="display: flex; align-items: top; padding: 5px; justify-content: center; border-bottom: dashed 1px black;">
+            <img src="/security/done.svg" style="width: 30px; height: 30px; margin-top: 5px;"> 
+            <img src="/security/chrome_done.png" style="width: 50%; margin-left: 30px;"/>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
 
 </template>
