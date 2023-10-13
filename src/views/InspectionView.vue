@@ -438,10 +438,8 @@ function toggleTutorial() {
                             Notes
                             <i class='pi pi-info-circle tooltip'>
                                 <span class="tooltiptext right-tooltiptext" style="width: 145px">
-                                    <!-- Write down any hypothesis or questions you have.
-                                    The system will document that for you. -->
-                                    We will record the text you put here for academic user study.
-                                    We do not collect any other information from you.
+                                    We will not record the text you put here.
+                                    We do not collect any data other than the survey.
                                 </span>
                             </i>
                         </h2>

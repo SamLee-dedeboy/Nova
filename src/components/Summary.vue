@@ -20,6 +20,7 @@ const clicked_hexview = vue.computed(() => Object.keys(store.clicked_hexview).ma
 const user_hex_selection = vue.computed(() => store.hex_selection) 
 const segmentation = vue.computed(() => store.segmentation)
 const notes = vue.computed(() => store.notes)
+const hive_explanations = vue.computed(() => store.hiveExplanation)
 const summary_created = vue.computed(() => 
                         {
                             // console.log(user_hex_selection.value)
@@ -32,6 +33,7 @@ vue.onMounted(() => {
     console.log('summary mounted: ', notes.value)
     // console.log(user_hex_selection.value)
     console.log(route.name)
+    console.log(hive_explanations.value)
 })
 </script>
 
@@ -87,15 +89,22 @@ vue.onMounted(() => {
                             :user_hex_selection="user_hex_selection[hexview.outlet]?.[hexview.center_entity]">
                         </HexCooccurrence>
                     </div>
+                    <div style="whiteSpace: pre-line; margin-right: 30px;padding: 5px; max-width: 20%;">
+                        <div style="font-weight: bold;"> Your thought process: </div>
+                        <div style="border: 1px solid black; border-radius: 5px; padding: 3px 3px 3px 5px; margin-top: 8px; font-size: 0.8rem; height: 80%; box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.5);">
+                        {{ hive_explanations[hexview.outlet]?.[hexview.center_entity] }}
+                        </div>
+
+                    </div>
                     <div class="summary-notes-container" style=" flex: 1.5; display: flex; flex-direction: column;height: 100%;">
                         <h2 class="component-header notes-header">
                             Notes
                             <i class='pi pi-info-circle tooltip'>
-                                <span class="tooltiptext right-tooltiptext" style="width: 145px">
+                                <span class="tooltiptext right-tooltiptext" style="width: 200px;">
                                     <!-- Write down any hypothesis or questions you have.
                                     The system will document that for you. -->
-                                    We will record the text you put here for academic user study.
-                                    We do not collect any other information from you.
+                                    We will not record the text you put here.
+                                    We do not collect any data other than the survey.
                                 </span>
                             </i>
                         </h2>

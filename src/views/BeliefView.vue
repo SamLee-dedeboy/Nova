@@ -49,6 +49,8 @@ const firstAccess = vue.computed(() => store.belief_first_access)
 const setFirstAccess = (value) => (store.setBeliefFirstAccess(value))
 const init_hex_selection = ref({}) //declare a ref object
 const init_hexview = ref()
+const showExplanation = ref(false)
+const setHiveExplanation = (explanation) => store.setHiveExplanation(explanation, target_outlet.value, target_entity.value)
 
 vue.watch(revealed, () => {
     user_hex.value.updateHighlightHex() 
@@ -145,8 +147,9 @@ function handleHexFilled({filledEntity, filledHexIndex}) {
         setClickedHexView(init_hexview.value) //update clicked entity(s) and oulet(s)
         hex_filled.value = true
     }
-    else{
+    else {
         hex_filled.value = false
+        // hex_filled.value = true
     }
 
 }
@@ -155,7 +158,8 @@ function checkReveal() {
     if(!hex_filled.value) { 
         showDragNDropHint.value = true
     } else {
-        revealed.value = true
+        showExplanation.value = true
+        // revealed.value = true
     }
 }
 
@@ -284,6 +288,10 @@ function toggleDataHexTutorial() {
     })
     .start()
 }
+
+function recordInput(e) {
+    setHiveExplanation(e.target.value)
+}
 </script>
 <template>
     <Dialog v-model:visible="showDragNDropHint" position="center" :model="true">
@@ -302,6 +310,36 @@ function toggleDataHexTutorial() {
       </p>
       <template #footer>
         <Button label="Got it" icon="pi pi-check" @click="showDragNDropHint=false" autofocus />
+      </template>
+    </Dialog> 
+    <Dialog v-model:visible="showExplanation" position="center" :model="true">
+      <template #header>
+        <h3 class="header-container" style="display: flex; align-items: center"> 
+            <i class="pi pi-angle-double-right" style="font-size: 1rem;" /> 
+            &thinsp;
+            &thinsp;
+            <span class="header-text">
+                Wait! One more thing to do...
+            </span> 
+        </h3>
+      </template>
+
+      <div>
+        Before you see the data, could you please briefly explain your thought process behind the placement of each hive?
+        <br>
+        What topics are positive, negative, neutral, or mixed? 
+        <br>
+        Can you recall any example? 
+        <br>
+        <span style="font-size: 0.7rem; font-style: italic;">
+        Later in the survey, what you write here will be helpful to answer the questions.
+        <br>
+        For privacy concerns, we do not collect anything other than the survey result.
+        </span>
+      </div>
+      <textarea style="width: 600px; height: 200px; margin-top; 10px;" @input="recordInput"></textarea>
+      <template #footer>    
+        <Button label="I'm Done!" icon="pi pi-check" @click="revealed=true;showExplanation=false;" autofocus />
       </template>
     </Dialog> 
     <div class='selection-grid' style="display: flex; width: 100%; height: 95vh; padding: 1%">

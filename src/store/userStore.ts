@@ -25,6 +25,7 @@ export const useUserDataStore = defineStore('userData', {
         overview_first_access: true,
         belief_first_access: true,
         inspection_first_access: true,
+        hiveExplanation: {}
     }),
     getters: {},
     actions: {
@@ -110,6 +111,10 @@ export const useUserDataStore = defineStore('userData', {
         },
         setInspectionFirstAccess(first_access) {
             this.inspection_first_access = first_access
+        },
+        setHiveExplanation(explanation, outlet, entity) {
+            if(this.hiveExplanation[outlet] === undefined) this.hiveExplanation[outlet] = {}
+            this.hiveExplanation[outlet][entity] = explanation
         }
     }
 })
