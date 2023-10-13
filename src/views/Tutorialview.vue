@@ -13,6 +13,7 @@ import Page8 from "../components/TutorialPages/TutorialPage8.vue"
 import { useRoute, useRouter } from 'vue-router'
 const router = useRouter()
 const server_address = vue.inject("server_address")
+const blocked = ref(true)
 
 const page = ref(1)
 function handleNextPage() {
@@ -44,10 +45,11 @@ onMounted(() => {
     body: JSON.stringify({article_num_threshold: 1000})
   })
   .then(res => res.json())
-  .then(res => console.log(res))
+  .then(res => blocked.value=false)
 })
 </script>
 <template>
+  <div v-if="!blocked">
     <div class="container" >
         <Page1 v-if="page===1"></Page1> 
         <Page2 v-if="page===2"></Page2>
@@ -73,6 +75,7 @@ onMounted(() => {
             <!-- <button class="btn zoom"> &#8594; </button> -->
             <div class="btn zoom"> &#8594; </div>
     </div>
+  </div>
 
 
 </template>
