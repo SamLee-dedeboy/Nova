@@ -1,4 +1,5 @@
 # NOVA: A visual interface for assessing polarizing media coverage
+### We're on arxiv: https://arxiv.org/abs/2403.00334
 ## Overview 
 Within the United States, a majority of the populace receives their news online. 
 U.S mainstream media outlets either generate or influence the news consumed by U.S citizens. 
@@ -18,6 +19,8 @@ Through user interaction, the outlet weights used to generate the overall topic 
 Green lines indicate data communication between the backend and the frontend. 
 
 ## Interface & Visualization Design
+**_The interface is significantly updated in the latest version. Check out here: https://arxiv.org/abs/2403.00334_**
+
 NOVA has two objectives:
 - to allow general audiences to freely assess mainstream media coverage on a variety of topics and 
 - to serve as a platform to facilitate the assessment of one's personal beliefs toward these outlets.
