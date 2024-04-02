@@ -1,12 +1,7 @@
 # NOVA: A visual interface for assessing polarizing media coverage
 ### We're on arxiv: https://arxiv.org/abs/2403.00334
 ## Overview 
-Within the United States, a majority of the populace receives their news online. 
-U.S mainstream media outlets either generate or influence the news consumed by U.S citizens. 
-Many of these citizens have their own personal beliefs about these outlets and question the fairness of their reporting. 
-We offer an interactive visualization system to facilitate `News Outlet Visual Assessment` (NOVA).
-We gathered ~25k articles from the span of 2020-2022 related to COVID-19 from six mainstream media outlets. 
-Our system design emphasizes transparency and facilitates users evaluating their beliefs on media outlets. 
+Within the United States, the majority of the populace receives their news online. U.S mainstream media outlets both generate and influence the news consumed by U.S citizens. Many of these citizens have their personal beliefs about these outlets and question the fairness of their reporting. We offer an interactive visualization system for the public to assess their perception of the mainstream media’s coverage of a topic against the data. Our system combines belief elicitation techniques and narrative structure designs, emphasizing transparency and user-friendliness to facilitate users' self-assessment on personal beliefs. We gathered $\sim${25k} articles from the span of 2020-2022 from six mainstream media outlets as a testbed. To evaluate our system, we present usage scenarios alongside a user study with a qualitative analysis of user exploration strategies for personal belief assessment. We report our observations from this study and discuss future work and challenges of developing tools for the public to assess media outlet coverage and belief updating on provocative topics.
 
 ## Preprocessing 
 <img src='./img/data_pipeline.png'></img>
