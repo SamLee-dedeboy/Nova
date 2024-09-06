@@ -1,8 +1,12 @@
 # NOVA: A visual interface for assessing polarizing media coverage
-### We're on arxiv: https://arxiv.org/abs/2403.00334.
-You can also access the interface through: https://samlee-dedeboy.github.io/Nova/
+<!-- ### We're on arxiv: https://arxiv.org/abs/2403.00334.
+You can also access the interface through: https://samlee-dedeboy.github.io/Nova/ -->
 ## Overview 
-Within the United States, the majority of the populace receives their news online. U.S mainstream media outlets both generate and influence the news consumed by U.S citizens. Many of these citizens have their personal beliefs about these outlets and question the fairness of their reporting. We offer an interactive visualization system for the public to assess their perception of the mainstream media’s coverage of a topic against the data. Our system combines belief elicitation techniques and narrative structure designs, emphasizing transparency and user-friendliness to facilitate users' self-assessment on personal beliefs. We gathered $\sim${25k} articles from the span of 2020-2022 from six mainstream media outlets as a testbed. To evaluate our system, we present usage scenarios alongside a user study with a qualitative analysis of user exploration strategies for personal belief assessment. We report our observations from this study and discuss future work and challenges of developing tools for the public to assess media outlet coverage and belief updating on provocative topics.
+``Echo chamber'' is a common phenomenon found in the general public in the U.S. and can exacerbates the political polarization. 
+Such polarization presents an unresolved challenge in computationally analyzing media bias, in which the public is divided and can hardly reach agreement on media bias, making it hard to find ground truths.
+We attempt to create a platform, NOVA, where people assess personal beliefs on media biases by finding evidence articles. Such a platform exposes them to both supporting and countering articles, thus mitigates the effect of echo chambers and polarization. 
+We decided to incorporate presentation narrative structure and visual belief elicitation techniques after two design iterations, during which pilot studies and user studies are conducted to refine and evaluate the design to cater to the general public.
+We report lessons learned from designing and evaluating NOVA for belief elicitation and assessment and identify opportunities and challenges for prospective research.
 
 ## Preprocessing 
 <img src='./img/transformation.png'></img>
@@ -14,16 +18,19 @@ The preprocessed article data, co-occurrences data, and topic sentiment data are
 Green lines indicate data communication between the backend and the frontend. 
 
 ## Interface & Visualization Design
-**_The interface is significantly updated in the latest version. Check out here: https://arxiv.org/abs/2403.00334_**
+<!-- **_The interface is significantly updated in the latest version. Check out here: https://arxiv.org/abs/2403.00334_** -->
 
-NOVA has two objectives:
+<!-- NOVA has two objectives:
 - to allow general audiences to freely assess mainstream media coverage on a variety of topics and 
 - to serve as a platform to facilitate the assessment of one's personal beliefs toward these outlets.
 
 To address the first objective we take advantage of narrative visualization techniques and strategies to pace out the assessment and allow users to have more control over their process.
-To support the second objective NOVA facilitates belief elicitation by facilitating users to express their beliefs about the topic and the outlet they choose and contrast their beliefs to the data.
+To support the second objective NOVA facilitates belief elicitation by facilitating users to express their beliefs about the topic and the outlet they choose and contrast their beliefs to the data. -->
+We design a workflow in which users first
+externalize their belief through a visualization, then contrast the visualization to the data-driven one, and finally find
+evidence to explain the discrepancies.
 
-NOVA's interface design has 3 stages: `Topic Selection`, `Belief Elicitation`, and `Article Review`.
+Namely, there are 3 stages: `Topic Selection`, `Belief Elicitation`, and `Article Review`.
 In our design, people are allowed to navigate between stages as they please, while the system keeps track of the data and any changes between stages.
 We incorporate modals and annotations to help direct user attention and to provide context for what they are assessing.
 The system, in the first two stages, adjusts the visualizations to reflect their beliefs allowing them to form a hypothesis based on their existing beliefs and then evaluate them in the third stage.
@@ -123,7 +130,15 @@ Install the dependencies for the venv
 `pip install -r requirements.txt` -->
 
 
-## Activating the server
+## Launching
+Install the packages
+`npm i`
+
+Start
+`npm run dev`
+
+
+<!-- ## Activating the server
 `cd src/server`
 
 `flask --app server run`
@@ -135,5 +150,5 @@ Install the packages
 `npm i`
 
 Start
-`npm dev`
+`npm dev` -->
 
