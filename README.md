@@ -1,5 +1,6 @@
 # NOVA: A visual interface for assessing polarizing media coverage
-<!-- ### We're on arxiv: https://arxiv.org/abs/2403.00334.
+### Check out the full paper for NOVA on arxiv: https://arxiv.org/abs/2403.00334
+<!--
 You can also access the interface through: https://samlee-dedeboy.github.io/Nova/ -->
 ## Overview 
 ``Echo chamber'' is a common phenomenon found in the general public in the U.S. and can exacerbates the political polarization. 
